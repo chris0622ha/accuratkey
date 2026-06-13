@@ -2,7 +2,7 @@
 import TypingTest from "./TypingTest";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { auth, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, getDailyLeaderboard, purchaseTheme, setActiveTheme } from "@/lib/firebase";
+import { auth, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont } from "@/lib/firebase";
 
 export const LEVELS = [
   { id:1,  name:"Home Row Hero",         emoji:"🏠", wpmTarget:12,  accuracy:75, color:"#10b981", words:["ffjj","fjfj","asdf","jkl;","add","ask","fall","glad","flask","lads","fads","salads"] },
@@ -537,9 +537,46 @@ export default function AccuratKey() {
   const [activeProfile, setActiveProfile] = useState(null);
   const _age = activeProfile?.isProfileAdmin ? 20 : (activeProfile?.age ?? (activeProfile?.birthday ? calcAge(activeProfile.birthday) : 20));
   const _baseT = getTheme(_age);
-  const THEME_COLORS = {dark:{},midnight:{purple:"#818cf8",bg:"#060614",card:"#0d0d24"},forest:{purple:"#34d399",bg:"#0a1410",card:"#0f1f18"},coffee:{purple:"#d97706",bg:"#120d08",card:"#1e1408"},sunset:{purple:"#f472b6",bg:"#150a0f",card:"#201018"},ocean:{purple:"#06b6d4",bg:"#050d14",card:"#0a1820"},lavender:{purple:"#a78bfa",bg:"#0e0b18",card:"#180f28"},neon:{purple:"#00ff88",bg:"#050505",card:"#0a0f0a",text:"#e0ffe0"}};
+  const THEME_COLORS = {
+    dark:{},
+    midnight:{purple:"#818cf8",bg:"#060614",card:"#0d0d24",border:"#14143a",text:"#c8d0ff",muted:"#4a4a7a",faint:"#333360",accent:"#a78bfa"},
+    slate:{purple:"#818cf8",bg:"#0b0f1a",card:"#111827",border:"#1f2937",text:"#e2e8f0",muted:"#64748b",faint:"#374151",accent:"#38bdf8"},
+    carbon:{purple:"#cc5500",bg:"#0a0a0a",card:"#111111",border:"#222222",text:"#e8e8e8",muted:"#666666",faint:"#333333",accent:"#ff6b35"},
+    forest:{purple:"#34d399",bg:"#0a1410",card:"#0f1f18",border:"#1a3020",text:"#d4f0d0",muted:"#4a7060",faint:"#2a4a38",accent:"#86efac"},
+    ocean:{purple:"#06b6d4",bg:"#050d14",card:"#0a1820",border:"#0f2535",text:"#bae6fd",muted:"#2a6080",faint:"#0f3a55",accent:"#38bdf8"},
+    sakura:{purple:"#f472b6",bg:"#160a10",card:"#201218",border:"#3a1a28",text:"#ffd6e8",muted:"#804060",faint:"#501a30",accent:"#f9a8d4"},
+    desert:{purple:"#d97706",bg:"#120d08",card:"#1e1408",border:"#2e2010",text:"#fde68a",muted:"#785028",faint:"#4a3018",accent:"#fbbf24"},
+    aurora:{purple:"#2dd4bf",bg:"#070d12",card:"#0c1620",border:"#122030",text:"#d0f0e0",muted:"#2a6050",faint:"#0f3030",accent:"#5eead4"},
+    neon:{purple:"#00ff88",bg:"#050505",card:"#0a0f0a",border:"#0a2010",text:"#e0ffe0",muted:"#00aa44",faint:"#004422",accent:"#00ff88"},
+    hacker:{purple:"#00cc33",bg:"#000000",card:"#001200",border:"#003300",text:"#00ff41",muted:"#007a1f",faint:"#003d0f",accent:"#00ff41",font:"'Courier New',Courier,monospace"},
+    cyberpunk:{purple:"#e879f9",bg:"#0a0010",card:"#130020",border:"#1e0035",text:"#f0e0ff",muted:"#7a3090",faint:"#3d0060",accent:"#f0abfc"},
+    synthwave:{purple:"#c084fc",bg:"#0a0018",card:"#100025",border:"#200040",text:"#f8d8ff",muted:"#9a30c0",faint:"#4d0070",accent:"#f472b6"},
+    vaporwave:{purple:"#d070ff",bg:"#0f0520",card:"#1a0a30",border:"#2d1050",text:"#ffe8ff",muted:"#9050a0",faint:"#4a1060",accent:"#ff70d0"},
+    lavender:{purple:"#a78bfa",bg:"#0e0b18",card:"#180f28",border:"#281840",text:"#ede0ff",muted:"#7060a0",faint:"#3a2860",accent:"#c4b5fd"},
+    peach:{purple:"#fb923c",bg:"#140a08",card:"#201410",border:"#342018",text:"#ffe8d8",muted:"#906040",faint:"#4a2818",accent:"#fdba74"},
+    mint:{purple:"#34d399",bg:"#080e10",card:"#0e1a1c",border:"#162830",text:"#d0f4e8",muted:"#306860",faint:"#143830",accent:"#6ee7b7"},
+    sunset:{purple:"#f472b6",bg:"#150a0f",card:"#201018",border:"#301820",text:"#ffeedd",muted:"#9a4060",faint:"#4d1430",accent:"#fda4af"},
+    galaxy:{purple:"#6366f1",bg:"#040410",card:"#08081c",border:"#10102e",text:"#e0e8ff",muted:"#404088",faint:"#202050",accent:"#818cf8"},
+    obsidian:{purple:"#7c3aed",bg:"#030305",card:"#07070c",border:"#100f1c",text:"#d8d8f0",muted:"#404060",faint:"#1c1c30",accent:"#8b5cf6"},
+    bloodmoon:{purple:"#ef4444",bg:"#0f0000",card:"#1a0000",border:"#2e0000",text:"#ffe8e8",muted:"#8a2020",faint:"#4a0808",accent:"#f87171"},
+    gold:{purple:"#eab308",bg:"#0a0800",card:"#140e00",border:"#241800",text:"#fff8d0",muted:"#9a7000",faint:"#4a3000",accent:"#fde047"},
+    coffee:{purple:"#d97706",bg:"#120d08",card:"#1e1408",border:"#2e2010",text:"#fde68a",muted:"#785028",faint:"#4a3018",accent:"#fbbf24"},
+  };
   const _shopOverride = THEME_COLORS[activeProfile?.activeTheme] || {};
   const T = {..._baseT, ..._shopOverride};
+  // Apply active font from shop
+  const FONT_MAP = {"firacode":"'Fira Code',monospace","sourcecodepro":"'Source Code Pro',monospace","robototmono":"'Roboto Mono',monospace","spacemono":"'Space Mono',monospace","inconsolata":"'Inconsolata',monospace","ptmono":"'PT Mono',monospace","cousine":"'Cousine',monospace","inter":"'Inter',sans-serif","outfit":"'Outfit',sans-serif","nunito":"'Nunito',sans-serif","poppins":"'Poppins',sans-serif","quicksand":"'Quicksand',sans-serif","dmsans":"'DM Sans',sans-serif","lexend":"'Lexend',sans-serif","orbitron":"'Orbitron',sans-serif","rajdhani":"'Rajdhani',sans-serif","exo2":"'Exo 2',sans-serif","audiowide":"'Audiowide',sans-serif","nasalization":"'Russo One',sans-serif","ubuntu":"'Ubuntu Mono',monospace","comicsans":"'Comic Neue',cursive","fredoka":"'Fredoka',sans-serif","boogaloo":"'Boogaloo',cursive","pressstart":"'Press Start 2P',cursive","vt323":"'VT323',monospace","silkscreen":"'Silkscreen',monospace","playfair":"'Playfair Display',serif","cormorant":"'Cormorant Garamond',serif","crimsonpro":"'Crimson Pro',serif"};
+  const _activeFont = activeProfile?.activeFont;
+  const _fontFamily = _activeFont && FONT_MAP[_activeFont] ? FONT_MAP[_activeFont] : T.font;
+  if (_fontFamily && _fontFamily !== T.font) T.font = _fontFamily;
+  // Load Google Font if needed
+  if (typeof window !== "undefined" && _activeFont && _activeFont !== "jetbrains") {
+    const GOOGLE_FONTS = {"firacode":"Fira+Code:wght@400;700","sourcecodepro":"Source+Code+Pro:wght@400;700","robototmono":"Roboto+Mono:wght@400;700","spacemono":"Space+Mono:wght@400;700","inconsolata":"Inconsolata:wght@400;700","ptmono":"PT+Mono","cousine":"Cousine:wght@400;700","inter":"Inter:wght@400;700","outfit":"Outfit:wght@400;700","nunito":"Nunito:wght@400;700","poppins":"Poppins:wght@400;700","quicksand":"Quicksand:wght@400;700","dmsans":"DM+Sans:wght@400;700","lexend":"Lexend:wght@400;700","orbitron":"Orbitron:wght@400;700","rajdhani":"Rajdhani:wght@400;700","exo2":"Exo+2:wght@400;700","audiowide":"Audiowide","nasalization":"Russo+One","ubuntu":"Ubuntu+Mono:wght@400;700","comicsans":"Comic+Neue:wght@400;700","fredoka":"Fredoka:wght@400;700","boogaloo":"Boogaloo","pressstart":"Press+Start+2P","vt323":"VT323","silkscreen":"Silkscreen","playfair":"Playfair+Display:wght@400;700","cormorant":"Cormorant+Garamond:wght@400;700","crimsonpro":"Crimson+Pro:wght@400;700"};
+    const gf = GOOGLE_FONTS[_activeFont];
+    if (gf && !document.getElementById("gf-"+_activeFont)) {
+      const l=document.createElement("link");l.id="gf-"+_activeFont;l.rel="stylesheet";l.href="https://fonts.googleapis.com/css2?family="+gf+"&display=swap";document.head.appendChild(l);
+    }
+  }
 
   const [authMode, setAuthMode] = useState("login");
   const [authEmail, setAuthEmail] = useState("");
@@ -1212,7 +1249,7 @@ const Nav = () => (<>
           {streak>0&&<span style={{color:"#f97316",fontWeight:700,fontSize:12}}>🔥{streak}</span>}
           {canUse(activeProfile,"keys")&&<span style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:"4px 10px",fontSize:13,color:T.accent,fontWeight:700,display:"flex",alignItems:"center",gap:4}}><KKey size={14}/>{((k)=>k>=1e6?""+Math.round(k/1e6)+"M":k>=1e3?""+Math.round(k/1e3)+"k":k)(activeProfile.keys||0)}</span>}
                     {canUse(activeProfile,"friends")&&<button onClick={()=>{getFriends(user?.uid).then(setFriends);getIncomingRequests(user?.uid).then(setFriendReqs);setShowFriends(true);}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:13,padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Friends">👥</button>}
-          {canUse(activeProfile,"shop")&&<button onClick={()=>setShowShop(true)} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:13,padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Shop">🛍️</button>}
+          {canUse(activeProfile,"shop")&&<button onClick={()=>window.location.href='/shop'} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:13,padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Shop">🛍️</button>}
           <button onClick={openSettings} style={{background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",alignItems:"center",gap:7}} title="Edit profile">
             <AvatarImg profile={activeProfile} size={30} />
             <span style={{fontSize:12,color:T.muted,maxWidth:90,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{activeProfile.name}</span>
