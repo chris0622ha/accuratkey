@@ -313,7 +313,7 @@ const KKey=({size=16,style={}})=>(<svg width={size} height={size*1.1} viewBox="0
 
 const isTeen=p=>((p?.age??0)||0)>=13,isKid=p=>{const a=p?.age;return a!=null&&a>0&&a<13;};
 const KID_FEATURES=["keys","friends","shop","daily","test","skip","sounds"];
-const canUse=(p,feat)=>{if(!p)return false;if(!isKid(p)||p.isProfileAdmin)return true;return p.features?.[feat]===true;};
+const canUse=(p,feat)=>{if(!p)return false;if(p.isProfileAdmin)return true;return p.features?.[feat]!==false;};
 
 const QRCanvas=({url,size=160})=>{const r=useRef(null);useEffect(()=>{if(url&&r.current)import("qrcode").then(Q=>Q.toCanvas(r.current,url,{width:size,margin:1,color:{dark:"#000",light:"#fff"}})).catch(()=>{});},[url,size]);return <canvas ref={r} style={{borderRadius:8,display:"block"}}/>;};
 
@@ -1711,12 +1711,12 @@ const Nav = () => (<>
               <div><div style={{color:T.text,fontSize:12,fontWeight:700}}>Profile Admin</div></div>
               <button onClick={async()=>{const v=!(activeProfile?.isProfileAdmin);patchProfile({isProfileAdmin:v});updateProfile(user.uid,activeProfile.id,{isProfileAdmin:v});}} style={{padding:"5px 12px",background:(activeProfile?.isProfileAdmin)?"#a78bfa22":"transparent",border:`1px solid ${(activeProfile?.isProfileAdmin)?"#a78bfa":T.border}`,borderRadius:7,color:(activeProfile?.isProfileAdmin)?"#a78bfa":T.muted,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>{activeProfile?.isProfileAdmin?"ON":"OFF"}</button>
                  </div>
-            {isKid(activeProfile)&&!activeProfile?.isProfileAdmin&&<div style={{padding:"10px 0",borderTop:`1px solid ${T.faint}`}}>
+            {!activeProfile?.isProfileAdmin&&<div style={{padding:"10px 0",borderTop:`1px solid ${T.faint}`}}>
               <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>Feature Access</div>
-              <div style={{color:T.faint,fontSize:10,marginBottom:8}}>Under-13 profiles have features off by default. Toggle each on/off.</div>
+              <div style={{color:T.faint,fontSize:10,marginBottom:8}}>Toggle features on/off for this profile only.</div>
               <div style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:10,padding:"8px 12px",marginBottom:6}}>
                 {[["keys","🔑 Keys display"],["friends","👥 Friends"],["shop","🛍️ Theme shop"],["daily","📅 Daily challenge"],["test","⌨️ Typing test"],["skip","⏭ Level skip"],["sounds","🔊 Sounds"],["leaderboard","🏆 Leaderboard"],["publicProfile","🌐 Public profile"],["chat","💬 Chat & messaging"],["customTheme","🎨 Custom themes"]].map(([feat,label])=>{
-                  const on=(activeProfile?.features||{})[feat]===true;
+                  const on=(activeProfile?.features||{})[feat]!==false; // true/undefined=ON, false=OFF
                   return <div key={feat} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 0",borderBottom:`1px solid ${T.border}`}}>
                     <span style={{color:T.muted,fontSize:12}}>{label}</span>
                     <button onClick={async()=>{const f={...(activeProfile?.features||{}),[feat]:!on};patchProfile({features:f});updateProfile(user.uid,activeProfile.id,{features:f});}} style={{padding:"3px 10px",background:on?"#7c6af722":"transparent",border:`1px solid ${on?T.purple:T.border}`,borderRadius:6,color:on?T.purple:T.faint,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>{on?"ON":"OFF"}</button>
