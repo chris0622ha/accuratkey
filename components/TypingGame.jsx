@@ -608,8 +608,12 @@ export default function AccuratKey() {
   // Shop font always wins - override age-based theme font
   if (_fontFamily) T.font = _fontFamily;
   // Inject font into document so elements without explicit fontFamily pick it up
-  if (typeof document !== "undefined" && _fontFamily) {
+  // Only when a profile is actually selected (not during profile picker)
+  if (typeof document !== "undefined" && _fontFamily && activeProfile) {
     document.documentElement.style.setProperty("--ak-font", _fontFamily);
+  } else if (typeof document !== "undefined" && !activeProfile) {
+    // Reset to default when no profile selected (profile picker screen)
+    document.documentElement.style.removeProperty("--ak-font");
   }
   // Load Google Font if needed
   if (typeof window !== "undefined" && _activeFont && _activeFont !== "jetbrains") {
@@ -1255,7 +1259,7 @@ export default function AccuratKey() {
 
   const Overlay = ({ onClose, children, wide }) => (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:3000,backdropFilter:"blur(8px)"}} onClick={onClose}>
-      <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:28,width:wide?520:420,maxWidth:"94vw",maxHeight:"90vh",overflowY:"auto",fontFamily:T.uiFont}} onClick={e=>e.stopPropagation()}>
+      <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:28,width:wide?520:420,maxWidth:"94vw",maxHeight:"90vh",overflowY:"auto",fontFamily:T.font}} onClick={e=>e.stopPropagation()}>
         {children}
       </div>
     </div>
@@ -1269,7 +1273,7 @@ export default function AccuratKey() {
   );
 
   const UidTag = () => user ? (
-  <div style={{position:"fixed",bottom:8,left:10,fontSize:9,color:T.faint,fontFamily:T.uiFont,zIndex:999,opacity:0.6,display:"flex",gap:4,alignItems:"center"}}>
+  <div style={{position:"fixed",bottom:8,left:10,fontSize:9,color:T.faint,fontFamily:T.font,zIndex:999,opacity:0.6,display:"flex",gap:4,alignItems:"center"}}>
     <span style={{userSelect:"none"}}>UID:</span>
     <span
       title="Click to select"
@@ -1283,26 +1287,26 @@ const Nav = () => (<>
     <UidTag />
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
       <div>
-        <span style={{fontWeight:800,fontSize:16,color:T.text,fontFamily:T.uiFont}}><span style={{color:T.purple}}>Accurat</span>Key</span>
+        <span style={{fontWeight:800,fontSize:16,color:T.text,fontFamily:T.font}}><span style={{color:T.purple}}>Accurat</span>Key</span>
         {currentUsername && <div style={{fontSize:9,color:T.muted,marginTop:1}}>@{currentUsername}</div>}
       </div>
       {activeProfile && (
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           {streak>0&&<span style={{color:"#f97316",fontWeight:700,fontSize:12}}>🔥{streak}</span>}
           {canUse(activeProfile,"keys")&&<span style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:"4px 10px",fontSize:13,color:T.accent,fontWeight:700,display:"flex",alignItems:"center",gap:4}}><KKey size={14}/>{((k)=>k>=1e6?""+Math.round(k/1e6)+"M":k>=1e3?""+Math.round(k/1e3)+"k":k)(activeProfile.keys||0)}</span>}
-                    {canUse(activeProfile,"friends")&&<button onClick={()=>{getFriends(user?.uid).then(setFriends);getIncomingRequests(user?.uid).then(setFriendReqs);setShowFriends(true);}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:13,padding:"4px 7px",cursor:"pointer",fontFamily:T.uiFont}} title="Friends">👥</button>}
-          {canUse(activeProfile,"shop")&&<button onClick={()=>window.location.href='/shop'} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:13,padding:"4px 7px",cursor:"pointer",fontFamily:T.uiFont}} title="Shop">🛍️</button>}
+                    {canUse(activeProfile,"friends")&&<button onClick={()=>{getFriends(user?.uid).then(setFriends);getIncomingRequests(user?.uid).then(setFriendReqs);setShowFriends(true);}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:13,padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Friends">👥</button>}
+          {canUse(activeProfile,"shop")&&<button onClick={()=>window.location.href='/shop'} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:13,padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Shop">🛍️</button>}
           <button onClick={openSettings} style={{background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",alignItems:"center",gap:7}} title="Edit profile">
             <AvatarImg profile={activeProfile} size={30} />
             <span style={{fontSize:12,color:T.muted,maxWidth:90,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{activeProfile.name}</span>
           </button>
-          <button onClick={() => requirePin("switch", () => setScreen("profilePicker"))} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.faint,fontSize:11,padding:"4px 8px",cursor:"pointer",fontFamily:T.uiFont}}>
+          <button onClick={() => requirePin("switch", () => setScreen("profilePicker"))} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.faint,fontSize:11,padding:"4px 8px",cursor:"pointer",fontFamily:T.font}}>
             Switch
           </button>
         </div>
       )}
       {!activeProfile && (
-        <button onClick={() => setScreen("auth")} style={{background:T.purple,border:"none",borderRadius:8,color:"#fff",fontSize:12,fontWeight:700,padding:"7px 16px",cursor:"pointer",fontFamily:T.uiFont}}>
+        <button onClick={() => setScreen("auth")} style={{background:T.purple,border:"none",borderRadius:8,color:"#fff",fontSize:12,fontWeight:700,padding:"7px 16px",cursor:"pointer",fontFamily:T.font}}>
           Sign in
         </button>
       )}
@@ -1313,7 +1317,7 @@ const Nav = () => (<>
   // SCREENS
 
   if (isMobile && user?.uid !== "qM3qeYBLwvRXy8D0gOKGCQbGuA12") return (
-    <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.uiFont,padding:32,textAlign:"center"}}>
+    <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:32,textAlign:"center"}}>
       <div style={{fontSize:64,marginBottom:20}}>⌨️</div>
       <h1 style={{color:T.text,fontSize:26,fontWeight:700,marginBottom:12}}>Desktop only</h1>
       <p style={{color:T.muted,fontSize:15,lineHeight:1.6,maxWidth:280}}>AccuratKey needs a physical keyboard. Open it on your computer to start practicing!</p>
@@ -1405,7 +1409,7 @@ const Nav = () => (<>
   );
 
   if (screen === "profilePicker") return (
-    <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.uiFont,padding:24}}>
+    <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'JetBrains Mono',monospace",padding:24}}>
       <h1 style={{color:T.text,fontSize:28,fontWeight:800,marginBottom:8,textAlign:"center"}}>Who's playing?</h1>
       <p style={{color:T.muted,fontSize:14,marginBottom:36,textAlign:"center"}}>Pick your profile to continue</p>
       <div style={{display:"flex",flexWrap:"wrap",gap:16,justifyContent:"center",maxWidth:600}}>
@@ -1415,7 +1419,7 @@ const Nav = () => (<>
             onMouseLeave={() => setHoveredProfileId(null)}
           >
             <div onClick={() => selectProfile(p)}
-              style={{background:T.card,border:`2px solid ${hoveredProfileId===p.id?T.purple:T.border}`,borderRadius:16,padding:"24px 20px",width:140,cursor:"pointer",textAlign:"center",fontFamily:T.uiFont,overflow:"hidden",display:"block",transition:"border-color 0.15s",boxSizing:"border-box"}}>
+              style={{background:T.card,border:`2px solid ${hoveredProfileId===p.id?T.purple:T.border}`,borderRadius:16,padding:"24px 20px",width:140,cursor:"pointer",textAlign:"center",fontFamily:T.font,overflow:"hidden",display:"block",transition:"border-color 0.15s",boxSizing:"border-box"}}>
               <div style={{marginBottom:10}}>
                 {p.photoURL
                   ? <img src={p.photoURL} style={{width:60,height:60,borderRadius:"50%",objectFit:"cover",margin:"0 auto"}} />
@@ -1427,18 +1431,18 @@ const Nav = () => (<>
               <div style={{color:T.accent,fontSize:11,marginTop:2,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}><KKey size={11}/>{p.keys || 0}</div>
             </div>
             <button onClick={(e) => { e.stopPropagation(); const prof = p; setActiveProfile(prof); setLayoutKey(prof.favoriteLayout||"qwerty"); setEditName(prof.name||""); setEditAvatar(prof.avatar||"key"); setEditBirthday(prof.birthday||""); setEditPhoto(null); setEditPhotoPreview(null); setEditPhotoB64(null); setSaveMsg(""); setDeleteConfirmText(""); setShowDeleteProfile(false); setDeleteAccConfirmText(""); setShowDeleteAccount(false); setScreen("levelMap"); setShowSettingsModal(true);}}
-              style={{position:"absolute",top:6,right:6,background:T.purple,border:"none",borderRadius:8,padding:"4px 8px",display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:11,fontWeight:700,color:"#fff",zIndex:10,opacity:hoveredProfileId===p.id?1:0,pointerEvents:hoveredProfileId===p.id?"all":"none",transition:"opacity 0.15s",fontFamily:T.uiFont,whiteSpace:"nowrap"}}>
+              style={{position:"absolute",top:6,right:6,background:T.purple,border:"none",borderRadius:8,padding:"4px 8px",display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:11,fontWeight:700,color:"#fff",zIndex:10,opacity:hoveredProfileId===p.id?1:0,pointerEvents:hoveredProfileId===p.id?"all":"none",transition:"opacity 0.15s",fontFamily:T.font,whiteSpace:"nowrap"}}>
               ✏️ Edit
             </button>
           </div>
         ))}
         <button onClick={() => setScreen("createProfile")}
-          style={{background:"transparent",border:`2px dashed ${T.border}`,borderRadius:16,padding:"24px 20px",width:140,cursor:"pointer",textAlign:"center",fontFamily:T.uiFont}}>
+          style={{background:"transparent",border:`2px dashed ${T.border}`,borderRadius:16,padding:"24px 20px",width:140,cursor:"pointer",textAlign:"center",fontFamily:T.font}}>
           <span style={{fontSize:36,display:"block",marginBottom:10}}>➕</span>
           <div style={{color:T.faint,fontSize:13}}>Add Profile</div>
         </button>
       </div>
-      <button onClick={() => { if(typeof window !== "undefined"){localStorage.removeItem("ak_profileName");localStorage.removeItem("ak_uid");localStorage.removeItem("ak_lastProfile_"+(user?.uid||""));} signOut(auth); setActiveProfile(null); setProfiles([]); setScreen("levelMap");}} style={{marginTop:32,background:"none",border:"none",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.uiFont}}>
+      <button onClick={() => { if(typeof window !== "undefined"){localStorage.removeItem("ak_profileName");localStorage.removeItem("ak_uid");localStorage.removeItem("ak_lastProfile_"+(user?.uid||""));} signOut(auth); setActiveProfile(null); setProfiles([]); setScreen("levelMap");}} style={{marginTop:32,background:"none",border:"none",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
         Sign out
       </button>
     {BroadcastBanner}
@@ -1446,7 +1450,7 @@ const Nav = () => (<>
   );
 
   if (screen === "createProfile") return (
-    <div style={{minHeight:"100vh",background:T.bg,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:T.uiFont,padding:24}}>
+    <div style={{minHeight:"100vh",background:T.bg,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:24}}>
       <div style={{width:"100%",maxWidth:460}}>
         <div style={{textAlign:"center",marginBottom:28}}>
           <div style={{fontSize:42,marginBottom:8}}>👤</div>
@@ -1460,10 +1464,10 @@ const Nav = () => (<>
               : <span style={{width:60,height:60,borderRadius:"50%",background:T.bg,border:`2px solid ${T.border}`,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:28,flexShrink:0}}>{AV[newAvatar]||"⌨️"}</span>
             }
             <div style={{display:"flex",flexDirection:"column",gap:6}}>
-              <button onClick={()=>photoRef.current?.click()} style={{background:"transparent",border:`1px solid ${T.border}`,borderRadius:7,color:T.muted,fontSize:12,padding:"6px 12px",cursor:"pointer",fontFamily:T.uiFont}}>
+              <button onClick={()=>photoRef.current?.click()} style={{background:"transparent",border:`1px solid ${T.border}`,borderRadius:7,color:T.muted,fontSize:12,padding:"6px 12px",cursor:"pointer",fontFamily:T.font}}>
                 Upload photo
               </button>
-              <button onClick={(e)=>{e.stopPropagation();startQrUpload("create");}} style={{background:"transparent",border:`1px solid ${T.purple}66`,borderRadius:7,color:T.purple,fontSize:12,padding:"6px 12px",cursor:"pointer",fontFamily:T.uiFont}}>
+              <button onClick={(e)=>{e.stopPropagation();startQrUpload("create");}} style={{background:"transparent",border:`1px solid ${T.purple}66`,borderRadius:7,color:T.purple,fontSize:12,padding:"6px 12px",cursor:"pointer",fontFamily:T.font}}>
                 📱 Use phone
               </button>
             </div>
@@ -1474,7 +1478,7 @@ const Nav = () => (<>
               <p style={{color:T.muted,fontSize:12,marginBottom:10}}>Scan this QR code with your phone, then pick a photo.</p>
               <QRCanvas url={qrUrl} size={160} />
               <p style={{color:T.faint,fontSize:11,marginBottom:8,wordBreak:"break-all"}}>{qrUrl}</p>
-              <button onClick={cancelQr} style={{background:"transparent",border:`1px solid ${T.border}`,borderRadius:7,color:T.faint,fontSize:11,padding:"5px 12px",cursor:"pointer",fontFamily:T.uiFont}}>Cancel</button>
+              <button onClick={cancelQr} style={{background:"transparent",border:`1px solid ${T.border}`,borderRadius:7,color:T.faint,fontSize:11,padding:"5px 12px",cursor:"pointer",fontFamily:T.font}}>Cancel</button>
             </div>
           )}
           <label style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:8}}>Pick an avatar</label>
@@ -1483,15 +1487,15 @@ const Nav = () => (<>
           </div>
           <label style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:6}}>Name</label>
           <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="Your name"
-            style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.uiFont,fontSize:15,padding:"11px 14px",marginBottom:14,outline:"none",boxSizing:"border-box"}} />
+            style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:15,padding:"11px 14px",marginBottom:14,outline:"none",boxSizing:"border-box"}} />
           <label style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:6}}>Birthday</label>
           <input type="date" value={newBirthday} onChange={e=>setNewBirthday(e.target.value)}
-            style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.uiFont,fontSize:14,padding:"11px 14px",marginBottom:14,outline:"none",boxSizing:"border-box",colorScheme:"dark"}} />
+            style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:14,padding:"11px 14px",marginBottom:14,outline:"none",boxSizing:"border-box",colorScheme:"dark"}} />
           <label style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:8}}>Starting skill</label>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:18}}>
             {[["beginner","🐣","Just starting"],["intermediate","🚀","Know basics"],["advanced","🔥","Type fast"]].map(([s,em,desc]) => (
               <button key={s} onClick={()=>setNewSkill(s)}
-                style={{padding:"10px 6px",borderRadius:8,border:`2px solid ${newSkill===s?T.purple:T.border}`,background:newSkill===s?T.purple+"22":T.bg,cursor:"pointer",textAlign:"center",fontFamily:T.uiFont}}>
+                style={{padding:"10px 6px",borderRadius:8,border:`2px solid ${newSkill===s?T.purple:T.border}`,background:newSkill===s?T.purple+"22":T.bg,cursor:"pointer",textAlign:"center",fontFamily:T.font}}>
                 <div style={{fontSize:20,marginBottom:3}}>{em}</div>
                 <div style={{color:newSkill===s?T.text:T.muted,fontSize:11,fontWeight:700,textTransform:"capitalize"}}>{s}</div>
                 <div style={{color:T.faint,fontSize:10}}>{desc}</div>
@@ -1501,19 +1505,19 @@ const Nav = () => (<>
           <label style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:8}}>Keyboard layout</label>
           <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:6,marginBottom:20}}>
             {Object.entries(LAYOUTS).map(([k,v]) => (
-              <button key={k} onClick={()=>setNewLayout(k)} style={{padding:"8px 4px",borderRadius:8,border:`2px solid ${newLayout===k?T.purple:T.border}`,background:newLayout===k?T.purple+"22":T.bg,cursor:"pointer",textAlign:"center",fontFamily:T.uiFont,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}><span style={{fontSize:18}}>{LAYOUT_FLAGS[k]}</span><span style={{color:newLayout===k?T.text:T.muted,fontSize:10,fontWeight:700}}>{v.label}</span></button>
+              <button key={k} onClick={()=>setNewLayout(k)} style={{padding:"8px 4px",borderRadius:8,border:`2px solid ${newLayout===k?T.purple:T.border}`,background:newLayout===k?T.purple+"22":T.bg,cursor:"pointer",textAlign:"center",fontFamily:T.font,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}><span style={{fontSize:18}}>{LAYOUT_FLAGS[k]}</span><span style={{color:newLayout===k?T.text:T.muted,fontSize:10,fontWeight:700}}>{v.label}</span></button>
             ))}
           </div>
           <div style={{marginBottom:14}}>
             <label style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:6}}>PIN (optional)</label>
-            <input type="password" value={newPin} onChange={e=>setNewPin(e.target.value)} maxLength={6} placeholder="PIN (optional)" style={{width:"100%",background:T.faint,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.uiFont,fontSize:13,padding:"9px 12px",outline:"none",boxSizing:"border-box"}}/>
+            <input type="password" value={newPin} onChange={e=>setNewPin(e.target.value)} maxLength={6} placeholder="PIN (optional)" style={{width:"100%",background:T.faint,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:13,padding:"9px 12px",outline:"none",boxSizing:"border-box"}}/>
           </div>
           <button onClick={handleCreateProfile} disabled={!newName.trim()||!newBirthday}
-            style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:newName.trim()&&newBirthday?T.purple:"#252530",color:newName.trim()&&newBirthday?"#fff":"#555",fontSize:15,fontWeight:700,cursor:newName.trim()&&newBirthday?"pointer":"not-allowed",fontFamily:T.uiFont}}>
+            style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:newName.trim()&&newBirthday?T.purple:"#252530",color:newName.trim()&&newBirthday?"#fff":"#555",fontSize:15,fontWeight:700,cursor:newName.trim()&&newBirthday?"pointer":"not-allowed",fontFamily:T.font}}>
             Let's go! →
           </button>
           {profiles.length > 0 && (
-            <button onClick={()=>setScreen("profilePicker")} style={{width:"100%",marginTop:10,padding:"10px",borderRadius:8,background:"none",border:`1px solid ${T.border}`,color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.uiFont}}>
+            <button onClick={()=>setScreen("profilePicker")} style={{width:"100%",marginTop:10,padding:"10px",borderRadius:8,background:"none",border:`1px solid ${T.border}`,color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
               Back to profiles
             </button>
           )}
@@ -1523,13 +1527,13 @@ const Nav = () => (<>
   );
 
   if (screen === "birthday") return (
-    <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.uiFont,padding:24,textAlign:"center"}}>
+    <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:24,textAlign:"center"}}>
       <div style={{fontSize:80,marginBottom:16,animation:"bounce .6s infinite alternate"}}>🎂</div>
       <h1 style={{color:T.text,fontSize:32,fontWeight:800,marginBottom:10}}>Happy Birthday, {birthdayProfile?.name}!</h1>
       <p style={{color:T.muted,fontSize:16,marginBottom:8}}>You're now {birthdayProfile?.age} years old! 🎉</p>
       <p style={{color:T.accent2,fontSize:14,marginBottom:32}}>Keep up the great typing practice!</p>
       <button onClick={() => setScreen("levelMap")}
-        style={{padding:"14px 40px",borderRadius:12,border:"none",background:T.purple,color:"#fff",fontSize:16,fontWeight:700,cursor:"pointer",fontFamily:T.uiFont}}>
+        style={{padding:"14px 40px",borderRadius:12,border:"none",background:T.purple,color:"#fff",fontSize:16,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>
         Start Playing →
       </button>
       <style>{`@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-14px)}}`}</style>
@@ -1543,7 +1547,7 @@ const Nav = () => (<>
       : (LEVEL_TIPS[pendingLevelId] || LEVEL_TIPS.default);
 
     return (
-      <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.uiFont,padding:24}}>
+      <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:24}}>
         <div style={{width:"100%",maxWidth:460,textAlign:"center"}}>
           <div style={{fontSize:56,marginBottom:12}}>{lv.emoji}</div>
           <h2 style={{color:T.text,fontSize:24,fontWeight:800,marginBottom:4}}>Level {lv.id}: {lv.name}</h2>
@@ -1561,10 +1565,10 @@ const Nav = () => (<>
             ⚠️ <strong style={{color:T.text}}>No corrections.</strong> Once you type a character, it's locked in. Focus on accuracy.
           </div>
           <button onClick={() => startLevel(pendingLevelId, pendingIsSkip, pendingSkipTarget)}
-            style={{width:"100%",padding:"15px",borderRadius:12,border:"none",background:T.purple,color:"#fff",fontSize:16,fontWeight:700,cursor:"pointer",fontFamily:T.uiFont}}>
+            style={{width:"100%",padding:"15px",borderRadius:12,border:"none",background:T.purple,color:"#fff",fontSize:16,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>
             Start Typing →
           </button>
-          <button onClick={() => setScreen("levelMap")} style={{marginTop:12,background:"none",border:"none",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.uiFont}}>
+          <button onClick={() => setScreen("levelMap")} style={{marginTop:12,background:"none",border:"none",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
             ← Back to map
           </button>
         </div>
@@ -1576,18 +1580,18 @@ const Nav = () => (<>
     const lv = LEVELS.find(l => l.id === playingLevel) || LEVELS[0];
     const lvWords = levelOverrides[String(playingLevel)] || lv.words;
     return (
-      <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.uiFont,padding:24,textAlign:"center"}}>
+      <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:24,textAlign:"center"}}>
         <div style={{fontSize:64,marginBottom:16}}>❌</div>
         <h2 style={{color:"#ef4444",fontSize:28,fontWeight:800,marginBottom:8}}>Accuracy too low</h2>
         <p style={{color:T.muted,fontSize:15,marginBottom:6}}>{failReason}</p>
         <p style={{color:T.faint,fontSize:13,marginBottom:32}}>{lv.emoji} {lv.name} requires 75% accuracy.</p>
         <div style={{display:"flex",gap:10}}>
           <button onClick={() => requestStartLevel(playingLevel, isSkipChallenge, skipTargetLevel)}
-            style={{padding:"14px 32px",borderRadius:12,border:"none",background:T.purple,color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:T.uiFont}}>
+            style={{padding:"14px 32px",borderRadius:12,border:"none",background:T.purple,color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>
             Try Again
           </button>
           <button onClick={() => setScreen("levelMap")}
-            style={{padding:"14px 32px",borderRadius:12,border:`1px solid ${T.border}`,background:"transparent",color:T.muted,fontSize:15,cursor:"pointer",fontFamily:T.uiFont}}>
+            style={{padding:"14px 32px",borderRadius:12,border:`1px solid ${T.border}`,background:"transparent",color:T.muted,fontSize:15,cursor:"pointer",fontFamily:T.font}}>
             Level Map
           </button>
         </div>
@@ -1600,7 +1604,7 @@ const Nav = () => (<>
     const currentLevel = activeProfile?.currentLevel || 1;
 
     return (
-      <div style={{minHeight:"100vh",background:T.bg,fontFamily:T.uiFont,padding:"20px 16px"}}>
+      <div style={{minHeight:"100vh",background:T.bg,fontFamily:T.font,padding:"20px 16px"}}>
         {activeProfile && <style>{`* { font-family: ${T.font} !important; } body { background: ${T.bg}; }`}</style>}
         {showProfileModal && (
           <Overlay onClose={() => setShowProfileModal(false)}>
@@ -1634,10 +1638,10 @@ const Nav = () => (<>
                 ))}
               </div>
             </>}
-            <button onClick={()=>{setShowProfileModal(false);openSettings();}} style={{width:"100%",marginTop:16,padding:"10px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.uiFont}}>
+            <button onClick={()=>{setShowProfileModal(false);openSettings();}} style={{width:"100%",marginTop:16,padding:"10px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
               Edit Profile
             </button>
-            <button onClick={()=>{setShowProfileModal(false);setScreen("profilePicker");}} style={{width:"100%",marginTop:8,padding:"10px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.uiFont}}>
+            <button onClick={()=>{setShowProfileModal(false);setScreen("profilePicker");}} style={{width:"100%",marginTop:8,padding:"10px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
               Switch Profile
             </button>
           </Overlay>
@@ -1652,9 +1656,9 @@ const Nav = () => (<>
                 : <span style={{width:56,height:56,borderRadius:"50%",background:T.bg,border:`2px solid ${T.border}`,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:26}}>{AV[editAvatar]||"⌨️"}</span>
               }
               <div>
-                <button onClick={()=>editPhotoRef.current?.click()} style={{display:"block",background:"transparent",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:12,padding:"6px 12px",cursor:"pointer",marginBottom:5,fontFamily:T.uiFont}}>Upload photo</button>
-                <button onClick={(e)=>{e.stopPropagation();startQrUpload("edit");}} style={{display:"block",background:"transparent",border:`1px solid ${T.purple}66`,borderRadius:6,color:T.purple,fontSize:12,padding:"6px 12px",cursor:"pointer",marginBottom:5,fontFamily:T.uiFont}}>📱 Use phone</button>
-                {(editPhotoPreview||activeProfile?.photoURL) && <button onClick={()=>{setEditPhoto(null);setEditPhotoPreview(null);setEditPhotoB64(null);}} style={{background:"transparent",border:"none",color:T.faint,fontSize:11,cursor:"pointer",fontFamily:T.uiFont}}>Remove</button>}
+                <button onClick={()=>editPhotoRef.current?.click()} style={{display:"block",background:"transparent",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:12,padding:"6px 12px",cursor:"pointer",marginBottom:5,fontFamily:T.font}}>Upload photo</button>
+                <button onClick={(e)=>{e.stopPropagation();startQrUpload("edit");}} style={{display:"block",background:"transparent",border:`1px solid ${T.purple}66`,borderRadius:6,color:T.purple,fontSize:12,padding:"6px 12px",cursor:"pointer",marginBottom:5,fontFamily:T.font}}>📱 Use phone</button>
+                {(editPhotoPreview||activeProfile?.photoURL) && <button onClick={()=>{setEditPhoto(null);setEditPhotoPreview(null);setEditPhotoB64(null);}} style={{background:"transparent",border:"none",color:T.faint,fontSize:11,cursor:"pointer",fontFamily:T.font}}>Remove</button>}
                 <input ref={editPhotoRef} type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){setEditPhoto(f);setEditPhotoPreview(URL.createObjectURL(f));setEditPhotoB64(null);}}} />
               </div>
             </div>
@@ -1663,7 +1667,7 @@ const Nav = () => (<>
                 <p style={{color:T.muted,fontSize:12,marginBottom:10}}>Scan with your phone, then pick a photo.</p>
                 <QRCanvas url={qrUrl} size={140} />
                 <p style={{color:T.faint,fontSize:10,wordBreak:"break-all",marginBottom:8}}>{qrUrl}</p>
-                <button onClick={cancelQr} style={{background:"transparent",border:`1px solid ${T.border}`,borderRadius:6,color:T.faint,fontSize:11,padding:"4px 10px",cursor:"pointer",fontFamily:T.uiFont}}>Cancel</button>
+                <button onClick={cancelQr} style={{background:"transparent",border:`1px solid ${T.border}`,borderRadius:6,color:T.faint,fontSize:11,padding:"4px 10px",cursor:"pointer",fontFamily:T.font}}>Cancel</button>
               </div>
             )}
             <label style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:6}}>Avatar</label>
@@ -1671,14 +1675,14 @@ const Nav = () => (<>
               {AVATARS.map(a=><div key={a.id} onClick={()=>setEditAvatar(a.id)} style={{aspectRatio:"1",borderRadius:7,border:`2px solid ${editAvatar===a.id?T.purple:T.border}`,background:editAvatar===a.id?T.purple+"22":T.bg,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:16}}>{a.e}</div>)}
             </div>
             <label style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:6}}>Name</label>
-            <input value={editName} onChange={e=>setEditName(e.target.value)} style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.uiFont,fontSize:14,padding:"10px 14px",marginBottom:14,outline:"none",boxSizing:"border-box"}} />
+            <input value={editName} onChange={e=>setEditName(e.target.value)} style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:14,padding:"10px 14px",marginBottom:14,outline:"none",boxSizing:"border-box"}} />
             <label style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:6}}>Birthday</label>
-            <input type="date" value={editBirthday} onChange={e=>setEditBirthday(e.target.value)} style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.uiFont,fontSize:14,padding:"10px 14px",marginBottom:18,outline:"none",boxSizing:"border-box",colorScheme:"dark"}} />
+            <input type="date" value={editBirthday} onChange={e=>setEditBirthday(e.target.value)} style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:14,padding:"10px 14px",marginBottom:18,outline:"none",boxSizing:"border-box",colorScheme:"dark"}} />
             {saveMsg && <p style={{color:saveMsg==="Saved!"?T.accent2:"#ef4444",fontSize:12,marginBottom:8}}>{saveMsg}</p>}
             {/* Profile Admin */}
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderTop:`1px solid ${T.faint}`,marginTop:8}}>
               <div><div style={{color:T.text,fontSize:12,fontWeight:700}}>Profile Admin</div></div>
-              <button onClick={async()=>{const v=!(activeProfile?.isProfileAdmin);patchProfile({isProfileAdmin:v});updateProfile(user.uid,activeProfile.id,{isProfileAdmin:v});}} style={{padding:"5px 12px",background:(activeProfile?.isProfileAdmin)?"#a78bfa22":"transparent",border:`1px solid ${(activeProfile?.isProfileAdmin)?"#a78bfa":T.border}`,borderRadius:7,color:(activeProfile?.isProfileAdmin)?"#a78bfa":T.muted,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.uiFont}}>{activeProfile?.isProfileAdmin?"ON":"OFF"}</button>
+              <button onClick={async()=>{const v=!(activeProfile?.isProfileAdmin);patchProfile({isProfileAdmin:v});updateProfile(user.uid,activeProfile.id,{isProfileAdmin:v});}} style={{padding:"5px 12px",background:(activeProfile?.isProfileAdmin)?"#a78bfa22":"transparent",border:`1px solid ${(activeProfile?.isProfileAdmin)?"#a78bfa":T.border}`,borderRadius:7,color:(activeProfile?.isProfileAdmin)?"#a78bfa":T.muted,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>{activeProfile?.isProfileAdmin?"ON":"OFF"}</button>
                  </div>
             {isKid(activeProfile)&&!activeProfile?.isProfileAdmin&&<div style={{padding:"10px 0",borderTop:`1px solid ${T.faint}`}}>
               <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>Feature Access</div>
@@ -1688,7 +1692,7 @@ const Nav = () => (<>
                   const on=(activeProfile?.features||{})[feat]===true;
                   return <div key={feat} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 0",borderBottom:`1px solid ${T.border}`}}>
                     <span style={{color:T.muted,fontSize:12}}>{label}</span>
-                    <button onClick={async()=>{const f={...(activeProfile?.features||{}),[feat]:!on};patchProfile({features:f});updateProfile(user.uid,activeProfile.id,{features:f});}} style={{padding:"3px 10px",background:on?"#7c6af722":"transparent",border:`1px solid ${on?T.purple:T.border}`,borderRadius:6,color:on?T.purple:T.faint,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.uiFont}}>{on?"ON":"OFF"}</button>
+                    <button onClick={async()=>{const f={...(activeProfile?.features||{}),[feat]:!on};patchProfile({features:f});updateProfile(user.uid,activeProfile.id,{features:f});}} style={{padding:"3px 10px",background:on?"#7c6af722":"transparent",border:`1px solid ${on?T.purple:T.border}`,borderRadius:6,color:on?T.purple:T.faint,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>{on?"ON":"OFF"}</button>
                   </div>;
                 })}
               </div>
@@ -1696,20 +1700,20 @@ const Nav = () => (<>
             {/* Change PIN */}
             <div style={{padding:"10px 0",borderTop:`1px solid ${T.faint}`}}>
               <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>PIN</div>
-              <input type="password" value={editPin} onChange={e=>setEditPin(e.target.value)} maxLength={6} placeholder={activeProfile?.pin?"Change PIN":"Set PIN (optional)"} style={{width:"100%",background:T.faint,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.uiFont,fontSize:13,padding:"8px 12px",outline:"none",boxSizing:"border-box",marginBottom:6}}/>
-              <button onClick={async()=>{const v=editPin.trim();patchProfile({pin:v||null});await updateProfile(user.uid,activeProfile.id,{pin:v||null});setEditPin("");setSaveMsg(v?"PIN set":"PIN removed");}} style={{padding:"6px 14px",background:T.faint,border:`1px solid ${T.border}`,borderRadius:7,color:T.muted,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.uiFont}}>Save PIN</button>
+              <input type="password" value={editPin} onChange={e=>setEditPin(e.target.value)} maxLength={6} placeholder={activeProfile?.pin?"Change PIN":"Set PIN (optional)"} style={{width:"100%",background:T.faint,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:13,padding:"8px 12px",outline:"none",boxSizing:"border-box",marginBottom:6}}/>
+              <button onClick={async()=>{const v=editPin.trim();patchProfile({pin:v||null});await updateProfile(user.uid,activeProfile.id,{pin:v||null});setEditPin("");setSaveMsg(v?"PIN set":"PIN removed");}} style={{padding:"6px 14px",background:T.faint,border:`1px solid ${T.border}`,borderRadius:7,color:T.muted,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>Save PIN</button>
             </div>
-            <button onClick={handleSettingsSave} disabled={saving} style={{width:"100%",padding:"13px",borderRadius:9,border:"none",background:T.purple,color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:T.uiFont,opacity:saving?0.6:1}}>{saving?"Saving...":"Save Changes"}</button>
+            <button onClick={handleSettingsSave} disabled={saving} style={{width:"100%",padding:"13px",borderRadius:9,border:"none",background:T.purple,color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:T.font,opacity:saving?0.6:1}}>{saving?"Saving...":"Save Changes"}</button>
 
             {/* Change Username */}
-            <button onClick={() => { setShowChangeUsername(true); setShowSettingsModal(false);}} style={{width:"100%",padding:"9px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:T.uiFont,marginTop:8}}>
+            <button onClick={() => { setShowChangeUsername(true); setShowSettingsModal(false);}} style={{width:"100%",padding:"9px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:T.font,marginTop:8}}>
               @{currentUsername || "Set username"} · Change username (5 🔑)
             </button>
 
             {/* Delete Profile */}
             <div style={{marginTop:20,borderTop:`1px solid ${T.border}`,paddingTop:18}}>
               {!showDeleteProfile ? (
-                <button onClick={()=>setShowDeleteProfile(true)} style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid #ef444466",background:"transparent",color:"#ef4444",fontSize:13,cursor:"pointer",fontFamily:T.uiFont}}>
+                <button onClick={()=>setShowDeleteProfile(true)} style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid #ef444466",background:"transparent",color:"#ef4444",fontSize:13,cursor:"pointer",fontFamily:T.font}}>
                   Delete Profile
                 </button>
               ) : (
@@ -1720,13 +1724,13 @@ const Nav = () => (<>
                     onChange={e=>setDeleteConfirmText(e.target.value)}
                     placeholder="yes"
                     autoFocus
-                    style={{width:"100%",background:T.bg,border:"1px solid #ef444466",borderRadius:7,color:T.text,fontFamily:T.uiFont,fontSize:14,padding:"9px 12px",marginBottom:8,outline:"none",boxSizing:"border-box"}} />
+                    style={{width:"100%",background:T.bg,border:"1px solid #ef444466",borderRadius:7,color:T.text,fontFamily:T.font,fontSize:14,padding:"9px 12px",marginBottom:8,outline:"none",boxSizing:"border-box"}} />
                   <div style={{display:"flex",gap:8}}>
                     <button onClick={handleDeleteProfile} disabled={deleteConfirmText.toLowerCase()!=="yes"}
-                      style={{flex:1,padding:"9px",borderRadius:7,border:"none",background:"#ef444422",color:"#ef4444",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:T.uiFont,opacity:deleteConfirmText.toLowerCase()==="yes"?1:0.3}}>
+                      style={{flex:1,padding:"9px",borderRadius:7,border:"none",background:"#ef444422",color:"#ef4444",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:T.font,opacity:deleteConfirmText.toLowerCase()==="yes"?1:0.3}}>
                       Confirm Delete
                     </button>
-                    <button onClick={()=>{setShowDeleteProfile(false);setDeleteConfirmText("");}} style={{padding:"9px 14px",borderRadius:7,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.uiFont}}>
+                    <button onClick={()=>{setShowDeleteProfile(false);setDeleteConfirmText("");}} style={{padding:"9px 14px",borderRadius:7,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
                       Cancel
                     </button>
                   </div>
@@ -1737,7 +1741,7 @@ const Nav = () => (<>
             {/* Delete Account */}
             <div style={{marginTop:12}}>
               {!showDeleteAccount ? (
-                <button onClick={()=>setShowDeleteAccount(true)} style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid #ef444433",background:"transparent",color:"#ef444488",fontSize:12,cursor:"pointer",fontFamily:T.uiFont}}>
+                <button onClick={()=>setShowDeleteAccount(true)} style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid #ef444433",background:"transparent",color:"#ef444488",fontSize:12,cursor:"pointer",fontFamily:T.font}}>
                   Delete Account
                 </button>
               ) : (
@@ -1748,13 +1752,13 @@ const Nav = () => (<>
                     onChange={e=>setDeleteAccConfirmText(e.target.value)}
                     placeholder="yes"
                     autoFocus
-                    style={{width:"100%",background:T.bg,border:"1px solid #ef444466",borderRadius:7,color:T.text,fontFamily:T.uiFont,fontSize:14,padding:"9px 12px",marginBottom:8,outline:"none",boxSizing:"border-box"}} />
+                    style={{width:"100%",background:T.bg,border:"1px solid #ef444466",borderRadius:7,color:T.text,fontFamily:T.font,fontSize:14,padding:"9px 12px",marginBottom:8,outline:"none",boxSizing:"border-box"}} />
                   <div style={{display:"flex",gap:8}}>
                     <button onClick={handleDeleteAccount} disabled={deleteAccConfirmText.toLowerCase()!=="yes"}
-                      style={{flex:1,padding:"9px",borderRadius:7,border:"none",background:deleteAccConfirmText.toLowerCase()==="yes"?"#ef4444":"#2a1a1a",color:deleteAccConfirmText.toLowerCase()==="yes"?"#fff":"#555",fontSize:13,fontWeight:700,cursor:deleteAccConfirmText.toLowerCase()==="yes"?"pointer":"not-allowed",fontFamily:T.uiFont}}>
+                      style={{flex:1,padding:"9px",borderRadius:7,border:"none",background:deleteAccConfirmText.toLowerCase()==="yes"?"#ef4444":"#2a1a1a",color:deleteAccConfirmText.toLowerCase()==="yes"?"#fff":"#555",fontSize:13,fontWeight:700,cursor:deleteAccConfirmText.toLowerCase()==="yes"?"pointer":"not-allowed",fontFamily:T.font}}>
                       Delete Everything
                     </button>
-                    <button onClick={()=>{setShowDeleteAccount(false);setDeleteAccConfirmText("");}} style={{padding:"9px 14px",borderRadius:7,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.uiFont}}>
+                    <button onClick={()=>{setShowDeleteAccount(false);setDeleteAccConfirmText("");}} style={{padding:"9px 14px",borderRadius:7,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
                       Cancel
                     </button>
                   </div>
@@ -1769,7 +1773,7 @@ const Nav = () => (<>
           {/* Tabs */}
           <div style={{display:"flex",gap:6,marginBottom:16,background:T.card,borderRadius:10,padding:3,border:`1px solid ${T.border}`}}>
             {([["map","🗺️ Map",true],["daily","📅 Daily",canUse(activeProfile,"daily")],["test","⌨️ Test",canUse(activeProfile,"test")]]).filter(t=>t[2]).map(([k,l])=>(
-              <button key={k} onClick={()=>setActiveTab(k)} style={{flex:1,padding:"8px 0",borderRadius:7,border:"none",background:activeTab===k?T.purple:"transparent",color:activeTab===k?"#fff":T.faint,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:T.uiFont}}>{l}</button>
+              <button key={k} onClick={()=>setActiveTab(k)} style={{flex:1,padding:"8px 0",borderRadius:7,border:"none",background:activeTab===k?T.purple:"transparent",color:activeTab===k?"#fff":T.faint,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:T.font}}>{l}</button>
             ))}
           </div>
 
@@ -1805,8 +1809,8 @@ const Nav = () => (<>
               );
             })}
           </div>
-          {showCount < LEVELS.length && <button onClick={()=>setShowCount(c=>Math.min(c+10,LEVELS.length))} style={{width:"100%",marginTop:14,padding:"10px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.muted,fontSize:13,cursor:"pointer",fontFamily:T.uiFont}}>Show 10 More ↓ ({LEVELS.length - showCount} remaining)</button>}
-          {showCount > currentLevel+10 && <button onClick={()=>setShowCount(currentLevel+10)} style={{width:"100%",marginTop:8,padding:"8px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:12,cursor:"pointer",fontFamily:T.uiFont}}>Show Less ↑</button>}
+          {showCount < LEVELS.length && <button onClick={()=>setShowCount(c=>Math.min(c+10,LEVELS.length))} style={{width:"100%",marginTop:14,padding:"10px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.muted,fontSize:13,cursor:"pointer",fontFamily:T.font}}>Show 10 More ↓ ({LEVELS.length - showCount} remaining)</button>}
+          {showCount > currentLevel+10 && <button onClick={()=>setShowCount(currentLevel+10)} style={{width:"100%",marginTop:8,padding:"8px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:12,cursor:"pointer",fontFamily:T.font}}>Show Less ↑</button>}
           <div style={{height:40}}/>
           </>}
 
@@ -1819,7 +1823,7 @@ const Nav = () => (<>
             {!dailyWords&&<div style={{color:T.muted,textAlign:"center",padding:20}}>Loading…</div>}
             {dailyWords&&(dailyDone
               ?<div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:20,textAlign:"center",marginBottom:16}}><div style={{color:T.accent2,fontWeight:700,fontSize:15,marginBottom:4}}>✓ Completed today!</div><div style={{color:T.muted,fontSize:12}}>Come back tomorrow.</div></div>
-              :<button onClick={()=>requestStartLevel(-1)} style={{width:"100%",padding:"14px",borderRadius:12,border:"none",background:T.purple,color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:T.uiFont,marginBottom:16}}>Start Daily Challenge →</button>
+              :<button onClick={()=>requestStartLevel(-1)} style={{width:"100%",padding:"14px",borderRadius:12,border:"none",background:T.purple,color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:T.font,marginBottom:16}}>Start Daily Challenge →</button>
             )}
             <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>Today's Leaderboard</div>
             {dailyBoard.length===0&&<div style={{color:T.faint,fontSize:13,textAlign:"center",padding:"20px 0"}}>No scores yet. Be first!</div>}
@@ -1857,10 +1861,10 @@ const Nav = () => (<>
               </>}
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:friendReqs.length?12:0,marginBottom:8}}>
                 <span style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase"}}>Add Friend</span>
-                <span style={{color:T.faint,fontSize:10}}>Requests: <button onClick={async()=>{const v=!activeProfile?.noFriendRequests;patchProfile({noFriendRequests:v});updateProfile(user.uid,activeProfile.id,{noFriendRequests:v});}} style={{background:"none",border:"none",color:activeProfile?.noFriendRequests?"#ef4444":T.accent2,fontSize:10,cursor:"pointer",fontFamily:T.uiFont,padding:0,fontWeight:700}}>{activeProfile?.noFriendRequests?"OFF":"ON"}</button></span>
+                <span style={{color:T.faint,fontSize:10}}>Requests: <button onClick={async()=>{const v=!activeProfile?.noFriendRequests;patchProfile({noFriendRequests:v});updateProfile(user.uid,activeProfile.id,{noFriendRequests:v});}} style={{background:"none",border:"none",color:activeProfile?.noFriendRequests?"#ef4444":T.accent2,fontSize:10,cursor:"pointer",fontFamily:T.font,padding:0,fontWeight:700}}>{activeProfile?.noFriendRequests?"OFF":"ON"}</button></span>
               </div>
               <div style={{display:"flex",gap:8,marginBottom:14}}>
-                <input value={friendSearch} onChange={e=>setFriendSearch(e.target.value)} onKeyDown={e=>e.key==="Enter"&&(async()=>{try{const res=await getUserByUsername(friendSearch.replace("@",""));if(!res)return setFriendMsg("User not found");await sendFriendRequest(user.uid,currentUsername,res.uid,friendSearch.replace("@","").toLowerCase());setFriendMsg("Request sent!");setFriendSearch("");}catch(e){setFriendMsg(e.message||"Error");}})()}  placeholder="@username" style={{flex:1,background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.uiFont,fontSize:13,padding:"9px 12px",outline:"none"}}/>
+                <input value={friendSearch} onChange={e=>setFriendSearch(e.target.value)} onKeyDown={e=>e.key==="Enter"&&(async()=>{try{const res=await getUserByUsername(friendSearch.replace("@",""));if(!res)return setFriendMsg("User not found");await sendFriendRequest(user.uid,currentUsername,res.uid,friendSearch.replace("@","").toLowerCase());setFriendMsg("Request sent!");setFriendSearch("");}catch(e){setFriendMsg(e.message||"Error");}})()}  placeholder="@username" style={{flex:1,background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:13,padding:"9px 12px",outline:"none"}}/>
                 <button onClick={async()=>{try{const res=await getUserByUsername(friendSearch.replace("@",""));if(!res)return setFriendMsg("User not found");await sendFriendRequest(user.uid,currentUsername,res.uid,friendSearch.replace("@","").toLowerCase());setFriendMsg("Request sent!");setFriendSearch("");}catch(e){setFriendMsg(e.message||"Error");}}} style={{padding:"9px 14px",background:T.purple,border:"none",borderRadius:8,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer"}}>Add</button>
               </div>
               {friendMsg&&<div style={{color:T.accent2,fontSize:12,marginBottom:10}}>{friendMsg}</div>}
@@ -1910,11 +1914,11 @@ const Nav = () => (<>
             <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:24,width:"100%",maxWidth:320,textAlign:"center"}}>
               <div style={{fontSize:28,marginBottom:8}}>🔒</div>
               <div style={{color:T.muted,fontSize:12,marginBottom:12}}>Enter parental PIN to {pinModal==="switch"?"switch profile":"sign out"}</div>
-              <input type="password" maxLength={6} value={pinInput} onChange={e=>{setPinInput(e.target.value);setPinErr('');}} onKeyDown={e=>e.key==='Enter'&&handlePin()} autoFocus placeholder="••••" style={{width:"100%",background:T.faint,border:`1px solid ${pinErr?"#ef4444":T.border}`,borderRadius:8,color:T.text,fontFamily:T.uiFont,fontSize:20,padding:"10px",outline:"none",textAlign:"center",letterSpacing:8,marginBottom:8,boxSizing:"border-box"}}/>
+              <input type="password" maxLength={6} value={pinInput} onChange={e=>{setPinInput(e.target.value);setPinErr('');}} onKeyDown={e=>e.key==='Enter'&&handlePin()} autoFocus placeholder="••••" style={{width:"100%",background:T.faint,border:`1px solid ${pinErr?"#ef4444":T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:20,padding:"10px",outline:"none",textAlign:"center",letterSpacing:8,marginBottom:8,boxSizing:"border-box"}}/>
               {pinErr&&<div style={{color:"#ef4444",fontSize:11,marginBottom:8}}>{pinErr}</div>}
               <div style={{display:"flex",gap:8}}>
-                <button onClick={handlePin} style={{flex:1,padding:"10px",background:T.purple,border:"none",borderRadius:8,color:"#fff",fontWeight:700,cursor:"pointer",fontFamily:T.uiFont}}>OK</button>
-                <button onClick={()=>setPinModal(null)} style={{padding:"10px 14px",background:"none",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,cursor:"pointer",fontFamily:T.uiFont}}>Cancel</button>
+                <button onClick={handlePin} style={{flex:1,padding:"10px",background:T.purple,border:"none",borderRadius:8,color:"#fff",fontWeight:700,cursor:"pointer",fontFamily:T.font}}>OK</button>
+                <button onClick={()=>setPinModal(null)} style={{padding:"10px 14px",background:"none",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,cursor:"pointer",fontFamily:T.font}}>Cancel</button>
               </div>
             </div>
           </div>
@@ -1926,7 +1930,7 @@ const Nav = () => (<>
               <div style={{fontSize:36,marginBottom:12}}>⚠️</div>
               <div style={{color:"#ef4444",fontWeight:700,fontSize:16,marginBottom:8}}>Warning from Admin</div>
               <div style={{color:"#e0e0ff",fontSize:13,marginBottom:20,lineHeight:1.6}}>{warning.message}</div>
-              <button onClick={handleDismissWarning} style={{background:"#a78bfa",border:"none",borderRadius:9,color:"#fff",fontWeight:700,fontSize:14,padding:"11px 32px",cursor:"pointer",fontFamily:T.uiFont}}>I understand</button>
+              <button onClick={handleDismissWarning} style={{background:"#a78bfa",border:"none",borderRadius:9,color:"#fff",fontWeight:700,fontSize:14,padding:"11px 32px",cursor:"pointer",fontFamily:T.font}}>I understand</button>
             </div>
           </div>
         )}
@@ -1946,9 +1950,9 @@ const Nav = () => (<>
               <div style={{fontSize:24,textAlign:"center",marginBottom:8}}>👋</div>
               <div style={{color:"#e0e0ff",fontWeight:700,fontSize:16,textAlign:"center",marginBottom:4}}>Choose your username</div>
               <div style={{color:"#6b7280",fontSize:12,textAlign:"center",marginBottom:20}}>Lowercase, letters/numbers/underscores only.</div>
-              <input value={usernameInput} onChange={e=>{setUsernameInput(e.target.value);setUsernameError("");}} onKeyDown={e=>e.key==="Enter"&&handleClaimUsername()} placeholder="your_username" maxLength={20} autoFocus style={{width:"100%",background:"#1e1e30",border:"1px solid #2e2e44",borderRadius:8,color:"#e0e0ff",fontFamily:T.uiFont,fontSize:14,padding:"10px 12px",outline:"none",boxSizing:"border-box",marginBottom:8}} />
+              <input value={usernameInput} onChange={e=>{setUsernameInput(e.target.value);setUsernameError("");}} onKeyDown={e=>e.key==="Enter"&&handleClaimUsername()} placeholder="your_username" maxLength={20} autoFocus style={{width:"100%",background:"#1e1e30",border:"1px solid #2e2e44",borderRadius:8,color:"#e0e0ff",fontFamily:T.font,fontSize:14,padding:"10px 12px",outline:"none",boxSizing:"border-box",marginBottom:8}} />
               {usernameError && <div style={{color:"#ef4444",fontSize:11,marginBottom:8}}>{usernameError}</div>}
-              <button onClick={handleClaimUsername} disabled={usernameLoading||!usernameInput.trim()} style={{width:"100%",padding:"11px",background:T.purple,border:"none",borderRadius:9,color:"#fff",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:T.uiFont,opacity:usernameLoading?0.6:1}}>{usernameLoading?"Checking...":"Confirm"}</button>
+              <button onClick={handleClaimUsername} disabled={usernameLoading||!usernameInput.trim()} style={{width:"100%",padding:"11px",background:T.purple,border:"none",borderRadius:9,color:"#fff",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:T.font,opacity:usernameLoading?0.6:1}}>{usernameLoading?"Checking...":"Confirm"}</button>
             </div>
           </div>
         )}
@@ -1959,11 +1963,11 @@ const Nav = () => (<>
             <div style={{background:"#0f0f1a",border:"1px solid #1e1e30",borderRadius:14,padding:24,width:"100%",maxWidth:380}}>
               <div style={{color:"#e0e0ff",fontWeight:700,fontSize:15,marginBottom:4}}>Change Username</div>
               <div style={{color:"#6b7280",fontSize:12,marginBottom:16}}>Costs 5 🔑 keys. Current: @{currentUsername}</div>
-              <input value={newUsernameInput} onChange={e=>{setNewUsernameInput(e.target.value);setUsernameError("");}} onKeyDown={e=>e.key==="Enter"&&handleChangeUsername()} placeholder="new_username" maxLength={20} autoFocus style={{width:"100%",background:"#1e1e30",border:"1px solid #2e2e44",borderRadius:8,color:"#e0e0ff",fontFamily:T.uiFont,fontSize:14,padding:"10px 12px",outline:"none",boxSizing:"border-box",marginBottom:8}} />
+              <input value={newUsernameInput} onChange={e=>{setNewUsernameInput(e.target.value);setUsernameError("");}} onKeyDown={e=>e.key==="Enter"&&handleChangeUsername()} placeholder="new_username" maxLength={20} autoFocus style={{width:"100%",background:"#1e1e30",border:"1px solid #2e2e44",borderRadius:8,color:"#e0e0ff",fontFamily:T.font,fontSize:14,padding:"10px 12px",outline:"none",boxSizing:"border-box",marginBottom:8}} />
               {usernameError && <div style={{color:"#ef4444",fontSize:11,marginBottom:8}}>{usernameError}</div>}
               <div style={{display:"flex",gap:8}}>
-                <button onClick={handleChangeUsername} disabled={usernameLoading||!newUsernameInput.trim()} style={{flex:1,padding:"10px",background:T.purple,border:"none",borderRadius:8,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:T.uiFont}}>{usernameLoading?"...":"Change (5 🔑)"}</button>
-                <button onClick={()=>{setShowChangeUsername(false);setNewUsernameInput("");setUsernameError("");}} style={{padding:"10px 16px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,cursor:"pointer",fontFamily:T.uiFont}}>Cancel</button>
+                <button onClick={handleChangeUsername} disabled={usernameLoading||!newUsernameInput.trim()} style={{flex:1,padding:"10px",background:T.purple,border:"none",borderRadius:8,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:T.font}}>{usernameLoading?"...":"Change (5 🔑)"}</button>
+                <button onClick={()=>{setShowChangeUsername(false);setNewUsernameInput("");setUsernameError("");}} style={{padding:"10px 16px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,cursor:"pointer",fontFamily:T.font}}>Cancel</button>
               </div>
             </div>
           </div>
@@ -2007,7 +2011,7 @@ const Nav = () => (<>
     };
 
     return (
-      <div onClick={() => inputRef.current?.focus()} style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",padding:"20px 12px",fontFamily:T.uiFont,userSelect:"none"}}>
+      <div onClick={() => inputRef.current?.focus()} style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",padding:"20px 12px",fontFamily:T.font,userSelect:"none"}}>
         <div style={{width:"100%",maxWidth:660,marginBottom:8}}><Nav /></div>
         <div style={{width:"100%",maxWidth:660,display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
@@ -2042,7 +2046,7 @@ const Nav = () => (<>
         </div>
         <input ref={inputRef} value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Backspace") e.preventDefault();}} style={{position:"absolute",opacity:0,pointerEvents:"none"}} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
         <Keyboard />
-        <button onClick={() => { clearInterval(ghostInterval.current); setScreen("levelMap"); }} style={{marginTop:20,background:"none",border:"none",color:T.faint,fontSize:12,cursor:"pointer",fontFamily:T.uiFont}}>
+        <button onClick={() => { clearInterval(ghostInterval.current); setScreen("levelMap"); }} style={{marginTop:20,background:"none",border:"none",color:T.faint,fontSize:12,cursor:"pointer",fontFamily:T.font}}>
           ← Back to map
         </button>
       </div>
@@ -2055,7 +2059,7 @@ const Nav = () => (<>
     const worstKeys = Object.entries(keyMistakes).sort((a,b) => b[1]-a[1]).slice(0,5);
 
     return (
-      <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.uiFont,padding:20}}>
+      <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:20}}>
         <div style={{width:"100%",maxWidth:460,textAlign:"center"}}>
           <div style={{fontSize:64,marginBottom:10}}>{passed ? "🎉" : "💪"}</div>
           <h2 style={{color:T.text,fontSize:28,fontWeight:800,margin:0}}>
@@ -2074,7 +2078,7 @@ const Nav = () => (<>
             <div style={{background:"#1a1030",border:`1px solid ${T.purple}44`,borderRadius:10,padding:"12px 16px",marginBottom:14,fontSize:13,color:T.muted,textAlign:"left"}}>
               <div style={{color:T.text,fontWeight:700,marginBottom:4}}>Sign in to save your progress</div>
               <div style={{marginBottom:10,fontSize:12}}>Your results aren't saved yet.</div>
-              <button onClick={() => setScreen("auth")} style={{background:T.purple,border:"none",borderRadius:8,color:"#fff",fontSize:13,fontWeight:700,padding:"8px 18px",cursor:"pointer",fontFamily:T.uiFont}}>
+              <button onClick={() => setScreen("auth")} style={{background:T.purple,border:"none",borderRadius:8,color:"#fff",fontSize:13,fontWeight:700,padding:"8px 18px",cursor:"pointer",fontFamily:T.font}}>
                 Sign in / Sign up
               </button>
             </div>
@@ -2091,17 +2095,17 @@ const Nav = () => (<>
           )}
           <div style={{display:"flex",gap:8}}>
             <button onClick={() => requestStartLevel(resultData.level)}
-              style={{flex:1,padding:14,borderRadius:10,border:"none",background:T.purple,color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:T.uiFont}}>
+              style={{flex:1,padding:14,borderRadius:10,border:"none",background:T.purple,color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>
               {passed ? "Play Again" : "Try Again"}
             </button>
             <button onClick={() => setScreen("levelMap")}
-              style={{flex:1,padding:14,borderRadius:10,border:`1px solid ${T.border}`,background:"transparent",color:T.muted,fontSize:14,cursor:"pointer",fontFamily:T.uiFont}}>
+              style={{flex:1,padding:14,borderRadius:10,border:`1px solid ${T.border}`,background:"transparent",color:T.muted,fontSize:14,cursor:"pointer",fontFamily:T.font}}>
               Level Map
             </button>
           </div>
           {passed && resultData.level < LEVELS.length && (
             <button onClick={() => requestStartLevel(resultData.level + 1)}
-              style={{width:"100%",marginTop:10,padding:14,borderRadius:10,border:"none",background:lv.color,color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:T.uiFont}}>
+              style={{width:"100%",marginTop:10,padding:14,borderRadius:10,border:"none",background:lv.color,color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>
               Next Level →
             </button>
           )}
