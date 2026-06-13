@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminAddKeys, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats } from "@/lib/firebase";
+import { auth, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats } from "@/lib/firebase";
 const LEVELS = [
   { id:1,  name:"Home Row Hero",         emoji:"🏠", wpmTarget:12,  accuracy:75, color:"#10b981", words:["ffjj","fjfj","asdf","jkl;","add","ask","fall","glad","flask","lads","fads","salads"] },
   { id:2,  name:"Top Row Climber",       emoji:"🧗", wpmTarget:16,  accuracy:75, color:"#3b82f6", words:["quit","wrap","type","your","power","tower","write","pretty","quite","report"] },
@@ -440,11 +440,11 @@ export default function AdminPage() {
     setKeysLoading(false);
   }
 
-  async function handleAddKeys(profileId,profileName) {
-    const amount = parseInt(keysAmount[profileId]||0); if(!amount) return;
-    await adminAddKeys(keysTargetUid,profileId,amount);
-    await logActivity("add_keys",{adminUid:user.uid,targetUid:keysTargetUid,detail:`${amount} keys to "${profileName}"`});
-    setKeysMsgs(p=>({...p,[profileId]:`+${amount} added!`}));
+  async function handleSetKeys(profileId,profileName) {
+    const amount = parseInt(keysAmount[profileId]); if(isNaN(amount)||amount<0) return;
+    await adminSetKeys(keysTargetUid,profileId,amount);
+    await logActivity("set_keys",{adminUid:user.uid,targetUid:keysTargetUid,detail:`Set to ${amount} keys for "${profileName}"`});
+    setKeysMsgs(p=>({...p,[profileId]:`Set to ${amount}!`}));
     setTimeout(()=>setKeysMsgs(p=>({...p,[profileId]:null})),3000);
     const updated = await getProfilesForAdmin(keysTargetUid);
     setKeysProfiles(updated);
@@ -625,8 +625,8 @@ export default function AdminPage() {
                     {keysMsgs[p.id]&&<div style={{color:T.accent,fontSize:11}}>{keysMsgs[p.id]}</div>}
                   </div>
                   <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                    <input type="number" placeholder="amount" value={keysAmount[p.id]||""} onChange={e=>setKeysAmount(prev=>({...prev,[p.id]:e.target.value}))} style={{...st.input,width:90}} />
-                    <button onClick={()=>handleAddKeys(p.id,p.name)} style={st.btn()}>Add</button>
+                    <input type="number" placeholder="set to..." value={keysAmount[p.id]||""} onChange={e=>setKeysAmount(prev=>({...prev,[p.id]:e.target.value}))} style={{...st.input,width:100}} />
+                    <button onClick={()=>handleSetKeys(p.id,p.name)} style={st.btn()}>Set</button>
                   </div>
                 </div>
               </div>
