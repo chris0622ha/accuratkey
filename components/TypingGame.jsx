@@ -648,6 +648,7 @@ export default function AccuratKey() {
 
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showFeatureAccess, setShowFeatureAccess] = useState(false);
   const [editName, setEditName] = useState("");
   const [editAvatar, setEditAvatar] = useState("key");
   const [editBirthday, setEditBirthday] = useState("");
@@ -1375,6 +1376,91 @@ const Nav = () => (<>
     </div>
   );
 
+  if (showFeatureAccess) {
+    const ALL_FEATURES = [
+      // Gameplay
+      {group:"⌨️ Gameplay", items:[
+        ["sounds","🔊 Sound effects","Play sounds on keypress"],
+        ["skip","⏭ Level skip","Allow skipping to next level"],
+        ["ghost","👻 Ghost mode","Show ghost cursor from best run"],
+        ["keyboard","⌨️ On-screen keyboard","Show keyboard diagram while typing"],
+        ["combo","🔥 Combo counter","Show combo streak during game"],
+        ["wpmLive","📊 Live WPM display","Show WPM counter while typing"],
+        ["accuracyLive","🎯 Live accuracy","Show accuracy counter while typing"],
+      ]},
+      // Navigation
+      {group:"🗺️ Navigation", items:[
+        ["daily","📅 Daily challenge","Access the daily challenge tab"],
+        ["test","⌨️ Typing test","Access the free typing test tab"],
+        ["leaderboard","🏆 Leaderboard","View global leaderboards"],
+      ]},
+      // Social
+      {group:"👥 Social", items:[
+        ["keys","🔑 Keys display","Show key count in nav"],
+        ["friends","👥 Friends","Access friends panel"],
+        ["publicProfile","🌐 Public profile","Profile visible to others"],
+        ["chat","💬 Chat & messaging","Friends chat features"],
+        ["challenges","⚔️ Level challenges","Challenge friends to levels"],
+        ["streak","🔥 Streak display","Show streak count in nav"],
+      ]},
+      // Shop & customization
+      {group:"🛍️ Shop & Customization", items:[
+        ["shop","🛍️ Theme shop","Access the shop"],
+        ["customTheme","🎨 Custom themes","Buy & equip themes"],
+        ["customFont","✏️ Custom fonts","Buy & equip fonts"],
+      ]},
+      // Privacy & safety
+      {group:"🔒 Privacy & Safety", items:[
+        ["profilePhoto","📸 Profile photo","Upload custom photo"],
+        ["bio","✏️ Profile bio","Set a public bio"],
+        ["shareStats","📈 Share stats","Stats visible on profile"],
+      ]},
+    ];
+    const toggle = (feat) => {
+      const on = (activeProfile?.features||{})[feat] !== false;
+      const f = {...(activeProfile?.features||{}), [feat]: !on};
+      patchProfile({features:f});
+      updateProfile(user.uid, activeProfile.id, {features:f});
+    };
+    return (
+      <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:"16px"}} onClick={()=>{setShowFeatureAccess(false);setShowSettingsModal(true);}}>
+        <div onClick={e=>e.stopPropagation()} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:16,width:"100%",maxWidth:480,maxHeight:"90vh",overflowY:"auto",fontFamily:T.font}}>
+          {/* Header */}
+          <div style={{display:"flex",alignItems:"center",gap:12,padding:"16px 20px",borderBottom:`1px solid ${T.border}`,position:"sticky",top:0,background:T.card,zIndex:10}}>
+            <button onClick={()=>{setShowFeatureAccess(false);setShowSettingsModal(true);}} style={{background:"none",border:"none",color:T.muted,fontSize:13,cursor:"pointer",fontFamily:T.font,padding:"4px 8px",borderRadius:6,border:`1px solid ${T.border}`}}>← Settings</button>
+            <div>
+              <div style={{color:T.text,fontWeight:700,fontSize:15}}>Feature Access</div>
+              <div style={{color:T.muted,fontSize:11}}>{activeProfile?.name} · toggle features on/off</div>
+            </div>
+          </div>
+          {/* Groups */}
+          <div style={{padding:"12px 20px 24px"}}>
+            {ALL_FEATURES.map(({group,items})=>(
+              <div key={group} style={{marginBottom:20}}>
+                <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:8,marginTop:4}}>{group}</div>
+                <div style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:10,overflow:"hidden"}}>
+                  {items.map(([feat,label,desc],i)=>{
+                    const on=(activeProfile?.features||{})[feat]!==false;
+                    return (
+                      <div key={feat} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",borderBottom:i<items.length-1?`1px solid ${T.border}`:"none"}}>
+                        <div>
+                          <div style={{color:T.text,fontSize:13}}>{label}</div>
+                          <div style={{color:T.faint,fontSize:10,marginTop:2}}>{desc}</div>
+                        </div>
+                        <button onClick={()=>toggle(feat)} style={{flexShrink:0,marginLeft:12,padding:"4px 14px",background:on?T.purple+"22":"transparent",border:`1px solid ${on?T.purple:T.border}`,borderRadius:20,color:on?T.purple:T.faint,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font,minWidth:48}}>{on?"ON":"OFF"}</button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+
   if (screen === "loading") return (
     <div style={{minHeight:"100vh",background:"#0a0a0f",display:"flex",alignItems:"center",justifyContent:"center"}}>
       {activeProfile && <style>{`* { font-family: ${T.font} !important; } body { background: ${T.bg}; }`}</style>}
@@ -1516,7 +1602,7 @@ const Nav = () => (<>
           <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="Your name"
             style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:15,padding:"11px 14px",marginBottom:14,outline:"none",boxSizing:"border-box"}} />
           <label style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:6}}>Birthday</label>
-          <input type="date" value={newBirthday} onChange={e=>setNewBirthday(e.target.value)}
+          <input type="date" value={newBirthday} onChange={e=>{const v=e.target.value;const d=new Date(v);const now=new Date();const min=new Date();min.setFullYear(now.getFullYear()-120);if(v&&(d>now||d<min))return;setNewBirthday(v);}} max={new Date().toISOString().split("T")[0]} min={new Date(new Date().setFullYear(new Date().getFullYear()-120)).toISOString().split("T")[0]}
             style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:14,padding:"11px 14px",marginBottom:14,outline:"none",boxSizing:"border-box",colorScheme:"dark"}} />
           <label style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:8}}>Starting skill</label>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:18}}>
@@ -1704,7 +1790,7 @@ const Nav = () => (<>
             <label style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:6}}>Name</label>
             <input value={editName} onChange={e=>setEditName(e.target.value)} style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:14,padding:"10px 14px",marginBottom:14,outline:"none",boxSizing:"border-box"}} />
             <label style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:6}}>Birthday</label>
-            <input type="date" value={editBirthday} onChange={e=>setEditBirthday(e.target.value)} style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:14,padding:"10px 14px",marginBottom:18,outline:"none",boxSizing:"border-box",colorScheme:"dark"}} />
+            <input type="date" value={editBirthday} onChange={e=>{const v=e.target.value;const d=new Date(v);const now=new Date();const min=new Date();min.setFullYear(now.getFullYear()-120);if(v&&(d>now||d<min))return;setEditBirthday(v);}} max={new Date().toISOString().split("T")[0]} min={new Date(new Date().setFullYear(new Date().getFullYear()-120)).toISOString().split("T")[0]} style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:14,padding:"10px 14px",marginBottom:18,outline:"none",boxSizing:"border-box",colorScheme:"dark"}} />
             {saveMsg && <p style={{color:saveMsg==="Saved!"?T.accent2:"#ef4444",fontSize:12,marginBottom:8}}>{saveMsg}</p>}
             {/* Profile Admin */}
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderTop:`1px solid ${T.faint}`,marginTop:8}}>
@@ -1712,17 +1798,10 @@ const Nav = () => (<>
               <button onClick={async()=>{const v=!(activeProfile?.isProfileAdmin);patchProfile({isProfileAdmin:v});updateProfile(user.uid,activeProfile.id,{isProfileAdmin:v});}} style={{padding:"5px 12px",background:(activeProfile?.isProfileAdmin)?"#a78bfa22":"transparent",border:`1px solid ${(activeProfile?.isProfileAdmin)?"#a78bfa":T.border}`,borderRadius:7,color:(activeProfile?.isProfileAdmin)?"#a78bfa":T.muted,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>{activeProfile?.isProfileAdmin?"ON":"OFF"}</button>
                  </div>
             {!activeProfile?.isProfileAdmin&&<div style={{padding:"10px 0",borderTop:`1px solid ${T.faint}`}}>
-              <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>Feature Access</div>
-              <div style={{color:T.faint,fontSize:10,marginBottom:8}}>Toggle features on/off for this profile only.</div>
-              <div style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:10,padding:"8px 12px",marginBottom:6}}>
-                {[["keys","🔑 Keys display"],["friends","👥 Friends"],["shop","🛍️ Theme shop"],["daily","📅 Daily challenge"],["test","⌨️ Typing test"],["skip","⏭ Level skip"],["sounds","🔊 Sounds"],["leaderboard","🏆 Leaderboard"],["publicProfile","🌐 Public profile"],["chat","💬 Chat & messaging"],["customTheme","🎨 Custom themes"]].map(([feat,label])=>{
-                  const on=(activeProfile?.features||{})[feat]!==false; // true/undefined=ON, false=OFF
-                  return <div key={feat} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 0",borderBottom:`1px solid ${T.border}`}}>
-                    <span style={{color:T.muted,fontSize:12}}>{label}</span>
-                    <button onClick={async()=>{const f={...(activeProfile?.features||{}),[feat]:!on};patchProfile({features:f});updateProfile(user.uid,activeProfile.id,{features:f});}} style={{padding:"3px 10px",background:on?"#7c6af722":"transparent",border:`1px solid ${on?T.purple:T.border}`,borderRadius:6,color:on?T.purple:T.faint,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>{on?"ON":"OFF"}</button>
-                  </div>;
-                })}
-              </div>
+              <button onClick={()=>{setShowSettingsModal(false);setShowFeatureAccess(true);}} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",background:"none",border:`1px solid ${T.border}`,borderRadius:8,padding:"10px 14px",cursor:"pointer",fontFamily:T.font}}>
+                <span style={{color:T.text,fontSize:13,fontWeight:700}}>Feature Access</span>
+                <span style={{color:T.muted,fontSize:16}}>›</span>
+              </button>
             </div>}
             {/* Change PIN */}
             <div style={{padding:"10px 0",borderTop:`1px solid ${T.faint}`}}>
