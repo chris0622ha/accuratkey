@@ -615,6 +615,12 @@ export default function AccuratKey() {
     // Reset to default when no profile selected (profile picker screen)
     document.documentElement.style.removeProperty("--ak-font");
   }
+  // Font scale: pixel/display fonts need smaller sizes to not break layout
+  const BIG_FONTS = ["pressstart","vt323","silkscreen","audiowide","orbitron","rajdhani","tourney"];
+  const SMALL_FONTS = ["comicsans","boogaloo","chewy","rubikbubbles","permanentmarker","creepster","ultra","fredoka"];
+  const _fs = BIG_FONTS.includes(_activeFont) ? 0.7 : SMALL_FONTS.includes(_activeFont) ? 0.85 : 1;
+  // Helper: scale a font size for UI elements
+  const fs = (size) => _fs < 1 ? Math.round(size * _fs) : size;
   // Load Google Font if needed
   if (typeof window !== "undefined" && _activeFont && _activeFont !== "jetbrains") {
     const GOOGLE_FONTS = {"firacode":"Fira+Code:wght@400;700","sourcecodepro":"Source+Code+Pro:wght@400;700","robototmono":"Roboto+Mono:wght@400;700","spacemono":"Space+Mono:wght@400;700","inconsolata":"Inconsolata:wght@400;700","ptmono":"PT+Mono","cousine":"Cousine:wght@400;700","inter":"Inter:wght@400;700","outfit":"Outfit:wght@400;700","nunito":"Nunito:wght@400;700","poppins":"Poppins:wght@400;700","quicksand":"Quicksand:wght@400;700","dmsans":"DM+Sans:wght@400;700","lexend":"Lexend:wght@400;700","orbitron":"Orbitron:wght@400;700","rajdhani":"Rajdhani:wght@400;700","exo2":"Exo+2:wght@400;700","audiowide":"Audiowide","nasalization":"Russo+One","ubuntu":"Ubuntu+Mono:wght@400;700","comicsans":"Comic+Neue:wght@400;700","fredoka":"Fredoka:wght@400;700","boogaloo":"Boogaloo","pressstart":"Press+Start+2P","vt323":"VT323","silkscreen":"Silkscreen","playfair":"Playfair+Display:wght@400;700","cormorant":"Cormorant+Garamond:wght@400;700","crimsonpro":"Crimson+Pro:wght@400;700","eb_garamond":"EB+Garamond:wght@400;700","lora":"Lora:wght@400;700","ibmplexmono":"IBM+Plex+Mono:wght@400;700","cascadia":"Roboto+Mono:wght@400;700","notosamono":"Noto+Sans+Mono:wght@400;700","overpassmono":"Overpass+Mono:wght@400;700","sharetechmono":"Share+Tech+Mono","anonymouspro":"Anonymous+Pro:wght@400;700","manrope":"Manrope:wght@400;700","plusjakarta":"Plus+Jakarta+Sans:wght@400;700","syne":"Syne:wght@400;700","figtree":"Figtree:wght@400;700","onest":"Onest:wght@400;700","geist":"Geist:wght@400;700","jura":"Jura:wght@400;700","quantico":"Quantico:wght@400;700","oxanium":"Oxanium:wght@400;700","tektur":"Tektur:wght@400;700","tourney":"Tourney:wght@400;700","blender":"Blinker:wght@400;700","chewy":"Chewy","rubikbubbles":"Rubik+Bubbles","permanentmarker":"Permanent+Marker","creepster":"Creepster","domine":"Domine:wght@400;700","ultra":"Ultra"};
@@ -865,7 +871,21 @@ export default function AccuratKey() {
         if (profs.length === 0) {
           setScreen("createProfile");
         } else {
-          setScreen("profilePicker");
+          // If returning from shop or another page, auto-restore last profile
+          const returnScreen = typeof window !== "undefined" ? localStorage.getItem("ak_returnScreen") : null;
+          const lastProfileId = typeof window !== "undefined" ? localStorage.getItem("ak_lastProfile_" + u.uid) : null;
+          const lastProf = lastProfileId ? profs.find(p => p.id === lastProfileId) : null;
+          if (returnScreen && lastProf) {
+            // Auto-select profile and restore screen
+            localStorage.removeItem("ak_returnScreen");
+            setActiveProfile(lastProf);
+            setLayoutKey(lastProf.favoriteLayout || "qwerty");
+            if (lastProf.streak) setStreak(lastProf.streak);
+            setShowCount((lastProf.currentLevel || 1) + 10);
+            setScreen(returnScreen === "profilePicker" ? "levelMap" : returnScreen);
+          } else {
+            setScreen("profilePicker");
+          }
         }
       } else {
         // Not logged in
@@ -911,7 +931,14 @@ export default function AccuratKey() {
       setBirthdayProfile(updated);
       setScreen("birthday");
     } else {
-      setScreen("levelMap");
+      // Restore screen if returning from shop or other external page
+      const returnScreen = typeof window !== "undefined" ? localStorage.getItem("ak_returnScreen") : null;
+      if (returnScreen && returnScreen !== "profilePicker") {
+        localStorage.removeItem("ak_returnScreen");
+        setScreen(returnScreen);
+      } else {
+        setScreen("levelMap");
+      }
     }
   };
 
@@ -1287,20 +1314,20 @@ const Nav = () => (<>
     <UidTag />
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
       <div>
-        <span style={{fontWeight:800,fontSize:16,color:T.text,fontFamily:T.font}}><span style={{color:T.purple}}>Accurat</span>Key</span>
+        <span style={{fontWeight:800,fontSize:fs(16),color:T.text,fontFamily:T.font}}><span style={{color:T.purple}}>Accurat</span>Key</span>
         {currentUsername && <div style={{fontSize:9,color:T.muted,marginTop:1}}>@{currentUsername}</div>}
       </div>
       {activeProfile && (
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           {streak>0&&<span style={{color:"#f97316",fontWeight:700,fontSize:12}}>🔥{streak}</span>}
-          {canUse(activeProfile,"keys")&&<span style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:"4px 10px",fontSize:13,color:T.accent,fontWeight:700,display:"flex",alignItems:"center",gap:4}}><KKey size={14}/>{((k)=>k>=1e6?""+Math.round(k/1e6)+"M":k>=1e3?""+Math.round(k/1e3)+"k":k)(activeProfile.keys||0)}</span>}
-                    {canUse(activeProfile,"friends")&&<button onClick={()=>{getFriends(user?.uid).then(setFriends);getIncomingRequests(user?.uid).then(setFriendReqs);setShowFriends(true);}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:13,padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Friends">👥</button>}
-          {canUse(activeProfile,"shop")&&<button onClick={()=>window.location.href='/shop'} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:13,padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Shop">🛍️</button>}
+          {canUse(activeProfile,"keys")&&<span style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:"4px 10px",fontSize:fs(13),color:T.accent,fontWeight:700,display:"flex",alignItems:"center",gap:4}}><KKey size={14}/>{((k)=>k>=1e6?""+Math.round(k/1e6)+"M":k>=1e3?""+Math.round(k/1e3)+"k":k)(activeProfile.keys||0)}</span>}
+                    {canUse(activeProfile,"friends")&&<button onClick={()=>{getFriends(user?.uid).then(setFriends);getIncomingRequests(user?.uid).then(setFriendReqs);setShowFriends(true);}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:fs(13),padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Friends">👥</button>}
+          {canUse(activeProfile,"shop")&&<button onClick={()=>{localStorage.setItem('ak_returnScreen', screen);window.location.href='/shop';}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:13,padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Shop">🛍️</button>}
           <button onClick={openSettings} style={{background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",alignItems:"center",gap:7}} title="Edit profile">
             <AvatarImg profile={activeProfile} size={30} />
             <span style={{fontSize:12,color:T.muted,maxWidth:90,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{activeProfile.name}</span>
           </button>
-          <button onClick={() => requirePin("switch", () => setScreen("profilePicker"))} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.faint,fontSize:11,padding:"4px 8px",cursor:"pointer",fontFamily:T.font}}>
+          <button onClick={() => requirePin("switch", () => setScreen("profilePicker"))} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.faint,fontSize:fs(11),padding:"4px 8px",cursor:"pointer",fontFamily:T.font}}>
             Switch
           </button>
         </div>
@@ -1410,7 +1437,7 @@ const Nav = () => (<>
 
   if (screen === "profilePicker") return (
     <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'JetBrains Mono',monospace",padding:24}}>
-      <h1 style={{color:T.text,fontSize:28,fontWeight:800,marginBottom:8,textAlign:"center"}}>Who's playing?</h1>
+      <h1 style={{color:T.text,fontSize:fs(28),fontWeight:800,marginBottom:8,textAlign:"center"}}>Who's playing?</h1>
       <p style={{color:T.muted,fontSize:14,marginBottom:36,textAlign:"center"}}>Pick your profile to continue</p>
       <div style={{display:"flex",flexWrap:"wrap",gap:16,justifyContent:"center",maxWidth:600}}>
         {profiles.map(p => (
@@ -1550,7 +1577,7 @@ const Nav = () => (<>
       <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:24}}>
         <div style={{width:"100%",maxWidth:460,textAlign:"center"}}>
           <div style={{fontSize:56,marginBottom:12}}>{lv.emoji}</div>
-          <h2 style={{color:T.text,fontSize:24,fontWeight:800,marginBottom:4}}>Level {lv.id}: {lv.name}</h2>
+          <h2 style={{color:T.text,fontSize:fs(24),fontWeight:800,marginBottom:4}}>Level {lv.id}: {lv.name}</h2>
           <p style={{color:T.muted,fontSize:13,marginBottom:28}}>Target: {lv.accuracy}% accuracy</p>
           <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:24,marginBottom:24,textAlign:"left"}}>
             <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:14}}>Tips</div>
@@ -1773,7 +1800,7 @@ const Nav = () => (<>
           {/* Tabs */}
           <div style={{display:"flex",gap:6,marginBottom:16,background:T.card,borderRadius:10,padding:3,border:`1px solid ${T.border}`}}>
             {([["map","🗺️ Map",true],["daily","📅 Daily",canUse(activeProfile,"daily")],["test","⌨️ Test",canUse(activeProfile,"test")]]).filter(t=>t[2]).map(([k,l])=>(
-              <button key={k} onClick={()=>setActiveTab(k)} style={{flex:1,padding:"8px 0",borderRadius:7,border:"none",background:activeTab===k?T.purple:"transparent",color:activeTab===k?"#fff":T.faint,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:T.font}}>{l}</button>
+              <button key={k} onClick={()=>setActiveTab(k)} style={{flex:1,padding:"8px 0",borderRadius:7,border:"none",background:activeTab===k?T.purple:"transparent",color:activeTab===k?"#fff":T.faint,fontWeight:700,fontSize:fs(12),cursor:"pointer",fontFamily:T.font}}>{l}</button>
             ))}
           </div>
 
@@ -1795,8 +1822,8 @@ const Nav = () => (<>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
                       <div>
                         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
-                          <span style={{color:T.faint,fontSize:10,letterSpacing:1}}>LEVEL {lv.id}</span>
-                          {current&&<span style={{background:lv.color,color:"#fff",fontSize:9,fontWeight:700,padding:"1px 7px",borderRadius:10}}>CURRENT</span>}
+                          <span style={{color:T.faint,fontSize:fs(10),letterSpacing:1}}>LEVEL {lv.id}</span>
+                          {current&&<span style={{background:lv.color,color:"#fff",fontSize:fs(9),fontWeight:700,padding:"1px 7px",borderRadius:10}}>CURRENT</span>}
                           {canSkipTo&&<span style={{background:"#f59e0b22",color:"#f59e0b",fontSize:9,fontWeight:700,padding:"1px 7px",borderRadius:10}}>SKIP?</span>}
                         </div>
                         <div style={{color:T.text,fontWeight:700,fontSize:15}}>{lv.name}</div>
