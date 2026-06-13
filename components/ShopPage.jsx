@@ -267,40 +267,53 @@ export default function ShopPage() {
 
   const showMsg = m => { setMsg(m); setTimeout(() => setMsg(""), 2500); };
 
+  // Optimistic update helper — updates UI instantly, syncs to Firestore in background
+  const optimistic = (patch) => {
+    setActiveProfile(p => ({ ...p, ...patch }));
+  };
+
   const handleBuyTheme = async (th) => {
     if (!activeProfile) return;
+    const newKeys = (activeProfile.keys || 0) - th.cost;
+    if (newKeys < 0) { showMsg("Not enough 🔑 Keys"); return; }
+    // Instant UI update
+    optimistic({ keys: newKeys, ownedThemes: [...(activeProfile.ownedThemes || []), th.id] });
+    showMsg(`${th.label} unlocked! 🎉`);
     try {
       await purchaseTheme(user.uid, activeProfile.id, th.id, th.cost);
-      const fresh = await (await import("@/lib/firebase")).getProfile(user.uid, activeProfile.id);
-      setActiveProfile(fresh);
-      showMsg(`${th.label} unlocked! 🎉`);
-    } catch(e) { showMsg("Not enough 🔑 Keys"); }
+    } catch(e) {
+      // Revert if Firestore says no
+      optimistic({ keys: activeProfile.keys, ownedThemes: activeProfile.ownedThemes });
+      showMsg("Not enough 🔑 Keys");
+    }
   };
 
   const handleEquipTheme = async (th) => {
     if (!activeProfile) return;
-    await setActiveTheme(user.uid, activeProfile.id, th.id);
-    const fresh = await (await import("@/lib/firebase")).getProfile(user.uid, activeProfile.id);
-    setActiveProfile(fresh);
+    optimistic({ activeTheme: th.id });
     showMsg(`${th.label} equipped!`);
+    setActiveTheme(user.uid, activeProfile.id, th.id); // fire and forget
   };
 
   const handleBuyFont = async (f) => {
     if (!activeProfile) return;
+    const newKeys = (activeProfile.keys || 0) - f.cost;
+    if (newKeys < 0) { showMsg("Not enough 🔑 Keys"); return; }
+    optimistic({ keys: newKeys, ownedFonts: [...(activeProfile.ownedFonts || []), f.id] });
+    showMsg(`${f.label} unlocked! 🎉`);
     try {
       await purchaseFont(user.uid, activeProfile.id, f.id, f.cost);
-      const fresh = await (await import("@/lib/firebase")).getProfile(user.uid, activeProfile.id);
-      setActiveProfile(fresh);
-      showMsg(`${f.label} unlocked! 🎉`);
-    } catch(e) { showMsg("Not enough 🔑 Keys"); }
+    } catch(e) {
+      optimistic({ keys: activeProfile.keys, ownedFonts: activeProfile.ownedFonts });
+      showMsg("Not enough 🔑 Keys");
+    }
   };
 
   const handleEquipFont = async (f) => {
     if (!activeProfile) return;
-    await setActiveFont(user.uid, activeProfile.id, f.id);
-    const fresh = await (await import("@/lib/firebase")).getProfile(user.uid, activeProfile.id);
-    setActiveProfile(fresh);
+    optimistic({ activeFont: f.id });
     showMsg(`${f.label} equipped!`);
+    setActiveFont(user.uid, activeProfile.id, f.id); // fire and forget
   };
 
   const keys       = activeProfile?.keys || 0;

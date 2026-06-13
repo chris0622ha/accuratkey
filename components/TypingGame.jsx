@@ -535,6 +535,8 @@ export default function AccuratKey() {
   const [user, setUser] = useState(null);
   const [profiles, setProfiles] = useState([]);
   const [activeProfile, setActiveProfile] = useState(null);
+  // Optimistic profile patch — updates UI instantly without waiting for Firestore
+  const patchProfile = (patch) => setActiveProfile(p => p ? {...p, ...patch} : p);
   const _age = activeProfile?.isProfileAdmin ? 20 : (activeProfile?.age ?? (activeProfile?.birthday ? calcAge(activeProfile.birthday) : 20));
   const _baseT = getTheme(_age);
   const THEME_COLORS = {
@@ -1109,16 +1111,16 @@ export default function AccuratKey() {
       if (editPhotoB64) photoURL = editPhotoB64;
       else if (editPhoto) photoURL = await resizeToBase64(editPhoto, 200);
       const age = calcAge(editBirthday || activeProfile.birthday);
-      await updateProfile(user.uid, activeProfile.id, {
+      const patch = {
         name: editName.trim() || activeProfile.name,
         avatar: editAvatar,
         photoURL,
         birthday: editBirthday || activeProfile.birthday,
         age,
-      });
-      const updated = await getProfile(user.uid, activeProfile.id);
-      setActiveProfile(updated);
+      };
+      patchProfile(patch); // instant
       setSaveMsg("Saved!");
+      await updateProfile(user.uid, activeProfile.id, patch); // sync in background
     } catch { setSaveMsg("Error saving."); }
     setSaving(false);
   };
@@ -1636,7 +1638,7 @@ const Nav = () => (<>
             {/* Profile Admin */}
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderTop:`1px solid ${T.faint}`,marginTop:8}}>
               <div><div style={{color:T.text,fontSize:12,fontWeight:700}}>Profile Admin</div></div>
-              <button onClick={async()=>{const v=!(activeProfile?.isProfileAdmin);await updateProfile(user.uid,activeProfile.id,{isProfileAdmin:v});const u=await getProfile(user.uid,activeProfile.id);setActiveProfile(u);}} style={{padding:"5px 12px",background:(activeProfile?.isProfileAdmin)?"#a78bfa22":"transparent",border:`1px solid ${(activeProfile?.isProfileAdmin)?"#a78bfa":T.border}`,borderRadius:7,color:(activeProfile?.isProfileAdmin)?"#a78bfa":T.muted,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>{activeProfile?.isProfileAdmin?"ON":"OFF"}</button>
+              <button onClick={async()=>{const v=!(activeProfile?.isProfileAdmin);patchProfile({isProfileAdmin:v});updateProfile(user.uid,activeProfile.id,{isProfileAdmin:v});}} style={{padding:"5px 12px",background:(activeProfile?.isProfileAdmin)?"#a78bfa22":"transparent",border:`1px solid ${(activeProfile?.isProfileAdmin)?"#a78bfa":T.border}`,borderRadius:7,color:(activeProfile?.isProfileAdmin)?"#a78bfa":T.muted,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>{activeProfile?.isProfileAdmin?"ON":"OFF"}</button>
                  </div>
             {isKid(activeProfile)&&!activeProfile?.isProfileAdmin&&<div style={{padding:"10px 0",borderTop:`1px solid ${T.faint}`}}>
               <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>Feature Access</div>
@@ -1646,7 +1648,7 @@ const Nav = () => (<>
                   const on=(activeProfile?.features||{})[feat]===true;
                   return <div key={feat} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 0",borderBottom:`1px solid ${T.border}`}}>
                     <span style={{color:T.muted,fontSize:12}}>{label}</span>
-                    <button onClick={async()=>{const f={...(activeProfile?.features||{}),[feat]:!on};await updateProfile(user.uid,activeProfile.id,{features:f});const u=await getProfile(user.uid,activeProfile.id);setActiveProfile(u);}} style={{padding:"3px 10px",background:on?"#7c6af722":"transparent",border:`1px solid ${on?T.purple:T.border}`,borderRadius:6,color:on?T.purple:T.faint,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>{on?"ON":"OFF"}</button>
+                    <button onClick={async()=>{const f={...(activeProfile?.features||{}),[feat]:!on};patchProfile({features:f});updateProfile(user.uid,activeProfile.id,{features:f});}} style={{padding:"3px 10px",background:on?"#7c6af722":"transparent",border:`1px solid ${on?T.purple:T.border}`,borderRadius:6,color:on?T.purple:T.faint,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>{on?"ON":"OFF"}</button>
                   </div>;
                 })}
               </div>
@@ -1655,7 +1657,7 @@ const Nav = () => (<>
             <div style={{padding:"10px 0",borderTop:`1px solid ${T.faint}`}}>
               <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>PIN</div>
               <input type="password" value={editPin} onChange={e=>setEditPin(e.target.value)} maxLength={6} placeholder={activeProfile?.pin?"Change PIN":"Set PIN (optional)"} style={{width:"100%",background:T.faint,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:13,padding:"8px 12px",outline:"none",boxSizing:"border-box",marginBottom:6}}/>
-              <button onClick={async()=>{const v=editPin.trim();await updateProfile(user.uid,activeProfile.id,{pin:v||null});const u=await getProfile(user.uid,activeProfile.id);setActiveProfile(u);setEditPin("");setSaveMsg(v?"PIN set":"PIN removed");}} style={{padding:"6px 14px",background:T.faint,border:`1px solid ${T.border}`,borderRadius:7,color:T.muted,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>Save PIN</button>
+              <button onClick={async()=>{const v=editPin.trim();patchProfile({pin:v||null});await updateProfile(user.uid,activeProfile.id,{pin:v||null});setEditPin("");setSaveMsg(v?"PIN set":"PIN removed");}} style={{padding:"6px 14px",background:T.faint,border:`1px solid ${T.border}`,borderRadius:7,color:T.muted,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>Save PIN</button>
             </div>
             <button onClick={handleSettingsSave} disabled={saving} style={{width:"100%",padding:"13px",borderRadius:9,border:"none",background:T.purple,color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:T.font,opacity:saving?0.6:1}}>{saving?"Saving...":"Save Changes"}</button>
 
@@ -1815,7 +1817,7 @@ const Nav = () => (<>
               </>}
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:friendReqs.length?12:0,marginBottom:8}}>
                 <span style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase"}}>Add Friend</span>
-                <span style={{color:T.faint,fontSize:10}}>Requests: <button onClick={async()=>{const v=!activeProfile?.noFriendRequests;await updateProfile(user.uid,activeProfile.id,{noFriendRequests:v});const u=await getProfile(user.uid,activeProfile.id);setActiveProfile(u);}} style={{background:"none",border:"none",color:activeProfile?.noFriendRequests?"#ef4444":T.accent2,fontSize:10,cursor:"pointer",fontFamily:T.font,padding:0,fontWeight:700}}>{activeProfile?.noFriendRequests?"OFF":"ON"}</button></span>
+                <span style={{color:T.faint,fontSize:10}}>Requests: <button onClick={async()=>{const v=!activeProfile?.noFriendRequests;patchProfile({noFriendRequests:v});updateProfile(user.uid,activeProfile.id,{noFriendRequests:v});}} style={{background:"none",border:"none",color:activeProfile?.noFriendRequests?"#ef4444":T.accent2,fontSize:10,cursor:"pointer",fontFamily:T.font,padding:0,fontWeight:700}}>{activeProfile?.noFriendRequests?"OFF":"ON"}</button></span>
               </div>
               <div style={{display:"flex",gap:8,marginBottom:14}}>
                 <input value={friendSearch} onChange={e=>setFriendSearch(e.target.value)} onKeyDown={e=>e.key==="Enter"&&(async()=>{try{const res=await getUserByUsername(friendSearch.replace("@",""));if(!res)return setFriendMsg("User not found");await sendFriendRequest(user.uid,currentUsername,res.uid,friendSearch.replace("@","").toLowerCase());setFriendMsg("Request sent!");setFriendSearch("");}catch(e){setFriendMsg(e.message||"Error");}})()}  placeholder="@username" style={{flex:1,background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:13,padding:"9px 12px",outline:"none"}}/>
@@ -1852,8 +1854,8 @@ const Nav = () => (<>
                       <div style={{color:T.faint,fontSize:11,marginBottom:8}}>{th.cost===0?"Free":`${th.cost} 🔑`}</div>
                       {active?<div style={{color:T.purple,fontSize:11,fontWeight:700}}>Active</div>
                         :!canCustomTheme&&th.id!=="dark"?<div style={{color:T.faint,fontSize:11}}>🔒 Locked</div>
-                        :owned?<button onClick={async()=>{await setActiveTheme(user.uid,activeProfile.id,th.id);const u=await getProfile(user.uid,activeProfile.id);setActiveProfile(u);setShopMsg(`${th.label} activated!`);}} style={{width:"100%",padding:"6px",background:"transparent",border:`1px solid ${T.purple}`,borderRadius:6,color:T.purple,fontSize:11,fontWeight:700,cursor:"pointer"}}>Equip</button>
-                        :<button onClick={async()=>{try{await purchaseTheme(user.uid,activeProfile.id,th.id,th.cost);const u=await getProfile(user.uid,activeProfile.id);setActiveProfile(u);setShopMsg(`${th.label} purchased!`);await setActiveTheme(user.uid,activeProfile.id,th.id);const u2=await getProfile(user.uid,activeProfile.id);setActiveProfile(u2);}catch(e){setShopMsg(e.message||"Error");}}} style={{width:"100%",padding:"6px",background:T.purple,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>Buy</button>
+                        :owned?<button onClick={async()=>{patchProfile({activeTheme:th.id});setShopMsg(`${th.label} activated!`);setActiveTheme(user.uid,activeProfile.id,th.id);}} style={{width:"100%",padding:"6px",background:"transparent",border:`1px solid ${T.purple}`,borderRadius:6,color:T.purple,fontSize:11,fontWeight:700,cursor:"pointer"}}>Equip</button>
+                        :<button onClick={async()=>{const newKeys=(activeProfile.keys||0)-th.cost;if(newKeys<0){setShopMsg("Not enough 🔑 Keys");return;}patchProfile({keys:newKeys,ownedThemes:[...(activeProfile.ownedThemes||[]),th.id],activeTheme:th.id});setShopMsg(`${th.label} purchased!`);try{await purchaseTheme(user.uid,activeProfile.id,th.id,th.cost);await setActiveTheme(user.uid,activeProfile.id,th.id);}catch(e){setShopMsg(e.message||"Error");}}} style={{width:"100%",padding:"6px",background:T.purple,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>Buy</button>
                       }
                     </div>
                   );
