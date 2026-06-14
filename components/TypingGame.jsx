@@ -3,7 +3,7 @@ import TypingTest from "./TypingTest";
 import GamesTab from "./GamesTab";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont } from "@/lib/firebase";
+import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback } from "@/lib/firebase";
 
 export 
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
@@ -833,6 +833,11 @@ export default function AccuratKey() {
   const [dailyWords, setDailyWords] = useState(null);
   const [dailyBoard, setDailyBoard] = useState([]);
   const [dailyDone, setDailyDone] = useState(false);
+  const [sessionDates, setSessionDates] = useState({});
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackSent, setFeedbackSent] = useState(false);
+  const [feedbackSending, setFeedbackSending] = useState(false);
   const [streak, setStreak] = useState(0);
 
   const SHOP_THEMES = [
@@ -916,6 +921,9 @@ export default function AccuratKey() {
     if(activeTab==="daily"&&!dailyWords){
       getDailyChallenge().then(d=>setDailyWords(d.words||["typefast","accuracy","keyboard","practice","daily"])).catch(()=>{});
       getDailyLeaderboard().then(setDailyBoard).catch(()=>{});
+    }
+    if(activeTab==="daily"&&user&&activeProfile){
+      getSessionDates(user.uid, activeProfile.id, 90).then(setSessionDates).catch(()=>{});
     }
   }, [activeTab]);
 
@@ -1449,6 +1457,7 @@ const Nav = () => (<>
       {activeProfile && (
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           {streak>0&&<span style={{color:"#f97316",fontWeight:700,fontSize:12}}>🔥{streak}</span>}
+          <button onClick={e=>{e.stopPropagation();setShowFeedback(true);setFeedbackSent(false);setFeedbackText("");}} title="Send feedback" style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:12,padding:"3px 7px",cursor:"pointer",fontFamily:T.font,lineHeight:1}}>💬</button>
           {canUse(activeProfile,"keys")&&<span style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:"4px 10px",fontSize:fs(13),color:T.accent,fontWeight:700,display:"flex",alignItems:"center",gap:4}}><KKey size={14}/>{((k)=>k>=1e6?""+Math.round(k/1e6)+"M":k>=1e3?""+Math.round(k/1e3)+"k":k)(activeProfile.keys||0)}</span>}
                     {canUse(activeProfile,"friends")&&<button onClick={()=>{getFriends(user?.uid).then(setFriends);getIncomingRequests(user?.uid).then(setFriendReqs);setShowFriends(true);}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:fs(13),padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Friends">👥</button>}
           {canUse(activeProfile,"shop")&&<button onClick={()=>{
@@ -2103,6 +2112,88 @@ const Nav = () => (<>
               ?<div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:20,textAlign:"center",marginBottom:16}}><div style={{color:T.accent2,fontWeight:700,fontSize:15,marginBottom:4}}>✓ Completed today!</div><div style={{color:T.muted,fontSize:12}}>Come back tomorrow.</div></div>
               :<button onClick={()=>requestStartLevel(-1)} style={{width:"100%",padding:"14px",borderRadius:12,border:"none",background:T.purple,color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:T.font,marginBottom:16}}>Start Daily Challenge →</button>
             )}
+
+            {/* ── Streak Calendar ── */}
+            {(() => {
+              const today = new Date();
+              const days = 91;
+              // Build array of last 91 days (oldest first), aligned to start on Sunday
+              const cells = [];
+              for (let i = days - 1; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(d.getDate() - i);
+                const key = d.toISOString().slice(0, 10);
+                const data = sessionDates[key];
+                cells.push({ key, date: d, data });
+              }
+              // Pad start so grid starts on Sunday
+              const firstDay = cells[0].date.getDay(); // 0=Sun
+              const padded = Array(firstDay).fill(null).concat(cells);
+              const maxCount = Math.max(1, ...cells.map(c => c.data?.count || 0));
+              const weeks = [];
+              for (let i = 0; i < padded.length; i += 7) weeks.push(padded.slice(i, i + 7));
+              const monthLabels = [];
+              let lastMonth = -1;
+              weeks.forEach((week, wi) => {
+                const firstReal = week.find(c => c);
+                if (firstReal) {
+                  const m = firstReal.date.getMonth();
+                  if (m !== lastMonth) { monthLabels.push({ wi, label: firstReal.date.toLocaleString("default", { month: "short" }) }); lastMonth = m; }
+                }
+              });
+              const totalDays = cells.filter(c => c.data).length;
+              const totalSessions = cells.reduce((s, c) => s + (c.data?.count || 0), 0);
+              return (
+                <div style={{marginBottom:20}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                    <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase"}}>Activity — Last 90 Days</div>
+                    <div style={{display:"flex",gap:12}}>
+                      <span style={{color:T.muted,fontSize:11}}><span style={{color:T.text,fontWeight:700}}>{totalDays}</span> active days</span>
+                      <span style={{color:T.muted,fontSize:11}}><span style={{color:T.text,fontWeight:700}}>{totalSessions}</span> sessions</span>
+                    </div>
+                  </div>
+                  {/* Month labels */}
+                  <div style={{display:"flex",gap:3,marginBottom:2,paddingLeft:0}}>
+                    {weeks.map((_, wi) => {
+                      const lbl = monthLabels.find(m => m.wi === wi);
+                      return <div key={wi} style={{width:12,fontSize:8,color:lbl?T.muted:"transparent",flexShrink:0}}>{lbl?.label||"·"}</div>;
+                    })}
+                  </div>
+                  {/* Grid: columns=weeks, rows=days */}
+                  <div style={{display:"flex",gap:3,overflowX:"auto",paddingBottom:4}}>
+                    {weeks.map((week, wi) => (
+                      <div key={wi} style={{display:"flex",flexDirection:"column",gap:3}}>
+                        {week.map((cell, di) => {
+                          if (!cell) return <div key={di} style={{width:12,height:12,borderRadius:2}} />;
+                          const intensity = cell.data ? Math.max(0.2, cell.data.count / maxCount) : 0;
+                          const isToday = cell.key === today.toISOString().slice(0,10);
+                          const bg = cell.data
+                            ? `rgba(139,92,246,${Math.min(1, intensity * 0.8 + 0.2)})`
+                            : T.card;
+                          return (
+                            <div key={di} title={cell.data
+                              ? `${cell.key}: ${cell.data.count} session${cell.data.count>1?"s":""}, best ${cell.data.bestWpm} WPM${cell.data.passed?" ✓":""}`
+                              : cell.key}
+                              style={{width:12,height:12,borderRadius:2,background:bg,
+                                border:isToday?`1px solid ${T.purple}`:`1px solid ${cell.data?"transparent":T.border+"44"}`,
+                                cursor:cell.data?"pointer":"default",flexShrink:0}} />
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                  {/* Legend */}
+                  <div style={{display:"flex",alignItems:"center",gap:4,marginTop:6,justifyContent:"flex-end"}}>
+                    <span style={{fontSize:9,color:T.faint}}>less</span>
+                    {[0,0.25,0.5,0.75,1].map(v=>(
+                      <div key={v} style={{width:10,height:10,borderRadius:2,background:v===0?T.card:`rgba(139,92,246,${v*0.8+0.2})`}} />
+                    ))}
+                    <span style={{fontSize:9,color:T.faint}}>more</span>
+                  </div>
+                </div>
+              );
+            })()}
+
             <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>Today's Leaderboard</div>
             {dailyBoard.length===0&&<div style={{color:T.faint,fontSize:13,textAlign:"center",padding:"20px 0"}}>No scores yet. Be first!</div>}
             {dailyBoard.map((s,i)=>(
@@ -2119,6 +2210,49 @@ const Nav = () => (<>
 
           <div style={{height:40}}/>
         </div>
+
+        {showFeedback && (
+          <div onClick={()=>setShowFeedback(false)} style={{position:"fixed",inset:0,background:"#000a",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1010,padding:20}}>
+            <div onClick={e=>e.stopPropagation()} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:16,padding:24,width:"100%",maxWidth:420}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                <span style={{color:T.text,fontWeight:800,fontSize:16}}>💬 Feedback</span>
+                <button onClick={()=>setShowFeedback(false)} style={{background:"none",border:"none",color:T.faint,fontSize:20,cursor:"pointer"}}>×</button>
+              </div>
+              {feedbackSent ? (
+                <div style={{textAlign:"center",padding:"20px 0"}}>
+                  <div style={{fontSize:36,marginBottom:8}}>🙏</div>
+                  <div style={{color:T.text,fontWeight:700,fontSize:15,marginBottom:6}}>Thanks for your feedback!</div>
+                  <div style={{color:T.muted,fontSize:13}}>We read every message.</div>
+                  <button onClick={()=>setShowFeedback(false)} style={{marginTop:16,background:T.purple,border:"none",borderRadius:8,color:"#fff",fontSize:13,fontWeight:700,padding:"8px 20px",cursor:"pointer",fontFamily:T.font}}>Close</button>
+                </div>
+              ) : (
+                <>
+                  <div style={{color:T.muted,fontSize:13,marginBottom:12}}>AccuratKey is being built — tell us anything. Bug, idea, complaint, request. We're listening.</div>
+                  <textarea
+                    autoFocus
+                    value={feedbackText}
+                    onChange={e=>setFeedbackText(e.target.value)}
+                    placeholder="Type anything here..."
+                    rows={5}
+                    style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontSize:13,padding:"10px 12px",fontFamily:T.font,resize:"vertical",outline:"none",boxSizing:"border-box"}}
+                  />
+                  <div style={{display:"flex",justifyContent:"flex-end",marginTop:10,gap:8}}>
+                    <button onClick={()=>setShowFeedback(false)} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,fontSize:13,padding:"8px 16px",cursor:"pointer",fontFamily:T.font}}>Cancel</button>
+                    <button disabled={!feedbackText.trim()||feedbackSending} onClick={async()=>{
+                      if(!feedbackText.trim())return;
+                      setFeedbackSending(true);
+                      try{ await submitFeedback(user?.uid||null, activeProfile?.id||null, feedbackText.trim()); setFeedbackSent(true); }
+                      catch(e){ alert("Failed to send. Please try again."); }
+                      finally{ setFeedbackSending(false); }
+                    }} style={{background:feedbackText.trim()&&!feedbackSending?T.purple:"#444",border:"none",borderRadius:8,color:"#fff",fontSize:13,fontWeight:700,padding:"8px 20px",cursor:feedbackText.trim()&&!feedbackSending?"pointer":"default",fontFamily:T.font,opacity:feedbackSending?0.6:1}}>
+                      {feedbackSending?"Sending…":"Send →"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
         {showFriends && (
           <div onClick={()=>{setShowFriends(false);setFriendMsg("");}} style={{position:"fixed",inset:0,background:"#000a",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1010,padding:20}}>
