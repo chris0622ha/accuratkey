@@ -286,7 +286,19 @@ export default function ShopPage() {
   };
 
   const startTrial = (themeId, fontId) => {
-    if (trial) { showMsg("End current trial first"); return; }
+    // If trial already running, allow swapping theme OR font within same trial
+    if (trial) {
+      const newT = {
+        ...trial,
+        themeId: themeId || trial.themeId,
+        fontId:  fontId  || trial.fontId,
+      };
+      setTrial(newT);
+      if (themeId) setActiveProfile(p => p ? {...p, activeTheme: themeId} : p);
+      if (fontId)  setActiveProfile(p => p ? {...p, activeFont: fontId}  : p);
+      showMsg(`Swapped ${themeId ? "theme" : "font"} — ${trialSecondsLeft}s left`);
+      return;
+    }
     const usage = getTrialUsage();
     if (usage.count >= MAX_TRIALS) { showMsg(`Trial limit: ${MAX_TRIALS}/week reached`); return; }
     localStorage.setItem("ak_trials", JSON.stringify({ week: usage.week, count: usage.count + 1 }));
@@ -423,8 +435,9 @@ export default function ShopPage() {
         <div style={{position:"fixed",top:0,left:0,right:0,zIndex:998,background:"#1a0a30",borderBottom:"2px solid #c084fc",padding:"8px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",fontFamily:"'JetBrains Mono',monospace"}}>
           <div style={{color:"#c084fc",fontSize:12,fontWeight:700}}>
             ⏱ TRIAL: {trialSecondsLeft}s left
-            {trial.themeId !== (trial.prevTheme) && <span style={{marginLeft:12,color:"#e0e0ff"}}>Theme: {ALL_THEMES.find(t=>t.id===trial.themeId)?.label}</span>}
-            {trial.fontId !== (trial.prevFont) && <span style={{marginLeft:12,color:"#e0e0ff"}}>Font: {ALL_FONTS.find(f=>f.id===trial.fontId)?.label}</span>}
+            <span style={{marginLeft:12,color:"#e0e0ff"}}>Theme: {ALL_THEMES.find(t=>t.id===trial.themeId)?.label || trial.themeId}</span>
+            <span style={{marginLeft:8,color:"#aaa"}}>·</span>
+            <span style={{marginLeft:8,color:"#e0e0ff"}}>Font: {ALL_FONTS.find(f=>f.id===trial.fontId)?.label || trial.fontId}</span>
           </div>
           <button onClick={cancelTrial} style={{background:"none",border:"1px solid #c084fc",borderRadius:6,color:"#c084fc",fontSize:11,padding:"3px 10px",cursor:"pointer",fontFamily:"inherit"}}>End trial</button>
         </div>
@@ -484,7 +497,7 @@ export default function ShopPage() {
                         <button onClick={()=>handleBuyTheme(th)} style={{flex:1,padding:"6px 0",background:th.purple+"22",border:`1px solid ${th.purple}`,borderRadius:6,color:th.purple,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
                           Buy {th.cost} 🔑
                         </button>
-                        {th.cost > 0 && <button onClick={()=>startTrial(th.id, null)} style={{padding:"6px 8px",background:"transparent",border:`1px solid ${th.border}`,borderRadius:6,color:th.muted,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}} title="Try for 30s">Try</button>}
+                        {th.cost > 0 && <button onClick={()=>startTrial(th.id, null)} style={{padding:"6px 8px",background:"transparent",border:`1px solid ${th.border}`,borderRadius:6,color:th.muted,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}} title={trial ? "Swap theme in current trial" : "Try for 30s"}>Try</button>}
                       </div>
                     )}
                   </div>
@@ -522,7 +535,7 @@ export default function ShopPage() {
                       <button onClick={()=>handleBuyFont(f)} style={{flex:1,padding:"6px 0",background:T.purple+"22",border:`1px solid ${T.purple}`,borderRadius:6,color:T.purple,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
                         Buy {f.cost} 🔑
                       </button>
-                      {f.cost > 0 && <button onClick={()=>startTrial(null, f.id)} style={{padding:"6px 8px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}} title="Try for 30s">Try</button>}
+                      {f.cost > 0 && <button onClick={()=>startTrial(null, f.id)} style={{padding:"6px 8px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}} title={trial ? "Swap theme in current trial" : "Try for 30s"}>Try</button>}
                     </div>
                   )}
                 </div>
