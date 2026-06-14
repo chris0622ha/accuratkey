@@ -788,6 +788,7 @@ export default function AccuratKey() {
   const ghostInterval = useRef(null);
   const [combo, setCombo] = useState(0);
   const [keyMistakes, setKeyMistakes] = useState({});
+  const [showHeatmap, setShowHeatmap] = useState(false);
   const [resultData, setResultData] = useState(null);
   const [keysEarned, setKeysEarned] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
@@ -1107,7 +1108,7 @@ export default function AccuratKey() {
     const ov = customWords || levelOverrides[String(levelId)] || null;
     setLines(Array.from({ length: TOTAL_LINES }, () => genLine(levelId, ov)));
     setLineIdx(0); setTyped(""); setTotalChars(0); totalCharsRef.current = 0; setTotalCorrectChars(0);
-    setStartTime(null); startTimeRef.current = null; setWpm(0); setAccuracy(100); setCombo(0); setKeyMistakes({});
+    setStartTime(null); startTimeRef.current = null; setWpm(0); setAccuracy(100); setCombo(0); setKeyMistakes({}); setShowHeatmap(false);
   }, []);
 
   const startLevel = (levelId, isSkip = false, skipTarget = null) => {
@@ -2262,8 +2263,24 @@ const Nav = () => (<>
 
     const Keyboard = () => {
       const nextChar = current[typed.length] || null;
+      const maxErr = Math.max(1, ...Object.values(keyMistakes));
+      const hasAnyMistakes = Object.keys(keyMistakes).length > 0;
       return (
         <div style={{width:"100%",maxWidth:660,background:"#0d0d1a",border:"1px solid #1e1e30",borderRadius:14,padding:14,marginTop:12}}>
+          <div style={{display:"flex",justifyContent:"flex-end",alignItems:"center",marginBottom:8,gap:6}}>
+            {showHeatmap && hasAnyMistakes && (
+              <div style={{display:"flex",alignItems:"center",gap:4,fontSize:9,color:"#666"}}>
+                <span>few</span>
+                {[0.15,0.35,0.55,0.75,1].map(v => (
+                  <div key={v} style={{width:10,height:10,borderRadius:2,background:`rgba(239,68,68,${v})`}} />
+                ))}
+                <span>many</span>
+              </div>
+            )}
+            <button onClick={e=>{e.stopPropagation();setShowHeatmap(h=>!h);}} style={{background:showHeatmap?"#ef4444":"#1a1a2e",border:`1px solid ${showHeatmap?"#ef4444":"#2a2a3e"}`,borderRadius:6,color:showHeatmap?"#fff":"#666",fontSize:10,padding:"2px 7px",cursor:"pointer",fontWeight:700,letterSpacing:0.5}}>
+              {showHeatmap?"🔥 HEAT":"🔥 OFF"}
+            </button>
+          </div>
           {layout.rows.map((row, ri) => (
             <div key={ri} style={{display:"flex",justifyContent:"center",gap:4,marginBottom:4,paddingLeft:ri===1?10:ri===2?18:0}}>
               {row.map(k => {
@@ -2271,10 +2288,20 @@ const Nav = () => (<>
                 const color = FC[finger] || "#444";
                 const isActive = activeKey === k;
                 const isNext = nextChar === k;
+                const errCount = keyMistakes[k] || 0;
+                const heatIntensity = showHeatmap && errCount > 0 ? errCount / maxErr : 0;
+                const heatBg = heatIntensity > 0
+                  ? `rgba(239,68,68,${Math.min(0.85, heatIntensity * 0.7 + 0.15)})`
+                  : null;
+                const baseBg = isActive ? color : isNext ? color+"33" : "#1a1a2e";
+                const finalBg = (!isActive && !isNext && heatBg) ? heatBg : baseBg;
                 return (
-                  <div key={k} style={{width:38,height:38,borderRadius:7,background:isActive?color:isNext?color+"33":"#1a1a2e",border:isNext?`1px solid ${color}88`:"1px solid #2a2a3e",borderBottom:`3px solid ${isActive?color+"88":"#111"}`,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",color:isActive?"#000":isNext?color:color+"99",fontSize:11,fontWeight:700,position:"relative",transition:"background 0.08s"}}>
+                  <div key={k} title={showHeatmap && errCount > 0 ? `${k.toUpperCase()}: ${errCount} error${errCount>1?"s":""}` : undefined} style={{width:38,height:38,borderRadius:7,background:finalBg,border:isNext?`1px solid ${color}88`:"1px solid #2a2a3e",borderBottom:`3px solid ${isActive?color+"88":"#111"}`,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",color:isActive?"#000":isNext?color:heatIntensity>0.4?"#fff":color+"99",fontSize:11,fontWeight:700,position:"relative",transition:"background 0.08s"}}>
                     {k.toUpperCase()}
                     {layout.bumps.includes(k) && <div style={{width:4,height:3,borderRadius:2,background:isActive?"#000":color,position:"absolute",bottom:3}} />}
+                    {showHeatmap && errCount > 0 && (
+                      <div style={{position:"absolute",top:1,right:2,fontSize:7,color:"#ffcdd2",fontWeight:900,lineHeight:1}}>{errCount}</div>
+                    )}
                   </div>
                 );
               })}
