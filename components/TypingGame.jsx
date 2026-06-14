@@ -776,6 +776,7 @@ export default function AccuratKey() {
   const [lineIdx, setLineIdx] = useState(0);
   const [typed, setTyped] = useState("");
   const [totalChars, setTotalChars] = useState(0);
+  const totalCharsRef = useRef(0);
   const [totalCorrectChars, setTotalCorrectChars] = useState(0);
   const [startTime, setStartTime] = useState(null);
   const startTimeRef = useRef(null);
@@ -1105,7 +1106,7 @@ export default function AccuratKey() {
   const initGame = useCallback((levelId, customWords) => {
     const ov = customWords || levelOverrides[String(levelId)] || null;
     setLines(Array.from({ length: TOTAL_LINES }, () => genLine(levelId, ov)));
-    setLineIdx(0); setTyped(""); setTotalChars(0); setTotalCorrectChars(0);
+    setLineIdx(0); setTyped(""); setTotalChars(0); totalCharsRef.current = 0; setTotalCorrectChars(0);
     setStartTime(null); startTimeRef.current = null; setWpm(0); setAccuracy(100); setCombo(0); setKeyMistakes({});
   }, []);
 
@@ -1154,6 +1155,19 @@ export default function AccuratKey() {
 
   useEffect(() => {
     if (screen === "game") setTimeout(() => inputRef.current?.focus(), 100);
+  }, [screen]);
+
+  // Tick WPM every second so it updates without typing
+  useEffect(() => {
+    if (screen !== "game") return;
+    const iv = setInterval(() => {
+      const st = startTimeRef.current;
+      if (!st) return;
+      const elMs = Date.now() - st;
+      if (elMs < 3000) return; // wait 3s to avoid spike
+      setWpm(Math.round((totalCharsRef.current / 5) / (elMs / 60000)));
+    }, 1000);
+    return () => clearInterval(iv);
   }, [screen]);
 
   useEffect(() => {
@@ -1205,8 +1219,10 @@ export default function AccuratKey() {
 
     const _st = startTimeRef.current;
     if (_st) {
-      const el = (Date.now() - _st) / 60000;
-      setWpm(Math.round(((totalChars + newTyped.length) / 5) / Math.max(el, 0.01)));
+      const elMs = Date.now() - _st;
+      if (elMs >= 3000) {
+        setWpm(Math.round(((totalChars + newTyped.length) / 5) / (elMs / 60000)));
+      }
     }
 
     // Line complete when typed length equals current line length
@@ -1214,7 +1230,7 @@ export default function AccuratKey() {
       const lv = LEVELS.find(l => l.id === playingLevel);
       const nt = totalChars + current.length;
       const nc = totalCorrectChars + current.split("").filter((c, i) => c === newTyped[i]).length;
-      setTotalChars(nt);
+      setTotalChars(nt); totalCharsRef.current = nt;
       setTotalCorrectChars(nc);
       setCombo(c => c + 1);
       const ni = lineIdx + 1;
