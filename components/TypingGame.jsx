@@ -1,5 +1,6 @@
 "use client";
 import TypingTest from "./TypingTest";
+import GamesTab from "./GamesTab";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
 import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont } from "@/lib/firebase";
@@ -2017,17 +2018,7 @@ const Nav = () => (<>
             ))}
           </div>
 
-          {activeTab==="games" && (
-            <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"60px 20px",textAlign:"center"}}>
-              <div style={{fontSize:64,marginBottom:20}}>🎮</div>
-              <div style={{color:T.text,fontWeight:800,fontSize:22,marginBottom:10}}>Games</div>
-              <div style={{color:T.muted,fontSize:14,marginBottom:6}}>Mini-games and challenges coming soon!</div>
-              <div style={{color:T.faint,fontSize:12}}>Check back for typing games, speed challenges, and more.</div>
-              <div style={{marginTop:24,background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"12px 24px"}}>
-                <div style={{color:T.faint,fontSize:11,letterSpacing:2,textTransform:"uppercase"}}>🚧 Under Construction</div>
-              </div>
-            </div>
-          )}
+          {activeTab==="games" && <GamesTab T={T} />}
 
           {activeTab==="map" && <>
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
