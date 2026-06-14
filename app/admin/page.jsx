@@ -283,7 +283,7 @@ const st = {
   input:{ width:"100%",background:T.faint,border:`1px solid ${T.border}`,borderRadius:7,color:T.text,fontFamily:T.font,fontSize:12,padding:"8px 11px",outline:"none",boxSizing:"border-box" },
   label:{ color:T.muted,fontSize:9,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:5 },
 };
-const TABS = ["stats","users","bans","admins","keys","warn","broadcast","levels","analytics","log","settings"];
+const TABS = ["stats","users","bans","admins","keys","trials","warn","broadcast","levels","analytics","log","settings"];
 
 export default function AdminPage() {
   const [user,setUser]=useState(null);
@@ -532,7 +532,7 @@ export default function AdminPage() {
         <div style={{display:"flex",gap:4,marginBottom:16,background:T.card,borderRadius:10,padding:4,border:`1px solid ${T.border}`,flexWrap:"wrap"}}>
           {TABS.map(t=>(
             <button key={t} onClick={()=>setTab(t)} style={st.tab(tab===t)}>
-              {t==="stats"?"📊 Stats":t==="users"?`👥 Users (${users.length})`:t==="bans"?`🔨 Bans (${bans.length})`:t==="admins"?`🔑 Admins`:t==="keys"?"💰 Keys":t==="warn"?"⚠️ Warn":t==="broadcast"?"📢 Broadcast":t==="levels"?"🗺️ Levels":t==="analytics"?"📈 Analytics":t==="log"?"📋 Log":t==="settings"?"⚙️ Settings":""}
+              {t==="stats"?"📊 Stats":t==="users"?`👥 Users (${users.length})`:t==="bans"?`🔨 Bans (${bans.length})`:t==="admins"?`🔑 Admins`:t==="keys"?"💰 Keys":t==="trials"?"⏱ Trials":t==="warn"?"⚠️ Warn":t==="broadcast"?"📢 Broadcast":t==="levels"?"🗺️ Levels":t==="analytics"?"📈 Analytics":t==="log"?"📋 Log":t==="settings"?"⚙️ Settings":""}
             </button>
           ))}
         </div>
@@ -634,18 +634,39 @@ export default function AdminPage() {
                     <div style={{color:T.accent,fontSize:11}}>keys: {p.keys||0} · Lv {p.currentLevel||1}</div>
                     {keysMsgs[p.id]&&<div style={{color:T.accent,fontSize:11}}>{keysMsgs[p.id]}</div>}
                   </div>
-                  <div style={{display:"flex",flexDirection:"column",gap:6,alignItems:"flex-end"}}>
-                    <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                      <span style={{color:T.faint,fontSize:10}}>🔑 Keys</span>
-                      <input type="number" placeholder="set to..." value={keysAmount[p.id]||""} onChange={e=>setKeysAmount(prev=>({...prev,[p.id]:e.target.value}))} style={{...st.input,width:90}} />
-                      <button onClick={()=>handleSetKeys(p.id,p.name)} style={st.btn()}>Set</button>
-                    </div>
-                    <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                      <span style={{color:T.faint,fontSize:10}}>⏱ Trials</span>
-                      <input type="number" placeholder="set to..." min="0" max="99" value={trialsAmount[p.id]||""} onChange={e=>setTrialsAmount(prev=>({...prev,[p.id]:e.target.value}))} style={{...st.input,width:90}} />
-                      <button onClick={()=>handleSetTrials(p.id,p.name)} style={st.btn()}>Set</button>
-                    </div>
+                  <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                    <input type="number" placeholder="set to..." value={keysAmount[p.id]||""} onChange={e=>setKeysAmount(prev=>({...prev,[p.id]:e.target.value}))} style={{...st.input,width:100}} />
+                    <button onClick={()=>handleSetKeys(p.id,p.name)} style={st.btn()}>Set</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* TRIALS */}
+        {tab==="trials"&&(
+          <div>
+            <div style={st.card}>
+              <div style={{color:T.text,fontSize:12,marginBottom:8}}>Set the number of shop trials a profile gets this week. Default is 5/week. Use this to grant extra trials as a reward or reset them.</div>
+              <div style={st.label}>Look up by @username or UID</div>
+              <div style={{display:"flex",gap:8}}>
+                <input value={keysInput} onChange={e=>setKeysInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleKeysLookup()} placeholder="@username or UID..." style={{...st.input,flex:1}} />
+                <button onClick={handleKeysLookup} style={st.btn()}>{keysLoading?"...":"Look up"}</button>
+              </div>
+            </div>
+            {keysTargetUid&&keysProfiles.length===0&&!keysLoading&&<div style={{color:T.danger,fontSize:12,padding:"8px 0"}}>No profiles found</div>}
+            {keysProfiles.map(p=>(
+              <div key={p.id} style={st.card}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+                  <div>
+                    <div style={{color:T.text,fontWeight:700,fontSize:12,marginBottom:4}}>{p.name}</div>
+                    <div style={{color:T.accent,fontSize:11}}>Lv {p.currentLevel||1} · {p.keys||0} 🔑</div>
                     {trialsMsgs[p.id]&&<div style={{color:T.accent,fontSize:11}}>{trialsMsgs[p.id]}</div>}
+                  </div>
+                  <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                    <input type="number" placeholder="set trials to..." min="0" max="99" value={trialsAmount[p.id]||""} onChange={e=>setTrialsAmount(prev=>({...prev,[p.id]:e.target.value}))} style={{...st.input,width:120}} />
+                    <button onClick={()=>handleSetTrials(p.id,p.name)} style={st.btn()}>Set</button>
                   </div>
                 </div>
               </div>
