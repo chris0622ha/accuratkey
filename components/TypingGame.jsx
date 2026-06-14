@@ -2,7 +2,7 @@
 import TypingTest from "./TypingTest";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { auth, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont } from "@/lib/firebase";
+import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont } from "@/lib/firebase";
 
 export 
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
@@ -902,7 +902,8 @@ export default function AccuratKey() {
   useEffect(() => {
     getMaintenanceMode().then(m => {
       setMaintenance(m);
-      if (m.enabled && screen === "loading") setScreen("maintenance");
+      // Initial check before auth - only block if users trigger is on
+      if (m.enabled && (m.triggers?.users !== false) && screen === "loading") setScreen("maintenance");
     }).catch(() => {});
     getBroadcast().then(b => { if (b?.active && b?.message) setBroadcast(b); }).catch(()=>{});
     getLevelOverrides().then(setLevelOverrides).catch(()=>{});
@@ -938,7 +939,13 @@ export default function AccuratKey() {
         // Check maintenance mode
         const maint = await getMaintenanceMode();
         setMaintenance(maint);
-        if (maint.enabled) { setScreen("maintenance"); return; }
+        if (maint.enabled) {
+          const triggers = maint.triggers || {owner:true,admins:false,users:false};
+          const isOwner = u.uid === "qM3qeYBLwvRXy8D0gOKGCQbGuA12";
+          const isAdminUser = await isAdmin(u.uid).catch(()=>false);
+          const shouldBlock = triggers.users || (triggers.admins && isAdminUser) || (triggers.owner && isOwner);
+          if (shouldBlock) { setScreen("maintenance"); return; }
+        }
         // Check if banned
         const ban = await getBan(u.uid);
         if (ban) { setBanInfo(ban); return; }
@@ -2005,10 +2012,22 @@ const Nav = () => (<>
           <Nav />
           {/* Tabs */}
           <div style={{display:"flex",gap:6,marginBottom:16,background:T.card,borderRadius:10,padding:3,border:`1px solid ${T.border}`}}>
-            {([["map","🎮 Game",true],["daily","📅 Daily",canUse(activeProfile,"daily")],["test","⌨️ Test",canUse(activeProfile,"test")]]).filter(t=>t[2]).map(([k,l])=>(
+            {([["games","🎮 Games",true],["map","🗺️ Level Map",true],["daily","📅 Daily",canUse(activeProfile,"daily")],["test","⌨️ Test",canUse(activeProfile,"test")]]).filter(t=>t[2]).map(([k,l])=>(
               <button key={k} onClick={()=>setActiveTab(k)} style={{flex:1,padding:"8px 0",borderRadius:7,border:"none",background:activeTab===k?T.purple:"transparent",color:activeTab===k?"#fff":T.faint,fontWeight:700,fontSize:fs(12),cursor:"pointer",fontFamily:T.font}}>{l}</button>
             ))}
           </div>
+
+          {activeTab==="games" && (
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"60px 20px",textAlign:"center"}}>
+              <div style={{fontSize:64,marginBottom:20}}>🎮</div>
+              <div style={{color:T.text,fontWeight:800,fontSize:22,marginBottom:10}}>Games</div>
+              <div style={{color:T.muted,fontSize:14,marginBottom:6}}>Mini-games and challenges coming soon!</div>
+              <div style={{color:T.faint,fontSize:12}}>Check back for typing games, speed challenges, and more.</div>
+              <div style={{marginTop:24,background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"12px 24px"}}>
+                <div style={{color:T.faint,fontSize:11,letterSpacing:2,textTransform:"uppercase"}}>🚧 Under Construction</div>
+              </div>
+            </div>
+          )}
 
           {activeTab==="map" && <>
           <div style={{display:"flex",flexDirection:"column",gap:10}}>

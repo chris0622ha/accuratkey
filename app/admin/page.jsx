@@ -334,6 +334,7 @@ export default function AdminPage() {
   // Maintenance
   const [maintEnabled,setMaintEnabled]=useState(false);
   const [maintMsg,setMaintMsg]=useState("");
+  const [maintTriggers,setMaintTriggers]=useState({owner:true,admins:false,users:false});
 
   // Level editor
   const [levelOverrides,setLevelOverrides]=useState({});
@@ -348,7 +349,7 @@ export default function AdminPage() {
   useEffect(()=>{ return onAuthStateChanged(auth, async u => { setUser(u); if(!u){setAdminOk(false);return;} const ok=await isAdmin(u.uid); setAdminOk(ok); }); },[]);
   useEffect(()=>{ if(adminOk) loadAll(); },[adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="log") getActivityLog(100).then(setLog).catch(()=>{}); },[tab,adminOk]);
-  useEffect(()=>{ if(adminOk&&tab==="settings") getMaintenanceMode().then(m=>{setMaintEnabled(m.enabled);setMaintMsg(m.message||"");}); },[tab,adminOk]);
+  useEffect(()=>{ if(adminOk&&tab==="settings") getMaintenanceMode().then(m=>{setMaintEnabled(m.enabled);setMaintMsg(m.message||"");if(m.triggers)setMaintTriggers(m.triggers);}); },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="analytics"&&!failStats){setFailStatsLoading(true);getLevelFailStats().then(d=>{setFailStats(d);setFailStatsLoading(false);}).catch(()=>setFailStatsLoading(false));} },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="broadcast") getBroadcast().then(b=>{if(b)setCurrentBroadcast(b);}); },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="levels") getLevelOverrides().then(setLevelOverrides).catch(()=>{}); },[tab,adminOk]);
@@ -476,8 +477,8 @@ export default function AdminPage() {
   }
 
   async function handleMaintenance() {
-    await setMaintenanceMode(maintEnabled,maintMsg);
-    await logActivity("maintenance",{adminUid:user.uid,detail:maintEnabled?`on: ${maintMsg}`:"off"});
+    await setMaintenanceMode(maintEnabled,maintMsg,maintTriggers);
+    await logActivity("maintenance",{adminUid:user.uid,detail:maintEnabled?`on: ${maintMsg}`:"off",triggers:maintTriggers});
     flash(maintEnabled?"Maintenance ON":"Maintenance OFF");
   }
 
@@ -795,7 +796,19 @@ export default function AdminPage() {
               <button onClick={()=>setMaintEnabled(false)} style={st.tab(!maintEnabled)}>OFF</button>
             </div>
             <div style={st.label}>Message</div>
-            <input value={maintMsg} onChange={e=>setMaintMsg(e.target.value)} placeholder="We'll be back soon..." style={{...st.input,marginBottom:12}} />
+            <input value={maintMsg} onChange={e=>setMaintMsg(e.target.value)} placeholder="We'll be back soon..." style={{...st.input,marginBottom:16}} />
+            <div style={st.label}>Who sees maintenance screen</div>
+            <div style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,overflow:"hidden",marginBottom:12}}>
+              {[["owner","👑 Owner (you)","Only you see the maintenance screen"],["admins","🔑 Admins","Admins also see it"],["users","👥 All users","Everyone sees it"]].map(([key,label,desc],i,arr)=>(
+                <div key={key} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",borderBottom:i<arr.length-1?`1px solid ${T.border}`:"none"}}>
+                  <div>
+                    <div style={{color:T.text,fontSize:12,fontWeight:600}}>{label}</div>
+                    <div style={{color:T.faint,fontSize:10}}>{desc}</div>
+                  </div>
+                  <button onClick={()=>setMaintTriggers(p=>({...p,[key]:!p[key]}))} style={{padding:"3px 14px",background:maintTriggers[key]?T.purple+"22":"transparent",border:`1px solid ${maintTriggers[key]?T.purple:T.border}`,borderRadius:20,color:maintTriggers[key]?T.purple:T.faint,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",minWidth:48}}>{maintTriggers[key]?"ON":"OFF"}</button>
+                </div>
+              ))}
+            </div>
             <button onClick={handleMaintenance} style={st.btn()}>Save</button>
           </div>
         )}
