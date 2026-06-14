@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { auth, getProfile, getProfiles, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
@@ -267,6 +267,63 @@ export default function ShopPage() {
 
   const showMsg = m => { setMsg(m); setTimeout(() => setMsg(""), 2500); };
 
+  // ─── Trial system ───────────────────────────────────────────────────────────
+  const [trial, setTrial] = useState(null);
+  const [trialSecondsLeft, setTrialSecondsLeft] = useState(0);
+  const trialTimerRef = useRef(null);
+  const TRIAL_SECONDS = 30;
+  const MAX_TRIALS = 5; // per week
+
+  const getTrialUsage = () => {
+    try {
+      const raw = localStorage.getItem("ak_trials");
+      const data = raw ? JSON.parse(raw) : {};
+      const d=new Date(),jan1=new Date(d.getFullYear(),0,1);
+      const weekKey=`${d.getFullYear()}-w${Math.ceil((((d-jan1)/86400000)+jan1.getDay()+1)/7)}`;
+      if (data.week !== weekKey) return { count: 0, week: weekKey };
+      return { count: data.count || 0, week: weekKey };
+    } catch { return { count: 0, week: "" }; }
+  };
+
+  const startTrial = (themeId, fontId) => {
+    if (trial) { showMsg("End current trial first"); return; }
+    const usage = getTrialUsage();
+    if (usage.count >= MAX_TRIALS) { showMsg(`Trial limit: ${MAX_TRIALS}/week reached`); return; }
+    localStorage.setItem("ak_trials", JSON.stringify({ week: usage.week, count: usage.count + 1 }));
+    const prevTheme = activeProfile?.activeTheme || "dark";
+    const prevFont  = activeProfile?.activeFont  || "jetbrains";
+    const t = { themeId: themeId || prevTheme, fontId: fontId || prevFont, prevTheme, prevFont };
+    setTrial(t);
+    setTrialSecondsLeft(TRIAL_SECONDS);
+    if (themeId) setActiveProfile(p => p ? {...p, activeTheme: themeId} : p);
+    if (fontId)  setActiveProfile(p => p ? {...p, activeFont: fontId}  : p);
+    showMsg(`⏱ ${TRIAL_SECONDS}s trial! (${MAX_TRIALS - usage.count - 1} left this week)`);
+    if (trialTimerRef.current) clearInterval(trialTimerRef.current);
+    trialTimerRef.current = setInterval(() => {
+      setTrialSecondsLeft(s => {
+        if (s <= 1) {
+          clearInterval(trialTimerRef.current);
+          setTrial(prev => { if(prev) { setActiveProfile(p => p ? {...p, activeTheme: prev.prevTheme, activeFont: prev.prevFont} : p); } return null; });
+          setTrialSecondsLeft(0);
+          setMsg("⏱ Trial ended — reverted");
+          setTimeout(() => setMsg(""), 2500);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+  };
+
+  const cancelTrial = () => {
+    if (!trial) return;
+    clearInterval(trialTimerRef.current);
+    setActiveProfile(p => p ? {...p, activeTheme: trial.prevTheme, activeFont: trial.prevFont} : p);
+    setTrial(null); setTrialSecondsLeft(0);
+    showMsg("Trial cancelled");
+  };
+
+  useEffect(() => () => { if (trialTimerRef.current) clearInterval(trialTimerRef.current); }, []);
+
   // Optimistic update helper — updates UI instantly, syncs to Firestore in background
   const optimistic = (patch) => {
     setActiveProfile(p => ({ ...p, ...patch }));
@@ -361,6 +418,17 @@ export default function ShopPage() {
 
       {/* Toast */}
       {msg && <div style={{position:"fixed",top:70,left:"50%",transform:"translateX(-50%)",background:T.purple,color:"#fff",padding:"8px 20px",borderRadius:20,fontSize:13,fontWeight:700,zIndex:999,boxShadow:"0 4px 20px rgba(0,0,0,0.4)"}}>{msg}</div>}
+      {/* Trial banner */}
+      {trial && (
+        <div style={{position:"fixed",top:0,left:0,right:0,zIndex:998,background:"#1a0a30",borderBottom:"2px solid #c084fc",padding:"8px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",fontFamily:"'JetBrains Mono',monospace"}}>
+          <div style={{color:"#c084fc",fontSize:12,fontWeight:700}}>
+            ⏱ TRIAL: {trialSecondsLeft}s left
+            {trial.themeId !== (trial.prevTheme) && <span style={{marginLeft:12,color:"#e0e0ff"}}>Theme: {ALL_THEMES.find(t=>t.id===trial.themeId)?.label}</span>}
+            {trial.fontId !== (trial.prevFont) && <span style={{marginLeft:12,color:"#e0e0ff"}}>Font: {ALL_FONTS.find(f=>f.id===trial.fontId)?.label}</span>}
+          </div>
+          <button onClick={cancelTrial} style={{background:"none",border:"1px solid #c084fc",borderRadius:6,color:"#c084fc",fontSize:11,padding:"3px 10px",cursor:"pointer",fontFamily:"inherit"}}>End trial</button>
+        </div>
+      )}
 
       <div style={{maxWidth:960,margin:"0 auto",padding:"24px 16px"}}>
         {/* Tab bar */}
@@ -412,9 +480,12 @@ export default function ShopPage() {
                         Equip
                       </button>
                     ) : (
-                      <button onClick={()=>handleBuyTheme(th)} style={{width:"100%",padding:"6px 0",background:th.purple+"22",border:`1px solid ${th.purple}`,borderRadius:6,color:th.purple,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                        Buy {th.cost} 🔑
-                      </button>
+                      <div style={{display:"flex",gap:4}}>
+                        <button onClick={()=>handleBuyTheme(th)} style={{flex:1,padding:"6px 0",background:th.purple+"22",border:`1px solid ${th.purple}`,borderRadius:6,color:th.purple,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                          Buy {th.cost} 🔑
+                        </button>
+                        {th.cost > 0 && <button onClick={()=>startTrial(th.id, null)} style={{padding:"6px 8px",background:"transparent",border:`1px solid ${th.border}`,borderRadius:6,color:th.muted,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}} title="Try for 30s">Try</button>}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -447,9 +518,12 @@ export default function ShopPage() {
                       Equip
                     </button>
                   ) : (
-                    <button onClick={()=>handleBuyFont(f)} style={{width:"100%",padding:"6px 0",background:T.purple+"22",border:`1px solid ${T.purple}`,borderRadius:6,color:T.purple,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                      Buy {f.cost} 🔑
-                    </button>
+                    <div style={{display:"flex",gap:4}}>
+                      <button onClick={()=>handleBuyFont(f)} style={{flex:1,padding:"6px 0",background:T.purple+"22",border:`1px solid ${T.purple}`,borderRadius:6,color:T.purple,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                        Buy {f.cost} 🔑
+                      </button>
+                      {f.cost > 0 && <button onClick={()=>startTrial(null, f.id)} style={{padding:"6px 8px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}} title="Try for 30s">Try</button>}
+                    </div>
                   )}
                 </div>
               );

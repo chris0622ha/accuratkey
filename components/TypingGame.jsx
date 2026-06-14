@@ -4,7 +4,95 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
 import { auth, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont } from "@/lib/firebase";
 
-export const LEVELS = [
+export 
+// ─── Custom Date Picker ───────────────────────────────────────────────────────
+function DatePicker({ value, onChange, T }) {
+  const today = new Date();
+  const minYear = today.getFullYear() - 120;
+  const maxYear = today.getFullYear();
+  const parsed = value ? new Date(value + "T12:00:00") : null;
+  const [month, setMonth] = React.useState(parsed ? parsed.getMonth() : today.getMonth());
+  const [year, setYear] = React.useState(parsed ? parsed.getFullYear() : today.getFullYear());
+  const [open, setOpen] = React.useState(false);
+
+  const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const FULL_MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const years = Array.from({length: maxYear - minYear + 1}, (_,i) => maxYear - i);
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDay = new Date(year, month, 1).getDay();
+  const days = [];
+  for (let i = 0; i < firstDay; i++) days.push(null);
+  for (let d = 1; d <= daysInMonth; d++) days.push(d);
+
+  const select = (d) => {
+    const mm = String(month+1).padStart(2,"0");
+    const dd = String(d).padStart(2,"0");
+    const v = `${year}-${mm}-${dd}`;
+    const picked = new Date(v+"T12:00:00");
+    if (picked > today) return;
+    onChange(v);
+    setOpen(false);
+  };
+
+  const isSelected = (d) => {
+    if (!parsed || !d) return false;
+    return parsed.getFullYear()===year && parsed.getMonth()===month && parsed.getDate()===d;
+  };
+  const isFuture = (d) => {
+    if (!d) return false;
+    const dt = new Date(year, month, d);
+    return dt > today;
+  };
+
+  const displayStr = parsed
+    ? `${FULL_MONTHS[parsed.getMonth()]} ${parsed.getDate()}, ${parsed.getFullYear()}`
+    : "Select birthday";
+
+  return (
+    <div style={{position:"relative",marginBottom:18,userSelect:"none"}}>
+      <button onClick={()=>setOpen(o=>!o)} style={{width:"100%",background:T.bg,border:`1px solid ${open?T.purple:T.border}`,borderRadius:8,color:parsed?T.text:T.faint,fontFamily:T.font,fontSize:14,padding:"10px 14px",cursor:"pointer",textAlign:"left",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <span>{displayStr}</span>
+        <span style={{fontSize:10,color:T.muted}}>{open?"▲":"▼"}</span>
+      </button>
+      {open && (
+        <div style={{position:"absolute",top:"calc(100% + 6px)",left:0,right:0,background:T.card,border:`1px solid ${T.border}`,borderRadius:12,zIndex:500,padding:14,boxShadow:"0 8px 32px rgba(0,0,0,0.5)"}}>
+          {/* Month/Year selectors */}
+          <div style={{display:"flex",gap:6,marginBottom:12}}>
+            <select value={month} onChange={e=>{setMonth(Number(e.target.value));}} style={{flex:1,background:T.bg,border:`1px solid ${T.border}`,borderRadius:6,color:T.text,fontFamily:T.font,fontSize:12,padding:"5px 8px",cursor:"pointer"}}>
+              {MONTHS.map((m,i)=><option key={i} value={i}>{m}</option>)}
+            </select>
+            <select value={year} onChange={e=>setYear(Number(e.target.value))} style={{flex:1,background:T.bg,border:`1px solid ${T.border}`,borderRadius:6,color:T.text,fontFamily:T.font,fontSize:12,padding:"5px 8px",cursor:"pointer"}}>
+              {years.map(y=><option key={y} value={y}>{y}</option>)}
+            </select>
+          </div>
+          {/* Day of week header */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginBottom:4}}>
+            {["S","M","T","W","T","F","S"].map((d,i)=>(
+              <div key={i} style={{textAlign:"center",fontSize:10,color:T.faint,fontWeight:700,padding:"2px 0"}}>{d}</div>
+            ))}
+          </div>
+          {/* Days grid */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2}}>
+            {days.map((d,i)=>(
+              <button key={i} onClick={()=>d&&!isFuture(d)&&select(d)} disabled={!d||isFuture(d)} style={{padding:"6px 0",borderRadius:6,border:"none",background:isSelected(d)?T.purple:"transparent",color:isSelected(d)?"#fff":isFuture(d)?"#333":d?T.text:"transparent",fontSize:12,cursor:d&&!isFuture(d)?"pointer":"default",fontFamily:T.font,fontWeight:isSelected(d)?700:400}}>
+                {d||""}
+              </button>
+            ))}
+          </div>
+          {/* Quick nav */}
+          <div style={{display:"flex",justifyContent:"space-between",marginTop:10,paddingTop:8,borderTop:`1px solid ${T.border}`}}>
+            <button onClick={()=>{const p=month===0?{m:11,y:year-1}:{m:month-1,y:year};if(p.y>=minYear){setMonth(p.m);setYear(p.y);}}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:11,padding:"3px 10px",cursor:"pointer",fontFamily:T.font}}>‹ Prev</button>
+            <button onClick={()=>{setMonth(today.getMonth());setYear(today.getFullYear());}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:11,padding:"3px 10px",cursor:"pointer",fontFamily:T.font}}>Today</button>
+            <button onClick={()=>{const n=month===11?{m:0,y:year+1}:{m:month+1,y:year};if(n.y<=maxYear){setMonth(n.m);setYear(n.y);}}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:11,padding:"3px 10px",cursor:"pointer",fontFamily:T.font}}>Next ›</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const LEVELS = [
   { id:1,  name:"Home Row Hero",         emoji:"🏠", wpmTarget:12,  accuracy:75, color:"#10b981", words:["ffjj","fjfj","asdf","jkl;","add","ask","fall","glad","flask","lads","fads","salads"] },
   { id:2,  name:"Top Row Climber",       emoji:"🧗", wpmTarget:16,  accuracy:75, color:"#3b82f6", words:["quit","wrap","type","your","power","tower","write","pretty","quite","report"] },
   { id:3,  name:"Full Board Basics",     emoji:"⌨️", wpmTarget:20,  accuracy:75, color:"#8b5cf6", words:["the","and","for","you","big","hot","map","key","ask","say","put","old","new","see","try","own","two","way","how","run"] },
@@ -616,10 +704,10 @@ export default function AccuratKey() {
     document.documentElement.style.removeProperty("--ak-font");
   }
   // Font scale: pixel/display fonts need smaller sizes to not break layout
-  const BIG_FONTS = ["pressstart","vt323","silkscreen","audiowide","orbitron","rajdhani","tourney"];
-  const SMALL_FONTS = ["comicsans","boogaloo","chewy","rubikbubbles","permanentmarker","creepster","ultra","fredoka"];
-  const _fs = BIG_FONTS.includes(_activeFont) ? 0.7 : SMALL_FONTS.includes(_activeFont) ? 0.85 : 1;
-  // Helper: scale a font size for UI elements
+  // Only scale fonts that actually render oversized at normal px values
+  const BIG_FONTS = ["pressstart","rubikbubbles","permanentmarker","audiowide","orbitron"];
+  const MED_FONTS = ["rajdhani","exo2","tourney"];
+  const _fs = BIG_FONTS.includes(_activeFont) ? 0.7 : MED_FONTS.includes(_activeFont) ? 0.85 : 1;
   const fs = (size) => _fs < 1 ? Math.round(size * _fs) : size;
   // Load Google Font if needed
   if (typeof window !== "undefined" && _activeFont && _activeFont !== "jetbrains") {
@@ -649,6 +737,8 @@ export default function AccuratKey() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showFeatureAccess, setShowFeatureAccess] = useState(false);
+  const [trial, setTrial] = useState(null); // {type:"theme"|"font", id, prevId, endAt, used}
+  const trialTimerRef = useRef(null);
   const [editName, setEditName] = useState("");
   const [editAvatar, setEditAvatar] = useState("key");
   const [editBirthday, setEditBirthday] = useState("");
@@ -876,13 +966,16 @@ export default function AccuratKey() {
           const returnScreen = typeof window !== "undefined" ? localStorage.getItem("ak_returnScreen") : null;
           const lastProfileId = typeof window !== "undefined" ? localStorage.getItem("ak_lastProfile_" + u.uid) : null;
           const lastProf = lastProfileId ? profs.find(p => p.id === lastProfileId) : null;
-          if (returnScreen && lastProf) {
-            // Auto-select profile and restore screen
+          const returnProfileId = typeof window !== "undefined" ? localStorage.getItem("ak_returnProfileId") : null;
+          const returnProf = returnProfileId ? profs.find(p => p.id === returnProfileId) : lastProf;
+          if (returnScreen && (returnProf || lastProf)) {
+            const prof = returnProf || lastProf;
             localStorage.removeItem("ak_returnScreen");
-            setActiveProfile(lastProf);
-            setLayoutKey(lastProf.favoriteLayout || "qwerty");
-            if (lastProf.streak) setStreak(lastProf.streak);
-            setShowCount((lastProf.currentLevel || 1) + 10);
+            localStorage.removeItem("ak_returnProfileId");
+            setActiveProfile(prof);
+            setLayoutKey(prof.favoriteLayout || "qwerty");
+            if (prof.streak) setStreak(prof.streak);
+            setShowCount((prof.currentLevel || 1) + 10);
             setScreen(returnScreen === "profilePicker" ? "levelMap" : returnScreen);
           } else {
             setScreen("profilePicker");
@@ -1070,7 +1163,9 @@ export default function AccuratKey() {
     if (val.length <= typed.length) return;
 
     // Only take the newest char
+    // Handle multi-char (fast typing / mobile) - process each new char
     const newTyped = val.slice(0, current.length); // cap at line length
+    if (newTyped === typed) return; // no actual change
     const ch = newTyped[newTyped.length - 1];
 
     if (!startTime) { const now = Date.now(); setStartTime(now); startTimeRef.current = now; }
@@ -1092,7 +1187,7 @@ export default function AccuratKey() {
     }
 
     setTyped(newTyped);
-    ghostTimings.current.push({ t: startTime ? Date.now() - startTime : 0, pos: totalChars + newTyped.length });
+    ghostTimings.current.push({ t: startTimeRef.current ? Date.now() - startTimeRef.current : 0, pos: totalChars + newTyped.length });
 
     // Update live accuracy
     const correct = newTyped.split("").filter((c, i) => c === current[i]).length;
@@ -1323,7 +1418,11 @@ const Nav = () => (<>
           {streak>0&&<span style={{color:"#f97316",fontWeight:700,fontSize:12}}>🔥{streak}</span>}
           {canUse(activeProfile,"keys")&&<span style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:"4px 10px",fontSize:fs(13),color:T.accent,fontWeight:700,display:"flex",alignItems:"center",gap:4}}><KKey size={14}/>{((k)=>k>=1e6?""+Math.round(k/1e6)+"M":k>=1e3?""+Math.round(k/1e3)+"k":k)(activeProfile.keys||0)}</span>}
                     {canUse(activeProfile,"friends")&&<button onClick={()=>{getFriends(user?.uid).then(setFriends);getIncomingRequests(user?.uid).then(setFriendReqs);setShowFriends(true);}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:fs(13),padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Friends">👥</button>}
-          {canUse(activeProfile,"shop")&&<button onClick={()=>{localStorage.setItem('ak_returnScreen', screen);window.location.href='/shop';}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:13,padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Shop">🛍️</button>}
+          {canUse(activeProfile,"shop")&&<button onClick={()=>{
+    localStorage.setItem('ak_returnScreen', screen||'levelMap');
+    localStorage.setItem('ak_returnProfileId', activeProfile?.id||'');
+    window.location.href='/shop';
+  }} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:13,padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Shop">🛍️</button>}
           <button onClick={openSettings} style={{background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",alignItems:"center",gap:7}} title="Edit profile">
             <AvatarImg profile={activeProfile} size={30} />
             <span style={{fontSize:12,color:T.muted,maxWidth:90,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{activeProfile.name}</span>
@@ -1378,42 +1477,71 @@ const Nav = () => (<>
 
   if (showFeatureAccess) {
     const ALL_FEATURES = [
-      // Gameplay
       {group:"⌨️ Gameplay", items:[
-        ["sounds","🔊 Sound effects","Play sounds on keypress"],
-        ["skip","⏭ Level skip","Allow skipping to next level"],
-        ["ghost","👻 Ghost mode","Show ghost cursor from best run"],
+        ["sounds","🔊 Sound effects","Play sounds on correct/wrong keypress"],
+        ["skip","⏭ Level skip","Allow skipping ahead to the next level"],
+        ["ghost","👻 Ghost mode","Show a ghost cursor from your best run"],
         ["keyboard","⌨️ On-screen keyboard","Show keyboard diagram while typing"],
-        ["combo","🔥 Combo counter","Show combo streak during game"],
-        ["wpmLive","📊 Live WPM display","Show WPM counter while typing"],
-        ["accuracyLive","🎯 Live accuracy","Show accuracy counter while typing"],
+        ["combo","🔥 Combo counter","Show combo streak during a game"],
+        ["wpmLive","📊 Live WPM","Show words-per-minute counter while typing"],
+        ["accuracyLive","🎯 Live accuracy","Show accuracy percentage while typing"],
+        ["progressBar","⬜ Progress bar","Show level progress bar during game"],
+        ["linePreview","👁 Next line preview","Show upcoming line while typing"],
+        ["restartShortcut","↩ Quick restart","Press Esc to restart current level"],
+        ["autoAdvance","▶ Auto-advance","Automatically move to next level on pass"],
+        ["mistakeHighlight","❌ Mistake highlight","Flash red on wrong keypress"],
+        ["capsWarning","⚠️ Caps Lock warning","Warn when Caps Lock is on"],
+        ["wpmGoal","🏁 WPM goal tracker","Show progress toward WPM goal"],
       ]},
-      // Navigation
       {group:"🗺️ Navigation", items:[
         ["daily","📅 Daily challenge","Access the daily challenge tab"],
         ["test","⌨️ Typing test","Access the free typing test tab"],
         ["leaderboard","🏆 Leaderboard","View global leaderboards"],
+        ["levelMap","🗺 Level map","See full level progression map"],
+        ["sessionHistory","📋 Session history","View past typing sessions"],
+        ["achievements","🏅 Achievements","Access achievements panel"],
+        ["stats","📊 Stats page","View detailed personal stats"],
+        ["tips","💡 Tips & tricks","Show typing tips between levels"],
       ]},
-      // Social
       {group:"👥 Social", items:[
-        ["keys","🔑 Keys display","Show key count in nav"],
-        ["friends","👥 Friends","Access friends panel"],
-        ["publicProfile","🌐 Public profile","Profile visible to others"],
-        ["chat","💬 Chat & messaging","Friends chat features"],
-        ["challenges","⚔️ Level challenges","Challenge friends to levels"],
-        ["streak","🔥 Streak display","Show streak count in nav"],
+        ["keys","🔑 Keys display","Show 🔑 key count in nav bar"],
+        ["streak","🔥 Streak display","Show 🔥 streak count in nav bar"],
+        ["friends","👥 Friends","Access friends panel and requests"],
+        ["publicProfile","🌐 Public profile","Profile visible to other users"],
+        ["chat","💬 Chat & messaging","Messaging with friends"],
+        ["challenges","⚔️ Level challenges","Challenge friends to typing duels"],
+        ["sendKeys","🎁 Send keys","Send 🔑 keys to friends"],
+        ["spectate","👀 Spectate","Watch friends play in real time"],
+        ["friendLeaderboard","📊 Friend leaderboard","See how you rank vs friends"],
       ]},
-      // Shop & customization
       {group:"🛍️ Shop & Customization", items:[
-        ["shop","🛍️ Theme shop","Access the shop"],
-        ["customTheme","🎨 Custom themes","Buy & equip themes"],
-        ["customFont","✏️ Custom fonts","Buy & equip fonts"],
+        ["shop","🛍️ Shop access","Navigate to the shop page"],
+        ["customTheme","🎨 Custom themes","Buy and equip color themes"],
+        ["customFont","✏️ Custom fonts","Buy and equip fonts"],
+        ["customAvatar","🖼 Custom avatar","Change emoji avatar"],
+        ["profilePhoto","📸 Profile photo","Upload a custom profile photo"],
+        ["bio","📝 Profile bio","Set a public bio on your profile"],
+        ["keyboardLayout","⌨️ Layout switcher","Switch between QWERTY/DVORAK/etc"],
+        ["purchaseKeys","💰 Buy keys","Purchase 🔑 keys"],
       ]},
-      // Privacy & safety
       {group:"🔒 Privacy & Safety", items:[
-        ["profilePhoto","📸 Profile photo","Upload custom photo"],
-        ["bio","✏️ Profile bio","Set a public bio"],
-        ["shareStats","📈 Share stats","Stats visible on profile"],
+        ["shareStats","📈 Share stats","Stats visible on public profile"],
+        ["showOnline","🟢 Online status","Show when you are online"],
+        ["allowRequests","📩 Friend requests","Allow others to send friend requests"],
+        ["allowChallenges","⚔️ Accept challenges","Allow challenge requests from others"],
+        ["discoverableSearch","🔍 Searchable","Profile appears in user search"],
+        ["activityFeed","📰 Activity feed","Your activity shows in friends' feeds"],
+        ["twoFactor","🔐 Extra PIN required","Require PIN on every login to this profile"],
+      ]},
+      {group:"🎓 Learning & Accessibility", items:[
+        ["slowMode","🐢 Slow mode","No time pressure, focus on accuracy"],
+        ["wordHints","💡 Word hints","Highlight difficult words before typing"],
+        ["fingerGuide","🖐 Finger guide","Color-code keys by which finger to use"],
+        ["highContrast","♿ High contrast","Increase contrast for readability"],
+        ["largeText","🔡 Large text mode","Bigger typing text size"],
+        ["reducedMotion","🚫 Reduce motion","Disable animations"],
+        ["dyslexicFont","📖 Dyslexia-friendly font","Use OpenDyslexic font option"],
+        ["pauseBetweenLines","⏸ Pause between lines","Auto-pause at end of each line"],
       ]},
     ];
     const toggle = (feat) => {
@@ -1602,8 +1730,7 @@ const Nav = () => (<>
           <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="Your name"
             style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:15,padding:"11px 14px",marginBottom:14,outline:"none",boxSizing:"border-box"}} />
           <label style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:6}}>Birthday</label>
-          <input type="date" value={newBirthday} onChange={e=>{const v=e.target.value;const d=new Date(v);const now=new Date();const min=new Date();min.setFullYear(now.getFullYear()-120);if(v&&(d>now||d<min))return;setNewBirthday(v);}} max={new Date().toISOString().split("T")[0]} min={new Date(new Date().setFullYear(new Date().getFullYear()-120)).toISOString().split("T")[0]}
-            style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:14,padding:"11px 14px",marginBottom:14,outline:"none",boxSizing:"border-box",colorScheme:"dark"}} />
+          <DatePicker value={newBirthday} onChange={setNewBirthday} T={T} />
           <label style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:8}}>Starting skill</label>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:18}}>
             {[["beginner","🐣","Just starting"],["intermediate","🚀","Know basics"],["advanced","🔥","Type fast"]].map(([s,em,desc]) => (
@@ -1790,19 +1917,19 @@ const Nav = () => (<>
             <label style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:6}}>Name</label>
             <input value={editName} onChange={e=>setEditName(e.target.value)} style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:14,padding:"10px 14px",marginBottom:14,outline:"none",boxSizing:"border-box"}} />
             <label style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:6}}>Birthday</label>
-            <input type="date" value={editBirthday} onChange={e=>{const v=e.target.value;const d=new Date(v);const now=new Date();const min=new Date();min.setFullYear(now.getFullYear()-120);if(v&&(d>now||d<min))return;setEditBirthday(v);}} max={new Date().toISOString().split("T")[0]} min={new Date(new Date().setFullYear(new Date().getFullYear()-120)).toISOString().split("T")[0]} style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:14,padding:"10px 14px",marginBottom:18,outline:"none",boxSizing:"border-box",colorScheme:"dark"}} />
+            <DatePicker value={editBirthday} onChange={setEditBirthday} T={T} />
             {saveMsg && <p style={{color:saveMsg==="Saved!"?T.accent2:"#ef4444",fontSize:12,marginBottom:8}}>{saveMsg}</p>}
             {/* Profile Admin */}
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderTop:`1px solid ${T.faint}`,marginTop:8}}>
               <div><div style={{color:T.text,fontSize:12,fontWeight:700}}>Profile Admin</div></div>
               <button onClick={async()=>{const v=!(activeProfile?.isProfileAdmin);patchProfile({isProfileAdmin:v});updateProfile(user.uid,activeProfile.id,{isProfileAdmin:v});}} style={{padding:"5px 12px",background:(activeProfile?.isProfileAdmin)?"#a78bfa22":"transparent",border:`1px solid ${(activeProfile?.isProfileAdmin)?"#a78bfa":T.border}`,borderRadius:7,color:(activeProfile?.isProfileAdmin)?"#a78bfa":T.muted,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>{activeProfile?.isProfileAdmin?"ON":"OFF"}</button>
                  </div>
-            {!activeProfile?.isProfileAdmin&&<div style={{padding:"10px 0",borderTop:`1px solid ${T.faint}`}}>
-              <button onClick={()=>{setShowSettingsModal(false);setShowFeatureAccess(true);}} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",background:"none",border:`1px solid ${T.border}`,borderRadius:8,padding:"10px 14px",cursor:"pointer",fontFamily:T.font}}>
+            <div style={{padding:"10px 0",borderTop:`1px solid ${T.faint}`}}>
+              <button onClick={()=>{if(!activeProfile?.isProfileAdmin){setShowSettingsModal(false);setShowFeatureAccess(true);}}} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",background:"none",border:`1px solid ${T.border}`,borderRadius:8,padding:"10px 14px",cursor:activeProfile?.isProfileAdmin?"default":"pointer",fontFamily:T.font,opacity:activeProfile?.isProfileAdmin?0.4:1}}>
                 <span style={{color:T.text,fontSize:13,fontWeight:700}}>Feature Access</span>
-                <span style={{color:T.muted,fontSize:16}}>›</span>
+                <span style={{color:T.muted,fontSize:14}}>{activeProfile?.isProfileAdmin?"(bypassed by Admin)":"›"}</span>
               </button>
-            </div>}
+            </div>
             {/* Change PIN */}
             <div style={{padding:"10px 0",borderTop:`1px solid ${T.faint}`}}>
               <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>PIN</div>
@@ -1874,11 +2001,11 @@ const Nav = () => (<>
           </Overlay>
         )}
 
-        <div style={{maxWidth:500,margin:"0 auto"}}>
+        <div style={{maxWidth:"min(860px, 100%)",margin:"0 auto",padding:"0 8px"}}>
           <Nav />
           {/* Tabs */}
           <div style={{display:"flex",gap:6,marginBottom:16,background:T.card,borderRadius:10,padding:3,border:`1px solid ${T.border}`}}>
-            {([["map","🗺️ Map",true],["daily","📅 Daily",canUse(activeProfile,"daily")],["test","⌨️ Test",canUse(activeProfile,"test")]]).filter(t=>t[2]).map(([k,l])=>(
+            {([["map","🎮 Game",true],["daily","📅 Daily",canUse(activeProfile,"daily")],["test","⌨️ Test",canUse(activeProfile,"test")]]).filter(t=>t[2]).map(([k,l])=>(
               <button key={k} onClick={()=>setActiveTab(k)} style={{flex:1,padding:"8px 0",borderRadius:7,border:"none",background:activeTab===k?T.purple:"transparent",color:activeTab===k?"#fff":T.faint,fontWeight:700,fontSize:fs(12),cursor:"pointer",fontFamily:T.font}}>{l}</button>
             ))}
           </div>
