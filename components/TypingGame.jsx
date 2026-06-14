@@ -1244,6 +1244,14 @@ export default function AccuratKey() {
                 localStorage.setItem(`ak_ghost_${playingLevel}`, JSON.stringify({ wpm: fw, timings: ghostTimings.current }));
               }
             } catch(e) {}
+            // Save per-level best WPM + stars
+            if (playingLevel > 0) {
+              const lv = LEVELS.find(l => l.id === playingLevel);
+              const stars = newAcc >= 95 ? 3 : (lv && fw >= lv.wpmTarget && lv.wpmTarget > 0) ? 2 : 1;
+              const prevBest = activeProfile?.levelBests?.[playingLevel];
+              const newBest = { wpm: Math.max(fw, prevBest?.wpm || 0), accuracy: Math.max(newAcc, prevBest?.accuracy || 0), stars: Math.max(stars, prevBest?.stars || 0) };
+              updateProfile(user.uid, activeProfile.id, { [`levelBests.${playingLevel}`]: newBest }).catch(() => {});
+            }
             updateStreak(user.uid, activeProfile.id).then(s=>{ if(s) setStreak(s); }).catch(()=>{});
             if (playingLevel === -1) {
               submitDailyScore(user.uid, currentUsername, activeProfile.avatar, {wpm:fw, accuracy:newAcc}).catch(()=>{});
@@ -2045,7 +2053,17 @@ const Nav = () => (<>
                         <div style={{color:T.text,fontWeight:700,fontSize:15}}>{lv.name}</div>
                         <div style={{color:T.muted,fontSize:12,marginTop:2}}>{lv.accuracy}% accuracy</div>
                       </div>
-                      <div style={{textAlign:"right"}}>{completed&&<div style={{color:lv.color,fontSize:11,marginTop:3}}>✓ Done</div>}</div>
+                      <div style={{textAlign:"right"}}>
+                        {completed && (() => {
+                          const lb = activeProfile?.levelBests?.[lv.id];
+                          const s = lb?.stars || 1;
+                          return <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2}}>
+                            <div style={{fontSize:12}}>{"⭐".repeat(s)}{"☆".repeat(3-s)}</div>
+                            {lb?.wpm>0&&<div style={{color:lv.color,fontSize:11,fontWeight:700}}>{lb.wpm} WPM</div>}
+                            <div style={{color:lv.color,fontSize:10}}>✓ Done</div>
+                          </div>;
+                        })()}
+                      </div>
                     </div>
                   </div>
                 </div>

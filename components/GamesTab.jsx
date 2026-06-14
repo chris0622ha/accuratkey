@@ -337,6 +337,10 @@ function Survival({ T, onBack }) {
     setTimeout(() => inputRef.current?.focus(), 10);
   };
 
+  const handleKey = (e) => {
+    if (e.key === "Escape") { setTyped(""); inputRef.current?.focus(); }
+  };
+
   const timerCol = timeLeft < 8 ? "#ef4444" : timeLeft < 15 ? "#f59e0b" : T.accent2 || "#34d399";
   const bar = Math.max(0, Math.min(1, timeLeft / startTime));
   const target = wordList[current] || "";
@@ -405,7 +409,7 @@ function Survival({ T, onBack }) {
               {wordList.slice(current+1, current+4).map((w,i) => <span key={i} style={{ color:T.faint, fontSize:14 }}>{w}</span>)}
             </div>
           </div>
-          <input ref={inputRef} value={typed} onChange={handleType} placeholder="Type + Space to submit…"
+          <input ref={inputRef} value={typed} onChange={handleType} onKeyDown={handleKey} placeholder="Type + Space to submit… (Esc to clear)"
             autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
             style={{ width:"100%", background:T.bg, border:`2px solid ${T.purple}`, borderRadius:8, color:T.text, fontFamily:T.font, fontSize:16, padding:"10px 14px", outline:"none", boxSizing:"border-box" }} />
         </div>
