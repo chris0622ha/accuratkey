@@ -107,6 +107,7 @@ function WordRain({ T, onBack }) {
   const idRef     = useRef(0);
   const wordQRef  = useRef([]);
   const lastSpawn = useRef(0);
+  const stoppedRef = useRef(false);
   const maxLivesRef = useRef(maxLives);
   useEffect(() => { maxLivesRef.current = maxLives; }, [maxLives]);
 
@@ -119,6 +120,7 @@ function WordRain({ T, onBack }) {
 
   const start = () => {
     cancelAnimationFrame(frameRef.current);
+    stoppedRef.current = false;
     dropsRef.current = [];
     scoreRef.current = 0;
     missedRef.current = 0;
@@ -142,6 +144,7 @@ function WordRain({ T, onBack }) {
     if (status !== "playing") return;
     let last = performance.now();
     const loop = (now) => {
+      if (stoppedRef.current) return;
       const dt = now - last; last = now;
       const speed = SPEED[difficulty];
       const updated = dropsRef.current.map(d => ({ ...d, y: d.y + speed * dt / 10 }));
@@ -153,6 +156,7 @@ function WordRain({ T, onBack }) {
         setMissed(missedRef.current);
         fallen.forEach(() => sfx("miss"));
         if (missedRef.current >= maxLivesRef.current) {
+          stoppedRef.current = true;
           dropsRef.current = [];
           setDrops([]);
           sfx("gameover");
@@ -232,7 +236,7 @@ function WordRain({ T, onBack }) {
             <div style={{ fontSize:15 }}>{hearts.join(" ")}</div>
             <div style={{ display:"flex", gap:8, alignItems:"center" }}>
               <SoundBtn muted={muted} toggle={toggleMute} T={T} />
-              <button onClick={() => { cancelAnimationFrame(frameRef.current); setStatus("idle"); }}
+              <button onClick={() => { stoppedRef.current = true; cancelAnimationFrame(frameRef.current); setStatus("idle"); }}
                 style={{ background:"none", border:"none", color:T.faint, cursor:"pointer", fontSize:13, fontFamily:T.font }}>✕</button>
             </div>
           </div>
