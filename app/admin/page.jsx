@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats } from "@/lib/firebase";
+import { auth, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats } from "@/lib/firebase";
 const LEVELS = [
   { id:1,  name:"Home Row Hero",         emoji:"🏠", wpmTarget:12,  accuracy:75, color:"#10b981", words:["ffjj","fjfj","asdf","jkl;","add","ask","fall","glad","flask","lads","fads","salads"] },
   { id:2,  name:"Top Row Climber",       emoji:"🧗", wpmTarget:16,  accuracy:75, color:"#3b82f6", words:["quit","wrap","type","your","power","tower","write","pretty","quite","report"] },
@@ -316,6 +316,8 @@ export default function AdminPage() {
   const [keysInput,setKeysInput]=useState("");
   const [keysProfiles,setKeysProfiles]=useState([]);
   const [keysTargetUid,setKeysTargetUid]=useState(null);
+  const [trialsAmount,setTrialsAmount]=useState({});
+  const [trialsMsgs,setTrialsMsgs]=useState({});
   const [keysAmount,setKeysAmount]=useState({});
   const [keysLoading,setKeysLoading]=useState(false);
   const [keysMsgs,setKeysMsgs]=useState({});
@@ -448,6 +450,14 @@ export default function AdminPage() {
     setTimeout(()=>setKeysMsgs(p=>({...p,[profileId]:null})),3000);
     const updated = await getProfilesForAdmin(keysTargetUid);
     setKeysProfiles(updated);
+  }
+
+  async function handleSetTrials(profileId,profileName) {
+    const amount = parseInt(trialsAmount[profileId]); if(isNaN(amount)||amount<0||amount>99) return;
+    await adminSetTrials(keysTargetUid,profileId,amount);
+    await logActivity("set_trials",{adminUid:user.uid,targetUid:keysTargetUid,detail:`Set trials to ${amount} for "${profileName}"`});
+    setTrialsMsgs(p=>({...p,[profileId]:`Trials set to ${amount}!`}));
+    setTimeout(()=>setTrialsMsgs(p=>({...p,[profileId]:null})),3000);
   }
 
   async function handleSearch() {
@@ -624,9 +634,18 @@ export default function AdminPage() {
                     <div style={{color:T.accent,fontSize:11}}>keys: {p.keys||0} · Lv {p.currentLevel||1}</div>
                     {keysMsgs[p.id]&&<div style={{color:T.accent,fontSize:11}}>{keysMsgs[p.id]}</div>}
                   </div>
-                  <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                    <input type="number" placeholder="set to..." value={keysAmount[p.id]||""} onChange={e=>setKeysAmount(prev=>({...prev,[p.id]:e.target.value}))} style={{...st.input,width:100}} />
-                    <button onClick={()=>handleSetKeys(p.id,p.name)} style={st.btn()}>Set</button>
+                  <div style={{display:"flex",flexDirection:"column",gap:6,alignItems:"flex-end"}}>
+                    <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                      <span style={{color:T.faint,fontSize:10}}>🔑 Keys</span>
+                      <input type="number" placeholder="set to..." value={keysAmount[p.id]||""} onChange={e=>setKeysAmount(prev=>({...prev,[p.id]:e.target.value}))} style={{...st.input,width:90}} />
+                      <button onClick={()=>handleSetKeys(p.id,p.name)} style={st.btn()}>Set</button>
+                    </div>
+                    <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                      <span style={{color:T.faint,fontSize:10}}>⏱ Trials</span>
+                      <input type="number" placeholder="set to..." min="0" max="99" value={trialsAmount[p.id]||""} onChange={e=>setTrialsAmount(prev=>({...prev,[p.id]:e.target.value}))} style={{...st.input,width:90}} />
+                      <button onClick={()=>handleSetTrials(p.id,p.name)} style={st.btn()}>Set</button>
+                    </div>
+                    {trialsMsgs[p.id]&&<div style={{color:T.accent,fontSize:11}}>{trialsMsgs[p.id]}</div>}
                   </div>
                 </div>
               </div>

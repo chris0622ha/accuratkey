@@ -274,15 +274,25 @@ export default function ShopPage() {
   const TRIAL_SECONDS = 30;
   const MAX_TRIALS = 5; // per week
 
+  const getWeekKey = () => {
+    const d=new Date(),jan1=new Date(d.getFullYear(),0,1);
+    return `${d.getFullYear()}-w${Math.ceil((((d-jan1)/86400000)+jan1.getDay()+1)/7)}`;
+  };
   const getTrialUsage = () => {
     try {
+      const weekKey = getWeekKey();
+      // Check localStorage usage this week
       const raw = localStorage.getItem("ak_trials");
-      const data = raw ? JSON.parse(raw) : {};
-      const d=new Date(),jan1=new Date(d.getFullYear(),0,1);
-      const weekKey=`${d.getFullYear()}-w${Math.ceil((((d-jan1)/86400000)+jan1.getDay()+1)/7)}`;
-      if (data.week !== weekKey) return { count: 0, week: weekKey };
-      return { count: data.count || 0, week: weekKey };
-    } catch { return { count: 0, week: "" }; }
+      const local = raw ? JSON.parse(raw) : {};
+      const localUsed = local.week === weekKey ? (local.count || 0) : 0;
+      // Check if admin granted extra trials (stored on profile)
+      const adminWeek = activeProfile?.trialWeek;
+      const adminCount = activeProfile?.trialCount;
+      const adminRemaining = adminWeek === weekKey && adminCount > 0 ? adminCount : 0;
+      // Effective max = base MAX_TRIALS + admin bonus
+      const effectiveMax = MAX_TRIALS + adminRemaining;
+      return { count: localUsed, week: weekKey, max: effectiveMax };
+    } catch { return { count: 0, week: getWeekKey(), max: MAX_TRIALS }; }
   };
 
   const startTrial = (themeId, fontId) => {
@@ -300,7 +310,7 @@ export default function ShopPage() {
       return;
     }
     const usage = getTrialUsage();
-    if (usage.count >= MAX_TRIALS) { showMsg(`Trial limit: ${MAX_TRIALS}/week reached`); return; }
+    if (usage.count >= usage.max) { showMsg(`Trial limit reached (${usage.max}/week)`); return; }
     localStorage.setItem("ak_trials", JSON.stringify({ week: usage.week, count: usage.count + 1 }));
     const prevTheme = activeProfile?.activeTheme || "dark";
     const prevFont  = activeProfile?.activeFont  || "jetbrains";
@@ -309,7 +319,7 @@ export default function ShopPage() {
     setTrialSecondsLeft(TRIAL_SECONDS);
     if (themeId) setActiveProfile(p => p ? {...p, activeTheme: themeId} : p);
     if (fontId)  setActiveProfile(p => p ? {...p, activeFont: fontId}  : p);
-    showMsg(`⏱ ${TRIAL_SECONDS}s trial! (${MAX_TRIALS - usage.count - 1} left this week)`);
+    showMsg(`⏱ ${TRIAL_SECONDS}s trial! (${usage.max - usage.count - 1} left this week)`);
     if (trialTimerRef.current) clearInterval(trialTimerRef.current);
     trialTimerRef.current = setInterval(() => {
       setTrialSecondsLeft(s => {
