@@ -1,6 +1,12 @@
 "use client";
 import React, { useState, useRef, useEffect, useCallback } from "react";
 
+
+// ─── Game persistence helpers ─────────────────────────────────────────────────
+function gSave(id, data) { try { localStorage.setItem("ak_gs_"+id, JSON.stringify(data)); } catch{} }
+function gLoad(id) { try { return JSON.parse(localStorage.getItem("ak_gs_"+id)||"null"); } catch{return null;} }
+function gClear(id) { try { localStorage.removeItem("ak_gs_"+id); } catch{} }
+
 // ─── Shared utils ──────────────────────────────────────────────────────────────
 function getSfxCtx() {
   if (typeof window === "undefined") return null;
@@ -63,15 +69,18 @@ function ResultScreen({ emoji, title, color, stats, onRetry, T }) {
 
 // ─── SNIPER ────────────────────────────────────────────────────────────────────
 export function Sniper({ T, onBack, onSettings, settings = {} }) {
-  const [words] = useState(()=>pickN(50, MED_WORDS));
-  const [idx, setIdx] = useState(0);
+  const count = settings.count || 25;
+  const sv = gLoad("sniper");
+  const [words] = useState(()=> sv?.words || pickN(count, MED_WORDS));
+  const [idx, setIdx] = useState(()=> sv?.idx || 0);
   const [typed, setTyped] = useState("");
-  const [streak, setStreak] = useState(0);
-  const [best, setBest] = useState(0);
+  const [streak, setStreak] = useState(()=> sv?.streak || 0);
+  const [best, setBest] = useState(()=> sv?.best || 0);
   const [done, setDone] = useState(false);
   const [muted, setMuted] = useState(false);
   const ref = useRef(null);
   const target = words[idx] || "";
+  useEffect(()=>{ if(!done) gSave("sniper",{words,idx,streak,best}); },[idx,streak,best,done]);
 
   const handleType = e => {
     const v = e.target.value;
@@ -93,7 +102,7 @@ export function Sniper({ T, onBack, onSettings, settings = {} }) {
     }
   };
 
-  if (done) return <ResultScreen emoji="🎯" title="Mission Complete" color="#34d399" stats={[["Words",words.length],["Best Streak",best]]} onRetry={()=>{ setIdx(0);setTyped("");setStreak(0);setBest(0);setDone(false); setTimeout(()=>ref.current?.focus(),50); }} T={T}/>;
+  if (done) return <ResultScreen emoji="🎯" title="Mission Complete" color="#34d399" stats={[["Words",words.length],["Best Streak",best]]} onRetry={()=>{ gClear("sniper");setIdx(0);setTyped("");setStreak(0);setBest(0);setDone(false); setTimeout(()=>ref.current?.focus(),50); }} T={T}/>;
 
   return (
     <div>
@@ -116,14 +125,17 @@ export function Sniper({ T, onBack, onSettings, settings = {} }) {
 
 // ─── MIRROR ────────────────────────────────────────────────────────────────────
 export function Mirror({ T, onBack, onSettings, settings = {} }) {
-  const [words] = useState(()=>pickN(30, EASY_WORDS));
-  const [idx, setIdx] = useState(0);
+  const count = settings.count || 20;
+  const sv = gLoad("mirror");
+  const [words] = useState(()=> sv?.words || pickN(count, EASY_WORDS));
+  const [idx, setIdx] = useState(()=> sv?.idx || 0);
   const [typed, setTyped] = useState("");
-  const [correct, setCorrect] = useState(0);
+  const [correct, setCorrect] = useState(()=> sv?.correct || 0);
   const [done, setDone] = useState(false);
   const [muted, setMuted] = useState(false);
-  const [start, setStart] = useState(null);
+  const [start, setStart] = useState(()=> sv?.start || null);
   const ref = useRef(null);
+  useEffect(()=>{ if(!done) gSave("mirror",{words,idx,correct,start}); },[idx,correct,done]);
   const target = words[idx] || "";
   const reversed = target.split("").reverse().join("");
 
@@ -142,7 +154,7 @@ export function Mirror({ T, onBack, onSettings, settings = {} }) {
 
   const wpm = start && done ? Math.round((words.length / ((Date.now()-start)/60000))) : 0;
 
-  if (done) return <ResultScreen emoji="🪞" title="Mirror Master!" color={T.purple} stats={[["Words",words.length],["WPM",wpm]]} onRetry={()=>{setIdx(0);setTyped("");setCorrect(0);setDone(false);setStart(null);setTimeout(()=>ref.current?.focus(),50);}} T={T}/>;
+  if (done) return <ResultScreen emoji="🪞" title="Mirror Master!" color={T.purple} stats={[["Words",words.length],["WPM",wpm]]} onRetry={()=>{gClear("mirror");setIdx(0);setTyped("");setCorrect(0);setDone(false);setStart(null);setTimeout(()=>ref.current?.focus(),50);}} T={T}/>;
 
   return (
     <div>
@@ -165,15 +177,18 @@ export function Mirror({ T, onBack, onSettings, settings = {} }) {
 
 // ─── FLASH ─────────────────────────────────────────────────────────────────────
 export function Flash({ T, onBack, onSettings, settings = {} }) {
-  const FLASH_MS = 1000;
-  const [words] = useState(()=>pickN(20, MED_WORDS));
-  const [idx, setIdx] = useState(0);
-  const [phase, setPhase] = useState("show"); // show | type
+  const FLASH_MS = settings.flashMs || 1000;
+  const count = settings.count || 20;
+  const sv = gLoad("flash");
+  const [words] = useState(()=> sv?.words || pickN(count, MED_WORDS));
+  const [idx, setIdx] = useState(()=> sv?.idx || 0);
+  const [phase, setPhase] = useState("show");
   const [typed, setTyped] = useState("");
-  const [correct, setCorrect] = useState(0);
+  const [correct, setCorrect] = useState(()=> sv?.correct || 0);
   const [done, setDone] = useState(false);
   const [muted, setMuted] = useState(false);
   const ref = useRef(null);
+  useEffect(()=>{ if(!done) gSave("flash",{words,idx,correct}); },[idx,correct,done]);
   const target = words[idx] || "";
 
   useEffect(() => {
@@ -196,7 +211,7 @@ export function Flash({ T, onBack, onSettings, settings = {} }) {
     }
   };
 
-  if (done) return <ResultScreen emoji="⚡" title="Flash Complete!" color="#facc15" stats={[["Correct",`${correct}/${words.length}`],["Accuracy",Math.round(correct/words.length*100)+"%"]]} onRetry={()=>{setIdx(0);setPhase("show");setTyped("");setCorrect(0);setDone(false);}} T={T}/>;
+  if (done) return <ResultScreen emoji="⚡" title="Flash Complete!" color="#facc15" stats={[["Correct",`${correct}/${words.length}`],["Accuracy",Math.round(correct/words.length*100)+"%"]]} onRetry={()=>{gClear("flash");setIdx(0);setPhase("show");setTyped("");setCorrect(0);setDone(false);}} T={T}/>;
 
   return (
     <div>
@@ -305,15 +320,18 @@ export function Echo({ T, onBack, onSettings, settings = {} }) {
 
 // ─── GHOST WORDS ───────────────────────────────────────────────────────────────
 export function GhostWords({ T, onBack, onSettings, settings = {} }) {
-  const VISIBLE_MS = 2500;
-  const [words] = useState(()=>pickN(25, MED_WORDS));
-  const [idx, setIdx] = useState(0);
+  const VISIBLE_MS = settings.visibleMs || 2500;
+  const count = settings.count || 25;
+  const sv = gLoad("ghost");
+  const [words] = useState(()=> sv?.words || pickN(count, MED_WORDS));
+  const [idx, setIdx] = useState(()=> sv?.idx || 0);
   const [typed, setTyped] = useState("");
   const [visible, setVisible] = useState(true);
-  const [correct, setCorrect] = useState(0);
+  const [correct, setCorrect] = useState(()=> sv?.correct || 0);
   const [done, setDone] = useState(false);
   const [muted, setMuted] = useState(false);
   const [opacity, setOpacity] = useState(1);
+  useEffect(()=>{ if(!done) gSave("ghost",{words,idx,correct}); },[idx,correct,done]);
   const ref = useRef(null);
   const target = words[idx] || "";
 
@@ -341,7 +359,7 @@ export function GhostWords({ T, onBack, onSettings, settings = {} }) {
     }
   };
 
-  if (done) return <ResultScreen emoji="👻" title="Ghost Cleared!" color="#a78bfa" stats={[["Typed",`${correct}/${words.length}`],["Accuracy",Math.round(correct/words.length*100)+"%"]]} onRetry={()=>{setIdx(0);setTyped("");setCorrect(0);setDone(false);setVisible(true);setOpacity(1);}} T={T}/>;
+  if (done) return <ResultScreen emoji="👻" title="Ghost Cleared!" color="#a78bfa" stats={[["Typed",`${correct}/${words.length}`],["Accuracy",Math.round(correct/words.length*100)+"%"]]} onRetry={()=>{gClear("ghost");setIdx(0);setTyped("");setCorrect(0);setDone(false);setVisible(true);setOpacity(1);}} T={T}/>;
 
   return (
     <div>
@@ -360,15 +378,20 @@ export function GhostWords({ T, onBack, onSettings, settings = {} }) {
 // ─── CODE RAIN ─────────────────────────────────────────────────────────────────
 export function CodeRain({ T, onBack, onSettings, settings = {} }) {
   const COLS = 6;
-  const [score, setScore] = useState(0);
-  const [missed, setMissed] = useState(0);
+  const MAX_MISSED = settings.maxMissed || 8;
+  const SPEED_MAP = { slow: 0.012, normal: 0.02, fast: 0.032 };
+  const FALL_SPEED = SPEED_MAP[settings.speed || "normal"];
+  const sv = gLoad("coderain");
+  const [score, setScore] = useState(()=> sv?.score || 0);
+  const [missed, setMissed] = useState(()=> sv?.missed || 0);
   const [typed, setTyped] = useState("");
   const [columns, setColumns] = useState(()=>Array.from({length:COLS},()=>[]));
   const [done, setDone] = useState(false);
   const [muted, setMuted] = useState(false);
-  const colsRef = useRef(columns);
-  const scoreRef = useRef(0);
-  const missedRef = useRef(0);
+  const colsRef = useRef([]);
+  const scoreRef = useRef(sv?.score || 0);
+  const missedRef = useRef(sv?.missed || 0);
+  useEffect(()=>{ if(!done) gSave("coderain",{score,missed}); },[score,missed,done]);
   const inputRef = useRef(null);
   const frameRef = useRef(null);
   const lastSpawn = useRef(0);
@@ -382,7 +405,7 @@ export function CodeRain({ T, onBack, onSettings, settings = {} }) {
       const dt = now - last; last = now;
       // Move words down
       const updated = colsRef.current.map(col =>
-        col.map(w => ({...w, y: w.y + 0.02 * dt}))
+        col.map(w => ({...w, y: w.y + FALL_SPEED * dt}))
       );
       // Check missed
       let newMissed = 0;
@@ -392,7 +415,7 @@ export function CodeRain({ T, onBack, onSettings, settings = {} }) {
       if (newMissed > 0) {
         missedRef.current += newMissed;
         setMissed(missedRef.current);
-        if (missedRef.current >= MAX_MISSED) { setDone(true); cancelAnimationFrame(frameRef.current); return; }
+        if (missedRef.current >= (settings.maxMissed||8)) { setDone(true); cancelAnimationFrame(frameRef.current); return; }
       }
       // Spawn
       if (now - lastSpawn.current > 1200) {
@@ -428,7 +451,7 @@ export function CodeRain({ T, onBack, onSettings, settings = {} }) {
     }
   };
 
-  const reset = () => { setScore(0);setMissed(0);setTyped("");setDone(false);setColumns(Array.from({length:COLS},()=>[]));colsRef.current=Array.from({length:COLS},()=>[]);scoreRef.current=0;missedRef.current=0;lastSpawn.current=0; };
+  const reset = () => { gClear("coderain");setScore(0);setMissed(0);setTyped("");setDone(false);setColumns(Array.from({length:COLS},()=>[]));colsRef.current=Array.from({length:COLS},()=>[]);scoreRef.current=0;missedRef.current=0;lastSpawn.current=0; };
 
   if (done) return <ResultScreen emoji="💻" title="Matrix Down!" color="#34d399" stats={[["Words Typed",score],["Words Missed",missed]]} onRetry={reset} T={T}/>;
 
@@ -577,12 +600,14 @@ const STORIES = [
 ];
 
 export function TypewriterStory({ T, onBack, onSettings, settings = {} }) {
-  const [storyIdx, setStoryIdx] = useState(0);
-  const [typed, setTyped] = useState("");
+  const sv = gLoad("story");
+  const [storyIdx, setStoryIdx] = useState(()=> sv?.storyIdx || 0);
+  const [typed, setTyped] = useState(()=> sv?.typed || "");
   const [done, setDone] = useState(false);
-  const [start, setStart] = useState(null);
+  const [start, setStart] = useState(()=> sv?.start || null);
   const [muted, setMuted] = useState(false);
   const ref = useRef(null);
+  useEffect(()=>{ if(!done) gSave("story",{storyIdx,typed,start}); },[storyIdx,typed,done]);
   const story = STORIES[storyIdx];
   const target = story.text;
   const wpm = start && done ? Math.round((target.length/5)/((Date.now()-start)/60000)) : 0;
@@ -600,7 +625,7 @@ export function TypewriterStory({ T, onBack, onSettings, settings = {} }) {
 
   const acc = typed.length > 0 ? Math.round(typed.split("").filter((c,i)=>c===target[i]).length/typed.length*100) : 100;
 
-  const reset = (si=storyIdx) => { setTyped(""); setDone(false); setStart(null); setStoryIdx(si); setTimeout(()=>ref.current?.focus(),50); };
+  const reset = (si=storyIdx) => { gClear("story"); setTyped(""); setDone(false); setStart(null); setStoryIdx(si); setTimeout(()=>ref.current?.focus(),50); };
 
   if (done) return (
     <div>
@@ -785,13 +810,15 @@ function ambientTone(ctx, freq, vol=0.04) {
 }
 
 export function PoetryMode({ T, onBack, onSettings, settings = {} }) {
-  const [poemIdx, setPoemIdx] = useState(0);
-  const [lineIdx, setLineIdx] = useState(0);
+  const sv = gLoad("poetry");
+  const [poemIdx, setPoemIdx] = useState(()=> sv?.poemIdx || 0);
+  const [lineIdx, setLineIdx] = useState(()=> sv?.lineIdx || 0);
   const [typed, setTyped] = useState("");
   const [done, setDone] = useState(false);
   const [muted, setMuted] = useState(false);
-  const [completedLines, setCompletedLines] = useState([]);
+  const [completedLines, setCompletedLines] = useState(()=> sv?.completedLines || []);
   const ref = useRef(null);
+  useEffect(()=>{ if(!done) gSave("poetry",{poemIdx,lineIdx,completedLines}); },[poemIdx,lineIdx,completedLines,done]);
   const ambientRef = useRef(null);
   const poem = POEMS[poemIdx];
   const target = poem.lines[lineIdx] || "";
@@ -821,7 +848,7 @@ export function PoetryMode({ T, onBack, onSettings, settings = {} }) {
     }
   };
 
-  const reset = (pi=poemIdx) => { setPoemIdx(pi);setLineIdx(0);setTyped("");setDone(false);setCompletedLines([]); setTimeout(()=>ref.current?.focus(),50); };
+  const reset = (pi=poemIdx) => { gClear("poetry");setPoemIdx(pi);setLineIdx(0);setTyped("");setDone(false);setCompletedLines([]); setTimeout(()=>ref.current?.focus(),50); };
 
   return (
     <div>
