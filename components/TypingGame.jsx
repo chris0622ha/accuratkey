@@ -1113,7 +1113,9 @@ export default function AccuratKey() {
         if (typeof window !== "undefined" && window.location.search.includes("signout=1")) {
           localStorage.removeItem("ak_profileName");
           localStorage.removeItem("ak_uid");
+          localStorage.removeItem("ak_username");
           signOut(auth);
+          setCurrentUsername(null);
           return;
         }
         await createAccount(u.uid, u.email);
@@ -1147,7 +1149,9 @@ export default function AccuratKey() {
           if (window.location.search.includes("signout=1")) {
             localStorage.removeItem("ak_profileName");
             localStorage.removeItem("ak_uid");
+            localStorage.removeItem("ak_username");
             signOut(auth);
+            setCurrentUsername(null);
             setScreen("levelMap");
           } else if (window.location.search.includes("auth=1")) {
             setScreen("auth");
@@ -2067,7 +2071,7 @@ const Nav = () => (<>
           <div style={{color:T.faint,fontSize:13}}>Add Profile</div>
         </button>
       </div>
-      <button onClick={() => { if(typeof window !== "undefined"){localStorage.removeItem("ak_profileName");localStorage.removeItem("ak_uid");localStorage.removeItem("ak_lastProfile_"+(user?.uid||""));} signOut(auth); setActiveProfile(null); setProfiles([]); setScreen("levelMap");}} style={{marginTop:32,background:"none",border:"none",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
+      <button onClick={() => { if(typeof window !== "undefined"){localStorage.removeItem("ak_profileName");localStorage.removeItem("ak_uid");localStorage.removeItem("ak_lastProfile_"+(user?.uid||""));localStorage.removeItem("ak_username");} signOut(auth); setActiveProfile(null); setProfiles([]); setCurrentUsername(null); setScreen("levelMap");}} style={{marginTop:32,background:"none",border:"none",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
         Sign out
       </button>
     {BroadcastBanner}
