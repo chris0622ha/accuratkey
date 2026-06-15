@@ -247,6 +247,25 @@ export const SOUND_THEMES = [
 ];
 
 export default function ShopPage() {
+  const previewSound = (soundId) => {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const t = ctx.currentTime;
+      const beep = (freq, start, dur, vol=0.3) => {
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.frequency.value = freq; g.gain.setValueAtTime(vol, t+start);
+        g.gain.exponentialRampToValueAtTime(0.001, t+start+dur);
+        o.start(t+start); o.stop(t+start+dur+0.05);
+      };
+      if (soundId === "default") { beep(880,0,0.08); beep(660,0.15,0.08); beep(1100,0.35,0.2); }
+      else if (soundId === "mechanical") { [0,0.12,0.24].forEach(d=>beep(2200+Math.random()*200,d,0.04,0.15)); beep(3000,0.45,0.06,0.2); }
+      else if (soundId === "typewriter") { [0,0.1,0.2].forEach(d=>beep(1800,d,0.03,0.2)); beep(2400,0.4,0.12,0.25); }
+      else if (soundId === "soft") { beep(660,0,0.15,0.15); beep(440,0.2,0.12,0.1); beep(880,0.4,0.3,0.2); }
+      else if (soundId === "arcade") { beep(220,0,0.05); beep(440,0.08,0.05); [0,0.15,0.3,0.45].forEach((d,i)=>beep(220+i*110,0.5+d,0.08)); }
+      else if (soundId === "nature") { beep(1200,0,0.2,0.15); beep(900,0.3,0.15,0.1); beep(1600,0.55,0.4,0.18); }
+    } catch(e) {}
+  };
   const router = useRouter();
   const [user, setUser]               = useState(null);
   const [profiles, setProfiles]       = useState([]);
@@ -589,6 +608,7 @@ export default function ShopPage() {
                     <div style={{fontSize:11,color:T.muted,marginTop:3}}>{s.desc}</div>
                     <div style={{fontSize:11,color:T.faint,marginTop:4}}>{s.cost===0?"Free":`${s.cost} 🔑`}</div>
                   </div>
+                  <button onClick={()=>previewSound(s.id)} style={{padding:"5px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:11,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>▶ Preview</button>
                   {active ? (
                     <div style={{textAlign:"center",color:T.purple,fontSize:11,fontWeight:700,padding:"6px",border:`1px solid ${T.purple}`,borderRadius:6}}>✓ Active</div>
                   ) : owned ? (
