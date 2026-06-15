@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
+import { Sniper, Mirror, Flash, Echo, GhostWords, CodeRain, BossBattle, TypewriterStory, WordDuel, TypingJournal, PoetryMode } from "./GamesExtra";
 
 // ─── Sound Engine ─────────────────────────────────────────────────────────────
 let _sfxCtx = null;
@@ -87,6 +88,17 @@ const GAMES = [
   { id:"suddendeath", emoji:"☠️", name:"Sudden Death",   desc:"One wrong key and it's all over", tag:"💥 NEW" },
   { id:"zen",         emoji:"🧘", name:"Zen Mode",       desc:"No timer, no pressure — just type", tag:"✨ NEW" },
   { id:"ladder",      emoji:"🪜", name:"Speed Ladder",   desc:"Each rung must be faster than the last", tag:"🔥 NEW" },
+  { id:"sniper",      emoji:"🎯", name:"Sniper",         desc:"100% accuracy required — any mistake resets the word", tag:"🆕" },
+  { id:"mirror",      emoji:"🪞", name:"Mirror",          desc:"Words appear backwards — type them forwards", tag:"🆕" },
+  { id:"flash",       emoji:"⚡", name:"Flash",           desc:"Memorize the word before it disappears", tag:"🆕" },
+  { id:"echo",        emoji:"🔁", name:"Echo",            desc:"Repeat growing sequences of words from memory", tag:"🆕" },
+  { id:"ghost",       emoji:"👻", name:"Ghost Words",     desc:"Type the word before it fades away", tag:"🆕" },
+  { id:"coderain",    emoji:"💻", name:"Code Rain",       desc:"Matrix-style falling words in columns", tag:"🆕" },
+  { id:"boss",        emoji:"👾", name:"Boss Battle",     desc:"Deal damage by typing — dodge the boss attacks", tag:"🆕" },
+  { id:"story",       emoji:"🎭", name:"Typewriter Story",desc:"Type classic literature passages", tag:"🆕" },
+  { id:"duel",        emoji:"⚔️", name:"Word Duel",       desc:"Two players race on the same device", tag:"🆕" },
+  { id:"journal",     emoji:"📝", name:"Typing Journal",  desc:"Free type and save your entries locally", tag:"🆕" },
+  { id:"poetry",      emoji:"📜", name:"Poetry Mode",     desc:"Type poems with ambient synthesized tones", tag:"🆕" },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -773,7 +785,18 @@ export default function GamesTab({ T }) {
   if (activeGame === "scramble")    return <div style={{ padding:"4px 0" }}><WordScramble  T={T} onBack={() => setActiveGame(null)} /></div>;
   if (activeGame === "suddendeath") return <div style={{ padding:"4px 0" }}><SuddenDeath   T={T} onBack={() => setActiveGame(null)} /></div>;
   if (activeGame === "zen")         return <div style={{ padding:"4px 0" }}><ZenMode        T={T} onBack={() => setActiveGame(null)} /></div>;
-  if (activeGame === "ladder")      return <div style={{ padding:"4px 0" }}><SpeedLadder   T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "ladder")      return <div style={{ padding:"4px 0" }}><SpeedLadder    T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "sniper")      return <div style={{ padding:"4px 0" }}><Sniper          T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "mirror")      return <div style={{ padding:"4px 0" }}><Mirror          T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "flash")       return <div style={{ padding:"4px 0" }}><Flash           T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "echo")        return <div style={{ padding:"4px 0" }}><Echo            T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "ghost")       return <div style={{ padding:"4px 0" }}><GhostWords      T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "coderain")    return <div style={{ padding:"4px 0" }}><CodeRain        T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "boss")        return <div style={{ padding:"4px 0" }}><BossBattle      T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "story")       return <div style={{ padding:"4px 0" }}><TypewriterStory T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "duel")        return <div style={{ padding:"4px 0" }}><WordDuel        T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "journal")     return <div style={{ padding:"4px 0" }}><TypingJournal   T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "poetry")      return <div style={{ padding:"4px 0" }}><PoetryMode      T={T} onBack={() => setActiveGame(null)} /></div>;
 
   return (
     <div style={{ padding:"8px 0" }}>
