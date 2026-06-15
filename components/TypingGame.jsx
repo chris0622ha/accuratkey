@@ -4,7 +4,7 @@ import { useRouter, usePathname } from "next/navigation";
 import TypingTest from "./TypingTest";
 import GamesTab from "./GamesTab";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions } from "@/lib/firebase";
+import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback } from "@/lib/firebase";
 
 export 
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
@@ -971,6 +971,8 @@ export default function AccuratKey() {
   const [dailyDone, setDailyDone] = useState(false);
   const [sessionDates, setSessionDates] = useState({});
   const [showFeedback, setShowFeedback] = useState(false);
+  const [pendingNotifications, setPendingNotifications] = useState([]);
+  const [activeNotification, setActiveNotification] = useState(null);
   // Pomodoro
   const [showPomodoro, setShowPomodoro] = useState(false);
   const [pomodoroMode, setPomodoroMode] = useState("work"); // "work"|"break"|"longBreak"
@@ -1688,6 +1690,13 @@ export default function AccuratKey() {
       if (canUse(activeProfile, 'challenges')) {
         getPendingChallenges(user.uid).then(setChallenges).catch(() => {});
       }
+      // Check for admin replies / notifications
+      getPendingNotifications(user.uid).then(notifs => {
+        if (notifs.length > 0) {
+          setPendingNotifications(notifs);
+          setActiveNotification(notifs[0]);
+        }
+      }).catch(() => {});
     }
     setShowProfileModal(true);
   };
@@ -1932,6 +1941,27 @@ const Nav = () => (<>
     </div>
   );
 
+  // Notification popup (feedback reply from admin)
+  const NotificationPopup = activeNotification ? (
+    <div style={{position:"fixed",inset:0,background:"#000000aa",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div style={{background:T.card,border:`1px solid ${T.purple}`,borderRadius:16,padding:28,maxWidth:420,width:"100%",fontFamily:T.font}}>
+        <div style={{color:T.purple,fontWeight:800,fontSize:16,marginBottom:4}}>💬 Reply from {activeNotification.adminName}</div>
+        <div style={{color:T.faint,fontSize:11,marginBottom:16,letterSpacing:1}}>Response to your feedback</div>
+        <div style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:10,padding:"14px 16px",color:T.text,fontSize:14,lineHeight:1.7,marginBottom:20}}>
+          {activeNotification.reply}
+        </div>
+        <button onClick={async()=>{
+          await markNotificationRead(user?.uid, activeNotification.id).catch(()=>{});
+          const remaining = pendingNotifications.filter(n=>n.id!==activeNotification.id);
+          setPendingNotifications(remaining);
+          setActiveNotification(remaining[0]||null);
+        }} style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:T.purple,color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>
+          Got it ✓
+        </button>
+      </div>
+    </div>
+  ) : null;
+
   const BroadcastBanner = broadcast ? (
     <div style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:"#1e1e30",border:`1px solid ${T.purple}`,borderRadius:12,padding:"12px 20px",zIndex:1002,maxWidth:480,width:"90%",display:"flex",alignItems:"center",gap:12,pointerEvents:"none"}}>
       <span style={{fontSize:18}}>📢</span>
@@ -2072,6 +2102,7 @@ const Nav = () => (<>
         <span style={{animation:"blink 1s infinite",marginLeft:4}}>_</span>
       </div>
       <style>{`@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}`}</style>
+    {NotificationPopup}
     {BroadcastBanner}
     </div>
   );
@@ -2139,6 +2170,7 @@ const Nav = () => (<>
           </button>
         </div>
       </div>
+    {NotificationPopup}
     {BroadcastBanner}
     </div>
   );
@@ -2180,6 +2212,7 @@ const Nav = () => (<>
       <button onClick={() => { if(typeof window !== "undefined"){localStorage.removeItem("ak_profileName");localStorage.removeItem("ak_uid");localStorage.removeItem("ak_lastProfile_"+(user?.uid||""));localStorage.removeItem("ak_username");} signOut(auth); setActiveProfile(null); setProfiles([]); setCurrentUsername(null); setScreenWithUrl("levelMap");}} style={{marginTop:32,background:"none",border:"none",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
         Sign out
       </button>
+    {NotificationPopup}
     {BroadcastBanner}
     </div>
   );
