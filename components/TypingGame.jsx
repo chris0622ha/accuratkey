@@ -1902,6 +1902,7 @@ const Nav = () => (<>
       <h1 style={{color:T.text,fontSize:24,fontWeight:700,marginBottom:12}}>⌨️ Press any key</h1>
       <p style={{color:T.muted,fontSize:15,lineHeight:1.6,maxWidth:280}}>Click a key on your keyboard to access AccuratKey.</p>
       <p style={{color:T.faint,fontSize:12,marginTop:8,maxWidth:280}}>Have a Bluetooth keyboard? Connect it first, then press any key.</p>
+      <a href="/keyboard" style={{color:"#444",fontSize:11,marginTop:20,display:"block",textDecoration:"underline",cursor:"pointer"}}>How to connect a keyboard →</a>
       <div style={{marginTop:24,display:"flex",flexDirection:"column",gap:10,width:"100%",maxWidth:280}}>
         {user ? (
           <button onClick={()=>{ if(typeof window!=="undefined"){localStorage.removeItem("ak_profileName");localStorage.removeItem("ak_uid");localStorage.removeItem("ak_lastProfile_"+(user?.uid||""));localStorage.removeItem("ak_username");} signOut(auth); setActiveProfile(null); setProfiles([]); setCurrentUsername(null); setScreenWithUrl("auth"); }}
