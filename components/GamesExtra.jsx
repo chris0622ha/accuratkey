@@ -36,8 +36,13 @@ function SoundBtn({ muted, toggle, T }) {
   );
 }
 
-function BackBtn({ onBack, T }) {
-  return <button onClick={onBack} style={{background:"none",border:"none",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font,padding:0}}>← Back</button>;
+function BackBtn({ onBack, onSettings, T }) {
+  return (
+    <div style={{display:"flex",alignItems:"center",gap:8}}>
+      <button onClick={onBack} style={{background:"none",border:"none",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font,padding:0}}>← Back</button>
+      {onSettings && <button onClick={onSettings} style={{background:"none",border:"1px solid #2a2a4a",borderRadius:6,color:"#555",fontSize:12,padding:"2px 7px",cursor:"pointer"}}>⚙️</button>}
+    </div>
+  );
 }
 
 function ResultScreen({ emoji, title, color, stats, onRetry, T }) {
@@ -57,7 +62,7 @@ function ResultScreen({ emoji, title, color, stats, onRetry, T }) {
 }
 
 // ─── SNIPER ────────────────────────────────────────────────────────────────────
-export function Sniper({ T, onBack }) {
+export function Sniper({ T, onBack, onSettings, settings = {} }) {
   const [words] = useState(()=>pickN(50, MED_WORDS));
   const [idx, setIdx] = useState(0);
   const [typed, setTyped] = useState("");
@@ -92,7 +97,7 @@ export function Sniper({ T, onBack }) {
 
   return (
     <div>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><BackBtn onBack={onBack} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>🎯 Sniper</span><SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/></div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><BackBtn onBack={onBack} onSettings={onSettings} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>🎯 Sniper</span><SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/></div>
       <div style={{background:"#34d39911",border:"1px solid #34d39933",borderRadius:8,padding:"6px 12px",marginBottom:10,fontSize:11,color:"#34d399",textAlign:"center"}}>100% accuracy required — any mistake resets the word</div>
       <div style={{display:"flex",justifyContent:"space-between",marginBottom:10,fontSize:13}}>
         <span style={{color:T.muted}}>Word {idx+1}/{words.length}</span>
@@ -110,7 +115,7 @@ export function Sniper({ T, onBack }) {
 }
 
 // ─── MIRROR ────────────────────────────────────────────────────────────────────
-export function Mirror({ T, onBack }) {
+export function Mirror({ T, onBack, onSettings, settings = {} }) {
   const [words] = useState(()=>pickN(30, EASY_WORDS));
   const [idx, setIdx] = useState(0);
   const [typed, setTyped] = useState("");
@@ -141,7 +146,7 @@ export function Mirror({ T, onBack }) {
 
   return (
     <div>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><BackBtn onBack={onBack} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>🪞 Mirror</span><SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/></div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><BackBtn onBack={onBack} onSettings={onSettings} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>🪞 Mirror</span><SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/></div>
       <div style={{background:T.purple+"11",border:`1px solid ${T.purple}33`,borderRadius:8,padding:"6px 12px",marginBottom:10,fontSize:11,color:T.purple,textAlign:"center"}}>Word appears backwards — type it forwards</div>
       <div style={{textAlign:"center",marginBottom:8,color:T.muted,fontSize:13}}>{idx+1} / {words.length}</div>
       <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"20px",marginBottom:8,fontFamily:"'JetBrains Mono',monospace",fontSize:28,textAlign:"center",letterSpacing:4,color:T.muted,opacity:0.7,userSelect:"none"}}>
@@ -159,7 +164,7 @@ export function Mirror({ T, onBack }) {
 }
 
 // ─── FLASH ─────────────────────────────────────────────────────────────────────
-export function Flash({ T, onBack }) {
+export function Flash({ T, onBack, onSettings, settings = {} }) {
   const FLASH_MS = 1000;
   const [words] = useState(()=>pickN(20, MED_WORDS));
   const [idx, setIdx] = useState(0);
@@ -195,7 +200,7 @@ export function Flash({ T, onBack }) {
 
   return (
     <div>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><BackBtn onBack={onBack} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>⚡ Flash</span><SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/></div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><BackBtn onBack={onBack} onSettings={onSettings} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>⚡ Flash</span><SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/></div>
       <div style={{background:"#facc1511",border:"1px solid #facc1533",borderRadius:8,padding:"6px 12px",marginBottom:10,fontSize:11,color:"#facc15",textAlign:"center"}}>Memorize the word — then type it from memory</div>
       <div style={{textAlign:"center",color:T.muted,fontSize:13,marginBottom:10}}>{idx+1} / {words.length} · {correct} correct</div>
       <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"30px 20px",marginBottom:10,fontFamily:"'JetBrains Mono',monospace",fontSize:28,textAlign:"center",letterSpacing:4,minHeight:90,display:"flex",alignItems:"center",justifyContent:"center"}}>
@@ -210,7 +215,7 @@ export function Flash({ T, onBack }) {
 }
 
 // ─── ECHO ──────────────────────────────────────────────────────────────────────
-export function Echo({ T, onBack }) {
+export function Echo({ T, onBack, onSettings, settings = {} }) {
   const POOL = EASY_WORDS;
   const [sequence, setSequence] = useState([POOL[Math.floor(Math.random()*POOL.length)]]);
   const [phase, setPhase] = useState("show"); // show|type
@@ -259,7 +264,7 @@ export function Echo({ T, onBack }) {
 
   return (
     <div>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><BackBtn onBack={onBack} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>🔁 Echo</span><SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/></div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><BackBtn onBack={onBack} onSettings={onSettings} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>🔁 Echo</span><SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/></div>
       <div style={{display:"flex",justifyContent:"space-between",marginBottom:10,fontSize:13}}>
         <span style={{color:T.muted}}>Sequence: {sequence.length} words</span>
         <span>{"❤️".repeat(lives)}{"🖤".repeat(3-lives)}</span>
@@ -285,7 +290,7 @@ export function Echo({ T, onBack }) {
 }
 
 // ─── GHOST WORDS ───────────────────────────────────────────────────────────────
-export function GhostWords({ T, onBack }) {
+export function GhostWords({ T, onBack, onSettings, settings = {} }) {
   const VISIBLE_MS = 2500;
   const [words] = useState(()=>pickN(25, MED_WORDS));
   const [idx, setIdx] = useState(0);
@@ -326,7 +331,7 @@ export function GhostWords({ T, onBack }) {
 
   return (
     <div>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><BackBtn onBack={onBack} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>👻 Ghost Words</span><SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/></div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><BackBtn onBack={onBack} onSettings={onSettings} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>👻 Ghost Words</span><SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/></div>
       <div style={{background:"#a78bfa11",border:"1px solid #a78bfa33",borderRadius:8,padding:"6px 12px",marginBottom:10,fontSize:11,color:"#a78bfa",textAlign:"center"}}>Type the word before it fades away</div>
       <div style={{textAlign:"center",color:T.muted,fontSize:13,marginBottom:10}}>{idx+1} / {words.length}</div>
       <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"30px 20px",marginBottom:10,fontFamily:"'JetBrains Mono',monospace",fontSize:28,textAlign:"center",letterSpacing:4,minHeight:90,display:"flex",alignItems:"center",justifyContent:"center",transition:"opacity 0.5s",opacity:visible?opacity:0}}>
@@ -339,7 +344,7 @@ export function GhostWords({ T, onBack }) {
 }
 
 // ─── CODE RAIN ─────────────────────────────────────────────────────────────────
-export function CodeRain({ T, onBack }) {
+export function CodeRain({ T, onBack, onSettings, settings = {} }) {
   const COLS = 6;
   const [score, setScore] = useState(0);
   const [missed, setMissed] = useState(0);
@@ -415,7 +420,7 @@ export function CodeRain({ T, onBack }) {
 
   return (
     <div>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><BackBtn onBack={onBack} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>💻 Code Rain</span><SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/></div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><BackBtn onBack={onBack} onSettings={onSettings} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>💻 Code Rain</span><SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/></div>
       <div style={{display:"flex",justifyContent:"space-between",marginBottom:8,fontSize:13}}>
         <span style={{color:"#34d399",fontWeight:700}}>{score} typed</span>
         <span style={{color:"#ef4444"}}>{missed}/{MAX_MISSED} missed</span>
@@ -438,7 +443,7 @@ export function CodeRain({ T, onBack }) {
 }
 
 // ─── BOSS BATTLE ───────────────────────────────────────────────────────────────
-export function BossBattle({ T, onBack }) {
+export function BossBattle({ T, onBack, onSettings, settings = {} }) {
   const BOSS_HP = 100;
   const [bossHp, setBossHp] = useState(BOSS_HP);
   const [playerHp, setPlayerHp] = useState(100);
@@ -499,7 +504,7 @@ export function BossBattle({ T, onBack }) {
 
   return (
     <div>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><BackBtn onBack={onBack} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>👾 Boss Battle</span><SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/></div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><BackBtn onBack={onBack} onSettings={onSettings} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>👾 Boss Battle</span><SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/></div>
       {/* Boss */}
       <div style={{background:"#1a0a0a",border:"1px solid #ef444433",borderRadius:10,padding:"12px 16px",marginBottom:8}}>
         <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
@@ -544,7 +549,7 @@ const STORIES = [
   { title:"Orwell — 1984", text:"It was a bright cold day in April and the clocks were striking thirteen Winston Smith his chin nuzzled into his breast in an effort to escape the vile wind slipped quickly through the glass doors" },
 ];
 
-export function TypewriterStory({ T, onBack }) {
+export function TypewriterStory({ T, onBack, onSettings, settings = {} }) {
   const [storyIdx, setStoryIdx] = useState(0);
   const [typed, setTyped] = useState("");
   const [done, setDone] = useState(false);
@@ -572,7 +577,7 @@ export function TypewriterStory({ T, onBack }) {
 
   if (done) return (
     <div>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><BackBtn onBack={onBack} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>🎭 {story.title}</span></div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><BackBtn onBack={onBack} onSettings={onSettings} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>🎭 {story.title}</span></div>
       <ResultScreen emoji="📜" title="Story Complete!" color="#a78bfa" stats={[["WPM",wpm],["Accuracy",acc+"%"],["Passage",story.title]]} onRetry={()=>reset()} T={T}/>
       <div style={{marginTop:10,display:"flex",gap:6,flexWrap:"wrap"}}>
         {STORIES.map((s,i)=><button key={i} onClick={()=>reset(i)} style={{padding:"5px 10px",borderRadius:6,border:`1px solid ${T.border}`,background:i===storyIdx?T.purple:"transparent",color:i===storyIdx?"#fff":T.muted,fontSize:11,cursor:"pointer",fontFamily:T.font}}>{s.title.split("—")[0].trim()}</button>)}
@@ -582,7 +587,7 @@ export function TypewriterStory({ T, onBack }) {
 
   return (
     <div>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><BackBtn onBack={onBack} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>🎭 Typewriter Story</span><SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/></div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}><BackBtn onBack={onBack} onSettings={onSettings} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>🎭 Typewriter Story</span><SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/></div>
       <div style={{marginBottom:10,display:"flex",gap:6,flexWrap:"wrap"}}>
         {STORIES.map((s,i)=><button key={i} onClick={()=>reset(i)} style={{padding:"4px 8px",borderRadius:6,border:`1px solid ${T.border}`,background:i===storyIdx?T.purple+"33":"transparent",color:i===storyIdx?T.purple:T.faint,fontSize:10,cursor:"pointer",fontFamily:T.font}}>{s.title}</button>)}
       </div>
@@ -605,7 +610,7 @@ export function TypewriterStory({ T, onBack }) {
 }
 
 // ─── WORD DUEL ─────────────────────────────────────────────────────────────────
-export function WordDuel({ T, onBack }) {
+export function WordDuel({ T, onBack, onSettings, settings = {} }) {
   const WORDS = pickN(30, MED_WORDS);
   const [p1typed, setP1typed] = useState("");
   const [p2typed, setP2typed] = useState("");
@@ -663,7 +668,7 @@ export function WordDuel({ T, onBack }) {
 
   return (
     <div>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><BackBtn onBack={onBack} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>⚔️ Word Duel</span><SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/></div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><BackBtn onBack={onBack} onSettings={onSettings} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>⚔️ Word Duel</span><SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/></div>
       <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:8,padding:"6px 12px",marginBottom:10,fontSize:11,color:T.muted,textAlign:"center"}}>Two players · Same device · Race to finish</div>
       {bothDone && (
         <div style={{textAlign:"center",padding:"12px",background:T.card,border:`1px solid ${T.purple}`,borderRadius:10,marginBottom:10}}>
@@ -681,7 +686,7 @@ export function WordDuel({ T, onBack }) {
 }
 
 // ─── TYPING JOURNAL ────────────────────────────────────────────────────────────
-export function TypingJournal({ T, onBack }) {
+export function TypingJournal({ T, onBack, onSettings, settings = {} }) {
   const [text, setText] = useState("");
   const [saved, setSaved] = useState(()=>{ try { return JSON.parse(localStorage.getItem("ak_journal")||"[]"); } catch{return[];} });
   const [saving, setSaving] = useState(false);
@@ -703,7 +708,7 @@ export function TypingJournal({ T, onBack }) {
 
   return (
     <div>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><BackBtn onBack={onBack} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>📝 Typing Journal</span></div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><BackBtn onBack={onBack} onSettings={onSettings} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>📝 Typing Journal</span></div>
       <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Entry title (optional)" maxLength={50}
         style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:13,padding:"8px 12px",outline:"none",boxSizing:"border-box",marginBottom:8}}/>
       <textarea value={text} onChange={e=>setText(e.target.value)} placeholder="Type anything... notes, thoughts, practice passages. Saved locally on this device."
@@ -752,7 +757,7 @@ function ambientTone(ctx, freq, vol=0.04) {
   o.start(); return {o,g};
 }
 
-export function PoetryMode({ T, onBack }) {
+export function PoetryMode({ T, onBack, onSettings, settings = {} }) {
   const [poemIdx, setPoemIdx] = useState(0);
   const [lineIdx, setLineIdx] = useState(0);
   const [typed, setTyped] = useState("");
@@ -793,7 +798,7 @@ export function PoetryMode({ T, onBack }) {
 
   return (
     <div>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}><BackBtn onBack={onBack} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:18}}>📜 Poetry Mode</span><SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/></div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}><BackBtn onBack={onBack} onSettings={onSettings} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:18}}>📜 Poetry Mode</span><SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/></div>
       <div style={{display:"flex",gap:5,marginBottom:14,flexWrap:"wrap"}}>
         {POEMS.map((p,i)=><button key={i} onClick={()=>reset(i)} style={{padding:"3px 8px",borderRadius:6,border:`1px solid ${T.border}`,background:i===poemIdx?T.purple+"22":"transparent",color:i===poemIdx?T.purple:T.faint,fontSize:10,cursor:"pointer",fontFamily:T.font}}>{p.title.split("—")[0].trim()}</button>)}
       </div>
