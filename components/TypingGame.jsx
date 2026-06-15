@@ -2113,7 +2113,6 @@ const Nav = () => (<>
                 }} />
               ))}
             </div>
-            </div>
 
             {/* Delete Profile */}
             <div style={{marginTop:20,borderTop:`1px solid ${T.border}`,paddingTop:18}}>
