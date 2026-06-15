@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats } from "@/lib/firebase";
+import { auth, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback } from "@/lib/firebase";
 const LEVELS = [
   { id:1,  name:"Home Row Hero",         emoji:"🏠", wpmTarget:12,  accuracy:75, color:"#10b981", words:["ffjj","fjfj","asdf","jkl;","add","ask","fall","glad","flask","lads","fads","salads"] },
   { id:2,  name:"Top Row Climber",       emoji:"🧗", wpmTarget:16,  accuracy:75, color:"#3b82f6", words:["quit","wrap","type","your","power","tower","write","pretty","quite","report"] },
@@ -283,7 +283,7 @@ const st = {
   input:{ width:"100%",background:T.faint,border:`1px solid ${T.border}`,borderRadius:7,color:T.text,fontFamily:T.font,fontSize:12,padding:"8px 11px",outline:"none",boxSizing:"border-box" },
   label:{ color:T.muted,fontSize:9,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:5 },
 };
-const TABS = ["stats","users","bans","admins","keys","trials","warn","broadcast","levels","analytics","log","settings"];
+const TABS = ["stats","users","bans","admins","keys","trials","warn","broadcast","levels","analytics","log","feedback","settings"];
 
 export default function AdminPage() {
   const [user,setUser]=useState(null);
@@ -293,6 +293,7 @@ export default function AdminPage() {
   const [bans,setBans]=useState([]);
   const [admins,setAdmins]=useState([]);
   const [log,setLog]=useState([]);
+  const [feedbackList,setFeedbackList]=useState([]);
   const [stats,setStats]=useState(null);
   const [loading,setLoading]=useState(false);
   const [msg,setMsg]=useState("");
@@ -349,6 +350,7 @@ export default function AdminPage() {
   useEffect(()=>{ return onAuthStateChanged(auth, async u => { setUser(u); if(!u){setAdminOk(false);return;} const ok=await isAdmin(u.uid); setAdminOk(ok); }); },[]);
   useEffect(()=>{ if(adminOk) loadAll(); },[adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="log") getActivityLog(100).then(setLog).catch(()=>{}); },[tab,adminOk]);
+  useEffect(()=>{ if(adminOk&&tab==="feedback") getAdminFeedback(50).then(setFeedbackList).catch(()=>{}); },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="settings") getMaintenanceMode().then(m=>{setMaintEnabled(m.enabled);setMaintMsg(m.message||"");if(m.triggers)setMaintTriggers(m.triggers);}); },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="analytics"&&!failStats){setFailStatsLoading(true);getLevelFailStats().then(d=>{setFailStats(d);setFailStatsLoading(false);}).catch(()=>setFailStatsLoading(false));} },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="broadcast") getBroadcast().then(b=>{if(b)setCurrentBroadcast(b);}); },[tab,adminOk]);
@@ -533,7 +535,7 @@ export default function AdminPage() {
         <div style={{display:"flex",gap:4,marginBottom:16,background:T.card,borderRadius:10,padding:4,border:`1px solid ${T.border}`,flexWrap:"wrap"}}>
           {TABS.map(t=>(
             <button key={t} onClick={()=>setTab(t)} style={st.tab(tab===t)}>
-              {t==="stats"?"📊 Stats":t==="users"?`👥 Users (${users.length})`:t==="bans"?`🔨 Bans (${bans.length})`:t==="admins"?`🔑 Admins`:t==="keys"?"💰 Keys":t==="trials"?"⏱ Trials":t==="warn"?"⚠️ Warn":t==="broadcast"?"📢 Broadcast":t==="levels"?"🗺️ Levels":t==="analytics"?"📈 Analytics":t==="log"?"📋 Log":t==="settings"?"⚙️ Settings":""}
+              {t==="stats"?"📊 Stats":t==="users"?`👥 Users (${users.length})`:t==="bans"?`🔨 Bans (${bans.length})`:t==="admins"?`🔑 Admins`:t==="keys"?"💰 Keys":t==="trials"?"⏱ Trials":t==="warn"?"⚠️ Warn":t==="broadcast"?"📢 Broadcast":t==="levels"?"🗺️ Levels":t==="analytics"?"📈 Analytics":t==="log"?"📋 Log":t==="feedback"?"💬 Feedback":t==="settings"?"⚙️ Settings":""}
             </button>
           ))}
         </div>
@@ -788,6 +790,22 @@ export default function AdminPage() {
         )}
 
         {/* SETTINGS */}
+        {tab==="feedback"&&(
+          <div style={st.card}>
+            <div style={{fontWeight:700,color:T.text,marginBottom:14,fontSize:13}}>💬 User Feedback ({feedbackList.length})</div>
+            {feedbackList.length===0&&<div style={{color:T.muted,fontSize:12,textAlign:"center",padding:"20px 0"}}>No feedback yet.</div>}
+            {feedbackList.map(f=>(
+              <div key={f.id} style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,padding:"12px 14px",marginBottom:8}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                  <span style={{color:T.muted,fontSize:10}}>{f.uid?.slice(0,8)}…</span>
+                  <span style={{color:T.faint,fontSize:10}}>{f.createdAt?new Date(f.createdAt).toLocaleString():"unknown time"}</span>
+                </div>
+                <div style={{color:T.text,fontSize:13,whiteSpace:"pre-wrap",lineHeight:1.5}}>{f.text}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {tab==="settings"&&(
           <div style={st.card}>
             <div style={{fontWeight:700,color:T.text,marginBottom:14,fontSize:13}}>🔧 Maintenance Mode</div>

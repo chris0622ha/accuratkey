@@ -1985,6 +1985,34 @@ const Nav = () => (<>
               @{currentUsername || "Set username"} · Change username (5 🔑)
             </button>
 
+            {/* Privacy Settings */}
+            <div style={{marginTop:16,borderTop:`1px solid ${T.border}`,paddingTop:14}}>
+              <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>🔒 Privacy</div>
+              {[
+                ["publicProfile","Public profile page","Your /u/username page is visible to anyone"],
+                ["showStreak","Show streak publicly","Display 🔥 streak on your public profile"],
+                ["showSessions","Show session history","Show recent sessions on your public profile"],
+                ["showWpm","Show best WPM","Display your best WPM on your public profile"],
+              ].map(([key, label, desc]) => {
+                const val = activeProfile?.privacy?.[key] !== false; // default ON
+                return (
+                  <div key={key} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"9px 0",borderBottom:`1px solid ${T.faint}`}}>
+                    <div>
+                      <div style={{color:T.text,fontSize:12,fontWeight:700}}>{label}</div>
+                      <div style={{color:T.muted,fontSize:10,marginTop:2}}>{desc}</div>
+                    </div>
+                    <button onClick={()=>{
+                      const newPrivacy = {...(activeProfile?.privacy||{}), [key]: !val};
+                      patchProfile({privacy: newPrivacy});
+                      updateProfile(user.uid, activeProfile.id, {privacy: newPrivacy});
+                    }} style={{flexShrink:0,padding:"5px 12px",background:val?T.purple+"22":"transparent",border:`1px solid ${val?T.purple:T.border}`,borderRadius:7,color:val?T.purple:T.muted,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font,marginLeft:12}}>
+                      {val?"ON":"OFF"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
             {/* Delete Profile */}
             <div style={{marginTop:20,borderTop:`1px solid ${T.border}`,paddingTop:18}}>
               {!showDeleteProfile ? (
@@ -2242,9 +2270,13 @@ const Nav = () => (<>
                       e.stopPropagation();
                       if(!feedbackText.trim())return;
                       setFeedbackSending(true);
-                      try{ await submitFeedback(user?.uid||null, activeProfile?.id||null, feedbackText.trim()); setFeedbackSent(true); }
-                      catch(err){ console.error("Feedback error:",err); }
-                      finally{ setFeedbackSending(false); }
+                      try{
+                        await submitFeedback(user?.uid||null, activeProfile?.id||null, feedbackText.trim());
+                        setFeedbackSent(true);
+                      } catch(err){
+                        console.error("Feedback error:",err);
+                        setFeedbackText(t => t + "\n\n[send failed — please screenshot and share]");
+                      } finally{ setFeedbackSending(false); }
                     }} style={{background:feedbackText.trim()&&!feedbackSending?T.purple:"#444",border:"none",borderRadius:8,color:"#fff",fontSize:13,fontWeight:700,padding:"8px 20px",cursor:feedbackText.trim()&&!feedbackSending?"pointer":"default",fontFamily:T.font,opacity:feedbackSending?0.6:1}}>
                       {feedbackSending?"Sending…":"Send →"}
                     </button>

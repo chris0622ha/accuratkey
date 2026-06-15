@@ -116,6 +116,16 @@ export default function PublicProfile({ params }) {
   );
 
   const prof = data.profiles[activeProfile];
+  // If all profiles are private, show nothing
+  const publicProfiles = data.profiles.filter(p => p.isPublic !== false);
+  if (publicProfiles.length === 0) return (
+    <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font}}>
+      <div style={{fontSize:48,marginBottom:16}}>🔒</div>
+      <div style={{color:T.text,fontWeight:700,fontSize:18,marginBottom:8}}>Profile is private</div>
+      <div style={{color:T.muted,fontSize:13}}>@{data.username} has hidden their profile</div>
+      <a href="/" style={{color:T.purple,fontSize:13,marginTop:20,textDecoration:"none"}}>← AccuratKey</a>
+    </div>
+  );
   const badges = getBadges(prof);
 
   return (
@@ -143,8 +153,8 @@ export default function PublicProfile({ params }) {
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
             {[
               ["Level",prof.currentLevel||1,T.purple],
-              ["Best WPM",`${prof.bestWpm||0}`,T.accent],
-              ["Streak",`🔥${prof.streak||0}`,"#f97316"],
+              ["Best WPM",prof.bestWpm != null ? `${prof.bestWpm}` : "—",T.accent],
+              ["Streak",prof.streak != null ? `🔥${prof.streak}` : "—","#f97316"],
               ["Sessions",prof.totalSessions||0,T.muted],
             ].map(([label,val,color])=>(
               <div key={label} style={{background:T.card2,borderRadius:10,padding:"10px 6px"}}>
