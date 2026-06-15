@@ -104,16 +104,17 @@ const GAMES = [
 // ═══════════════════════════════════════════════════════════════════════════════
 // WORD RAIN
 // ═══════════════════════════════════════════════════════════════════════════════
-function WordRain({ T, onBack }) {
+function WordRain({ T, onBack, settings = {} }) {
+  const sv = gLoad("rain");
   const [status, setStatus]   = useState("idle");
-  const [difficulty, setDiff] = useState("easy");
-  const [maxLives, setMaxLives] = useState(5);
+  const [difficulty, setDiff] = useState(()=> settings.difficulty || sv?.difficulty || "easy");
+  const [maxLives, setMaxLives] = useState(()=> settings.lives || sv?.maxLives || 5);
   const [muted, setMuted]     = useState(() => localStorage.getItem("ak_sfx_muted") === "1");
   const [drops, setDrops]     = useState([]);
   const [typed, setTyped]     = useState("");
   const [score, setScore]     = useState(0);
   const [missed, setMissed]   = useState(0);
-  const [best, setBest]       = useState(0);
+  const [best, setBest]       = useState(()=> sv?.best || 0);
   const [speedMult, setSpeedMult] = useState(1);
   const inputRef  = useRef(null);
   const frameRef  = useRef(null);
@@ -179,7 +180,9 @@ function WordRain({ T, onBack }) {
           setDrops([]);
           sfx("gameover");
           setStatus("dead");
-          setBest(b => Math.max(b, scoreRef.current));
+          const newBest = Math.max(Number(localStorage.getItem("ak_gs_rain_best")||0), scoreRef.current);
+          localStorage.setItem("ak_gs_rain_best", newBest);
+          setBest(newBest);
           cancelAnimationFrame(frameRef.current);
           return;
         }
@@ -286,7 +289,8 @@ function WordRain({ T, onBack }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // SURVIVAL
 // ═══════════════════════════════════════════════════════════════════════════════
-function Survival({ T, onBack }) {
+function Survival({ T, onBack, settings = {} }) {
+  const sv = gLoad("survival");
   const [status, setStatus]     = useState("idle");
   const [startTime, setStartTime] = useState(30);
   const [muted, setMuted]       = useState(() => localStorage.getItem("ak_sfx_muted") === "1");
@@ -295,6 +299,7 @@ function Survival({ T, onBack }) {
   const [typed, setTyped]       = useState("");
   const [timeLeft, setTimeLeft]  = useState(30);
   const [score, setScore]        = useState(0);
+  const [best, setBest] = useState(()=> sv?.best || 0);
   const [best, setBest]          = useState(0);
   const [flash, setFlash]        = useState(null);
   const inputRef = useRef(null);
@@ -446,16 +451,17 @@ function Survival({ T, onBack }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // SPEED BURST
 // ═══════════════════════════════════════════════════════════════════════════════
-function SpeedBurst({ T, onBack }) {
-  const [duration, setDuration] = useState(15);
+function SpeedBurst({ T, onBack, settings = {} }) {
+  const sv = gLoad("burst");
+  const [duration, setDuration] = useState(()=> settings.duration || 30);
   const [status, setStatus]     = useState("idle");
   const [muted, setMuted]       = useState(() => localStorage.getItem("ak_sfx_muted") === "1");
   const [words, setWords]        = useState([]);
   const [typed, setTyped]        = useState("");
-  const [timeLeft, setTimeLeft]  = useState(15);
+  const [timeLeft, setTimeLeft]  = useState(()=> settings.duration || 30);
   const [correct, setCorrect]    = useState(0);
   const [chars, setChars]        = useState(0);
-  const [best, setBest]          = useState({ wpm:0, acc:0 });
+  const [best, setBest]          = useState(()=> sv?.best || { wpm:0, acc:0 });
   const inputRef  = useRef(null);
   const timerRef  = useRef(null);
   const timeRef   = useRef(15);
@@ -601,7 +607,8 @@ function SpeedBurst({ T, onBack }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // WORD SCRAMBLE
 // ═══════════════════════════════════════════════════════════════════════════════
-function WordScramble({ T, onBack }) {
+function WordScramble({ T, onBack, settings = {} }) {
+  const sv = gLoad("scramble");
   const POOL = [...MED_WORDS, ...HARD_WORDS];
 
   const scramble = (w) => {
@@ -775,6 +782,12 @@ function WordScramble({ T, onBack }) {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN GamesTab
+
+// ─── Game persistence helpers ─────────────────────────────────────────────────
+function gSave(id, data) { try { localStorage.setItem("ak_gs_"+id, JSON.stringify(data)); } catch{} }
+function gLoad(id) { try { return JSON.parse(localStorage.getItem("ak_gs_"+id)||"null"); } catch{return null;} }
+function gClear(id) { try { localStorage.removeItem("ak_gs_"+id); } catch{} }
+
 // ─── Per-game settings definitions ───────────────────────────────────────────
 const GAME_SETTINGS = {
   rain:        [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"easy" }, { key:"lives", label:"Lives", opts:[3,5,7,10], default:5 }],
@@ -946,16 +959,18 @@ export default function GamesTab({ T }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // SUDDEN DEATH
 // ═══════════════════════════════════════════════════════════════════════════════
-function SuddenDeath({ T, onBack }) {
-  const WORD_POOL = pickWords(60, "medium");
-  const [words] = useState(WORD_POOL);
+function SuddenDeath({ T, onBack, settings = {} }) {
+  const sv = gLoad("suddendeath");
+  const WORD_POOL = pickWords(60, settings.difficulty || "medium");
+  const [words] = useState(()=> sv?.words || WORD_POOL);
   const [typed, setTyped] = useState("");
-  const [current, setCurrent] = useState(0);
+  const [current, setCurrent] = useState(()=> sv?.current || 0);
   const [dead, setDead] = useState(false);
   const [done, setDone] = useState(false);
   const [startTime, setStartTime] = useState(null);
   const [wpm, setWpm] = useState(0);
   const [muted, setMuted] = useState(false);
+  useEffect(()=>{ if(!dead&&!done) gSave("suddendeath",{words,current}); },[current,dead,done]);
   const ref = React.useRef(null);
   const target = words[current] || "";
 
@@ -988,7 +1003,7 @@ function SuddenDeath({ T, onBack }) {
     }
   };
 
-  const reset = () => { setTyped(""); setCurrent(0); setDead(false); setDone(false); setStartTime(null); setWpm(0); setTimeout(()=>ref.current?.focus(),50); };
+  const reset = () => { gClear("suddendeath"); setTyped(""); setCurrent(0); setDead(false); setDone(false); setStartTime(null); setWpm(0); setTimeout(()=>ref.current?.focus(),50); };
 
   return (
     <div style={{padding:"4px 0"}}>
@@ -1037,14 +1052,16 @@ function SuddenDeath({ T, onBack }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // ZEN MODE
 // ═══════════════════════════════════════════════════════════════════════════════
-function ZenMode({ T, onBack }) {
-  const [words, setWords] = useState(() => pickWords(80, "easy"));
-  const [typed, setTyped] = useState("");
+function ZenMode({ T, onBack, settings = {} }) {
+  const sv = gLoad("zen");
+  const [words, setWords] = useState(() => sv?.words || pickWords(80, settings.difficulty || "easy"));
+  const [typed, setTyped] = useState(()=> sv?.typed || "");
   const [correct, setCorrect] = useState(0);
   const [total, setTotal] = useState(0);
   const [startTime, setStartTime] = useState(null);
   const [wpm, setWpm] = useState(0);
   const [muted, setMuted] = useState(false);
+  useEffect(()=>{ gSave("zen",{words,typed}); },[typed]);
   const ref = React.useRef(null);
   const target = words.join(" ");
 
@@ -1088,7 +1105,7 @@ function ZenMode({ T, onBack }) {
         <span style={{color:T.purple,fontWeight:700}}>{startTime?wpm:0} WPM</span>
         <span style={{color:"#34d399",fontWeight:700}}>{acc}%</span>
         <span>{typed.length} chars</span>
-        {startTime && <button onClick={()=>{setTyped("");setStartTime(null);setWpm(0);}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.faint,fontSize:11,padding:"2px 8px",cursor:"pointer",fontFamily:"inherit"}}>↺ Reset</button>}
+        {startTime && <button onClick={()=>{gClear("zen");setTyped("");setStartTime(null);setWpm(0);}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.faint,fontSize:11,padding:"2px 8px",cursor:"pointer",fontFamily:"inherit"}}>↺ Reset</button>}
       </div>
     </div>
   );
@@ -1097,17 +1114,19 @@ function ZenMode({ T, onBack }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // SPEED LADDER
 // ═══════════════════════════════════════════════════════════════════════════════
-function SpeedLadder({ T, onBack }) {
-  const RUNGS = 10;
-  const [rung, setRung] = useState(0);
-  const [words] = useState(()=>Array.from({length:RUNGS},(_,i)=>pickWords(5+i*2,"easy")));
+function SpeedLadder({ T, onBack, settings = {} }) {
+  const RUNGS = settings.rungs || 10;
+  const sv = gLoad("ladder");
+  const [rung, setRung] = useState(()=> sv?.rung || 0);
+  const [words] = useState(()=> sv?.words || Array.from({length:RUNGS},(_,i)=>pickWords(5+i*2,"easy")));
   const [typed, setTyped] = useState("");
   const [startTime, setStartTime] = useState(null);
   const [rungStart, setRungStart] = useState(null);
-  const [rungWpms, setRungWpms] = useState([]);
+  const [rungWpms, setRungWpms] = useState(()=> sv?.rungWpms || []);
   const [failed, setFailed] = useState(false);
   const [done, setDone] = useState(false);
   const [muted, setMuted] = useState(false);
+  useEffect(()=>{ if(!failed&&!done) gSave("ladder",{rung,words,rungWpms}); },[rung,rungWpms,failed,done]);
   const ref = React.useRef(null);
   const MIN_WPM = rung === 0 ? 0 : rungWpms[rung-1] || 0;
   const target = (words[rung]||[]).join(" ");
@@ -1129,7 +1148,7 @@ function SpeedLadder({ T, onBack }) {
     }
   };
 
-  const reset = () => { setRung(0);setTyped("");setStartTime(null);setRungStart(null);setRungWpms([]);setFailed(false);setDone(false);setTimeout(()=>ref.current?.focus(),50); };
+  const reset = () => { gClear("ladder");setRung(0);setTyped("");setStartTime(null);setRungStart(null);setRungWpms([]);setFailed(false);setDone(false);setTimeout(()=>ref.current?.focus(),50); };
   const bestWpm = rungWpms.length ? Math.max(...rungWpms) : 0;
 
   return (
