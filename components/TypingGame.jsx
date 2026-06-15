@@ -721,10 +721,9 @@ function SendChallengeForm({ T, friends, LEVELS, onSend }) {
 
 export default function AccuratKey() {
   const router = useRouter();
-  const pathname = usePathname();
   const [screen, setScreen] = useState("loading");
 
-  // Screen → URL mapping
+  // Screen to URL mapping
   const SCREEN_URLS = {
     auth: "/signin",
     profilePicker: "/profiles",
@@ -739,8 +738,8 @@ export default function AccuratKey() {
     maintenance: "/game",
   };
 
-  // Sync screen → URL (replace so back button works naturally)
-  const setScreenWithUrl = React.useCallback((s, opts = {}) => {
+  // Sync screen to URL (replace so back button works naturally)
+  const setScreenWithUrl = React.useCallback((s) => {
     setScreen(s);
     const url = SCREEN_URLS[s] || "/game";
     if (typeof window !== "undefined" && window.location.pathname !== url) {
