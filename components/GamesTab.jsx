@@ -1,9 +1,10 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, ALL_WORDS, WORD_CATEGORIES, pickWords as dbPickWords } from "./WordDB";
-const EASY_WORDS = EASY_ARR;
-const MED_WORDS = MED_ARR;
-const HARD_WORDS = HARD_ARR;
+import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, ALL_WORDS, WORD_CATEGORIES, CATEGORY_NAMES, SPELLING_BEE_WORDS, pickWords, pickByDiff } from "./WordDB";
+// Use TYPING_BASIC/MEDIUM/HARD for gameplay, EASY/MED/HARD for general
+const EASY_WORDS = TYPING_BASIC;
+const MED_WORDS = TYPING_MEDIUM;
+const HARD_WORDS = TYPING_HARD;
 import { Sniper, Mirror, Flash, Echo, GhostWords, CodeRain, BossBattle, TypewriterStory, TypingJournal, PoetryMode } from "./GamesExtra";
 import { HundredWords, Endurance, Roulette, WordChain, CategoryBlitz, VocabBuilder, SpellingBee, TypingInvaders, AsteroidBelt, TowerDefense, MysteryWords, RhymeTime, MadLibs } from "./GamesNew2";
 
@@ -60,12 +61,7 @@ const _LEGACY_EASY = ["the","and","you","for","with","that","this","from","have"
 const MED_WORDS  = ["people","before","should","between","through","because","without","another","against","thought","looking","children","problem","school","always","found","three","still","world","never","right","where","every","might","place","state","small","large","often","along","since","until","while","point","house","again","away","hand","light","city","high","need","home","water","more","game","play","work","life","form","help","feel","talk","turn","each","face","show","move","live","hold","days","line","side","open","keep","read","mind","head","stop","left","real","near","book","land","thing","kind","mean","same","tell","want","seem","call","come","give","than","when","them","then","look"];
 const HARD_WORDS = ["strength","keyboard","through","beautiful","challenge","wonderful","important","different","available","carefully","excellent","sometimes","knowledge","necessary","community","following","according","something","together","mountain","whatever","remember","question","probably","absolute","previous","solution","position","language","practice","describe","continue","personal","students","consider","although","happened","thousand","everyone","anything","building","business","however","evening","already","medical","natural","culture","serious"];
 
-function pickWords(count = 20, level = "easy") {
-  const pool = level === "hard" ? HARD_ARR : level === "med" ? MED_ARR : level === "vhard" ? VHARD_ARR : EASY_ARR;
-  const out = [];
-  for (let i = 0; i < count; i++) out.push(pool[Math.floor(Math.random() * pool.length)]);
-  return out;
-}
+// pickWords from WordDB handles this now
 
 // ─── Option Row helper ─────────────────────────────────────────────────────────
 function OptionRow({ label, options, value, onChange, T }) {
