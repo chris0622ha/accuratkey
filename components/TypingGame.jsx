@@ -1886,11 +1886,16 @@ const Nav = () => (<>
 
   // SCREENS
 
-  if (isMobile && user?.uid !== "qM3qeYBLwvRXy8D0gOKGCQbGuA12") return (
+  if (isMobile && user?.uid !== "qM3qeYBLwvRXy8D0gOKGCQbGuA12" && screen !== "auth" && screen !== "profilePicker" && screen !== "createProfile") return (
     <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:32,textAlign:"center"}}>
       <div style={{fontSize:64,marginBottom:20}}>⌨️</div>
       <h1 style={{color:T.text,fontSize:26,fontWeight:700,marginBottom:12}}>Desktop only</h1>
       <p style={{color:T.muted,fontSize:15,lineHeight:1.6,maxWidth:280}}>AccuratKey needs a physical keyboard. Open it on your computer to start practicing!</p>
+      <div style={{marginTop:24,display:"flex",flexDirection:"column",gap:10,width:"100%",maxWidth:280}}>
+        <button onClick={()=>setScreenWithUrl("profilePicker")} style={{padding:"12px",borderRadius:10,border:"none",background:T.card,color:T.muted,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
+          Switch Profile / Sign Out
+        </button>
+      </div>
     </div>
   );
 
