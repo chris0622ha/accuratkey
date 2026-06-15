@@ -2656,6 +2656,104 @@ const Nav = () => (<>
     const lv = LEVELS.find(l => l.id === resultData.level) || LEVELS[0];
     const { passed, wpm: rWpm, accuracy: rAcc, isSkipChallenge: rSkip } = resultData;
     const worstKeys = Object.entries(keyMistakes).sort((a,b) => b[1]-a[1]).slice(0,5);
+    const stars = rAcc >= 95 ? 3 : (lv && rWpm >= lv.wpmTarget && lv.wpmTarget > 0) ? 2 : 1;
+
+    const downloadCertificate = () => {
+      const W = 800, H = 480;
+      const canvas = document.createElement("canvas");
+      canvas.width = W; canvas.height = H;
+      const ctx = canvas.getContext("2d");
+
+      // Background
+      ctx.fillStyle = "#0a0a0f";
+      ctx.fillRect(0, 0, W, H);
+
+      // Border glow
+      ctx.strokeStyle = "#7c6af7";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(16, 16, W-32, H-32);
+      ctx.strokeStyle = "#7c6af755";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(22, 22, W-44, H-44);
+
+      // Header
+      ctx.fillStyle = "#7c6af7";
+      ctx.font = "bold 13px 'JetBrains Mono', monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("⌨  ACCURATKEY", W/2, 58);
+
+      ctx.fillStyle = "#e0e0ff";
+      ctx.font = "bold 32px 'JetBrains Mono', monospace";
+      ctx.fillText("Certificate of Completion", W/2, 108);
+
+      // Divider
+      ctx.strokeStyle = "#7c6af744";
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(80, 128); ctx.lineTo(W-80, 128); ctx.stroke();
+
+      // "This certifies that"
+      ctx.fillStyle = "#555";
+      ctx.font = "14px 'JetBrains Mono', monospace";
+      ctx.fillText("This certifies that", W/2, 162);
+
+      // Name
+      const profileName = activeProfile?.name || currentUsername || "Typist";
+      ctx.fillStyle = "#fb923c";
+      ctx.font = "bold 28px 'JetBrains Mono', monospace";
+      ctx.fillText(profileName, W/2, 200);
+
+      // "successfully completed"
+      ctx.fillStyle = "#555";
+      ctx.font = "14px 'JetBrains Mono', monospace";
+      ctx.fillText("successfully completed", W/2, 232);
+
+      // Level name
+      ctx.fillStyle = lv.color || "#7c6af7";
+      ctx.font = "bold 22px 'JetBrains Mono', monospace";
+      ctx.fillText(`${lv.emoji}  Level ${lv.id}: ${lv.name}`, W/2, 268);
+
+      // Stats row
+      const stats = [
+        { label: "WPM", value: rWpm },
+        { label: "Accuracy", value: rAcc + "%" },
+        { label: "Stars", value: "★".repeat(stars) + "☆".repeat(3 - stars) },
+      ];
+      const colW = (W - 160) / stats.length;
+      stats.forEach((s, i) => {
+        const x = 80 + colW * i + colW / 2;
+        ctx.fillStyle = "#13131f";
+        ctx.beginPath();
+        ctx.roundRect(x - colW/2 + 8, 295, colW - 16, 72, 10);
+        ctx.fill();
+        ctx.strokeStyle = "#1e1e30";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.fillStyle = s.label === "Stars" ? "#facc15" : "#7c6af7";
+        ctx.font = `bold ${s.label === "Stars" ? 22 : 26}px 'JetBrains Mono', monospace`;
+        ctx.fillText(s.value, x, 335);
+        ctx.fillStyle = "#444";
+        ctx.font = "11px 'JetBrains Mono', monospace";
+        ctx.fillText(s.label, x, 355);
+      });
+
+      // Date
+      const dateStr = new Date().toLocaleDateString("en-US", { year:"numeric", month:"long", day:"numeric" });
+      ctx.fillStyle = "#333";
+      ctx.font = "12px 'JetBrains Mono', monospace";
+      ctx.fillText(dateStr, W/2, 408);
+
+      // Footer
+      ctx.fillStyle = "#222";
+      ctx.font = "11px 'JetBrains Mono', monospace";
+      ctx.fillText("accuratkey.vercel.app", W/2, 448);
+
+      // Download
+      const a = document.createElement("a");
+      a.download = `accuratkey-level${lv.id}-certificate.png`;
+      a.href = canvas.toDataURL("image/png");
+      a.click();
+    };
 
     return (
       <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:20}}>
@@ -2707,6 +2805,12 @@ const Nav = () => (<>
             <button onClick={() => requestStartLevel(resultData.level + 1)}
               style={{width:"100%",marginTop:10,padding:14,borderRadius:10,border:"none",background:lv.color,color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>
               Next Level →
+            </button>
+          )}
+          {passed && (
+            <button onClick={downloadCertificate}
+              style={{width:"100%",marginTop:10,padding:12,borderRadius:10,border:`1px solid ${T.purple}55`,background:T.purple+"18",color:T.purple,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:T.font}}>
+              🏆 Download Certificate
             </button>
           )}
         </div>
