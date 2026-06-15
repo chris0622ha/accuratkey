@@ -896,6 +896,16 @@ export default function AccuratKey() {
   const [dailyDone, setDailyDone] = useState(false);
   const [sessionDates, setSessionDates] = useState({});
   const [showFeedback, setShowFeedback] = useState(false);
+  // Pomodoro
+  const [showPomodoro, setShowPomodoro] = useState(false);
+  const [pomodoroMode, setPomodoroMode] = useState("work"); // "work"|"break"|"longBreak"
+  const [pomodoroSecs, setPomodoroSecs] = useState(25*60);
+  const [pomodoroRunning, setPomodoroRunning] = useState(false);
+  const [pomodoroCount, setPomodoroCount] = useState(0); // completed work sessions
+  const [pomodoroGoal, setPomodoroGoal] = useState(4);
+  const [pomodoroWpm, setPomodoroWpm] = useState([]); // wpm logged during session
+  const pomodoroIntervalRef = useRef(null);
+  const POMO_DURATIONS = { work: 25*60, break: 5*60, longBreak: 15*60 };
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackSent, setFeedbackSent] = useState(false);
   const [feedbackSending, setFeedbackSending] = useState(false);
@@ -987,6 +997,47 @@ export default function AccuratKey() {
       getSessionDates(user.uid, activeProfile.id, 90).then(setSessionDates).catch(()=>{});
     }
   }, [activeTab]);
+
+  // Pomodoro ticker
+  React.useEffect(() => {
+    if (pomodoroRunning) {
+      pomodoroIntervalRef.current = setInterval(() => {
+        setPomodoroSecs(s => {
+          if (s <= 1) {
+            // Session complete
+            clearInterval(pomodoroIntervalRef.current);
+            setPomodoroRunning(false);
+            if (pomodoroMode === "work") {
+              const newCount = pomodoroCount + 1;
+              setPomodoroCount(newCount);
+              const nextMode = newCount % 4 === 0 ? "longBreak" : "break";
+              setPomodoroMode(nextMode);
+              setPomodoroSecs(POMO_DURATIONS[nextMode]);
+            } else {
+              setPomodoroMode("work");
+              setPomodoroSecs(POMO_DURATIONS.work);
+            }
+            // Beep
+            try {
+              const ctx = new (window.AudioContext || window.webkitAudioContext)();
+              [0,0.3,0.6].forEach(t => {
+                const o = ctx.createOscillator(); const g = ctx.createGain();
+                o.connect(g); g.connect(ctx.destination);
+                o.frequency.value = 880; g.gain.setValueAtTime(0.3, ctx.currentTime+t);
+                g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+t+0.3);
+                o.start(ctx.currentTime+t); o.stop(ctx.currentTime+t+0.3);
+              });
+            } catch(e) {}
+            return 0;
+          }
+          return s - 1;
+        });
+      }, 1000);
+    } else {
+      clearInterval(pomodoroIntervalRef.current);
+    }
+    return () => clearInterval(pomodoroIntervalRef.current);
+  }, [pomodoroRunning, pomodoroMode, pomodoroCount]);
 
   
   const akTimer = useRef(null);
@@ -1710,6 +1761,9 @@ const Nav = () => (<>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           {streak>0&&<span style={{color:"#f97316",fontWeight:700,fontSize:12}}>🔥{streak}</span>}
           <button onClick={e=>{e.stopPropagation();setShowFeedback(true);setFeedbackSent(false);setFeedbackText("");}} title="Send feedback" style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:12,padding:"3px 7px",cursor:"pointer",fontFamily:T.font,lineHeight:1}}>💬</button>
+          {canUse(activeProfile,"pomodoro")&&<button onClick={e=>{e.stopPropagation();setShowPomodoro(true);}} title="Pomodoro timer" style={{background:pomodoroRunning?"#ef444422":"none",border:`1px solid ${pomodoroRunning?"#ef4444":T.border}`,borderRadius:6,color:pomodoroRunning?"#ef4444":T.muted,fontSize:12,padding:"3px 7px",cursor:"pointer",fontFamily:T.font,lineHeight:1}}>
+            {pomodoroRunning ? `⏱ ${String(Math.floor(pomodoroSecs/60)).padStart(2,"0")}:${String(pomodoroSecs%60).padStart(2,"0")}` : "⏱"}
+          </button>}
           {canUse(activeProfile,"keys")&&<span style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:"4px 10px",fontSize:fs(13),color:T.accent,fontWeight:700,display:"flex",alignItems:"center",gap:4}}><KKey size={14}/>{((k)=>k>=1e6?""+Math.round(k/1e6)+"M":k>=1e3?""+Math.round(k/1e3)+"k":k)(activeProfile.keys||0)}</span>}
                     {canUse(activeProfile,"friends")&&<button onClick={()=>{getFriends(user?.uid).then(setFriends);getIncomingRequests(user?.uid).then(setFriendReqs);setShowFriends(true);}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:fs(13),padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Friends">👥</button>}
           {canUse(activeProfile,"shop")&&<button onClick={()=>{
@@ -1791,6 +1845,7 @@ const Nav = () => (<>
         ["daily","📅 Daily challenge","Access the daily challenge tab"],
         ["test","⌨️ Typing test","Access the free typing test tab"],
         ["customWords","📝 Custom word lists","Create and use custom word lists in Test tab"],
+        ["pomodoro","⏱ Pomodoro timer","Focus timer with work/break cycles in nav bar"],
         ["leaderboard","🏆 Leaderboard","View global leaderboards"],
         ["levelMap","🗺 Level map","See full level progression map"],
         ["sessionHistory","📋 Session history","View past typing sessions"],
@@ -2542,6 +2597,73 @@ const Nav = () => (<>
 
           <div style={{height:40}}/>
         </div>
+
+        {showPomodoro && (() => {
+          const mins = Math.floor(pomodoroSecs/60);
+          const secs = pomodoroSecs%60;
+          const modeLabel = pomodoroMode==="work" ? "🍅 Focus" : pomodoroMode==="break" ? "☕ Short Break" : "🛋️ Long Break";
+          const modeColor = pomodoroMode==="work" ? "#ef4444" : pomodoroMode==="break" ? "#34d399" : "#7c6af7";
+          const pct = 1 - pomodoroSecs / POMO_DURATIONS[pomodoroMode];
+          const r=54, circ=2*Math.PI*r;
+          return (
+            <div onClick={()=>setShowPomodoro(false)} style={{position:"fixed",inset:0,background:"#000a",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1010,padding:20}}>
+              <div onClick={e=>e.stopPropagation()} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:16,padding:28,width:"100%",maxWidth:360,textAlign:"center"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+                  <span style={{color:T.text,fontWeight:800,fontSize:16}}>⏱ Pomodoro</span>
+                  <button onClick={()=>setShowPomodoro(false)} style={{background:"none",border:"none",color:T.faint,fontSize:20,cursor:"pointer"}}>×</button>
+                </div>
+
+                {/* Mode pills */}
+                <div style={{display:"flex",gap:6,justifyContent:"center",marginBottom:20}}>
+                  {[["work","🍅 Focus"],["break","☕ Break"],["longBreak","🛋️ Long"]].map(([m,l])=>(
+                    <button key={m} onClick={()=>{setPomodoroMode(m);setPomodoroSecs(POMO_DURATIONS[m]);setPomodoroRunning(false);}} style={{padding:"4px 10px",borderRadius:20,border:`1px solid ${pomodoroMode===m?modeColor:T.border}`,background:pomodoroMode===m?modeColor+"22":"transparent",color:pomodoroMode===m?modeColor:T.muted,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>{l}</button>
+                  ))}
+                </div>
+
+                {/* Ring timer */}
+                <div style={{position:"relative",display:"inline-block",marginBottom:16}}>
+                  <svg width="130" height="130" style={{transform:"rotate(-90deg)"}}>
+                    <circle cx="65" cy="65" r={r} fill="none" stroke={T.border} strokeWidth="6"/>
+                    <circle cx="65" cy="65" r={r} fill="none" stroke={modeColor} strokeWidth="6"
+                      strokeDasharray={circ} strokeDashoffset={circ*(1-pct)} strokeLinecap="round"
+                      style={{transition:"stroke-dashoffset 0.8s ease"}}/>
+                  </svg>
+                  <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+                    <div style={{color:T.text,fontWeight:800,fontSize:28,fontFamily:"'JetBrains Mono',monospace"}}>
+                      {String(mins).padStart(2,"0")}:{String(secs).padStart(2,"0")}
+                    </div>
+                    <div style={{color:modeColor,fontSize:10,fontWeight:700,marginTop:2}}>{modeLabel}</div>
+                  </div>
+                </div>
+
+                {/* Session dots */}
+                <div style={{display:"flex",gap:6,justifyContent:"center",marginBottom:20}}>
+                  {Array.from({length:pomodoroGoal}).map((_,i)=>(
+                    <div key={i} style={{width:10,height:10,borderRadius:"50%",background:i<pomodoroCount%pomodoroGoal||(pomodoroCount%pomodoroGoal===0&&pomodoroCount>0&&i===pomodoroGoal-1)?"#ef4444":T.border}}/>
+                  ))}
+                </div>
+
+                {/* Controls */}
+                <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:16}}>
+                  <button onClick={()=>setPomodoroRunning(r=>!r)} style={{padding:"10px 28px",borderRadius:10,border:"none",background:modeColor,color:"#fff",fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:T.font}}>
+                    {pomodoroRunning?"⏸ Pause":"▶ Start"}
+                  </button>
+                  <button onClick={()=>{setPomodoroRunning(false);setPomodoroSecs(POMO_DURATIONS[pomodoroMode]);}} style={{padding:"10px 14px",borderRadius:10,border:`1px solid ${T.border}`,background:"transparent",color:T.muted,fontSize:15,cursor:"pointer",fontFamily:T.font}}>↺</button>
+                </div>
+
+                {/* Goal setting */}
+                <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                  <span style={{color:T.faint,fontSize:11}}>Goal:</span>
+                  {[2,3,4,6,8].map(n=>(
+                    <button key={n} onClick={()=>setPomodoroGoal(n)} style={{padding:"2px 8px",borderRadius:6,border:`1px solid ${pomodoroGoal===n?"#ef4444":T.border}`,background:pomodoroGoal===n?"#ef444422":"transparent",color:pomodoroGoal===n?"#ef4444":T.faint,fontSize:11,cursor:"pointer",fontFamily:T.font}}>{n}</button>
+                  ))}
+                  <span style={{color:T.faint,fontSize:11}}>sessions</span>
+                </div>
+                {pomodoroCount>0&&<div style={{color:T.muted,fontSize:11,marginTop:10}}>✅ {pomodoroCount} session{pomodoroCount!==1?"s":""} completed today</div>}
+              </div>
+            </div>
+          );
+        })()}
 
         {showFeedback && (
           <div onClick={()=>setShowFeedback(false)} style={{position:"fixed",inset:0,background:"#000a",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1010,padding:20}}>
