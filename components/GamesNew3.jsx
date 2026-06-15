@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, ALL_WORDS, POOL_MYSTERY, pickWords } from "./WordDB";
-import { SYN_ANT, SYNONYMS_ONLY, ANTONYMS_ONLY } from "./SynAntDB";
+import { SYN_ANT, SYNONYMS_ONLY, ANTONYMS_ONLY, ALL_SYN_ANT } from "./SynAntDB";
 
 function gSave(id,d){try{localStorage.setItem("ak_gs_"+id,JSON.stringify(d));}catch{}}
 function gLoad(id){try{return JSON.parse(localStorage.getItem("ak_gs_"+id)||"null");}catch{return null;}}
@@ -16,7 +16,8 @@ function ResultScreen({emoji,title,color,stats,onRetry,T}){return(<div style={{t
 // ─── SPEED TEST ───────────────────────────────────────────────────────────────
 export function SpeedTest({ T, onBack, onSettings, settings={} }) {
   const DURATION = (settings.duration || 1) * 60;
-  const [words] = useState(()=>pickWords(300, TYPING_MEDIUM));
+  const diff2 = settings.difficulty||"med";
+  const [words] = useState(()=>pickWords(300, diff2==="easy"?TYPING_BASIC:diff2==="hard"?TYPING_HARD:TYPING_MEDIUM));
   const [typed, setTyped] = useState("");
   const [timeLeft, setTimeLeft] = useState(DURATION);
   const [started, setStarted] = useState(false);
@@ -84,7 +85,7 @@ export function MissingLetters({ T, onBack, onSettings, settings={} }) {
   const diff = settings.difficulty||"med";
   const pool = diff==="easy"?TYPING_BASIC:diff==="hard"?TYPING_HARD:TYPING_MEDIUM;
   const sv = gLoad("missing");
-  const [words] = useState(()=>sv?.words||pickWords(20,pool));
+  const [words] = useState(()=>sv?.words||pickWords(count,pool));
   const [idx, setIdx] = useState(()=>sv?.idx||0);
   const [typed, setTyped] = useState("");
   const [correct, setCorrect] = useState(()=>sv?.correct||0);
@@ -93,7 +94,9 @@ export function MissingLetters({ T, onBack, onSettings, settings={} }) {
   const [wrong, setWrong] = useState(false);
   const ref = useRef(null);
   const target = words[idx]||"";
-  const hideRate = diff==="easy"?0.3:diff==="hard"?0.6:0.45;
+  const hideRateMap = {low:0.25, medium:0.45, high:0.65};
+  const hideRate = hideRateMap[settings.hideRate||"medium"] || (diff==="easy"?0.3:diff==="hard"?0.6:0.45);
+  const count = settings.count || 20;
   useEffect(()=>{if(!done)gSave("missing",{words,idx,correct});},[idx,correct,done]);
 
   // Generate consistent mask for this word
@@ -153,7 +156,7 @@ export function Anagram({ T, onBack, onSettings, settings={} }) {
   const diff = settings.difficulty||"med";
   const pool = diff==="easy"?TYPING_BASIC.filter(w=>w.length>=4&&w.length<=6):diff==="hard"?TYPING_HARD.filter(w=>w.length>=5&&w.length<=9):TYPING_MEDIUM.filter(w=>w.length>=4&&w.length<=8);
   const sv = gLoad("anagram");
-  const [words] = useState(()=>sv?.words||pickWords(20,pool));
+  const [words] = useState(()=>sv?.words||pickWords(count,pool));
   const [idx, setIdx] = useState(()=>sv?.idx||0);
   const [typed, setTyped] = useState("");
   const [correct, setCorrect] = useState(()=>sv?.correct||0);
@@ -441,7 +444,8 @@ export function HaikuMode({ T, onBack, onSettings, settings={} }) {
 // ─── SYNONYMS ─────────────────────────────────────────────────────────────────
 export function Synonyms({ T, onBack, onSettings, settings={} }) {
   const sv = gLoad("synonyms");
-  const [list] = useState(()=>[...SYNONYMS_ONLY].sort(()=>Math.random()-.5));
+  const count = settings.count === "all" ? ALL_SYN_ANT.length : (settings.count || 20);
+  const [list] = useState(()=>[...ALL_SYN_ANT].sort(()=>Math.random()-.5).slice(0,count));
   const [idx, setIdx] = useState(()=>sv?.idx||0);
   const [typed, setTyped] = useState("");
   const [correct, setCorrect] = useState(()=>sv?.correct||0);
@@ -494,7 +498,8 @@ export function Synonyms({ T, onBack, onSettings, settings={} }) {
 // ─── ANTONYMS ─────────────────────────────────────────────────────────────────
 export function Antonyms({ T, onBack, onSettings, settings={} }) {
   const sv = gLoad("antonyms");
-  const [list] = useState(()=>[...ANTONYMS_ONLY].sort(()=>Math.random()-.5));
+  const count = settings.count === "all" ? ALL_SYN_ANT.length : (settings.count || 20);
+  const [list] = useState(()=>[...ALL_SYN_ANT].sort(()=>Math.random()-.5).slice(0,count));
   const [idx, setIdx] = useState(()=>sv?.idx||0);
   const [typed, setTyped] = useState("");
   const [correct, setCorrect] = useState(()=>sv?.correct||0);
