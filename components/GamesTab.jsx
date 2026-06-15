@@ -870,6 +870,8 @@ function SettingsPanel({ gameId, T, onStart }) {
 export default function GamesTab({ T }) {
   // Restore active game from URL on mount
   const [activeCat, setActiveCat] = useState("all");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 6;
   const [activeGame, setActiveGame] = useState(() => {
     if (typeof window === "undefined") return null;
     const path = window.location.pathname;
@@ -945,14 +947,19 @@ export default function GamesTab({ T }) {
       {/* Category filter */}
       <div style={{ display:"flex", gap:6, marginBottom:14, flexWrap:"wrap" }}>
         {CATEGORIES.map(c => (
-          <button key={c.id} onClick={()=>setActiveCat(c.id)}
+          <button key={c.id} onClick={()=>{setActiveCat(c.id);setPage(1);}}
             style={{ padding:"5px 12px", borderRadius:20, border:`1px solid ${activeCat===c.id?T.purple:T.border}`, background:activeCat===c.id?T.purple+"22":"transparent", color:activeCat===c.id?T.purple:T.muted, fontSize:12, fontWeight:activeCat===c.id?700:400, cursor:"pointer", fontFamily:T.font }}>
             {c.label}
           </button>
         ))}
       </div>
+      {(() => {
+        const filtered = GAMES.filter(g => activeCat==="all" || g.cat===activeCat);
+        const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+        const paged = filtered.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE);
+        return (<>
       <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-        {GAMES.filter(g => activeCat==="all" || g.cat===activeCat).map(g => (
+        {paged.map(g => (
           <div key={g.id} style={{ display:"flex", alignItems:"center", gap:14, padding:"14px 16px", borderRadius:12, border:`1px solid ${T.border}`, background:T.card, fontFamily:T.font }}>
             <span style={{ fontSize:30, cursor:"pointer" }} onClick={()=>enterGame(g.id)}>{g.emoji}</span>
             <div style={{flex:1,minWidth:0,cursor:"pointer"}} onClick={()=>enterGame(g.id)}>
@@ -969,241 +976,27 @@ export default function GamesTab({ T }) {
           </div>
         ))}
       </div>
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// SUDDEN DEATH
-// ═══════════════════════════════════════════════════════════════════════════════
-function SuddenDeath({ T, onBack, settings = {} }) {
-  const sv = gLoad("suddendeath");
-  const WORD_POOL = pickWords(60, settings.difficulty || "medium");
-  const [words] = useState(()=> sv?.words || WORD_POOL);
-  const [typed, setTyped] = useState("");
-  const [current, setCurrent] = useState(()=> sv?.current || 0);
-  const [dead, setDead] = useState(false);
-  const [done, setDone] = useState(false);
-  const [startTime, setStartTime] = useState(null);
-  const [wpm, setWpm] = useState(0);
-  const [muted, setMuted] = useState(false);
-  useEffect(()=>{ if(!dead&&!done) gSave("suddendeath",{words,current}); },[current,dead,done]);
-  const ref = React.useRef(null);
-  const target = words[current] || "";
-
-  const handleType = e => {
-    const v = e.target.value;
-    if (dead || done) return;
-    if (!startTime) setStartTime(Date.now());
-    // Check for wrong key — if any char is wrong, instant death
-    for (let i = 0; i < v.length; i++) {
-      if (v[i] !== target[i]) {
-        if (!muted) playTone(120, "sawtooth", 0.4, 0.3);
-        setDead(true);
-        const elapsed = (Date.now() - startTime) / 60000;
-        setWpm(elapsed > 0 ? Math.round((current * 1) / elapsed) : 0);
-        return;
-      }
-    }
-    setTyped(v);
-    if (v === target) {
-      if (!muted) playTone(880, "sine", 0.1, 0.2);
-      const next = current + 1;
-      if (next >= words.length) {
-        setDone(true);
-        const elapsed = (Date.now() - startTime) / 60000;
-        setWpm(Math.round(words.length / elapsed));
-      } else {
-        setCurrent(next);
-        setTyped("");
-      }
-    }
-  };
-
-  const reset = () => { gClear("suddendeath"); setTyped(""); setCurrent(0); setDead(false); setDone(false); setStartTime(null); setWpm(0); setTimeout(()=>ref.current?.focus(),50); };
-
-  return (
-    <div style={{padding:"4px 0"}}>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
-        <button onClick={onBack} style={{background:"none",border:"none",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>← Back</button>
-        <span style={{color:T.text,fontWeight:800,fontSize:20}}>💀 Sudden Death</span>
-        <SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/>
-      </div>
-      {dead ? (
-        <div style={{textAlign:"center",padding:32,background:T.card,border:"1px solid #ef4444",borderRadius:12}}>
-          <div style={{fontSize:48,marginBottom:8}}>💀</div>
-          <div style={{color:"#ef4444",fontWeight:800,fontSize:22,marginBottom:4}}>You died!</div>
-          <div style={{color:T.muted,fontSize:14,marginBottom:16}}>Survived {current} word{current!==1?"s":""} · {wpm} WPM</div>
-          <button onClick={reset} style={{padding:"12px 32px",borderRadius:10,border:"none",background:"#ef4444",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>Try Again</button>
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginTop:16}}>
+          <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
+            style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:page===1?T.faint:T.muted,cursor:page===1?"default":"pointer",fontSize:14,fontFamily:T.font}}>
+            ←
+          </button>
+          {Array.from({length:totalPages},(_,i)=>i+1).map(n=>(
+            <button key={n} onClick={()=>setPage(n)}
+              style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${page===n?T.purple:T.border}`,background:page===n?T.purple+"22":"transparent",color:page===n?T.purple:T.muted,cursor:"pointer",fontSize:13,fontWeight:page===n?700:400,fontFamily:T.font}}>
+              {n}
+            </button>
+          ))}
+          <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
+            style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:page===totalPages?T.faint:T.muted,cursor:page===totalPages?"default":"pointer",fontSize:14,fontFamily:T.font}}>
+            →
+          </button>
         </div>
-      ) : done ? (
-        <div style={{textAlign:"center",padding:32,background:T.card,border:`1px solid ${T.purple}`,borderRadius:12}}>
-          <div style={{fontSize:48,marginBottom:8}}>🏆</div>
-          <div style={{color:T.purple,fontWeight:800,fontSize:22,marginBottom:4}}>Flawless!</div>
-          <div style={{color:T.text,fontSize:18,fontWeight:700,marginBottom:16}}>{wpm} WPM · {words.length} words</div>
-          <button onClick={reset} style={{padding:"12px 32px",borderRadius:10,border:"none",background:T.purple,color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>Play Again</button>
-        </div>
-      ) : (
-        <>
-          <div style={{background:"#ef444411",border:"1px solid #ef444433",borderRadius:8,padding:"6px 12px",marginBottom:10,fontSize:11,color:"#ef4444",textAlign:"center"}}>
-            ⚠️ One wrong key = game over
-          </div>
-          <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"16px 20px",marginBottom:10,fontFamily:"'JetBrains Mono',monospace",fontSize:20,letterSpacing:2,textAlign:"center",minHeight:60}}>
-            {target.split("").map((ch,i) => (
-              <span key={i} style={{color: i < typed.length ? "#34d399" : i === typed.length ? T.purple : T.faint, borderBottom: i===typed.length?"2px solid "+T.purple:"2px solid transparent"}}>{ch}</span>
-            ))}
-          </div>
-          <div style={{display:"flex",justifyContent:"space-between",color:T.muted,fontSize:12,marginBottom:10}}>
-            <span>Word {current+1} / {words.length}</span>
-            <span>{startTime ? Math.round((Date.now()-startTime)/1000)+"s" : "Start typing..."}</span>
-          </div>
-          <input ref={ref} autoFocus value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
-            style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}
-          />
-        </>
       )}
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// ZEN MODE
-// ═══════════════════════════════════════════════════════════════════════════════
-function ZenMode({ T, onBack, settings = {} }) {
-  const sv = gLoad("zen");
-  const [words, setWords] = useState(() => sv?.words || pickWords(80, settings.difficulty || "easy"));
-  const [typed, setTyped] = useState(()=> sv?.typed || "");
-  const [correct, setCorrect] = useState(0);
-  const [total, setTotal] = useState(0);
-  const [startTime, setStartTime] = useState(null);
-  const [wpm, setWpm] = useState(0);
-  const [muted, setMuted] = useState(false);
-  useEffect(()=>{ gSave("zen",{words,typed}); },[typed]);
-  const ref = React.useRef(null);
-  const target = words.join(" ");
-
-  const handleType = e => {
-    const v = e.target.value;
-    if (!startTime && v.length > 0) setStartTime(Date.now());
-    setTyped(v);
-    const elapsed = startTime ? (Date.now() - startTime) / 60000 : 0.001;
-    if (elapsed > 0) setWpm(Math.round((v.length / 5) / elapsed));
-    setCorrect(v.split("").filter((c,i) => c === target[i]).length);
-    setTotal(v.length);
-    // Extend words when approaching end
-    if (v.length > target.length - 100) {
-      setWords(w => [...w, ...pickWords(40, "easy")]);
-    }
-  };
-
-  const acc = total > 0 ? Math.round((correct/total)*100) : 100;
-
-  return (
-    <div style={{padding:"4px 0"}}>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
-        <button onClick={onBack} style={{background:"none",border:"none",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>← Back</button>
-        <span style={{color:T.text,fontWeight:800,fontSize:20}}>🧘 Zen Mode</span>
-        <SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/>
-      </div>
-      <div style={{background:"#7c6af711",border:"1px solid #7c6af733",borderRadius:8,padding:"6px 12px",marginBottom:10,fontSize:11,color:T.purple,textAlign:"center"}}>
-        No timer · No pressure · Just type
-      </div>
-      <div onClick={()=>ref.current?.focus()} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"16px 20px",marginBottom:10,fontFamily:"'JetBrains Mono',monospace",fontSize:16,letterSpacing:1,lineHeight:1.8,cursor:"text",userSelect:"none",minHeight:80}}>
-        {target.slice(Math.max(0,typed.length-60), typed.length+120).split("").map((ch,i) => {
-          const absIdx = Math.max(0,typed.length-60)+i;
-          let color = T.faint;
-          if (absIdx < typed.length) color = typed[absIdx]===ch?"#34d399":"#ef4444";
-          else if (absIdx===typed.length) color=T.purple;
-          return <span key={absIdx} style={{color,borderBottom:absIdx===typed.length?"2px solid "+T.purple:"2px solid transparent"}}>{ch}</span>;
-        })}
-      </div>
-      <input ref={ref} autoFocus value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} style={{position:"absolute",opacity:0,pointerEvents:"none"}}/>
-      <div style={{display:"flex",gap:16,justifyContent:"center",color:T.muted,fontSize:13}}>
-        <span style={{color:T.purple,fontWeight:700}}>{startTime?wpm:0} WPM</span>
-        <span style={{color:"#34d399",fontWeight:700}}>{acc}%</span>
-        <span>{typed.length} chars</span>
-        {startTime && <button onClick={()=>{gClear("zen");setTyped("");setStartTime(null);setWpm(0);}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.faint,fontSize:11,padding:"2px 8px",cursor:"pointer",fontFamily:"inherit"}}>↺ Reset</button>}
-      </div>
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// SPEED LADDER
-// ═══════════════════════════════════════════════════════════════════════════════
-function SpeedLadder({ T, onBack, settings = {} }) {
-  const RUNGS = settings.rungs || 10;
-  const sv = gLoad("ladder");
-  const [rung, setRung] = useState(()=> sv?.rung || 0);
-  const [words] = useState(()=> sv?.words || Array.from({length:RUNGS},(_,i)=>pickWords(5+i*2,"easy")));
-  const [typed, setTyped] = useState("");
-  const [startTime, setStartTime] = useState(null);
-  const [rungStart, setRungStart] = useState(null);
-  const [rungWpms, setRungWpms] = useState(()=> sv?.rungWpms || []);
-  const [failed, setFailed] = useState(false);
-  const [done, setDone] = useState(false);
-  const [muted, setMuted] = useState(false);
-  useEffect(()=>{ if(!failed&&!done) gSave("ladder",{rung,words,rungWpms}); },[rung,rungWpms,failed,done]);
-  const ref = React.useRef(null);
-  const MIN_WPM = rung === 0 ? 0 : rungWpms[rung-1] || 0;
-  const target = (words[rung]||[]).join(" ");
-
-  const handleType = e => {
-    const v = e.target.value;
-    if (failed||done) return;
-    if (!startTime) { setStartTime(Date.now()); setRungStart(Date.now()); }
-    setTyped(v);
-    if (v === target) {
-      const elapsed = (Date.now()-rungStart)/60000;
-      const w = Math.round((target.length/5)/elapsed);
-      if (!muted) playTone(660+rung*55,"sine",0.12,0.2);
-      if (rung>0 && w <= MIN_WPM) { setFailed(true); setRungWpms(r=>[...r,w]); return; }
-      const newWpms = [...rungWpms, w];
-      setRungWpms(newWpms);
-      if (rung+1 >= RUNGS) { setDone(true); if(!muted) [0,0.2,0.4].forEach(t=>setTimeout(()=>playTone(880,"sine",0.15,0.25),t*1000)); }
-      else { setRung(r=>r+1); setTyped(""); setRungStart(Date.now()); }
-    }
-  };
-
-  const reset = () => { gClear("ladder");setRung(0);setTyped("");setStartTime(null);setRungStart(null);setRungWpms([]);setFailed(false);setDone(false);setTimeout(()=>ref.current?.focus(),50); };
-  const bestWpm = rungWpms.length ? Math.max(...rungWpms) : 0;
-
-  return (
-    <div style={{padding:"4px 0"}}>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
-        <button onClick={onBack} style={{background:"none",border:"none",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>← Back</button>
-        <span style={{color:T.text,fontWeight:800,fontSize:20}}>🪜 Speed Ladder</span>
-        <SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/>
-      </div>
-      {(failed||done) ? (
-        <div style={{textAlign:"center",padding:32,background:T.card,border:`1px solid ${failed?"#ef4444":T.purple}`,borderRadius:12}}>
-          <div style={{fontSize:48,marginBottom:8}}>{failed?"💥":"🏆"}</div>
-          <div style={{color:failed?"#ef4444":T.purple,fontWeight:800,fontSize:22,marginBottom:4}}>{failed?`Failed on Rung ${rung+1}`:"Ladder Complete!"}</div>
-          <div style={{color:T.muted,fontSize:13,marginBottom:16}}>Best: {bestWpm} WPM · {rungWpms.join(" → ")} WPM</div>
-          <button onClick={reset} style={{padding:"12px 32px",borderRadius:10,border:"none",background:failed?"#ef4444":T.purple,color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>Try Again</button>
-        </div>
-      ) : (
-        <>
-          <div style={{display:"flex",gap:4,marginBottom:12}}>
-            {Array.from({length:RUNGS}).map((_,i)=>(
-              <div key={i} style={{flex:1,height:6,borderRadius:3,background:i<rung?"#34d399":i===rung?T.purple:T.border,transition:"background 0.3s"}}/>
-            ))}
-          </div>
-          {rung > 0 && <div style={{textAlign:"center",color:T.faint,fontSize:11,marginBottom:8}}>Must beat {MIN_WPM} WPM (your last rung)</div>}
-          <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"14px 18px",marginBottom:10,fontFamily:"'JetBrains Mono',monospace",fontSize:17,letterSpacing:1,lineHeight:1.8}}>
-            {target.split("").map((ch,i)=>(
-              <span key={i} style={{color:i<typed.length?(typed[i]===ch?"#34d399":"#ef4444"):i===typed.length?T.purple:T.faint,borderBottom:i===typed.length?"2px solid "+T.purple:"2px solid transparent"}}>{ch}</span>
-            ))}
-          </div>
-          <div style={{display:"flex",justifyContent:"space-between",color:T.muted,fontSize:12,marginBottom:10}}>
-            <span>Rung {rung+1} / {RUNGS}</span>
-            <span>{rung>0?`Last: ${rungWpms[rung-1]} WPM`:"Go!"}</span>
-          </div>
-          <input ref={ref} autoFocus value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
-            style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}
-          />
-        </>
-      )}
+        </>);
+      })()}
     </div>
   );
 }
