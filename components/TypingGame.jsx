@@ -9,7 +9,8 @@ export
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
 function DatePicker({ value, onChange, T }) {
   const today = new Date();
-  const maxDate = today.toISOString().slice(0,10);
+  const maxBirth = new Date(today); maxBirth.setFullYear(today.getFullYear() - 3);
+  const maxDate = maxBirth.toISOString().slice(0,10); // must be at least 3 years old
   const minDate = `${today.getFullYear()-120}-01-01`;
   const parsed = value ? new Date(value + "T12:00:00") : null;
   const FULL_MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -31,7 +32,7 @@ function DatePicker({ value, onChange, T }) {
             const v = e.target.value;
             if(!v) return;
             const d = new Date(v+"T12:00:00");
-            if(d > today || d.getFullYear() < today.getFullYear()-120) return;
+            if(d > maxBirth || d.getFullYear() < today.getFullYear()-120) return;
             onChange(v);
           }}
           style={{position:"absolute",inset:0,opacity:0,cursor:"pointer",width:"100%",height:"100%"}}
@@ -1184,16 +1185,22 @@ export default function AccuratKey() {
     setGhostPos(-1);
     ghostTimings.current = [];
     clearInterval(ghostInterval.current);
-    // Load ghost for this level
+    // Load ghost for this level (only if ghost feature is enabled)
     try {
-      const g = JSON.parse(localStorage.getItem(`ak_ghost_${levelId}`) || "null");
-      if (g?.timings?.length) {
-        const t0 = Date.now();
-        ghostInterval.current = setInterval(() => {
-          const elapsed = Date.now() - t0;
-          const frame = g.timings.findLast(x => x.t <= elapsed);
-          setGhostPos(frame ? frame.pos : -1);
-        }, 50);
+      if (canUse(activeProfile, "ghost")) {
+        const g = JSON.parse(localStorage.getItem(`ak_ghost_${levelId}`) || "null");
+        if (g?.timings?.length) {
+          const t0 = Date.now();
+          ghostInterval.current = setInterval(() => {
+            const elapsed = Date.now() - t0;
+            const frame = g.timings.findLast(x => x.t <= elapsed);
+            setGhostPos(frame ? frame.pos : -1);
+          }, 50);
+        }
+      } else {
+        // Ghost toggle is OFF — ensure interval is dead and pos is reset
+        ghostInterval.current = null;
+        setGhostPos(-1);
       }
     } catch(e) {}
     setScreen("game");
