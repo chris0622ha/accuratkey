@@ -2242,9 +2242,7 @@ const Nav = () => (<>
               :<button onClick={()=>requestStartLevel(-1)} style={{width:"100%",padding:"14px",borderRadius:12,border:"none",background:T.purple,color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:T.font,marginBottom:16}}>Start Daily Challenge →</button>
             )}
 
-            {/* ── Activity Calendar ── */}
-            <ActivityCalendar sessionDates={sessionDates} T={T} />
-
+            {/* ── Leaderboard ── */}
             <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>Today's Leaderboard</div>
             {dailyBoard.length===0&&<div style={{color:T.faint,fontSize:13,textAlign:"center",padding:"20px 0"}}>No scores yet. Be first!</div>}
             {dailyBoard.map((s,i)=>(
