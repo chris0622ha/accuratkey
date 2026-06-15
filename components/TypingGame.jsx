@@ -1369,7 +1369,15 @@ export default function AccuratKey() {
   const openSettings = () => {
     setEditName(activeProfile?.name || "");
     setEditAvatar(activeProfile?.avatar || "key");
-    setEditBirthday(activeProfile?.birthday || "");
+    // Sanitize stored birthday - reject if future or age < 3
+    const rawB = activeProfile?.birthday || "";
+    let safeB = "";
+    if (rawB) {
+      const bd = new Date(rawB + "T12:00:00"); const now = new Date();
+      const maxB = new Date(now); maxB.setFullYear(now.getFullYear() - 3);
+      if (bd <= maxB && bd.getFullYear() >= now.getFullYear() - 120) safeB = rawB;
+    }
+    setEditBirthday(safeB);
     setEditPin("");
     setEditPhoto(null); setEditPhotoPreview(null); setEditPhotoB64(null); setSaveMsg("");
     setDeleteConfirmText(""); setShowDeleteProfile(false);
@@ -1384,12 +1392,21 @@ export default function AccuratKey() {
       let photoURL = activeProfile?.photoURL || null;
       if (editPhotoB64) photoURL = editPhotoB64;
       else if (editPhoto) photoURL = await resizeToBase64(editPhoto, 200);
-      const age = calcAge(editBirthday || activeProfile.birthday);
+      // Validate birthday: reject future dates or age < 3
+      const rawBday = editBirthday || activeProfile.birthday || "";
+      let validBday = "";
+      if (rawBday) {
+        const bd = new Date(rawBday + "T12:00:00");
+        const today = new Date();
+        const maxBirth = new Date(today); maxBirth.setFullYear(today.getFullYear() - 3);
+        if (bd <= maxBirth && bd.getFullYear() >= today.getFullYear() - 120) validBday = rawBday;
+      }
+      const age = validBday ? calcAge(validBday) : 20;
       const patch = {
         name: editName.trim() || activeProfile.name,
         avatar: editAvatar,
         photoURL,
-        birthday: editBirthday || activeProfile.birthday,
+        birthday: validBday,
         age,
       };
       patchProfile(patch); // instant
