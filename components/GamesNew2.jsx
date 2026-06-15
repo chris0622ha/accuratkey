@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, WORD_CATEGORIES, CATEGORY_NAMES, ALL_WORDS, SPELLING_BEE_WORDS, pickWords, pickByDiff, RHYMES } from "./WordDB";
+import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, WORD_CATEGORIES, CATEGORY_NAMES, ALL_WORDS, SPELLING_BEE_WORDS, POOL_100_WORDS, POOL_ENDURANCE, POOL_WORD_CHAIN, POOL_VOCAB, POOL_MYSTERY, POOL_INVADERS, POOL_ASTEROID, POOL_TOWER, pickWords, pickByDiff, RHYMES } from "./WordDB";
 const WORDS_EASY=TYPING_BASIC, WORDS_MED=TYPING_MEDIUM, WORDS_HARD=TYPING_HARD, WORDS_ANIMALS=WORD_CATEGORIES.animals, WORDS_COUNTRIES=WORD_CATEGORIES.countries;
 
 function gSave(id, data) { try { localStorage.setItem("ak_gs_"+id, JSON.stringify(data)); } catch{} }
@@ -17,7 +17,7 @@ function ResultScreen({emoji,title,color,stats,onRetry,T}){return(<div style={{t
 export function HundredWords({ T, onBack, onSettings, settings={} }) {
   const sv = gLoad("hundred");
   const diff = settings.difficulty || "med";
-  const pool = diff==="easy"?WORDS_EASY:diff==="hard"?WORDS_HARD:WORDS_MED;
+  const pool = diff==="easy"?TYPING_BASIC:diff==="hard"?TYPING_HARD:POOL_100_WORDS;
   const [words] = useState(()=> sv?.words || pickWords(100, pool));
   const [typed, setTyped] = useState(()=> sv?.typed || "");
   const [start, setStart] = useState(()=> sv?.start || null);
@@ -62,7 +62,7 @@ export function HundredWords({ T, onBack, onSettings, settings={} }) {
 // ─── ENDURANCE ────────────────────────────────────────────────────────────────
 export function Endurance({ T, onBack, onSettings, settings={} }) {
   const PAUSE_LIMIT_MS = (settings.pauseMs || 2) * 1000;
-  const [words, setWords] = useState(()=>pickWords(200, WORDS_MED));
+  const [words, setWords] = useState(()=>pickWords(200, POOL_ENDURANCE));
   const [typed, setTyped] = useState("");
   const [idx, setIdx] = useState(0);
   const [started, setStarted] = useState(false);
@@ -95,7 +95,7 @@ export function Endurance({ T, onBack, onSettings, settings={} }) {
     if(v===target){
       if(!muted)playTone(660,"sine",.08,.15);
       const ns=score+1;setScore(ns);
-      setIdx(i=>{const ni=i+1;if(ni>=words.length)setWords(w=>[...w,...pickWords(100,WORDS_MED)]);return ni;});
+      setIdx(i=>{const ni=i+1;if(ni>=words.length)setWords(w=>[...w,...pickWords(100,POOL_ENDURANCE)]);return ni;});
       setTyped("");
     }
   };
@@ -170,7 +170,7 @@ export function Roulette({ T, onBack, onSettings, settings={} }) {
 export function WordChain({ T, onBack, onSettings, settings={} }) {
   const sv = gLoad("wordchain");
   const timeLimit = settings.timePerWord || 10;
-  const [chain, setChain] = useState(()=> sv?.chain || [pickWords(1,WORDS_MED)[0]]);
+  const [chain, setChain] = useState(()=> sv?.chain || [pickWords(1,TYPING_MEDIUM)[0]]);
   const [typed, setTyped] = useState("");
   const [timeLeft, setTimeLeft] = useState(timeLimit);
   const [dead, setDead] = useState(false);
@@ -197,7 +197,7 @@ export function WordChain({ T, onBack, onSettings, settings={} }) {
     const v=e.target.value.toLowerCase().replace(/[^a-z]/g,"");
     setTyped(v);
     if(v.length>=2&&v[0]===requiredStart){
-      const valid=[...WORDS_EASY,...WORDS_MED,...WORDS_HARD];
+      const valid=POOL_WORD_CHAIN;
       if(valid.includes(v)&&!usedWords.has(v)){
         clearInterval(timerRef.current);
         if(!muted)playTone(660+chain.length*20,"sine",.1,.2);
@@ -453,7 +453,7 @@ export function TypingInvaders({ T, onBack, onSettings, settings={} }) {
   const COLS = 5, ROWS = 3;
   const [invaders, setInvaders] = useState(()=>{
     const grid=[];
-    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) grid.push({id:`${r}-${c}`,word:pickWords(1,WORDS_EASY)[0],col:c,row:r,alive:true});
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) grid.push({id:`${r}-${c}`,word:pickWords(1,POOL_INVADERS)[0],col:c,row:r,alive:true});
     return grid;
   });
   const [typed, setTyped] = useState("");
@@ -508,7 +508,7 @@ export function TypingInvaders({ T, onBack, onSettings, settings={} }) {
 
   const reset=()=>{
     cancelAnimationFrame(frameRef.current);yRef.current=0;setYOffset(0);setScore(0);setWave(1);setDead(false);setWon(false);setTyped("");
-    setInvaders(Array.from({length:COLS*ROWS},(_,i)=>({id:`new-${i}`,word:pickWords(1,WORDS_EASY)[0],col:i%COLS,row:Math.floor(i/COLS),alive:true})));
+    setInvaders(Array.from({length:COLS*ROWS},(_,i)=>({id:`new-${i}`,word:pickWords(1,POOL_INVADERS)[0],col:i%COLS,row:Math.floor(i/COLS),alive:true})));
     setTimeout(()=>ref.current?.focus(),50);
   };
 
@@ -576,7 +576,7 @@ export function AsteroidBelt({ T, onBack, onSettings, settings={} }) {
         else if(side===1){x=105;y=Math.random()*100;vx=-Math.abs(vx);}
         else if(side===2){x=Math.random()*100;y=105;vy=-Math.abs(vy);}
         else{x=-5;y=Math.random()*100;vx=Math.abs(vx);}
-        alive.push({id:idRef.current++,word:pickWords(1,WORDS_EASY)[0],x,y,vx,vy,angle:0,spin:(Math.random()-.5)*.5,hit:false});
+        alive.push({id:idRef.current++,word:pickWords(1,POOL_INVADERS)[0],x,y,vx,vy,angle:0,spin:(Math.random()-.5)*.5,hit:false});
         lastSpawn.current=now;
       }
       astRef.current=alive;
@@ -666,7 +666,7 @@ export function TowerDefense({ T, onBack, onSettings, settings={} }) {
         return true;
       });
       if(now-lastSpawn.current>spawnInterval&&alive.length<8){
-        alive.push({id:idRef.current++,word:pickWords(1,waveRef.current<=2?WORDS_EASY:WORDS_MED)[0],t:0,hp:1+Math.floor(waveRef.current/3)});
+        alive.push({id:idRef.current++,word:pickWords(1,waveRef.current<=2?POOL_INVADERS:TYPING_MEDIUM)[0],t:0,hp:1+Math.floor(waveRef.current/3)});
         lastSpawn.current=now;
       }
       if(scoreRef.current>0&&scoreRef.current%10===0&&scoreRef.current!==waveRef.current*10){waveRef.current++;setWave(waveRef.current);}
@@ -726,7 +726,7 @@ export function MysteryWords({ T, onBack, onSettings, settings={} }) {
   const SYMBOLS = "★◆■●▲▼♦♠♣♥◉⬟⬡◈";
   const sv = gLoad("mystery");
   const diff = settings.difficulty||"med";
-  const pool = diff==="easy"?WORDS_EASY:diff==="hard"?WORDS_HARD:WORDS_MED;
+  const pool = diff==="easy"?TYPING_BASIC:diff==="hard"?TYPING_HARD:POOL_MYSTERY;
   const [words] = useState(()=> sv?.words || pickWords(20,pool));
   const [idx, setIdx] = useState(()=> sv?.idx||0);
   const [typed, setTyped] = useState("");
