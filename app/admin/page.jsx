@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest } from "@/lib/firebase";
+import { auth, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest, replyToFeedback } from "@/lib/firebase";
 const LEVELS = [
   { id:1,  name:"Home Row Hero",         emoji:"🏠", wpmTarget:12,  accuracy:75, color:"#10b981", words:["ffjj","fjfj","asdf","jkl;","add","ask","fall","glad","flask","lads","fads","salads"] },
   { id:2,  name:"Top Row Climber",       emoji:"🧗", wpmTarget:16,  accuracy:75, color:"#3b82f6", words:["quit","wrap","type","your","power","tower","write","pretty","quite","report"] },
@@ -294,6 +294,9 @@ export default function AdminPage() {
   const [admins,setAdmins]=useState([]);
   const [log,setLog]=useState([]);
   const [feedbackList,setFeedbackList]=useState([]);
+  const [replyingTo,setReplyingTo]=useState(null); // feedback id
+  const [replyText,setReplyText]=useState("");
+  const [replySending,setReplySending]=useState(false);
   const [bdayReqList,setBdayReqList]=useState([]);
   const [stats,setStats]=useState(null);
   const [loading,setLoading]=useState(false);
@@ -817,6 +820,32 @@ export default function AdminPage() {
                   </div>
                 </div>
                 <div style={{color:T.text,fontSize:13,whiteSpace:"pre-wrap",lineHeight:1.5}}>{f.text}</div>
+                {f.reply && <div style={{background:"#7c6af722",border:"1px solid #7c6af744",borderRadius:6,padding:"8px 10px",marginTop:8,fontSize:12,color:"#a78bfa"}}><span style={{fontWeight:700}}>Reply from {f.replyBy||"Admin"}:</span> {f.reply}</div>}
+                {replyingTo===f.id ? (
+                  <div style={{marginTop:10}}>
+                    <textarea value={replyText} onChange={e=>setReplyText(e.target.value)} placeholder="Type your reply to the user..." rows={3}
+                      style={{width:"100%",background:T.bg,border:"1px solid #7c6af7",borderRadius:7,color:T.text,fontSize:13,padding:"8px 10px",resize:"vertical",boxSizing:"border-box",fontFamily:"inherit"}}/>
+                    <div style={{display:"flex",gap:8,marginTop:6}}>
+                      <button disabled={!replyText.trim()||replySending} onClick={async()=>{
+                        if(!replyText.trim()||!f.uid) return;
+                        setReplySending(true);
+                        try {
+                          await replyToFeedback(f.id, f.uid, replyText.trim(), "AccuratKey Admin");
+                          setFeedbackList(l=>l.map(x=>x.id===f.id?{...x,reply:replyText.trim(),replyBy:"AccuratKey Admin"}:x));
+                          setReplyingTo(null);setReplyText("");
+                        } catch(e){ alert("Failed to send reply"); }
+                        setReplySending(false);
+                      }} style={{flex:1,padding:"7px",borderRadius:7,border:"none",background:"#7c6af7",color:"#fff",fontSize:12,fontWeight:700,cursor:!replyText.trim()?"default":"pointer",opacity:!replyText.trim()?0.5:1}}>
+                        {replySending?"Sending...":"Send Reply"}
+                      </button>
+                      <button onClick={()=>{setReplyingTo(null);setReplyText("");}} style={{padding:"7px 14px",borderRadius:7,border:"1px solid #333",background:"transparent",color:"#888",fontSize:12,cursor:"pointer"}}>Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={()=>{setReplyingTo(f.id);setReplyText("");}} style={{marginTop:8,padding:"5px 12px",borderRadius:6,border:"1px solid #7c6af744",background:"transparent",color:"#7c6af7",fontSize:11,cursor:"pointer",fontWeight:600}}>
+                    {f.reply ? "Edit Reply" : "↩ Reply"}
+                  </button>
+                )}
               </div>
             ))}
           </div>
