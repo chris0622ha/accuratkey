@@ -237,3 +237,178 @@ export const RHYMES = {
 };
 
 export default { ALL_WORDS, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, WORD_CATEGORIES, CATEGORY_NAMES, SPELLING_BEE_WORDS, pickWords, pickByDiff, RHYMES };
+
+// ── EXTENDED VOCABULARY ───────────────────────────────────────────────────────
+export const WORDS_EXTENDED = `
+abbey abbot abhor abide abler abode abort abrupt absent absorb abused abyss
+acorn acres actor acute adage added adept admit adobe adore adult aegis afar
+after again agony agree aisle alarm album alert alike aloft aloof aloud aloft
+alter amend amiss among ample angel annex antic anvil apart aphid aptly arbor
+ardor arena argot aroma arose array arson ashen aside asked astir atlas atone
+attic audio avail avert avid avow azure badge bagel baggy baton begun belle
+berth beset blaze bleak bleat bliss bloat bloke blurt blunt braid brash bravo
+braze brawl braze briar brine brisk brittle broad broil brood broth brows
+bruin bruit brunt brunt budge buggy bulge bully burly burnt burp cabin cadet
+camel canal caper carve caste chafe chaff chant charm chasm cheek chide chimp
+clamp clasp clash cleft cloak clump coals cobra comet copse couch coupe coven
+cramp crane crawl crest crimp crisp crook crumb cruse crypt cubby curly cutie
+daisy dealt decay decoy defer deity delta dense depot drift drool drone droop
+drove drown dusky dwarf dwell easel edict eerie egret embed ember emcee emery
+envoy epoch erode ethos evade evoke evade exact exalt expel extol exude fable
+facet farce fated fawns feast fetch fewer finch fjord flame flank flare flask
+fleece flint flirt floss flout flunk flurry foamy focal folio folly frail freak
+freer frond frost froth froze fuels fungi fuzzy gable gable gamut gauze gaudy
+gavel geese glean gleam glean glint gloat gloss gourd gouge grasp gravel grave
+graze groan grope gross growl gruel gruff guise gusto gypsy habit haiku haste
+hatch haunt haven havoc hedge heist helms herbs hertz hoist holly homer hover
+humus hurled hymnal ideal idyll impel inane incur inept inert infer ingot inky
+inlay inner inter inure ionic irony itchy jerky jiffy joust knave knit lance
+lapel lapse larva lasso latch later lathe lauds leaky ledge leery libel liner
+lingo liner lithe livid llama locust lodge lofty logic lumpy lusty lyric macro
+maize manor marsh masts meager mealy melee mesh mirth mixing modal monde moose
+motif moult mowed muddy muggy murky musty nadir nanny natal nasal natal nadir
+naïve nifty nimble nippy nirvana nymph occur offhand often opine ovoid oxide
+paddy padre pamper pansy papal parry patio patsy peaky pebble peeve pique
+placid plaid plait plank pliant pluck plumb plume plump plunk plyboard polka
+posse potent pouch pouty prawn privy prone pronto prose prove proxy prank
+prowl prune psalm pudgy pulpy purge query quirk quota rabid radar radon rapid
+ratty ravel raven rayon rebel recur regal relax renew repel resin retro risky
+rival rivet rocky roman rondo roost rouge rouge rowdy runic rupee rustle sable
+saggy sandy sapling sassy savor scald scant scarf scoop scorn scram scrawl
+seedy serif serum shack shady shaky shawl sheen sheer sheen shrug sinew skiff
+skimp skipper skirm skunk slake slang slant slash slate sleet slimy slink
+slosh slouch slush smack smarmy smear snaky sneer snide sniff snub soggy solar
+sonar sorry spank spare spasm spawn spear speck spicy spine spire spoof spook
+spoor spore spout sprig squad squid staid stark start stash stark stead steer
+stern stiff stomp stout stray strut stung stunt suave swear sweep swept swill
+swipe syrup tabby taffy taint taunt tawny tepid terse theft thong thud titan
+totem touchy toxic tripe troth trowel truce tuber tummy turret tutor twang
+tweed twill twirl twitch tying udder ultra uncut unfed unfit unify unite
+unkind upset urban usher utmost vague valor viper viral visor vixen vodka
+vogue voila vouch wader wafts wager waning wares waved weary weedy weird whiff
+whirl whisk witty wordy wring yacht yodel zebra zesty zonal abbey abode
+afoot aloft amber anvil attic avid azure badger baste batty beefy bevel birch
+blaze blotch blunt boggy boost brash braze budge bully burly carve chafe chasm
+chimp clasp cleft cloak crisp crook dally decoy deity depot dovish drool drown
+dusky easel ember envoy erode ethos exalt facade facet farce fated fauna fizzy
+flank flare flask fleece flint floss freak frond gaunt gavel geese glean gloat
+gouge grasp gravel groan grope gruel guile gusto haven havoc heist helms hertz
+hoist holly ingot jiffy joust knave lance lapel larva lasso latch lathe lumber
+luster luxe macro maize manor marsh melee modal motif moult nadir nifty opine
+paddy pamper pansy parry patio peeve pique placid plaid pliant prawn privy
+prone pronto prose prowl pudgy pulpy purge quirk rabid ravel regal renew repel
+resin retro risky rival rivet roman rondo rouge rowdy runic rupee sable saggy
+sandy sapling sassy savor scald scant scarf scoop scrawl seedy serif shack
+shawl sheen shrug sinew skiff skimp skirm slake slang slant slash sleet slimy
+slink slosh slouch slush smack snaky sneer snide snub soggy sonar spank spare
+spasm spear speck spiny spire spoof spook spore spout squad squid staid stark
+stash stead stern stiff stomp stout stray strut suave swill syrup tabby taffy
+taint tawny tepid theft thong titan totem touchy tripe troth trowel tuber tummy
+twang tweed twill twitch udder uncut unfed urban usher valor viper visor vixen
+vogue wafer wager waning wares weedy whiff whirl witty wordy wring yodel zonal
+abrupt absorb acorn acrid acute adage adept adore aegis affix agile agony amble
+amend amiss ample aping arbor ardent arent argot aroma atone attic avail avant
+avert azure baton belle berth beset blare blight bloom bloat bloke blunt braid
+brash bravo bridle brisk brittle broil brood budge bully burly burnt cadet camel
+canal caper carve chafe chaff chant charm chimp clamp clasp clash cleft cloak
+clump comet copse coupe cramp crane crawl croon crumb cubby curly cutie daisy
+dealt decay decoy defer delta dense depot drool drone droop drove dusky dwarf
+easel edict eerie egret embed emcee emery envoy epoch erode ethos evade evoke
+facet farce fated fauna fizzy flank flare flask flint floss freak frond gaunt
+gavel geese glean gloat gouge grasp gravel groan grope gruel guile gusto haven
+havoc heist helms hertz hoist holly ingot jiffy joust knave lance lapel larva
+`;
+
+export const WORDS_MORE = `
+lasso latch lathe lumber luster macro maize manor marsh melee modal motif moult
+nadir nifty opine paddy pamper pansy parry patio peeve pique placid plaid pliant
+prawn privy prone pronto prose prowl pudgy purge quirk rabid ravel regal renew
+repel resin retro rival rivet roman rondo rouge rowdy runic rupee sable saggy
+sandy sappy sassy savor scald scant scarf scoop scrawl seedy serif shack shawl
+sheen shrug sinew skiff skimp slake slang slant slash sleet slimy slink slosh
+slouch slush smack snaky sneer snide snub soggy sonar spank spare spasm spear
+speck spiny spire spoof spook spore spout squad squid staid stark stash stead
+stern stiff stomp stout stray strut suave swill syrup tabby taffy taint tawny
+tepid theft thong titan totem touchy tripe troth trowel tuber tummy twang tweed
+twill twitch udder uncut unfed urban usher valor viper visor vixen vogue wafer
+wager waning wares weedy whiff whirl witty wordy wring yodel zonal abrupt absorb
+acorn acrid acute adage adept adore aegis affix agile agony amble amend amiss
+ample aping arbor ardent argot aroma atone avail avant avert azure baton belle
+berth beset blare blight bloom bloat bloke blunt braid brash bravo bridle brisk
+broil brood budge bully burly burnt cadet camel canal caper carve chafe chaff
+chant charm chimp clamp clasp clash cleft cloak clump comet copse coupe cramp
+crane crawl croon crumb cubby curly cutie daisy dealt decay decoy defer delta
+dense depot drool drone droop drove dusky dwarf easel edict eerie egret embed
+emcee emery envoy epoch erode ethos evade evoke exalt facade facet farce fated
+fauna fizzy flank flare flask flint floss freak frond gaunt gavel geese glean
+gloat gouge grasp gravel groan grope gruel guile gusto haven havoc heist helms
+hertz hoist holly ingot jiffy joust knave lance lapel larva lasso latch lathe
+lumber macro maize manor marsh melee modal motif nadir nifty opine paddy pamper
+pansy parry patio peeve pique placid plaid pliant prawn privy prone prose prowl
+pudgy purge quirk rabid ravel regal renew repel resin retro rival rivet roman
+rondo rouge rowdy runic rupee sable saggy sandy sassy savor scald scant scarf
+scoop scrawl seedy serif shack shawl sheen shrug sinew skiff skimp slake slang
+slant slash sleet slimy slink slosh slouch slush smack snaky sneer snide snub
+soggy sonar spank spare spasm spear speck spiny spire spoof spook spore spout
+squad squid staid stark stash stead stern stiff stomp stout stray strut suave
+swill syrup tabby taffy taint tawny tepid theft titan totem touchy tripe troth
+trowel tuber tummy twang tweed twill twitch udder uncut unfed urban usher valor
+viper visor vixen vogue wafer wager waning wares weedy whiff whirl witty wordy
+abysmal acclaim adhere adjacent advent aerial agitate ailment aimless airy alert
+albeit aleven alibi aligned allude almond aloof altern always amassed ambient
+ambling amnesia amoral amount ampere analog anchor anemia angled anoint anther
+antler aplomb appall apricot aptness arable archery arduous argent aright arisen
+arrant assize astern astral atrium attain attune augment avenge avenue babble
+backed ballet banter barren batten battled bauble beacon beckon bedlam befall
+before bellow bemuse berate bereft betray betwixt bicker binder blight bodily
+boggle boquet bounty bovine breezy bridle brisker broken buster cackle candle
+canter carnal casual caveat chagrin chapel chaste cipher cobalt cobble cogent
+collide commit compel comply condone confide confuse consult convene convey
+copious crabby cradle cranny crazed cringe crispy crotch crowded cruel crusade
+cumber cupola cursive cynical dagger dampen darken dauntless dawdle dazzle
+debris decree deduce defame defiant defunct delude demure denial deplete derive
+devise devour dextrous diaper differ digress discord dismal dispel docile doleful
+dotage doting dreary drudge dubious dulcet dungeon earnest eczema elated elicit
+embark enchant endear endure enforce enlist enough entail entice entreat entwine
+equine errant escort esoteric esteem ethnic evident exert exhaust expunge extort
+fallow famine fathom fervent fester fetid feudal fickle filthy flabby flagrant
+flawed flimsy florid flustered foment forbid forlorn forsake founded fragile frank
+frugal furtive gallant garble garish gather gaunt genial gentle germane gifted
+gladden glaring gleeful glibly gloomy glower glutton gnarled gnarly gobble gravel
+grisly grimy gloomy grovel grubby grumpy guarded haggle halted hamper handy
+harass hasten hearty heckle herald hinder hoarse hollow homely honesty hopeful
+horrid hostile humble hunger hunted hurried hustle ignite impart impede impure
+incite infest inform infuse injure insane insult intend intern invade invite irate
+jaunty jostle jovial joyful jumble jungle junior kindle knotty lacking languid
+lapsed lavish leaden leery lessen lethal liable lively loathe lofty linger livid
+loosen loosen loyal lucent lurid lustre madden marvel meager meddle menace menial
+meager messy mellow menace merciless mingle mishap mutter mystify nagging nettle
+nimble noxious nubile nudge negate nurture oblique offend offbeat offset ominous
+oppose opaque ordeal outwit overrun paltry pardon parody pathetic pensive perish
+pester placate pliant plunge plunder plunder pompous ponder portly potent preach
+pretext prickle profane prolong prompt proper provoke prudent punish puzzle
+qualify quench querulous rabble racket ragged rankle raucous reckless redeem
+remorse renown repent resent revolt rigid robust rotten ruckus ruffle rumble
+rustle sadden savage scorch scoundrel scrape scruffy sentry severe shaggy
+shamble shatter shifty shrewd shrill shoddy shun sicken sinister slander slapdash
+slavish sleazy slight sloppy smother snobby solemn somber soothe sordid sorrow
+squalid stammer starve steadfast stern stifle stingy stolid strife stubborn stunt
+subdue sullen summon sunder sunder surge suspicion swipe tacit tangle tarnish
+taunt temper tenuous tepid terse thrive thwart timid toil torment torture toxic
+traitor trample tremble trifle trivial trudge trusty tumult turbid twitch tyrant
+unfair unkempt unruly untrue uproot usurp utterly vacant vagary vanish vanity
+venal venom vindicate vitriolic wanton wasted wither wrangle writhe yeoman zealot
+`;
+
+// ── MERGE EXTENDED INTO MAIN POOLS ───────────────────────────────────────────
+const extArr = (s) => [...new Set(s.split(/\s+/).filter(w=>w.length>=3&&/^[a-z]+$/.test(w)))];
+const EXT1 = extArr(WORDS_EXTENDED);
+const EXT2 = extArr(WORDS_MORE);
+
+// Re-export merged pools (overrides previous exports)
+export const EASY_ARR    = [...new Set([...toArr(WORDS_EASY),    ...EXT1.filter(w=>w.length<=4)])];
+export const MED_ARR     = [...new Set([...toArr(WORDS_MED),     ...EXT1.filter(w=>w.length>=4&&w.length<=7), ...EXT2.filter(w=>w.length>=4&&w.length<=6)])];
+export const HARD_ARR    = [...new Set([...toArr(WORDS_HARD),    ...EXT2.filter(w=>w.length>=7)])];
+export const VHARD_ARR   = [...new Set([...toArr(WORDS_VERY_HARD)])];
+export const IMPOSSIBLE_ARR = [...new Set([...toArr(WORDS_IMPOSSIBLE)])];
+export const ALL_WORDS   = [...new Set([...EASY_ARR,...MED_ARR,...HARD_ARR,...VHARD_ARR])];
