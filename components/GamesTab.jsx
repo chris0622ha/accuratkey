@@ -102,6 +102,7 @@ function WordRain({ T, onBack }) {
   const [score, setScore]     = useState(0);
   const [missed, setMissed]   = useState(0);
   const [best, setBest]       = useState(0);
+  const [speedMult, setSpeedMult] = useState(1);
   const inputRef  = useRef(null);
   const frameRef  = useRef(null);
   const dropsRef  = useRef([]);
@@ -111,6 +112,7 @@ function WordRain({ T, onBack }) {
   const wordQRef  = useRef([]);
   const lastSpawn = useRef(0);
   const stoppedRef = useRef(false);
+  const speedMultRef = useRef(1);
   const maxLivesRef = useRef(maxLives);
   useEffect(() => { maxLivesRef.current = maxLives; }, [maxLives]);
 
@@ -130,7 +132,8 @@ function WordRain({ T, onBack }) {
     idRef.current = 0;
     wordQRef.current = pickWords(100, difficulty);
     lastSpawn.current = 0;
-    setDrops([]); setScore(0); setMissed(0); setTyped("");
+    speedMultRef.current = 1;
+    setDrops([]); setScore(0); setMissed(0); setTyped(""); setSpeedMult(1);
     setStatus("playing");
     setTimeout(() => inputRef.current?.focus(), 80);
   };
@@ -149,7 +152,7 @@ function WordRain({ T, onBack }) {
     const loop = (now) => {
       if (stoppedRef.current) return;
       const dt = now - last; last = now;
-      const speed = SPEED[difficulty];
+      const speed = SPEED[difficulty] * speedMultRef.current;
       const updated = dropsRef.current.map(d => ({ ...d, y: d.y + speed * dt / 10 }));
       // words are missed when y > 88 (just before 100% container height, inside the zone)
       const alive  = updated.filter(d => d.y < 88);
@@ -189,10 +192,17 @@ function WordRain({ T, onBack }) {
       setScore(scoreRef.current);
       setTyped("");
       sfx("correct");
+      // Increase speed 10% every 10 words
+      if (scoreRef.current % 10 === 0) {
+        speedMultRef.current = Math.round((speedMultRef.current * 1.1) * 100) / 100;
+        setSpeedMult(speedMultRef.current);
+        if (!muted) playTone(1200, "sine", 0.12, 0.2); // special sound on speed up
+      }
     }
   };
 
   const hearts = Array.from({ length: maxLives }, (_, i) => i < maxLives - missed ? "❤️" : "🖤");
+  const speedPct = Math.round((speedMult - 1) * 100);
 
   // word color by y position
   const wordColor = (y) => y > 72 ? "#ef4444" : y > 52 ? "#f59e0b" : T.text;
