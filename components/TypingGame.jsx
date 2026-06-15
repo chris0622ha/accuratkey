@@ -1899,9 +1899,9 @@ const Nav = () => (<>
   if (isMobile && !hasKeyboard && user?.uid !== "qM3qeYBLwvRXy8D0gOKGCQbGuA12" && screen !== "auth") return (
     <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:32,textAlign:"center"}}>
       <div style={{fontSize:64,marginBottom:20}}>⌨️</div>
-      <h1 style={{color:T.text,fontSize:26,fontWeight:700,marginBottom:12}}>Desktop only</h1>
-      <p style={{color:T.muted,fontSize:15,lineHeight:1.6,maxWidth:280}}>AccuratKey needs a physical keyboard. Connect one and press any key to unlock!</p>
-      <p style={{color:T.faint,fontSize:12,marginTop:8,maxWidth:280}}>Have a Bluetooth keyboard? Connect it and press any key.</p>
+      <h1 style={{color:T.text,fontSize:24,fontWeight:700,marginBottom:12}}>⌨️ Press any key</h1>
+      <p style={{color:T.muted,fontSize:15,lineHeight:1.6,maxWidth:280}}>Click a key on your keyboard to access AccuratKey.</p>
+      <p style={{color:T.faint,fontSize:12,marginTop:8,maxWidth:280}}>Have a Bluetooth keyboard? Connect it first, then press any key.</p>
       <div style={{marginTop:24,display:"flex",flexDirection:"column",gap:10,width:"100%",maxWidth:280}}>
         {user ? (
           <button onClick={()=>{ if(typeof window!=="undefined"){localStorage.removeItem("ak_profileName");localStorage.removeItem("ak_uid");localStorage.removeItem("ak_lastProfile_"+(user?.uid||""));localStorage.removeItem("ak_username");} signOut(auth); setActiveProfile(null); setProfiles([]); setCurrentUsername(null); setScreenWithUrl("auth"); }}
