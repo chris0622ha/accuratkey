@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import TypingTest from "./TypingTest";
 import GamesTab from "./GamesTab";
-import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, OAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
+import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
 import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions } from "@/lib/firebase";
 
 export 
@@ -2012,30 +2012,29 @@ const Nav = () => (<>
               </button>
             ))}
           </div>
-          {[
-            { label:"Google", color:"#fff", bg:"#1a1a2e", border:"#2a2a4a",
-              logo:<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.6 2.4 30.1 0 24 0 14.6 0 6.5 5.5 2.7 13.5l7.8 6C12.4 13.2 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.5 2.9-2.2 5.4-4.7 7l7.3 5.7c4.3-4 6.7-9.8 7.2-16.7z"/><path fill="#FBBC05" d="M10.5 28.5A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.1.8-4.5l-7.8-6A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.7 10.7l7.8-6.2z"/><path fill="#34A853" d="M24 48c6.1 0 11.2-2 14.9-5.4l-7.3-5.7c-2 1.4-4.6 2.1-7.6 2.1-6.3 0-11.6-3.7-13.5-9l-7.8 6.2C6.5 42.5 14.6 48 24 48z"/></svg>,
-              fn: () => handleOAuth(GoogleAuthProvider) },
-            { label:"GitHub", color:"#e0e0ff", bg:"#1a1a2e", border:"#2a2a4a",
-              logo:<svg width="18" height="18" viewBox="0 0 24 24" fill="#e0e0ff"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>,
-              fn: () => handleOAuth(GithubAuthProvider) },
-            { label:"Apple", color:"#e0e0ff", bg:"#1a1a2e", border:"#2a2a4a",
-              logo:<svg width="18" height="18" viewBox="0 0 814 1000" fill="#e0e0ff"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-42.3-155.5-127.4C46.7 790.7 0 663 0 541.8c0-207.3 135.3-317 270.1-317 69 0 126.4 45.8 170 45.8 42.2 0 108.6-48.9 188.9-48.9 30.1 0 116.7 2.6 174.8 98.3zM418.5 170.8c31.1-36.9 53.1-88.1 53.1-139.3 0-7.1-.6-14.3-1.9-20.1-50.6 1.9-110.8 33.7-147.1 75.8-28.5 32.4-55.1 83.6-55.1 135.5 0 7.8 1.3 15.6 1.9 18.1 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 135.5-71.3z"/></svg>,
-              fn: () => { const p = new OAuthProvider("apple.com"); handleOAuth(() => p); } },
-            { label:"Microsoft", color:"#e0e0ff", bg:"#1a1a2e", border:"#2a2a4a",
-              logo:<svg width="18" height="18" viewBox="0 0 21 21"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>,
-              fn: () => { const p = new OAuthProvider("microsoft.com"); handleOAuth(() => p); } },
-            { label:"Twitter / X", color:"#e0e0ff", bg:"#1a1a2e", border:"#2a2a4a",
-              logo:<svg width="18" height="18" viewBox="0 0 24 24" fill="#e0e0ff"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>,
-              fn: () => { const p = new OAuthProvider("twitter.com"); handleOAuth(() => p); } },
-          ].map(({label, color, bg, border, logo, fn}) => (
-            <button key={label} onClick={fn} disabled={authLoading}
-              style={{width:"100%",background:bg,border:`1px solid ${border}`,borderRadius:8,color,fontFamily:"'JetBrains Mono',monospace",fontSize:13,padding:"11px",cursor:"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:10,transition:"border-color 0.2s"}}
-              onMouseEnter={e=>e.currentTarget.style.borderColor="#7c6af7"}
-              onMouseLeave={e=>e.currentTarget.style.borderColor=border}>
-              {logo} Continue with {label}
-            </button>
-          ))}
+          {/* Google */}
+          <button onClick={() => handleOAuth(GoogleAuthProvider)} disabled={authLoading}
+            style={{width:"100%",background:"#0a0a0f",border:"1px solid #2a2a4a",borderRadius:8,color:"#e0e0ff",fontFamily:"'JetBrains Mono',monospace",fontSize:13,padding:"11px",cursor:"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:10}}
+            onMouseEnter={e=>e.currentTarget.style.borderColor="#7c6af7"}
+            onMouseLeave={e=>e.currentTarget.style.borderColor="#2a2a4a"}>
+            <svg width="18" height="18" viewBox="0 0 48 48">
+              <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.6 2.4 30.1 0 24 0 14.6 0 6.5 5.5 2.7 13.5l7.8 6C12.4 13.2 17.7 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.5 2.9-2.2 5.4-4.7 7l7.3 5.7c4.3-4 6.7-9.8 7.2-16.7z"/>
+              <path fill="#FBBC05" d="M10.5 28.5A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.1.8-4.5l-7.8-6A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.7 10.7l7.8-6.2z"/>
+              <path fill="#34A853" d="M24 48c6.1 0 11.2-2 14.9-5.4l-7.3-5.7c-2 1.4-4.6 2.1-7.6 2.1-6.3 0-11.6-3.7-13.5-9l-7.8 6.2C6.5 42.5 14.6 48 24 48z"/>
+            </svg>
+            Continue with Google
+          </button>
+          {/* GitHub */}
+          <button onClick={() => handleOAuth(GithubAuthProvider)} disabled={authLoading}
+            style={{width:"100%",background:"#0a0a0f",border:"1px solid #2a2a4a",borderRadius:8,color:"#e0e0ff",fontFamily:"'JetBrains Mono',monospace",fontSize:13,padding:"11px",cursor:"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:10}}
+            onMouseEnter={e=>e.currentTarget.style.borderColor="#7c6af7"}
+            onMouseLeave={e=>e.currentTarget.style.borderColor="#2a2a4a"}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#e0e0ff">
+              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+            </svg>
+            Continue with GitHub
+          </button>
           <div style={{display:"flex",alignItems:"center",gap:10,margin:"14px 0"}}>
             <div style={{flex:1,height:1,background:"#1e1e30"}} />
             <span style={{color:"#444",fontSize:11}}>or email</span>
