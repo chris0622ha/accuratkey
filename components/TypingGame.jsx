@@ -1283,7 +1283,13 @@ export default function AccuratKey() {
     try {
       const isClass = typeof ProviderOrFactory === "function" && /^[A-Z]/.test(ProviderOrFactory.name);
       const provider = isClass ? new ProviderOrFactory() : ProviderOrFactory();
-      await signInWithPopup(auth, provider);
+      // Use redirect on mobile, popup on desktop
+      const isMob = typeof window !== "undefined" && window.matchMedia("(pointer: coarse) and (hover: none)").matches;
+      if (isMob) {
+        await signInWithRedirect(auth, provider);
+      } else {
+        await signInWithPopup(auth, provider);
+      }
     }
     catch (e) { setAuthErr(cleanErr(e)); }
     setAuthLoading(false);
