@@ -2594,9 +2594,17 @@ const Nav = () => (<>
               const unlocked=lv.id<=highestUnlocked,current=lv.id===currentLevel,completed=lv.id<highestUnlocked,locked=!unlocked,canSkipTo=lv.id===highestUnlocked+1;
               return (
                 <div key={lv.id} style={{display:"flex",alignItems:"center",gap:12}}>
-                  <div style={{display:"flex",flexDirection:"column",alignItems:"center",width:40,flexShrink:0}}>
-                    <div style={{width:3,height:idx===0?0:20,background:completed||current?lv.color:"#1e1e30",borderRadius:2}}/>
-                    <div style={{width:40,height:40,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0,background:completed?"#0a3020":current?lv.color+"33":locked?"#0a0a15":"#0a0a15",border:`3px solid ${completed?lv.color:current?lv.color:locked?"#1e1e30":"#2a2a3e"}`,boxShadow:current?`0 0 16px ${lv.color}66`:"none"}}>{completed?"✓":locked?"🔒":lv.emoji}</div>
+                  <div style={{display:"flex",flexDirection:"column",alignItems:"center",width:44,flexShrink:0}}>
+                    {/* Top connector line */}
+                    <div style={{width:4,height:idx===0?0:24,background:idx===0?"transparent":completed?lv.color:current?lv.color+"88":"#1e1e30",borderRadius:2,transition:"background 0.3s"}}/>
+                    {/* Level node */}
+                    <div style={{width:44,height:44,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0,background:completed?lv.color+"22":current?lv.color+"33":locked?"#0a0a15":"#0d0d18",border:`3px solid ${completed?lv.color:current?lv.color:locked?"#1e1e30":"#2a2a3e"}`,boxShadow:current?`0 0 20px ${lv.color}77,0 0 40px ${lv.color}33`:"none",transition:"all 0.3s",position:"relative"}}>
+                      {completed ? <span style={{color:lv.color,fontSize:16,fontWeight:900}}>✓</span> : locked ? "🔒" : lv.emoji}
+                      {/* Pulse ring for current level */}
+                      {current && <div style={{position:"absolute",inset:-6,borderRadius:"50%",border:`2px solid ${lv.color}44`,animation:"none"}}/>}
+                    </div>
+                    {/* Bottom connector line */}
+                    <div style={{width:4,flex:1,minHeight:10,background:completed?lv.color:"#1e1e30",borderRadius:2,transition:"background 0.3s"}}/>
                   </div>
                   <div style={{flex:1,padding:"14px 16px",borderRadius:12,cursor:locked&&!canSkipTo?"default":"pointer",background:current?lv.color+"18":completed?"#0a180f":locked?"#0a0a12":T.card,border:`1px solid ${current?lv.color:completed?lv.color+"44":locked?"#1a1a28":T.border}`,opacity:locked&&!canSkipTo?0.45:1}}
                     onClick={()=>{
