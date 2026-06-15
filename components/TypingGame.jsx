@@ -1896,16 +1896,23 @@ const Nav = () => (<>
 
   // SCREENS
 
-  if (isMobile && !hasKeyboard && user?.uid !== "qM3qeYBLwvRXy8D0gOKGCQbGuA12" && screen !== "auth" && screen !== "profilePicker" && screen !== "createProfile") return (
+  if (isMobile && !hasKeyboard && user?.uid !== "qM3qeYBLwvRXy8D0gOKGCQbGuA12" && screen !== "auth") return (
     <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:32,textAlign:"center"}}>
       <div style={{fontSize:64,marginBottom:20}}>⌨️</div>
       <h1 style={{color:T.text,fontSize:26,fontWeight:700,marginBottom:12}}>Desktop only</h1>
       <p style={{color:T.muted,fontSize:15,lineHeight:1.6,maxWidth:280}}>AccuratKey needs a physical keyboard. Connect one and press any key to unlock!</p>
       <p style={{color:T.faint,fontSize:12,marginTop:8,maxWidth:280}}>Have a Bluetooth keyboard? Connect it and press any key.</p>
       <div style={{marginTop:24,display:"flex",flexDirection:"column",gap:10,width:"100%",maxWidth:280}}>
-        <button onClick={()=>setScreenWithUrl("profilePicker")} style={{padding:"12px",borderRadius:10,border:"none",background:T.card,color:T.muted,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
-          Switch Profile / Sign Out
-        </button>
+        {user ? (
+          <button onClick={()=>{ if(typeof window!=="undefined"){localStorage.removeItem("ak_profileName");localStorage.removeItem("ak_uid");localStorage.removeItem("ak_lastProfile_"+(user?.uid||""));localStorage.removeItem("ak_username");} signOut(auth); setActiveProfile(null); setProfiles([]); setCurrentUsername(null); setScreenWithUrl("auth"); }}
+            style={{padding:"12px",borderRadius:10,border:"none",background:T.card,color:T.muted,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
+            Sign Out
+          </button>
+        ) : (
+          <button onClick={()=>setScreenWithUrl("auth")} style={{padding:"12px",borderRadius:10,border:"none",background:T.purple,color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>
+            Sign In
+          </button>
+        )}
       </div>
     </div>
   );
