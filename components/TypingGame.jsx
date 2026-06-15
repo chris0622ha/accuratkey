@@ -1365,8 +1365,6 @@ export default function AccuratKey() {
       const w = Math.round((totalCharsRef.current / 5) / (elMs / 60000));
       setWpm(w);
       tick++;
-      if (tick % 5 === 0)
-, w]); // sample every 5s, keep 20 pts
     }, 1000);
     return () => clearInterval(iv);
   }, [screen]);
