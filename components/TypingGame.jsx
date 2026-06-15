@@ -874,7 +874,6 @@ export default function AccuratKey() {
   const [resultData, setResultData] = useState(null);
   const [keysEarned, setKeysEarned] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [wpmHistory, setWpmHistory] = useState([]);
   const [isMobile, setIsMobile] = useState(false);
   const [birthdayProfile, setBirthdayProfile] = useState(null);
 
@@ -1257,7 +1256,7 @@ export default function AccuratKey() {
     const ov = customWords || levelOverrides[String(levelId)] || null;
     setLines(Array.from({ length: TOTAL_LINES }, () => genLine(levelId, ov)));
     setLineIdx(0); setTyped(""); setTotalChars(0); totalCharsRef.current = 0; setTotalCorrectChars(0);
-    setStartTime(null); startTimeRef.current = null; setWpm(0); setAccuracy(100); setCombo(0); setKeyMistakes({}); setShowHeatmap(false); setWpmHistory([]);
+    setStartTime(null); startTimeRef.current = null; setWpm(0); setAccuracy(100); setCombo(0); setKeyMistakes({}); setShowHeatmap(false);
   }, []);
 
   const startLevel = (levelId, isSkip = false, skipTarget = null) => {
@@ -1325,7 +1324,8 @@ export default function AccuratKey() {
       const w = Math.round((totalCharsRef.current / 5) / (elMs / 60000));
       setWpm(w);
       tick++;
-      if (tick % 5 === 0) setWpmHistory(h => [...h.slice(-19), w]); // sample every 5s, keep 20 pts
+      if (tick % 5 === 0)
+, w]); // sample every 5s, keep 20 pts
     }, 1000);
     return () => clearInterval(iv);
   }, [screen]);
@@ -1755,23 +1755,6 @@ const ActivityCalendar = ({sessionDates, T}) => {
         <span style={{fontSize:9,color:T.faint}}>today</span>
       </div>
     </div>
-  );
-};
-
-const WpmSparkline = ({history}) => {
-  if (history.length < 2) return null;
-  const W=120, H=32, pad=2;
-  const max = Math.max(...history, 1);
-  const pts = history.map((v,i) => {
-    const x = pad + (i/(history.length-1))*(W-pad*2);
-    const y = H - pad - ((v/max)*(H-pad*2));
-    return `${x},${y}`;
-  }).join(" ");
-  return (
-    <svg width={W} height={H} style={{opacity:0.7}}>
-      <polyline points={pts} fill="none" stroke="#a78bfa" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"/>
-      <circle cx={pts.split(" ").pop().split(",")[0]} cy={pts.split(" ").pop().split(",")[1]} r="2.5" fill="#a78bfa"/>
-    </svg>
   );
 };
 
@@ -3145,7 +3128,7 @@ const Nav = () => (<>
             </div>
           </div>
           <div style={{display:"flex",gap:14,alignItems:"center"}}>
-            {canUse(activeProfile,"wpmLive") && <span style={{color:T.purple,fontWeight:700,fontSize:14,display:"flex",alignItems:"center",gap:6}}>{wpm} WPM <WpmSparkline history={wpmHistory}/></span>}
+            {canUse(activeProfile,"wpmLive") && <span style={{color:T.purple,fontWeight:700,fontSize:14,display:"flex",alignItems:"center",gap:6}}>{wpm} WPM</span>}
             {canUse(activeProfile,"accuracyLive") && <span style={{color:T.accent2,fontWeight:700,fontSize:14}}>{accuracy}%</span>}
             {canUse(activeProfile,"combo") && combo > 1 && <span style={{color:T.accent,fontWeight:700,fontSize:13}}>×{combo}{combo>=20?" 🔥🔥":combo>=10?" 🔥":""}</span>}
             {canUse(activeProfile,"ghost") && ghostPos >= 0 && <span style={{color:"#f59e0b",fontSize:11}}>👻</span>}
