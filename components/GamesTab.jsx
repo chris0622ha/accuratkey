@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Sniper, Mirror, Flash, Echo, GhostWords, CodeRain, BossBattle, TypewriterStory, WordDuel, TypingJournal, PoetryMode } from "./GamesExtra";
+import { Sniper, Mirror, Flash, Echo, GhostWords, CodeRain, BossBattle, TypewriterStory, TypingJournal, PoetryMode } from "./GamesExtra";
 
 // ─── Sound Engine ─────────────────────────────────────────────────────────────
 let _sfxCtx = null;
@@ -96,7 +96,6 @@ const GAMES = [
   { id:"coderain",    emoji:"💻", name:"Code Rain",       desc:"Matrix-style falling words in columns", tag:"🆕" },
   { id:"boss",        emoji:"👾", name:"Boss Battle",     desc:"Deal damage by typing — dodge the boss attacks", tag:"🆕" },
   { id:"story",       emoji:"🎭", name:"Typewriter Story",desc:"Type classic literature passages", tag:"🆕" },
-  { id:"duel",        emoji:"⚔️", name:"Word Duel",       desc:"Two players race on the same device", tag:"🆕" },
   { id:"journal",     emoji:"📝", name:"Typing Journal",  desc:"Free type and save your entries locally", tag:"🆕" },
   { id:"poetry",      emoji:"📜", name:"Poetry Mode",     desc:"Type poems with ambient synthesized tones", tag:"🆕" },
 ];
@@ -805,7 +804,6 @@ const GAME_SETTINGS = {
   coderain:    [{ key:"maxMissed",  label:"Max missed", opts:[3,5,8,12], default:8 }, { key:"speed", label:"Speed", opts:["slow","normal","fast"], default:"normal" }],
   boss:        [{ key:"bossHp",     label:"Boss HP",    opts:[50,100,200], default:100 }, { key:"attackMs", label:"Attack every", opts:[2000,4000,6000], default:4000, suffix:"ms" }],
   story:       [{ key:"passage",    label:"Passage",    opts:["random","raven","frost","dickens","austen","orwell"], default:"random" }],
-  duel:        [{ key:"count",      label:"Words",      opts:[10,20,30], default:20 }],
   journal:     [],
   poetry:      [{ key:"poem",       label:"Poem",       opts:["random","byron","dickinson","frost","whitman","poe"], default:"random" }],
 };
@@ -907,7 +905,7 @@ export default function GamesTab({ T }) {
     suddendeath: SuddenDeath, zen: ZenMode, ladder: SpeedLadder,
     sniper: Sniper, mirror: Mirror, flash: Flash, echo: Echo,
     ghost: GhostWords, coderain: CodeRain, boss: BossBattle,
-    story: TypewriterStory, duel: WordDuel, journal: TypingJournal, poetry: PoetryMode,
+    story: TypewriterStory, journal: TypingJournal, poetry: PoetryMode,
   };
 
   if (activeGame) {
