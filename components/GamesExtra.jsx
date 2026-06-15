@@ -1,5 +1,9 @@
 "use client";
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { EASY_ARR, MED_ARR, HARD_ARR, ALL_WORDS, pickWords as dbPick } from "./WordDB";
+const EASY_WORDS = EASY_ARR;
+const MED_WORDS = MED_ARR;
+const HARD_WORDS = HARD_ARR;
 
 
 // ─── Game persistence helpers ─────────────────────────────────────────────────
