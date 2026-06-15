@@ -1,8 +1,9 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import TypingTest from "./TypingTest";
 import GamesTab from "./GamesTab";
-import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
+import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, OAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
 import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions } from "@/lib/firebase";
 
 export 
@@ -719,7 +720,33 @@ function SendChallengeForm({ T, friends, LEVELS, onSend }) {
 }
 
 export default function AccuratKey() {
+  const router = useRouter();
+  const pathname = usePathname();
   const [screen, setScreen] = useState("loading");
+
+  // Screen → URL mapping
+  const SCREEN_URLS = {
+    auth: "/signin",
+    profilePicker: "/profiles",
+    createProfile: "/profiles/new",
+    levelMap: "/game",
+    game: "/game/play",
+    tips: "/game/level",
+    result: "/game/result",
+    fail: "/game/play",
+    birthday: "/game",
+    loading: "/game",
+    maintenance: "/game",
+  };
+
+  // Sync screen → URL (replace so back button works naturally)
+  const setScreenWithUrl = React.useCallback((s, opts = {}) => {
+    setScreen(s);
+    const url = SCREEN_URLS[s] || "/game";
+    if (typeof window !== "undefined" && window.location.pathname !== url) {
+      router.replace(url);
+    }
+  }, [router]);
   const [user, setUser] = useState(null);
   const [profiles, setProfiles] = useState([]);
   const [activeProfile, setActiveProfile] = useState(null);
@@ -1122,7 +1149,7 @@ export default function AccuratKey() {
         const profs = await getProfiles(u.uid);
         setProfiles(profs);
         if (profs.length === 0) {
-          setScreen("createProfile");
+          setScreenWithUrl("createProfile");
         } else {
           // If returning from shop or another page, auto-restore last profile
           const returnScreen = typeof window !== "undefined" ? localStorage.getItem("ak_returnScreen") : null;
@@ -1140,7 +1167,7 @@ export default function AccuratKey() {
             setShowCount((prof.currentLevel || 1) + 10);
             setScreen(returnScreen === "profilePicker" ? "levelMap" : returnScreen);
           } else {
-            setScreen("profilePicker");
+            setScreenWithUrl("profilePicker");
           }
         }
       } else {
@@ -1152,11 +1179,16 @@ export default function AccuratKey() {
             localStorage.removeItem("ak_username");
             signOut(auth);
             setCurrentUsername(null);
-            setScreen("levelMap");
+            setScreenWithUrl("levelMap");
           } else if (window.location.search.includes("auth=1")) {
-            setScreen("auth");
+            setScreenWithUrl("auth");
           } else if (screen === "loading") {
-            setScreen("levelMap");
+            // Restore screen from URL on refresh
+            const p = typeof window !== "undefined" ? window.location.pathname : "/game";
+            if (p === "/signin") setScreenWithUrl("auth");
+            else if (p === "/profiles") setScreenWithUrl("profilePicker");
+            else if (p === "/profiles/new") setScreenWithUrl("createProfile");
+            else setScreenWithUrl("levelMap");
           }
         }
       }
@@ -1195,7 +1227,7 @@ export default function AccuratKey() {
         localStorage.removeItem("ak_returnScreen");
         setScreen(returnScreen);
       } else {
-        setScreen("levelMap");
+        setScreenWithUrl("levelMap");
       }
     }
   };
@@ -1216,10 +1248,8 @@ export default function AccuratKey() {
   const handleOAuth = async (ProviderOrFactory) => {
     setAuthErr(""); setAuthLoading(true);
     try {
-      // Accepts either a Provider class (Google/GitHub) or a factory fn returning an instance
-      const provider = typeof ProviderOrFactory === "function" && ProviderOrFactory.prototype?.constructor?.name
-        ? new ProviderOrFactory()
-        : ProviderOrFactory();
+      const isClass = typeof ProviderOrFactory === "function" && /^[A-Z]/.test(ProviderOrFactory.name);
+      const provider = isClass ? new ProviderOrFactory() : ProviderOrFactory();
       await signInWithPopup(auth, provider);
     }
     catch (e) { setAuthErr(cleanErr(e)); }
@@ -1257,7 +1287,7 @@ export default function AccuratKey() {
       setActiveProfile(prof);
       setLayoutKey(newLayout);
       setShowTips(true);
-      setScreen("tips");
+      setScreenWithUrl("tips");
     } else {
       setCreatingProfile(false);
       await selectProfile(prof);
@@ -1307,7 +1337,7 @@ export default function AccuratKey() {
         setGhostPos(-1);
       }
     } catch(e) {}
-    setScreen("game");
+    setScreenWithUrl("game");
     setTimeout(() => inputRef.current?.focus(), 100);
   };
 
@@ -1317,7 +1347,7 @@ export default function AccuratKey() {
     setPendingIsSkip(isSkip);
     setPendingSkipTarget(skipTarget);
     setIsFirstPlay(false);
-    setScreen("tips");
+    setScreenWithUrl("tips");
   };
 
   useEffect(() => {
@@ -1467,7 +1497,7 @@ export default function AccuratKey() {
         } else {
           if(canUse(activeProfile,"sounds"))playSound("complete", activeProfile?.activeSound||"default");
           if(passed){ setShowConfetti(true); setTimeout(()=>setShowConfetti(false),3500); }
-          setScreen("result");
+          setScreenWithUrl("result");
         }
       } else {
         setLineIdx(ni);
@@ -1540,7 +1570,7 @@ export default function AccuratKey() {
     setShowDeleteProfile(false);
     await deleteProfile(user.uid, idToDelete);
     await reloadProfiles();
-    setScreen("profilePicker");
+    setScreenWithUrl("profilePicker");
   };
 
   const handleDeleteAccount = async () => {
@@ -1555,7 +1585,7 @@ export default function AccuratKey() {
       setProfiles([]);
       setActiveProfile(null);
       setShowSettingsModal(false);
-      setScreen("auth");
+      setScreenWithUrl("auth");
     } catch (e) {
       if (e?.code === "auth/requires-recent-login") {
         setSaveMsg("For security, please sign out and sign back in, then try deleting again.");
@@ -1819,13 +1849,13 @@ const Nav = () => (<>
             <AvatarImg profile={activeProfile} size={30} />
             <span style={{fontSize:12,color:T.muted,maxWidth:90,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{activeProfile.name}</span>
           </button>
-          <button onClick={() => requirePin("switch", () => setScreen("profilePicker"))} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.faint,fontSize:fs(11),padding:"4px 8px",cursor:"pointer",fontFamily:T.font}}>
+          <button onClick={() => requirePin("switch", () => setScreenWithUrl("profilePicker"))} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.faint,fontSize:fs(11),padding:"4px 8px",cursor:"pointer",fontFamily:T.font}}>
             Switch
           </button>
         </div>
       )}
       {!activeProfile && (
-        <button onClick={() => setScreen("auth")} style={{background:T.purple,border:"none",borderRadius:8,color:"#fff",fontSize:12,fontWeight:700,padding:"7px 16px",cursor:"pointer",fontFamily:T.font}}>
+        <button onClick={() => setScreenWithUrl("auth")} style={{background:T.purple,border:"none",borderRadius:8,color:"#fff",fontSize:12,fontWeight:700,padding:"7px 16px",cursor:"pointer",fontFamily:T.font}}>
           Sign in
         </button>
       )}
@@ -2035,6 +2065,29 @@ const Nav = () => (<>
             </svg>
             Continue with GitHub
           </button>
+          {/* Apple */}
+          <button onClick={() => { const p = new OAuthProvider("apple.com"); handleOAuth(() => p); }} disabled={authLoading}
+            style={{width:"100%",background:"#0a0a0f",border:"1px solid #2a2a4a",borderRadius:8,color:"#e0e0ff",fontFamily:"'JetBrains Mono',monospace",fontSize:13,padding:"11px",cursor:"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:10}}
+            onMouseEnter={e=>e.currentTarget.style.borderColor="#7c6af7"}
+            onMouseLeave={e=>e.currentTarget.style.borderColor="#2a2a4a"}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#e0e0ff">
+              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+            </svg>
+            Continue with Apple
+          </button>
+          {/* Microsoft */}
+          <button onClick={() => { const p = new OAuthProvider("microsoft.com"); handleOAuth(() => p); }} disabled={authLoading}
+            style={{width:"100%",background:"#0a0a0f",border:"1px solid #2a2a4a",borderRadius:8,color:"#e0e0ff",fontFamily:"'JetBrains Mono',monospace",fontSize:13,padding:"11px",cursor:"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:10}}
+            onMouseEnter={e=>e.currentTarget.style.borderColor="#7c6af7"}
+            onMouseLeave={e=>e.currentTarget.style.borderColor="#2a2a4a"}>
+            <svg width="18" height="18" viewBox="0 0 21 21">
+              <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+              <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+              <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
+              <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+            </svg>
+            Continue with Microsoft
+          </button>
           <div style={{display:"flex",alignItems:"center",gap:10,margin:"14px 0"}}>
             <div style={{flex:1,height:1,background:"#1e1e30"}} />
             <span style={{color:"#444",fontSize:11}}>or email</span>
@@ -2051,7 +2104,7 @@ const Nav = () => (<>
             style={{width:"100%",padding:"13px",borderRadius:9,border:"none",background:"#7c6af7",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"'JetBrains Mono',monospace",opacity:authLoading?0.6:1}}>
             {authLoading ? "..." : authMode === "login" ? "Log in" : "Sign up"}
           </button>
-          <button onClick={() => setScreen("levelMap")} style={{width:"100%",marginTop:12,background:"transparent",border:"none",color:"#444",fontSize:12,cursor:"pointer",fontFamily:"'JetBrains Mono',monospace"}}>
+          <button onClick={() => setScreenWithUrl("levelMap")} style={{width:"100%",marginTop:12,background:"transparent",border:"none",color:"#444",fontSize:12,cursor:"pointer",fontFamily:"'JetBrains Mono',monospace"}}>
             Continue without signing in
           </button>
         </div>
@@ -2082,19 +2135,19 @@ const Nav = () => (<>
               <div style={{color:T.muted,fontSize:11}}>Level {p.currentLevel || 1}</div>
               <div style={{color:T.accent,fontSize:11,marginTop:2,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}><KKey size={11}/>{p.keys || 0}</div>
             </div>
-            <button onClick={(e) => { e.stopPropagation(); const prof = p; setActiveProfile(prof); setLayoutKey(prof.favoriteLayout||"qwerty"); setEditName(prof.name||""); setEditAvatar(prof.avatar||"key"); setEditBirthday(prof.birthday||""); setEditPhoto(null); setEditPhotoPreview(null); setEditPhotoB64(null); setSaveMsg(""); setDeleteConfirmText(""); setShowDeleteProfile(false); setDeleteAccConfirmText(""); setShowDeleteAccount(false); setScreen("levelMap"); setShowSettingsModal(true);}}
+            <button onClick={(e) => { e.stopPropagation(); const prof = p; setActiveProfile(prof); setLayoutKey(prof.favoriteLayout||"qwerty"); setEditName(prof.name||""); setEditAvatar(prof.avatar||"key"); setEditBirthday(prof.birthday||""); setEditPhoto(null); setEditPhotoPreview(null); setEditPhotoB64(null); setSaveMsg(""); setDeleteConfirmText(""); setShowDeleteProfile(false); setDeleteAccConfirmText(""); setShowDeleteAccount(false); setScreenWithUrl("levelMap"); setShowSettingsModal(true);}}
               style={{position:"absolute",top:6,right:6,background:T.purple,border:"none",borderRadius:8,padding:"4px 8px",display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:11,fontWeight:700,color:"#fff",zIndex:10,opacity:hoveredProfileId===p.id?1:0,pointerEvents:hoveredProfileId===p.id?"all":"none",transition:"opacity 0.15s",fontFamily:T.font,whiteSpace:"nowrap"}}>
               ✏️ Edit
             </button>
           </div>
         ))}
-        <button onClick={() => setScreen("createProfile")}
+        <button onClick={() => setScreenWithUrl("createProfile")}
           style={{background:"transparent",border:`2px dashed ${T.border}`,borderRadius:16,padding:"24px 20px",width:140,cursor:"pointer",textAlign:"center",fontFamily:T.font}}>
           <span style={{fontSize:36,display:"block",marginBottom:10}}>➕</span>
           <div style={{color:T.faint,fontSize:13}}>Add Profile</div>
         </button>
       </div>
-      <button onClick={() => { if(typeof window !== "undefined"){localStorage.removeItem("ak_profileName");localStorage.removeItem("ak_uid");localStorage.removeItem("ak_lastProfile_"+(user?.uid||""));localStorage.removeItem("ak_username");} signOut(auth); setActiveProfile(null); setProfiles([]); setCurrentUsername(null); setScreen("levelMap");}} style={{marginTop:32,background:"none",border:"none",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
+      <button onClick={() => { if(typeof window !== "undefined"){localStorage.removeItem("ak_profileName");localStorage.removeItem("ak_uid");localStorage.removeItem("ak_lastProfile_"+(user?.uid||""));localStorage.removeItem("ak_username");} signOut(auth); setActiveProfile(null); setProfiles([]); setCurrentUsername(null); setScreenWithUrl("levelMap");}} style={{marginTop:32,background:"none",border:"none",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
         Sign out
       </button>
     {BroadcastBanner}
@@ -2168,7 +2221,7 @@ const Nav = () => (<>
             Let's go! →
           </button>
           {profiles.length > 0 && (
-            <button onClick={()=>setScreen("profilePicker")} style={{width:"100%",marginTop:10,padding:"10px",borderRadius:8,background:"none",border:`1px solid ${T.border}`,color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
+            <button onClick={()=>setScreenWithUrl("profilePicker")} style={{width:"100%",marginTop:10,padding:"10px",borderRadius:8,background:"none",border:`1px solid ${T.border}`,color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
               Back to profiles
             </button>
           )}
@@ -2183,7 +2236,7 @@ const Nav = () => (<>
       <h1 style={{color:T.text,fontSize:32,fontWeight:800,marginBottom:10}}>Happy Birthday, {birthdayProfile?.name}!</h1>
       <p style={{color:T.muted,fontSize:16,marginBottom:8}}>You're now {birthdayProfile?.age} years old! 🎉</p>
       <p style={{color:T.accent2,fontSize:14,marginBottom:32}}>Keep up the great typing practice!</p>
-      <button onClick={() => setScreen("levelMap")}
+      <button onClick={() => setScreenWithUrl("levelMap")}
         style={{padding:"14px 40px",borderRadius:12,border:"none",background:T.purple,color:"#fff",fontSize:16,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>
         Start Playing →
       </button>
@@ -2227,7 +2280,7 @@ const Nav = () => (<>
             style={{width:"100%",padding:"15px",borderRadius:12,border:"none",background:T.purple,color:"#fff",fontSize:16,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>
             Start Typing →
           </button>
-          <button onClick={() => setScreen("levelMap")} style={{marginTop:12,background:"none",border:"none",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
+          <button onClick={() => setScreenWithUrl("levelMap")} style={{marginTop:12,background:"none",border:"none",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
             ← Back to map
           </button>
         </div>
@@ -2249,7 +2302,7 @@ const Nav = () => (<>
             style={{padding:"14px 32px",borderRadius:12,border:"none",background:T.purple,color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>
             Try Again
           </button>
-          <button onClick={() => setScreen("levelMap")}
+          <button onClick={() => setScreenWithUrl("levelMap")}
             style={{padding:"14px 32px",borderRadius:12,border:`1px solid ${T.border}`,background:"transparent",color:T.muted,fontSize:15,cursor:"pointer",fontFamily:T.font}}>
             Level Map
           </button>
@@ -2331,7 +2384,7 @@ const Nav = () => (<>
             <button onClick={()=>{setShowProfileModal(false);openSettings();}} style={{width:"100%",marginTop:8,padding:"10px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
               Edit Profile
             </button>
-            <button onClick={()=>{setShowProfileModal(false);setScreen("profilePicker");}} style={{width:"100%",marginTop:8,padding:"10px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
+            <button onClick={()=>{setShowProfileModal(false);setScreenWithUrl("profilePicker");}} style={{width:"100%",marginTop:8,padding:"10px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
               Switch Profile
             </button>
           </Overlay>
@@ -3190,7 +3243,7 @@ const Nav = () => (<>
         </div>
         <input ref={inputRef} value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Backspace") e.preventDefault();}} style={{position:"absolute",opacity:0,pointerEvents:"none"}} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
         {canUse(activeProfile,"keyboard") && <Keyboard />}
-        <button onClick={() => { clearInterval(ghostInterval.current); setScreen("levelMap"); }} style={{marginTop:20,background:"none",border:"none",color:T.faint,fontSize:12,cursor:"pointer",fontFamily:T.font}}>
+        <button onClick={() => { clearInterval(ghostInterval.current); setScreenWithUrl("levelMap"); }} style={{marginTop:20,background:"none",border:"none",color:T.faint,fontSize:12,cursor:"pointer",fontFamily:T.font}}>
           ← Back to map
         </button>
       </div>
@@ -3344,7 +3397,7 @@ const Nav = () => (<>
             <div style={{background:"#1a1030",border:`1px solid ${T.purple}44`,borderRadius:10,padding:"12px 16px",marginBottom:14,fontSize:13,color:T.muted,textAlign:"left"}}>
               <div style={{color:T.text,fontWeight:700,marginBottom:4}}>Sign in to save your progress</div>
               <div style={{marginBottom:10,fontSize:12}}>Your results aren't saved yet.</div>
-              <button onClick={() => setScreen("auth")} style={{background:T.purple,border:"none",borderRadius:8,color:"#fff",fontSize:13,fontWeight:700,padding:"8px 18px",cursor:"pointer",fontFamily:T.font}}>
+              <button onClick={() => setScreenWithUrl("auth")} style={{background:T.purple,border:"none",borderRadius:8,color:"#fff",fontSize:13,fontWeight:700,padding:"8px 18px",cursor:"pointer",fontFamily:T.font}}>
                 Sign in / Sign up
               </button>
             </div>
@@ -3364,7 +3417,7 @@ const Nav = () => (<>
               style={{flex:1,padding:14,borderRadius:10,border:"none",background:T.purple,color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>
               {passed ? "Play Again" : "Try Again"}
             </button>
-            <button onClick={() => setScreen("levelMap")}
+            <button onClick={() => setScreenWithUrl("levelMap")}
               style={{flex:1,padding:14,borderRadius:10,border:`1px solid ${T.border}`,background:"transparent",color:T.muted,fontSize:14,cursor:"pointer",fontFamily:T.font}}>
               Level Map
             </button>
