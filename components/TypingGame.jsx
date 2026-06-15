@@ -2238,11 +2238,12 @@ const Nav = () => (<>
                   />
                   <div style={{display:"flex",justifyContent:"flex-end",marginTop:10,gap:8}}>
                     <button onClick={()=>setShowFeedback(false)} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,fontSize:13,padding:"8px 16px",cursor:"pointer",fontFamily:T.font}}>Cancel</button>
-                    <button disabled={!feedbackText.trim()||feedbackSending} onClick={async()=>{
+                    <button disabled={!feedbackText.trim()||feedbackSending} onClick={async(e)=>{
+                      e.stopPropagation();
                       if(!feedbackText.trim())return;
                       setFeedbackSending(true);
                       try{ await submitFeedback(user?.uid||null, activeProfile?.id||null, feedbackText.trim()); setFeedbackSent(true); }
-                      catch(e){ alert("Failed to send. Please try again."); }
+                      catch(err){ console.error("Feedback error:",err); }
                       finally{ setFeedbackSending(false); }
                     }} style={{background:feedbackText.trim()&&!feedbackSending?T.purple:"#444",border:"none",borderRadius:8,color:"#fff",fontSize:13,fontWeight:700,padding:"8px 20px",cursor:feedbackText.trim()&&!feedbackSending?"pointer":"default",fontFamily:T.font,opacity:feedbackSending?0.6:1}}>
                       {feedbackSending?"Sending…":"Send →"}
