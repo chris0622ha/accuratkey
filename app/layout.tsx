@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+// URLs: /signin /profiles /game /play /stats /help /store /social /about
 export const metadata: Metadata = {
   title: "AccuratKey",
   description: "Learn to type the right way.",
