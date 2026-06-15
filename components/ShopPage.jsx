@@ -417,7 +417,7 @@ export default function ShopPage() {
     ? ALL_THEMES.filter(t => catFilter === "all" || t.category === catFilter)
     : ALL_FONTS.filter(f => catFilter === "all" || f.category === catFilter);
 
-  const cats = tab === "themes" ? CATEGORIES_THEMES : CATEGORIES_FONTS;
+  const cats = tab === "themes" ? CATEGORIES_THEMES : tab === "fonts" ? CATEGORIES_FONTS : [];
 
   if (loading) return (
     <div style={{minHeight:"100vh",background:"#0a0a0f",display:"flex",alignItems:"center",justifyContent:"center",color:"#7c6af7",fontFamily:"monospace",fontSize:16}}>
