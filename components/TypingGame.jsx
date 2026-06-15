@@ -1447,6 +1447,118 @@ export default function AccuratKey() {
   </div>
 ) : null;
 
+const PrivacyRow = ({privKey, label, desc, profile, T, onToggle}) => {
+  const val = profile?.privacy?.[privKey] !== false;
+  return (
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"9px 0",borderBottom:`1px solid ${T.faint}`}}>
+      <div>
+        <div style={{color:T.text,fontSize:12,fontWeight:700}}>{label}</div>
+        <div style={{color:T.muted,fontSize:10,marginTop:2}}>{desc}</div>
+      </div>
+      <button onClick={()=>onToggle(privKey,!val)} style={{flexShrink:0,padding:"5px 12px",background:val?T.purple+"22":"transparent",border:`1px solid ${val?T.purple:T.border}`,borderRadius:7,color:val?T.purple:T.muted,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font,marginLeft:12}}>
+        {val?"ON":"OFF"}
+      </button>
+    </div>
+  );
+};
+
+const DAYS_SHORT = ["S","M","T","W","T","F","S"];
+const ActivityCalendar = ({sessionDates, T}) => {
+  const [tooltip, setTooltip] = React.useState(null);
+  const today = new Date();
+  const todayKey = today.toISOString().slice(0,10);
+  // Build last 12 weeks (84 days) from today, aligned to full weeks starting Sunday
+  const cells = [];
+  for (let i = 83; i >= 0; i--) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0,10);
+    cells.push({key, date:d, data:sessionDates[key]||null});
+  }
+  // Pad front so first cell is a Sunday
+  const firstDow = cells[0].date.getDay();
+  const padded = Array(firstDow).fill(null).concat(cells);
+  const weeks = [];
+  for (let i=0;i<padded.length;i+=7) weeks.push(padded.slice(i,i+7));
+  const maxCount = Math.max(1,...cells.map(c=>c.data?.count||0));
+  const activeDays = cells.filter(c=>c.data).length;
+  const totalSess = cells.reduce((s,c)=>s+(c.data?.count||0),0);
+  // Month label: show month when first week of that month appears
+  const monthLabels = {};
+  weeks.forEach((week,wi)=>{
+    const first = week.find(c=>c);
+    if(first&&first.date.getDate()<=7) monthLabels[wi]=first.date.toLocaleString("default",{month:"short"});
+  });
+  const CELL=14, GAP=3;
+  return (
+    <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"14px 16px",marginBottom:16}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+        <div style={{color:T.text,fontWeight:700,fontSize:13}}>📆 Your Activity</div>
+        <div style={{display:"flex",gap:14}}>
+          <span style={{color:T.muted,fontSize:11}}><span style={{color:T.purple,fontWeight:700}}>{activeDays}</span> days played</span>
+          <span style={{color:T.muted,fontSize:11}}><span style={{color:T.text,fontWeight:700}}>{totalSess}</span> sessions</span>
+        </div>
+      </div>
+      {/* Day-of-week labels */}
+      <div style={{display:"flex",gap:GAP,marginBottom:2}}>
+        <div style={{width:20,flexShrink:0}}/>
+        {weeks[0]?.map((_,di)=>(
+          <div key={di} style={{width:CELL,textAlign:"center",fontSize:8,color:T.faint,flexShrink:0}}>{DAYS_SHORT[di]}</div>
+        ))}
+      </div>
+      {/* Month label row */}
+      <div style={{display:"flex",gap:GAP,marginBottom:4}}>
+        <div style={{width:20,flexShrink:0}}/>
+        {weeks.map((_,wi)=>(
+          <div key={wi} style={{width:CELL,fontSize:8,color:monthLabels[wi]?T.muted:"transparent",flexShrink:0,textAlign:"center"}}>{monthLabels[wi]||"·"}</div>
+        ))}
+      </div>
+      {/* Grid: rows=days of week, cols=weeks */}
+      {[0,1,2,3,4,5,6].map(dow=>(
+        <div key={dow} style={{display:"flex",gap:GAP,marginBottom:GAP}}>
+          <div style={{width:20,fontSize:8,color:T.faint,display:"flex",alignItems:"center",justifyContent:"flex-end",paddingRight:4,flexShrink:0}}>
+            {dow===1?"M":dow===3?"W":dow===5?"F":""}
+          </div>
+          {weeks.map((week,wi)=>{
+            const cell = week[dow];
+            if(!cell) return <div key={wi} style={{width:CELL,height:CELL,flexShrink:0}}/>;
+            const isToday = cell.key===todayKey;
+            const intensity = cell.data ? Math.max(0.25,cell.data.count/maxCount) : 0;
+            const bg = cell.data?`rgba(139,92,246,${Math.min(1,intensity*0.75+0.25)})`:T.bg;
+            const border = isToday?`2px solid ${T.purple}`:`1px solid ${cell.data?"transparent":T.border+"55"}`;
+            return (
+              <div key={wi}
+                onMouseEnter={()=>cell.data&&setTooltip({key:cell.key,data:cell.data})}
+                onMouseLeave={()=>setTooltip(null)}
+                style={{width:CELL,height:CELL,borderRadius:3,background:bg,border,flexShrink:0,cursor:cell.data?"pointer":"default",position:"relative"}}
+              />
+            );
+          })}
+        </div>
+      ))}
+      {/* Tooltip */}
+      {tooltip&&(
+        <div style={{background:"#1a1a2e",border:`1px solid ${T.border}`,borderRadius:8,padding:"8px 12px",marginTop:8,fontSize:12}}>
+          <span style={{color:T.muted}}>{tooltip.key}</span>
+          <span style={{color:T.text,fontWeight:700,marginLeft:10}}>{tooltip.data.count} session{tooltip.data.count>1?"s":""}</span>
+          <span style={{color:T.purple,fontWeight:700,marginLeft:10}}>{tooltip.data.bestWpm} WPM best</span>
+          {tooltip.data.passed&&<span style={{color:T.accent,marginLeft:10}}>✓ passed</span>}
+        </div>
+      )}
+      {/* Legend */}
+      <div style={{display:"flex",alignItems:"center",gap:4,marginTop:10,justifyContent:"flex-end"}}>
+        <span style={{fontSize:9,color:T.faint}}>no sessions</span>
+        <div style={{width:10,height:10,borderRadius:2,background:T.bg,border:`1px solid ${T.border}55`}}/>
+        {[0.25,0.5,0.75,1].map(v=>(
+          <div key={v} style={{width:10,height:10,borderRadius:2,background:`rgba(139,92,246,${v*0.75+0.25})`}}/>
+        ))}
+        <span style={{fontSize:9,color:T.faint}}>many sessions</span>
+        <div style={{width:10,height:10,borderRadius:2,border:`2px solid ${T.purple}`,background:T.bg,marginLeft:6}}/>
+        <span style={{fontSize:9,color:T.faint}}>today</span>
+      </div>
+    </div>
+  );
+};
+
 const Nav = () => (<>
     <UidTag />
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
@@ -1993,24 +2105,14 @@ const Nav = () => (<>
                 ["showStreak","Show streak publicly","Display 🔥 streak on your public profile"],
                 ["showSessions","Show session history","Show recent sessions on your public profile"],
                 ["showWpm","Show best WPM","Display your best WPM on your public profile"],
-              ].map(([key, label, desc]) => {
-                const val = activeProfile?.privacy?.[key] !== false; // default ON
-                return (
-                  <div key={key} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"9px 0",borderBottom:`1px solid ${T.faint}`}}>
-                    <div>
-                      <div style={{color:T.text,fontSize:12,fontWeight:700}}>{label}</div>
-                      <div style={{color:T.muted,fontSize:10,marginTop:2}}>{desc}</div>
-                    </div>
-                    <button onClick={()=>{
-                      const newPrivacy = {...(activeProfile?.privacy||{}), [key]: !val};
-                      patchProfile({privacy: newPrivacy});
-                      updateProfile(user.uid, activeProfile.id, {privacy: newPrivacy});
-                    }} style={{flexShrink:0,padding:"5px 12px",background:val?T.purple+"22":"transparent",border:`1px solid ${val?T.purple:T.border}`,borderRadius:7,color:val?T.purple:T.muted,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font,marginLeft:12}}>
-                      {val?"ON":"OFF"}
-                    </button>
-                  </div>
-                );
-              })}
+              ].map(([key, label, desc]) => (
+                <PrivacyRow key={key} privKey={key} label={label} desc={desc} profile={activeProfile} T={T} onToggle={(k,v)=>{
+                  const np={...(activeProfile?.privacy||{}),[k]:v};
+                  patchProfile({privacy:np});
+                  updateProfile(user.uid,activeProfile.id,{privacy:np});
+                }} />
+              ))}
+            </div>
             </div>
 
             {/* Delete Profile */}
@@ -2137,90 +2239,12 @@ const Nav = () => (<>
             </div>
             {!dailyWords&&<div style={{color:T.muted,textAlign:"center",padding:20}}>Loading…</div>}
             {dailyWords&&(dailyDone
-              ?<div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:20,textAlign:"center",marginBottom:16}}><div style={{color:T.accent2,fontWeight:700,fontSize:15,marginBottom:4}}>✓ Completed today!</div><div style={{color:T.muted,fontSize:12}}>Come back tomorrow.</div></div>
+              ?<div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:20,textAlign:"center",marginBottom:16}}><div style={{color:T.accent2,fontWeight:700,fontSize:15,marginBottom:4}}>✓ Completed today!</div><div style={{color:T.muted,fontSize:12}}>Come back tomorrow for a new challenge.</div></div>
               :<button onClick={()=>requestStartLevel(-1)} style={{width:"100%",padding:"14px",borderRadius:12,border:"none",background:T.purple,color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:T.font,marginBottom:16}}>Start Daily Challenge →</button>
             )}
 
-            {/* ── Streak Calendar ── */}
-            {(() => {
-              const today = new Date();
-              const days = 91;
-              // Build array of last 91 days (oldest first), aligned to start on Sunday
-              const cells = [];
-              for (let i = days - 1; i >= 0; i--) {
-                const d = new Date(today);
-                d.setDate(d.getDate() - i);
-                const key = d.toISOString().slice(0, 10);
-                const data = sessionDates[key];
-                cells.push({ key, date: d, data });
-              }
-              // Pad start so grid starts on Sunday
-              const firstDay = cells[0].date.getDay(); // 0=Sun
-              const padded = Array(firstDay).fill(null).concat(cells);
-              const maxCount = Math.max(1, ...cells.map(c => c.data?.count || 0));
-              const weeks = [];
-              for (let i = 0; i < padded.length; i += 7) weeks.push(padded.slice(i, i + 7));
-              const monthLabels = [];
-              let lastMonth = -1;
-              weeks.forEach((week, wi) => {
-                const firstReal = week.find(c => c);
-                if (firstReal) {
-                  const m = firstReal.date.getMonth();
-                  if (m !== lastMonth) { monthLabels.push({ wi, label: firstReal.date.toLocaleString("default", { month: "short" }) }); lastMonth = m; }
-                }
-              });
-              const totalDays = cells.filter(c => c.data).length;
-              const totalSessions = cells.reduce((s, c) => s + (c.data?.count || 0), 0);
-              return (
-                <div style={{marginBottom:20}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                    <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase"}}>Activity — Last 90 Days</div>
-                    <div style={{display:"flex",gap:12}}>
-                      <span style={{color:T.muted,fontSize:11}}><span style={{color:T.text,fontWeight:700}}>{totalDays}</span> active days</span>
-                      <span style={{color:T.muted,fontSize:11}}><span style={{color:T.text,fontWeight:700}}>{totalSessions}</span> sessions</span>
-                    </div>
-                  </div>
-                  {/* Month labels */}
-                  <div style={{display:"flex",gap:3,marginBottom:2,paddingLeft:0}}>
-                    {weeks.map((_, wi) => {
-                      const lbl = monthLabels.find(m => m.wi === wi);
-                      return <div key={wi} style={{width:12,fontSize:8,color:lbl?T.muted:"transparent",flexShrink:0}}>{lbl?.label||"·"}</div>;
-                    })}
-                  </div>
-                  {/* Grid: columns=weeks, rows=days */}
-                  <div style={{display:"flex",gap:3,overflowX:"auto",paddingBottom:4}}>
-                    {weeks.map((week, wi) => (
-                      <div key={wi} style={{display:"flex",flexDirection:"column",gap:3}}>
-                        {week.map((cell, di) => {
-                          if (!cell) return <div key={di} style={{width:12,height:12,borderRadius:2}} />;
-                          const intensity = cell.data ? Math.max(0.2, cell.data.count / maxCount) : 0;
-                          const isToday = cell.key === today.toISOString().slice(0,10);
-                          const bg = cell.data
-                            ? `rgba(139,92,246,${Math.min(1, intensity * 0.8 + 0.2)})`
-                            : T.card;
-                          return (
-                            <div key={di} title={cell.data
-                              ? `${cell.key}: ${cell.data.count} session${cell.data.count>1?"s":""}, best ${cell.data.bestWpm} WPM${cell.data.passed?" ✓":""}`
-                              : cell.key}
-                              style={{width:12,height:12,borderRadius:2,background:bg,
-                                border:isToday?`1px solid ${T.purple}`:`1px solid ${cell.data?"transparent":T.border+"44"}`,
-                                cursor:cell.data?"pointer":"default",flexShrink:0}} />
-                          );
-                        })}
-                      </div>
-                    ))}
-                  </div>
-                  {/* Legend */}
-                  <div style={{display:"flex",alignItems:"center",gap:4,marginTop:6,justifyContent:"flex-end"}}>
-                    <span style={{fontSize:9,color:T.faint}}>less</span>
-                    {[0,0.25,0.5,0.75,1].map(v=>(
-                      <div key={v} style={{width:10,height:10,borderRadius:2,background:v===0?T.card:`rgba(139,92,246,${v*0.8+0.2})`}} />
-                    ))}
-                    <span style={{fontSize:9,color:T.faint}}>more</span>
-                  </div>
-                </div>
-              );
-            })()}
+            {/* ── Activity Calendar ── */}
+            <ActivityCalendar sessionDates={sessionDates} T={T} />
 
             <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>Today's Leaderboard</div>
             {dailyBoard.length===0&&<div style={{color:T.faint,fontSize:13,textAlign:"center",padding:"20px 0"}}>No scores yet. Be first!</div>}
