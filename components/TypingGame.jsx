@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import TypingTest from "./TypingTest";
 import GamesTab from "./GamesTab";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges } from "@/lib/firebase";
+import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions } from "@/lib/firebase";
 
 export 
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
@@ -817,7 +817,11 @@ export default function AccuratKey() {
   const [challenges, setChallenges] = useState([]);
   const [showChallenges, setShowChallenges] = useState(false);
   const [challengeMsg, setChallengeMsg] = useState("");
-  const [activeChallengeId, setActiveChallengeId] = useState(null); // playing a challenge // {status, birthday, reason}
+  const [activeChallengeId, setActiveChallengeId] = useState(null);
+  // Weekly summary
+  const [showWeeklySummary, setShowWeeklySummary] = useState(false);
+  const [weeklySessions, setWeeklySessions] = useState([]);
+  const [weeklyLoading, setWeeklyLoading] = useState(false); // playing a challenge // {status, birthday, reason}
   const [bdayReqReason, setBdayReqReason] = useState("");
   const [showBdayReqForm, setShowBdayReqForm] = useState(false);
   const [bdayReqMsg, setBdayReqMsg] = useState("");
@@ -1592,6 +1596,16 @@ export default function AccuratKey() {
     if (user && activeProfile) {
       getRecentSessions(user.uid, activeProfile.id, 10).then(setSessions).catch(() => {});
       setCustomLists(activeProfile.customLists || []);
+      // Auto-show weekly summary on Mondays
+      if (new Date().getDay() === 1) {
+        const seenKey = `ak_weekly_seen_${new Date().toISOString().slice(0,10)}`;
+        if (!localStorage.getItem(seenKey) && user) {
+          localStorage.setItem(seenKey, '1');
+          getWeeklySessions(user.uid, profile.id, 1).then(s => {
+            if (s.length > 0) { setWeeklySessions(s); setShowWeeklySummary(true); }
+          }).catch(() => {});
+        }
+      }
       if (canUse(activeProfile, 'challenges')) {
         getPendingChallenges(user.uid).then(setChallenges).catch(() => {});
       }
@@ -2287,7 +2301,14 @@ const Nav = () => (<>
                 })}
               </div>
             </>}
-            <button onClick={()=>{setShowProfileModal(false);openSettings();}} style={{width:"100%",marginTop:16,padding:"10px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
+            <button onClick={()=>{
+              setShowProfileModal(false);
+              setWeeklyLoading(true); setShowWeeklySummary(true);
+              getWeeklySessions(user.uid, activeProfile.id, 0).then(s=>{setWeeklySessions(s);setWeeklyLoading(false);}).catch(()=>setWeeklyLoading(false));
+            }} style={{width:"100%",marginTop:12,padding:"10px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
+              📈 This Week's Summary
+            </button>
+            <button onClick={()=>{setShowProfileModal(false);openSettings();}} style={{width:"100%",marginTop:8,padding:"10px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
               Edit Profile
             </button>
             <button onClick={()=>{setShowProfileModal(false);setScreen("profilePicker");}} style={{width:"100%",marginTop:8,padding:"10px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
@@ -2632,6 +2653,89 @@ const Nav = () => (<>
 
           <div style={{height:40}}/>
         </div>
+
+        {showWeeklySummary && (() => {
+          const sess = weeklySessions.filter(s => s.passed);
+          const allSess = weeklySessions;
+          const avgWpm = sess.length ? Math.round(sess.reduce((a,s)=>a+s.wpm,0)/sess.length) : 0;
+          const bestWpm = sess.length ? Math.max(...sess.map(s=>s.wpm)) : 0;
+          const avgAcc = sess.length ? Math.round(sess.reduce((a,s)=>a+s.accuracy,0)/sess.length) : 0;
+          const levelsCompleted = new Set(sess.map(s=>s.level)).size;
+          const totalSessions = allSess.length;
+          // WPM by day of week
+          const byDay = {};
+          allSess.forEach(s => {
+            if (!s.createdAt?.seconds) return;
+            const d = new Date(s.createdAt.seconds*1000);
+            const day = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+            if (!byDay[day]) byDay[day] = [];
+            if (s.passed) byDay[day].push(s.wpm);
+          });
+          const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+          const dayAvgs = days.map(d => byDay[d] ? Math.round(byDay[d].reduce((a,b)=>a+b,0)/byDay[d].length) : 0);
+          const maxBar = Math.max(...dayAvgs, 1);
+          // WPM sparkline trend
+          const wpmTrend = sess.slice(-10).map(s=>s.wpm);
+          return (
+            <div onClick={()=>setShowWeeklySummary(false)} style={{position:"fixed",inset:0,background:"#000a",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1010,padding:20}}>
+              <div onClick={e=>e.stopPropagation()} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:16,padding:24,width:"100%",maxWidth:420}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                  <span style={{color:T.text,fontWeight:800,fontSize:16}}>📈 Weekly Summary</span>
+                  <button onClick={()=>setShowWeeklySummary(false)} style={{background:"none",border:"none",color:T.faint,fontSize:20,cursor:"pointer"}}>×</button>
+                </div>
+                <div style={{color:T.faint,fontSize:11,marginBottom:16}}>
+                  {new Date().toLocaleDateString("en-US",{month:"long",day:"numeric"})} week
+                </div>
+
+                {weeklyLoading ? (
+                  <div style={{textAlign:"center",padding:"30px 0",color:T.muted}}>Loading…</div>
+                ) : allSess.length === 0 ? (
+                  <div style={{textAlign:"center",padding:"30px 0"}}>
+                    <div style={{fontSize:36,marginBottom:8}}>😴</div>
+                    <div style={{color:T.muted,fontSize:14}}>No sessions this week yet</div>
+                    <div style={{color:T.faint,fontSize:12,marginTop:4}}>Start typing to see your stats!</div>
+                  </div>
+                ) : (<>
+                  {/* Stat cards */}
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
+                    {[
+                      ["Best WPM", bestWpm, T.purple],
+                      ["Avg WPM", avgWpm, T.accent],
+                      ["Avg Accuracy", avgAcc+"%", T.accent2],
+                      ["Levels Done", levelsCompleted, "#facc15"],
+                    ].map(([l,v,c])=>(
+                      <div key={l} style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:10,padding:"12px 10px",textAlign:"center"}}>
+                        <div style={{color:c,fontSize:22,fontWeight:800}}>{v}</div>
+                        <div style={{color:T.faint,fontSize:10,marginTop:2}}>{l}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Bar chart by day */}
+                  <div style={{marginBottom:16}}>
+                    <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>WPM by Day</div>
+                    <div style={{display:"flex",gap:4,alignItems:"flex-end",height:60}}>
+                      {days.map((d,i)=>(
+                        <div key={d} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+                          <div style={{width:"100%",background:dayAvgs[i]>0?T.purple:T.border,borderRadius:"3px 3px 0 0",height:dayAvgs[i]>0?Math.max(4,Math.round((dayAvgs[i]/maxBar)*52)):3,transition:"height 0.4s ease"}}/>
+                          <span style={{color:T.faint,fontSize:9}}>{d}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Sessions count + encouragement */}
+                  <div style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:10,padding:"10px 14px",textAlign:"center"}}>
+                    <span style={{color:T.text,fontSize:13}}>
+                      {totalSessions} session{totalSessions!==1?"s":""} · {sess.length} passed
+                      {bestWpm>=100?" 🔥 100+ WPM!":bestWpm>=60?" ⚡ Great speed!":bestWpm>=30?" 💪 Keep it up!":""}
+                    </span>
+                  </div>
+                </>)}
+              </div>
+            </div>
+          );
+        })()}
 
         {showChallenges && (
           <div onClick={()=>setShowChallenges(false)} style={{position:"fixed",inset:0,background:"#000a",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1010,padding:20}}>
