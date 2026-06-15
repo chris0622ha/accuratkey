@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-
-// URLs: /signin /profiles /game /play /stats /help /store /social /about
+// AccuratKey - URLs: /signin /game /play /stats /help /store /social /about /settings /friends
 export const metadata: Metadata = {
   title: "AccuratKey",
-  description: "Learn to type the right way.",
+  description: "Train smarter. Type faster.",
 };
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
