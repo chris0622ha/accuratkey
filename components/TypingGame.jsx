@@ -1464,7 +1464,7 @@ const PrivacyRow = ({privKey, label, desc, profile, T, onToggle}) => {
 
 const DAYS_SHORT = ["S","M","T","W","T","F","S"];
 const ActivityCalendar = ({sessionDates, T}) => {
-  const [tooltip, setTooltip] = React.useState(null);
+  const [tooltip, setTooltip] = useState(null);
   const today = new Date();
   const todayKey = today.toISOString().slice(0,10);
   // Build last 12 weeks (84 days) from today, aligned to full weeks starting Sunday
