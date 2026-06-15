@@ -3005,36 +3005,6 @@ export const RHYMES = {
 };
 
 // ── COMBINED EXPORTS ──────────────────────────────────────────────────────────
-export const EASY_ARR    = [...new Set([...TYPING_BASIC, ...COMMON_ENGLISH.filter(w=>w.length<=5)])];
-export const MED_ARR     = [...new Set([...TYPING_MEDIUM, ...COMMON_ENGLISH.filter(w=>w.length>=4&&w.length<=8)])];
-export const HARD_ARR    = [...new Set([...TYPING_HARD, ...ACADEMIC.filter(w=>w.length>=7)])];
-export const VHARD_ARR   = toArr(`abandon abstraction accomplishment accountability accumulation acquaintance acknowledgment administration admonishment advertisement affectionate aggravation alienation allegiance ameliorate annihilation anthropology apocalyptic apprehension appropriation assassination authorization autobiography bibliography biodiversity bureaucratic camouflage capitalization catastrophic circumference collaboration commemorate commercialize communication compartmentalize compensation comprehension concentration configuration congratulation consideration consolidation contamination contextualize contradictory controversial coordination corroborate cybersecurity decentralize deliberation demonstration deterioration determination differentiation disambiguation disillusionment dissatisfaction diversification documentation electromagnetic embellishment encouragement entrepreneurial environmental equilibrium exemplification exponentiation extraordinary facilitation falsification familiarization fermentation fluctuation generalization globalization hallucination harmonization hospitalization hypothetical identification imagination implementation impersonation incapacitation incomprehensible individualization industrialization insubordination interconnection internationalization interpretation intimidation investigation jurisdiction juxtaposition legislative liberation manifestation manipulation maximization metamorphosis militarization misinterpretation misrepresentation mobilization modification monopolization multiplication nationalization naturalization negotiation normalization notification objectification optimization orchestration overpopulation participation philosophical photosynthesis polarization popularization precipitation preoccupation prioritization proliferation proportionality quantification rationalization recommendation reconfiguration rehabilitation reinterpretation rejuvenation representation responsibility revolutionize securitization segregation simplification sophisticated specialization standardization stewardship stratification subordination sustainability synchronization systematization telecommunications transportation unification universalization validation visualization vulnerability`);
-export const IMPOSSIBLE_ARR = toArr(`antidisestablishmentarianism floccinaucinihilipilification pneumonoultramicroscopicsilicovolcanoconiosis hippopotomonstrosesquippedaliophobia supercalifragilisticexpialidocious honorificabilitudinitatibus electroencephalographically dichlorodiphenyltrichloroethane phosphatidylethanolamine immunoelectrophoresis counterintelligence incomprehensibility transubstantiation prestidigitation onomatopoeia sesquipedalian schadenfreude synecdoche`);
-export const ALL_WORDS   = [...new Set([...EASY_ARR, ...MED_ARR, ...HARD_ARR])];
-
-export const WORD_CATEGORIES = {
-  animals:     WORDS_ANIMALS,
-  countries:   WORDS_COUNTRIES,
-  food:        WORDS_FOOD,
-  science:     WORDS_SCIENCE,
-  sports:      WORDS_SPORTS,
-  tech:        WORDS_TECH,
-  programming: WORDS_PROGRAMMING,
-  mythology:   WORDS_MYTHOLOGY,
-  geography:   WORDS_GEOGRAPHY,
-  colors:      WORDS_COLORS,
-  fruits:      WORDS_FRUITS,
-};
-
-export const CATEGORY_NAMES = {
-  animals:"🐾 Animals", countries:"🌍 Countries", food:"🍕 Food",
-  science:"🔬 Science", sports:"⚽ Sports", tech:"💻 Tech",
-  programming:"👨‍💻 Programming", mythology:"⚡ Mythology",
-  geography:"🗺️ Geography", colors:"🎨 Colors", fruits:"🍎 Fruits",
-};
-
-export default { ALL_WORDS, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, COMMON_ENGLISH, ACADEMIC, WORD_CATEGORIES, CATEGORY_NAMES, SPELLING_BEE_WORDS, pickWords, pickByDiff, RHYMES };
-
 // ── GAME-SPECIFIC POOLS ───────────────────────────────────────────────────────
 // Each game gets its own named pool so words feel appropriate
 
