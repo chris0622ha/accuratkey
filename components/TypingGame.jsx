@@ -10,19 +10,18 @@ export
 function DatePicker({ value, onChange, T }) {
   const today = new Date();
   const maxBirth = new Date(today); maxBirth.setFullYear(today.getFullYear() - 3);
-  const maxDate = maxBirth.toISOString().slice(0,10); // must be at least 3 years old
+  const maxDate = maxBirth.toISOString().slice(0,10);
   const minDate = `${today.getFullYear()-120}-01-01`;
   const parsed = value ? new Date(value + "T12:00:00") : null;
   const FULL_MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
   const displayStr = parsed
-    ? `${FULL_MONTHS[parsed.getMonth()]} ${parsed.getDate()}, ${parsed.getFullYear()}`
-    : "Select birthday";
+    ? `🎂 ${FULL_MONTHS[parsed.getMonth()]} ${parsed.getDate()}, ${parsed.getFullYear()}`
+    : "🎂 Select birthday";
 
   return (
-    <div style={{position:"relative",marginBottom:18}}>
-      <div style={{display:"flex",alignItems:"center",gap:8,background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,padding:"10px 14px"}}>
-        <span style={{fontSize:16}}>🎂</span>
-        <span style={{flex:1,color:parsed?T.text:T.faint,fontFamily:T.font,fontSize:14}}>{displayStr}</span>
+    <div style={{marginBottom:18}}>
+      <div style={{position:"relative",display:"flex",alignItems:"center",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,padding:"10px 14px",overflow:"hidden"}}>
+        <span style={{flex:1,color:parsed?T.text:T.faint,fontFamily:T.font,fontSize:14,pointerEvents:"none",userSelect:"none"}}>{displayStr}</span>
         <input
           type="date"
           value={value||""}
@@ -30,12 +29,12 @@ function DatePicker({ value, onChange, T }) {
           max={maxDate}
           onChange={e=>{
             const v = e.target.value;
-            if(!v) return;
+            if(!v){ onChange(""); return; }
             const d = new Date(v+"T12:00:00");
             if(d > maxBirth || d.getFullYear() < today.getFullYear()-120) return;
             onChange(v);
           }}
-          style={{position:"absolute",inset:0,opacity:0,cursor:"pointer",width:"100%",height:"100%"}}
+          style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",opacity:0.011,cursor:"pointer",zIndex:2,fontSize:16}}
         />
       </div>
       {parsed && (
@@ -2132,11 +2131,35 @@ const Nav = () => (<>
               ))}
             </div>
             {sessions.length > 0 && <>
-              <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>Recent Sessions</div>
-              <div style={{display:"flex",flexDirection:"column",gap:5,maxHeight:180,overflowY:"auto"}}>
-                {sessions.map((s,i) => (
-                  <div key={s.id||i} style={{display:"flex",justifyContent:"space-between",padding:"8px 12px",background:T.bg,border:`1px solid ${T.border}`,borderRadius:7}}><div style={{display:"flex",gap:10}}><span style={{color:T.purple,fontWeight:700}}>{s.wpm} WPM</span><span style={{color:T.accent2,fontSize:12}}>{s.accuracy}%</span><span style={{color:T.faint,fontSize:11}}>Lv {s.level}</span></div><span style={{color:"#333",fontSize:10}}>{s.createdAt?.seconds?new Date(s.createdAt.seconds*1000).toLocaleDateString():""}</span></div>
-                ))}
+              <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>📰 Activity Feed</div>
+              <div style={{display:"flex",flexDirection:"column",gap:4,maxHeight:220,overflowY:"auto"}}>
+                {sessions.map((s,i) => {
+                  const lv = LEVELS.find(l => l.id === s.level);
+                  const timeAgo = (() => {
+                    if(!s.createdAt?.seconds) return "";
+                    const secs = Math.floor(Date.now()/1000 - s.createdAt.seconds);
+                    if(secs < 60) return "just now";
+                    if(secs < 3600) return `${Math.floor(secs/60)}m ago`;
+                    if(secs < 86400) return `${Math.floor(secs/3600)}h ago`;
+                    if(secs < 604800) return `${Math.floor(secs/86400)}d ago`;
+                    return new Date(s.createdAt.seconds*1000).toLocaleDateString();
+                  })();
+                  return (
+                    <div key={s.id||i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8}}>
+                      <span style={{fontSize:16,flexShrink:0}}>{s.passed?"✅":"❌"}</span>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{color:T.text,fontSize:12,fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+                          {s.passed?"Completed":"Attempted"} {lv?`${lv.emoji} ${lv.name}`:`Level ${s.level}`}
+                        </div>
+                        <div style={{display:"flex",gap:8,marginTop:2}}>
+                          <span style={{color:T.purple,fontSize:11,fontWeight:700}}>{s.wpm} WPM</span>
+                          <span style={{color:T.accent2,fontSize:11}}>{s.accuracy}%</span>
+                        </div>
+                      </div>
+                      <span style={{color:T.faint,fontSize:10,flexShrink:0}}>{timeAgo}</span>
+                    </div>
+                  );
+                })}
               </div>
             </>}
             <button onClick={()=>{setShowProfileModal(false);openSettings();}} style={{width:"100%",marginTop:16,padding:"10px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
@@ -2181,14 +2204,19 @@ const Nav = () => (<>
             <DatePicker value={editBirthday} onChange={setEditBirthday} T={T} />
             {saveMsg && <p style={{color:saveMsg==="Saved!"?T.accent2:"#ef4444",fontSize:12,marginBottom:8}}>{saveMsg}</p>}
             {/* Profile Admin */}
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderTop:`1px solid ${T.faint}`,marginTop:8}}>
-              <div><div style={{color:T.text,fontSize:12,fontWeight:700}}>Profile Admin</div></div>
-              <button onClick={async()=>{const v=!(activeProfile?.isProfileAdmin);patchProfile({isProfileAdmin:v});updateProfile(user.uid,activeProfile.id,{isProfileAdmin:v});}} style={{padding:"5px 12px",background:(activeProfile?.isProfileAdmin)?"#a78bfa22":"transparent",border:`1px solid ${(activeProfile?.isProfileAdmin)?"#a78bfa":T.border}`,borderRadius:7,color:(activeProfile?.isProfileAdmin)?"#a78bfa":T.muted,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>{activeProfile?.isProfileAdmin?"ON":"OFF"}</button>
-                 </div>
+            <div style={{padding:"10px 0",borderTop:`1px solid ${T.faint}`,marginTop:8}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
+                <div>
+                  <div style={{color:T.text,fontSize:12,fontWeight:700}}>Profile Admin</div>
+                  <div style={{color:T.faint,fontSize:10,marginTop:2}}>{activeProfile?.isProfileAdmin ? "✓ All features unlocked" : "Unlocks all features for this profile"}</div>
+                </div>
+                <button onClick={async()=>{const v=!(activeProfile?.isProfileAdmin);patchProfile({isProfileAdmin:v});await updateProfile(user.uid,activeProfile.id,{isProfileAdmin:v});}} style={{padding:"5px 14px",background:(activeProfile?.isProfileAdmin)?"#7c6af7":"transparent",border:`1px solid ${(activeProfile?.isProfileAdmin)?"#7c6af7":T.border}`,borderRadius:7,color:(activeProfile?.isProfileAdmin)?"#fff":T.muted,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>{activeProfile?.isProfileAdmin?"ON":"OFF"}</button>
+              </div>
+            </div>
             <div style={{padding:"10px 0",borderTop:`1px solid ${T.faint}`}}>
-              <button onClick={()=>{if(!activeProfile?.isProfileAdmin){setShowSettingsModal(false);setShowFeatureAccess(true);}}} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",background:"none",border:`1px solid ${T.border}`,borderRadius:8,padding:"10px 14px",cursor:activeProfile?.isProfileAdmin?"default":"pointer",fontFamily:T.font,opacity:activeProfile?.isProfileAdmin?0.4:1}}>
+              <button onClick={()=>{if(!activeProfile?.isProfileAdmin){setShowSettingsModal(false);setShowFeatureAccess(true);}}} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",background:"none",border:`1px solid ${T.border}`,borderRadius:8,padding:"10px 14px",cursor:activeProfile?.isProfileAdmin?"default":"pointer",fontFamily:T.font,opacity:activeProfile?.isProfileAdmin?0.5:1}}>
                 <span style={{color:T.text,fontSize:13,fontWeight:700}}>Feature Access</span>
-                <span style={{color:T.muted,fontSize:14}}>{activeProfile?.isProfileAdmin?"(bypassed by Admin)":"›"}</span>
+                <span style={{color:T.muted,fontSize:14}}>{activeProfile?.isProfileAdmin?"(all unlocked via Admin)":"›"}</span>
               </button>
             </div>
             {/* Change PIN */}
@@ -2659,94 +2687,117 @@ const Nav = () => (<>
     const stars = rAcc >= 95 ? 3 : (lv && rWpm >= lv.wpmTarget && lv.wpmTarget > 0) ? 2 : 1;
 
     const downloadCertificate = () => {
-      const W = 800, H = 480;
+      const W = 1200, H = 720;
+      const DPR = window.devicePixelRatio || 2;
       const canvas = document.createElement("canvas");
-      canvas.width = W; canvas.height = H;
+      canvas.width = W * DPR; canvas.height = H * DPR;
+      canvas.style.width = W + "px"; canvas.style.height = H + "px";
       const ctx = canvas.getContext("2d");
+      ctx.scale(DPR, DPR);
 
-      // Background
-      ctx.fillStyle = "#0a0a0f";
+      // Background gradient
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, "#0d0b1e");
+      grad.addColorStop(1, "#0a0a0f");
+      ctx.fillStyle = grad;
       ctx.fillRect(0, 0, W, H);
 
-      // Border glow
-      ctx.strokeStyle = "#7c6af7";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(16, 16, W-32, H-32);
-      ctx.strokeStyle = "#7c6af755";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(22, 22, W-44, H-44);
+      // Decorative corner accents
+      const drawCorner = (x, y, dx, dy) => {
+        ctx.strokeStyle = "#7c6af7";
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(x, y + dy*30); ctx.lineTo(x, y); ctx.lineTo(x + dx*30, y); ctx.stroke();
+      };
+      drawCorner(24, 24, 1, 1); drawCorner(W-24, 24, -1, 1);
+      drawCorner(24, H-24, 1, -1); drawCorner(W-24, H-24, -1, -1);
 
-      // Header
-      ctx.fillStyle = "#7c6af7";
-      ctx.font = "bold 13px 'JetBrains Mono', monospace";
+      // Outer border
+      ctx.strokeStyle = "#7c6af733";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(30, 30, W-60, H-60);
+
+      // Header badge
+      ctx.fillStyle = "#7c6af711";
+      ctx.beginPath(); ctx.roundRect(W/2 - 90, 44, 180, 30, 15); ctx.fill();
+      ctx.strokeStyle = "#7c6af733"; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = "#a78bfa";
+      ctx.font = "bold 12px 'JetBrains Mono', monospace";
       ctx.textAlign = "center";
-      ctx.fillText("⌨  ACCURATKEY", W/2, 58);
+      ctx.fillText("⌨  ACCURATKEY", W/2, 65);
 
+      // Title
       ctx.fillStyle = "#e0e0ff";
-      ctx.font = "bold 32px 'JetBrains Mono', monospace";
-      ctx.fillText("Certificate of Completion", W/2, 108);
+      ctx.font = "bold 42px 'JetBrains Mono', monospace";
+      ctx.fillText("Certificate of Completion", W/2, 140);
 
-      // Divider
-      ctx.strokeStyle = "#7c6af744";
+      // Divider with glow
+      const divGrad = ctx.createLinearGradient(100, 0, W-100, 0);
+      divGrad.addColorStop(0, "transparent");
+      divGrad.addColorStop(0.5, "#7c6af755");
+      divGrad.addColorStop(1, "transparent");
+      ctx.strokeStyle = divGrad;
       ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(80, 128); ctx.lineTo(W-80, 128); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(100, 162); ctx.lineTo(W-100, 162); ctx.stroke();
 
-      // "This certifies that"
-      ctx.fillStyle = "#555";
-      ctx.font = "14px 'JetBrains Mono', monospace";
-      ctx.fillText("This certifies that", W/2, 162);
+      // Certifies that
+      ctx.fillStyle = "#4a4870";
+      ctx.font = "16px 'JetBrains Mono', monospace";
+      ctx.fillText("This certifies that", W/2, 205);
 
       // Name
       const profileName = activeProfile?.name || currentUsername || "Typist";
       ctx.fillStyle = "#fb923c";
-      ctx.font = "bold 28px 'JetBrains Mono', monospace";
-      ctx.fillText(profileName, W/2, 200);
+      ctx.font = "bold 36px 'JetBrains Mono', monospace";
+      ctx.fillText(profileName, W/2, 255);
 
-      // "successfully completed"
-      ctx.fillStyle = "#555";
-      ctx.font = "14px 'JetBrains Mono', monospace";
-      ctx.fillText("successfully completed", W/2, 232);
+      // Successfully completed
+      ctx.fillStyle = "#4a4870";
+      ctx.font = "16px 'JetBrains Mono', monospace";
+      ctx.fillText("successfully completed", W/2, 295);
 
-      // Level name
+      // Level chip
+      ctx.fillStyle = (lv.color || "#7c6af7") + "22";
+      const lvText = `${lv.emoji}  Level ${lv.id}: ${lv.name}`;
+      ctx.font = "bold 26px 'JetBrains Mono', monospace";
+      const lvW = ctx.measureText(lvText).width + 40;
+      ctx.beginPath(); ctx.roundRect(W/2 - lvW/2, 318, lvW, 44, 22); ctx.fill();
+      ctx.strokeStyle = (lv.color || "#7c6af7") + "55"; ctx.lineWidth = 1; ctx.stroke();
       ctx.fillStyle = lv.color || "#7c6af7";
-      ctx.font = "bold 22px 'JetBrains Mono', monospace";
-      ctx.fillText(`${lv.emoji}  Level ${lv.id}: ${lv.name}`, W/2, 268);
+      ctx.fillText(lvText, W/2, 348);
 
       // Stats row
       const stats = [
-        { label: "WPM", value: rWpm },
-        { label: "Accuracy", value: rAcc + "%" },
-        { label: "Stars", value: "★".repeat(stars) + "☆".repeat(3 - stars) },
+        { label: "WPM", value: String(rWpm), color: "#7c6af7" },
+        { label: "Accuracy", value: rAcc + "%", color: "#34d399" },
+        { label: "Stars", value: "★".repeat(stars) + "☆".repeat(3 - stars), color: "#facc15" },
       ];
-      const colW = (W - 160) / stats.length;
+      const statsTop = 390;
+      const colW = (W - 200) / stats.length;
       stats.forEach((s, i) => {
-        const x = 80 + colW * i + colW / 2;
+        const x = 100 + colW * i + colW / 2;
         ctx.fillStyle = "#13131f";
-        ctx.beginPath();
-        ctx.roundRect(x - colW/2 + 8, 295, colW - 16, 72, 10);
-        ctx.fill();
-        ctx.strokeStyle = "#1e1e30";
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        ctx.fillStyle = s.label === "Stars" ? "#facc15" : "#7c6af7";
-        ctx.font = `bold ${s.label === "Stars" ? 22 : 26}px 'JetBrains Mono', monospace`;
-        ctx.fillText(s.value, x, 335);
+        ctx.beginPath(); ctx.roundRect(x - colW/2 + 10, statsTop, colW - 20, 88, 12); ctx.fill();
+        ctx.strokeStyle = "#1e1e30"; ctx.lineWidth = 1; ctx.stroke();
+        ctx.fillStyle = s.color;
+        ctx.font = `bold ${s.label === "Stars" ? 28 : 34}px 'JetBrains Mono', monospace`;
+        ctx.fillText(s.value, x, statsTop + 52);
         ctx.fillStyle = "#444";
-        ctx.font = "11px 'JetBrains Mono', monospace";
-        ctx.fillText(s.label, x, 355);
+        ctx.font = "13px 'JetBrains Mono', monospace";
+        ctx.fillText(s.label, x, statsTop + 74);
       });
 
-      // Date
-      const dateStr = new Date().toLocaleDateString("en-US", { year:"numeric", month:"long", day:"numeric" });
-      ctx.fillStyle = "#333";
-      ctx.font = "12px 'JetBrains Mono', monospace";
-      ctx.fillText(dateStr, W/2, 408);
+      // Bottom divider
+      ctx.strokeStyle = divGrad;
+      ctx.beginPath(); ctx.moveTo(100, 502); ctx.lineTo(W-100, 502); ctx.stroke();
 
-      // Footer
-      ctx.fillStyle = "#222";
-      ctx.font = "11px 'JetBrains Mono', monospace";
-      ctx.fillText("accuratkey.vercel.app", W/2, 448);
+      // Date + footer
+      const dateStr = new Date().toLocaleDateString("en-US", { year:"numeric", month:"long", day:"numeric" });
+      ctx.fillStyle = "#3a3860";
+      ctx.font = "14px 'JetBrains Mono', monospace";
+      ctx.fillText(dateStr, W/2, 535);
+      ctx.fillStyle = "#252545";
+      ctx.font = "12px 'JetBrains Mono', monospace";
+      ctx.fillText("accuratkey.vercel.app", W/2, 560);
 
       // Download
       const a = document.createElement("a");
