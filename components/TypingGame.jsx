@@ -921,6 +921,7 @@ export default function AccuratKey() {
   const [keysEarned, setKeysEarned] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [hasKeyboard, setHasKeyboard] = useState(false);
   const [birthdayProfile, setBirthdayProfile] = useState(null);
 
   // Tips screen state
@@ -1123,7 +1124,16 @@ export default function AccuratKey() {
     const check = () => setIsMobile(window.matchMedia("(pointer: coarse) and (hover: none)").matches);
     check();
     window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
+    // Detect physical keyboard — if they press a real key, let them through
+    const onKey = (e) => {
+      // Ignore if it's a software keyboard (mobile virtual)
+      // Physical keyboards fire events even on touch devices
+      if (e.key && e.key.length === 1 || ['Backspace','Enter','Tab','Shift','Control','Alt','CapsLock','ArrowLeft','ArrowRight'].includes(e.key)) {
+        setHasKeyboard(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => { window.removeEventListener("resize", check); window.removeEventListener("keydown", onKey); };
   }, []);
 
   useEffect(() => {
@@ -1886,11 +1896,12 @@ const Nav = () => (<>
 
   // SCREENS
 
-  if (isMobile && user?.uid !== "qM3qeYBLwvRXy8D0gOKGCQbGuA12" && screen !== "auth" && screen !== "profilePicker" && screen !== "createProfile") return (
+  if (isMobile && !hasKeyboard && user?.uid !== "qM3qeYBLwvRXy8D0gOKGCQbGuA12" && screen !== "auth" && screen !== "profilePicker" && screen !== "createProfile") return (
     <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:32,textAlign:"center"}}>
       <div style={{fontSize:64,marginBottom:20}}>⌨️</div>
       <h1 style={{color:T.text,fontSize:26,fontWeight:700,marginBottom:12}}>Desktop only</h1>
-      <p style={{color:T.muted,fontSize:15,lineHeight:1.6,maxWidth:280}}>AccuratKey needs a physical keyboard. Open it on your computer to start practicing!</p>
+      <p style={{color:T.muted,fontSize:15,lineHeight:1.6,maxWidth:280}}>AccuratKey needs a physical keyboard. Connect one and press any key to unlock!</p>
+      <p style={{color:T.faint,fontSize:12,marginTop:8,maxWidth:280}}>Have a Bluetooth keyboard? Connect it and press any key.</p>
       <div style={{marginTop:24,display:"flex",flexDirection:"column",gap:10,width:"100%",maxWidth:280}}>
         <button onClick={()=>setScreenWithUrl("profilePicker")} style={{padding:"12px",borderRadius:10,border:"none",background:T.card,color:T.muted,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
           Switch Profile / Sign Out
