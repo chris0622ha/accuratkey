@@ -1601,7 +1601,7 @@ export default function AccuratKey() {
         const seenKey = `ak_weekly_seen_${new Date().toISOString().slice(0,10)}`;
         if (!localStorage.getItem(seenKey) && user) {
           localStorage.setItem(seenKey, '1');
-          getWeeklySessions(user.uid, profile.id, 1).then(s => {
+          getWeeklySessions(user.uid, activeProfile.id, 1).then(s => {
             if (s.length > 0) { setWeeklySessions(s); setShowWeeklySummary(true); }
           }).catch(() => {});
         }
