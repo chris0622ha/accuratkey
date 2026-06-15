@@ -215,17 +215,31 @@ export function Flash({ T, onBack, onSettings, settings = {} }) {
 }
 
 // ─── ECHO ──────────────────────────────────────────────────────────────────────
+const ECHO_KEY = "ak_game_echo_save";
+function echoLoad() { try { return JSON.parse(localStorage.getItem(ECHO_KEY)||"null"); } catch{return null;} }
+function echoSave(s) { try { localStorage.setItem(ECHO_KEY, JSON.stringify(s)); } catch{} }
+function echoClear() { try { localStorage.removeItem(ECHO_KEY); } catch{} }
+
 export function Echo({ T, onBack, onSettings, settings = {} }) {
   const POOL = EASY_WORDS;
-  const [sequence, setSequence] = useState([POOL[Math.floor(Math.random()*POOL.length)]]);
-  const [phase, setPhase] = useState("show"); // show|type
+  const maxLives = settings.lives || 3;
+
+  // Restore from save or start fresh
+  const saved = echoLoad();
+  const [sequence, setSequence] = useState(()=> saved?.sequence || [POOL[Math.floor(Math.random()*POOL.length)]]);
+  const [phase, setPhase] = useState(()=> saved ? "show" : "show"); // always restart show on refresh
   const [showIdx, setShowIdx] = useState(0);
   const [typeIdx, setTypeIdx] = useState(0);
   const [typed, setTyped] = useState("");
-  const [lives, setLives] = useState(3);
+  const [lives, setLives] = useState(()=> saved?.lives ?? maxLives);
   const [done, setDone] = useState(false);
   const [muted, setMuted] = useState(false);
   const ref = useRef(null);
+
+  // Save state on every sequence/lives change
+  useEffect(() => {
+    if (!done) echoSave({ sequence, lives });
+  }, [sequence, lives, done]);
 
   useEffect(() => {
     if (phase === "show") {
@@ -260,14 +274,14 @@ export function Echo({ T, onBack, onSettings, settings = {} }) {
     }
   };
 
-  if (done) return <ResultScreen emoji="🔁" title="Echo Broken!" color="#7c6af7" stats={[["Sequence Length",sequence.length],["Lives Lost",3-lives+lives]]} onRetry={()=>{setSequence([POOL[Math.floor(Math.random()*POOL.length)]]);setPhase("show");setShowIdx(0);setTypeIdx(0);setTyped("");setLives(3);setDone(false);}} T={T}/>;
+  if (done) return <ResultScreen emoji="🔁" title="Echo Broken!" color="#7c6af7" stats={[["Sequence Length",sequence.length],["Lives Lost",3-lives+lives]]} onRetry={()=>{echoClear();setSequence([POOL[Math.floor(Math.random()*POOL.length)]]);setPhase("show");setShowIdx(0);setTypeIdx(0);setTyped("");setLives(maxLives);setDone(false);}} T={T}/>;
 
   return (
     <div>
       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><BackBtn onBack={onBack} onSettings={onSettings} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>🔁 Echo</span><SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/></div>
       <div style={{display:"flex",justifyContent:"space-between",marginBottom:10,fontSize:13}}>
         <span style={{color:T.muted}}>Sequence: {sequence.length} words</span>
-        <span>{"❤️".repeat(lives)}{"🖤".repeat(3-lives)}</span>
+        <span>{"❤️".repeat(lives)}{"🖤".repeat(maxLives-lives)}</span>
       </div>
       <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"20px",marginBottom:10,minHeight:70,display:"flex",alignItems:"center",justifyContent:"center",gap:12,flexWrap:"wrap"}}>
         {phase==="show" ? (
@@ -443,20 +457,33 @@ export function CodeRain({ T, onBack, onSettings, settings = {} }) {
 }
 
 // ─── BOSS BATTLE ───────────────────────────────────────────────────────────────
+const BOSS_KEY = "ak_game_boss_save";
+function bossLoad() { try { return JSON.parse(localStorage.getItem(BOSS_KEY)||"null"); } catch{return null;} }
+function bossSave(s) { try { localStorage.setItem(BOSS_KEY, JSON.stringify(s)); } catch{} }
+function bossClear() { try { localStorage.removeItem(BOSS_KEY); } catch{} }
+
 export function BossBattle({ T, onBack, onSettings, settings = {} }) {
-  const BOSS_HP = 100;
-  const [bossHp, setBossHp] = useState(BOSS_HP);
-  const [playerHp, setPlayerHp] = useState(100);
-  const [words] = useState(()=>pickN(60, MED_WORDS));
-  const [idx, setIdx] = useState(0);
+  const BOSS_HP = settings.bossHp || 100;
+  const ATTACK_MS = settings.attackMs || 4000;
+
+  const saved = bossLoad();
+  const [bossHp, setBossHp] = useState(()=> saved?.bossHp ?? BOSS_HP);
+  const [playerHp, setPlayerHp] = useState(()=> saved?.playerHp ?? 100);
+  const [words] = useState(()=> saved?.words || pickN(60, MED_WORDS));
+  const [idx, setIdx] = useState(()=> saved?.idx || 0);
   const [typed, setTyped] = useState("");
-  const [phase, setPhase] = useState("fight"); // fight | dead | win
-  const [combo, setCombo] = useState(0);
+  const [phase, setPhase] = useState(()=> saved?.phase || "fight");
+  const [combo, setCombo] = useState(()=> saved?.combo || 0);
   const [muted, setMuted] = useState(false);
-  const [log, setLog] = useState([]);
+  const [log, setLog] = useState(()=> saved?.log || []);
   const ref = useRef(null);
   const attackTimer = useRef(null);
   const target = words[idx] || "";
+
+  // Save on every meaningful change
+  useEffect(() => {
+    if (phase === "fight") bossSave({ bossHp, playerHp, words, idx, phase, combo, log });
+  }, [bossHp, playerHp, idx, phase, combo]);
 
   // Boss attacks every 4s
   useEffect(() => {
@@ -470,9 +497,9 @@ export function BossBattle({ T, onBack, onSettings, settings = {} }) {
         if (nh <= 0) { setPhase("dead"); clearInterval(attackTimer.current); return 0; }
         return nh;
       });
-    }, 4000);
+    }, ATTACK_MS);
     return () => clearInterval(attackTimer.current);
-  }, [phase, muted]);
+  }, [phase, muted, ATTACK_MS]);
 
   const handleType = e => {
     const v = e.target.value;
@@ -497,10 +524,10 @@ export function BossBattle({ T, onBack, onSettings, settings = {} }) {
     }
   };
 
-  const reset = () => { setBossHp(BOSS_HP);setPlayerHp(100);setIdx(0);setTyped("");setPhase("fight");setCombo(0);setLog([]); setTimeout(()=>ref.current?.focus(),50); };
+  const reset = () => { bossClear();setBossHp(BOSS_HP);setPlayerHp(100);setIdx(0);setTyped("");setPhase("fight");setCombo(0);setLog([]); setTimeout(()=>ref.current?.focus(),50); };
 
-  if (phase==="win") return <ResultScreen emoji="🏆" title="Boss Defeated!" color="#facc15" stats={[["Boss HP",`0/${BOSS_HP}`],["Combo",combo]]} onRetry={reset} T={T}/>;
-  if (phase==="dead") return <ResultScreen emoji="💀" title="You Died!" color="#ef4444" stats={[["Boss HP Remaining",bossHp],["Dealt",`${BOSS_HP-bossHp} dmg`]]} onRetry={reset} T={T}/>;
+  if (phase==="win") { bossClear(); return <ResultScreen emoji="🏆" title="Boss Defeated!" color="#facc15" stats={[["Boss HP",`0/${BOSS_HP}`],["Combo",combo]]} onRetry={reset} T={T}/>; }
+  if (phase==="dead") { bossClear(); return <ResultScreen emoji="💀" title="You Died!" color="#ef4444" stats={[["Boss HP Remaining",bossHp],["Dealt",`${BOSS_HP-bossHp} dmg`]]} onRetry={reset} T={T}/>; }
 
   return (
     <div>
