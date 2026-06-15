@@ -732,10 +732,10 @@ export default function AccuratKey() {
     game: "/game/play",
     tips: "/game/level",
     result: "/game/result",
-    fail: "/game/play",
-    birthday: "/game",
+    fail: "/game/fail",
+    birthday: "/game/birthday",
     loading: "/game",
-    maintenance: "/game",
+    maintenance: "/maintenance",
   };
 
   // Sync screen to URL (replace so back button works naturally)
