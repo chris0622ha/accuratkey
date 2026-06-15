@@ -736,7 +736,22 @@ export default function AccuratKey() {
     birthday: "/game/birthday",
     loading: "/game",
     maintenance: "/maintenance",
+    // tabs (used when on levelMap)
+    "tab-games": "/game",
+    "tab-map": "/game/map",
+    "tab-daily": "/game/daily",
+    "tab-test": "/game/test",
   };
+
+  // Tab click also updates URL
+  const setActiveTabWithUrl = React.useCallback((tab) => {
+    setActiveTab(tab);
+    const tabUrls = { games: "/game", map: "/game/map", daily: "/game/daily", test: "/game/test" };
+    const url = tabUrls[tab] || "/game";
+    if (typeof window !== "undefined" && window.location.pathname !== url) {
+      router.replace(url);
+    }
+  }, [router]);
 
   // Sync screen to URL (replace so back button works naturally)
   const setScreenWithUrl = React.useCallback((s) => {
@@ -1187,7 +1202,13 @@ export default function AccuratKey() {
             if (p === "/signin") setScreenWithUrl("auth");
             else if (p === "/profiles") setScreenWithUrl("profilePicker");
             else if (p === "/profiles/new") setScreenWithUrl("createProfile");
-            else setScreenWithUrl("levelMap");
+            else {
+              setScreenWithUrl("levelMap");
+              // Restore tab from URL
+              if (p === "/game/daily") setActiveTab("daily");
+              else if (p === "/game/test") setActiveTab("test");
+              else if (p === "/game/map" || p === "/game") setActiveTab("map");
+            }
           }
         }
       }
@@ -2553,7 +2574,7 @@ const Nav = () => (<>
           {/* Tabs */}
           <div style={{display:"flex",gap:6,marginBottom:16,background:T.card,borderRadius:10,padding:3,border:`1px solid ${T.border}`}}>
             {([["games","🎮 Games",true],["map","🗺️ Level Map",true],["daily","📅 Daily",canUse(activeProfile,"daily")],["test","⌨️ Test",canUse(activeProfile,"test")]]).filter(t=>t[2]).map(([k,l])=>(
-              <button key={k} onClick={()=>setActiveTab(k)} style={{flex:1,padding:"8px 0",borderRadius:7,border:"none",background:activeTab===k?T.purple:"transparent",color:activeTab===k?"#fff":T.faint,fontWeight:700,fontSize:fs(12),cursor:"pointer",fontFamily:T.font}}>{l}</button>
+              <button key={k} onClick={()=>setActiveTabWithUrl(k)} style={{flex:1,padding:"8px 0",borderRadius:7,border:"none",background:activeTab===k?T.purple:"transparent",color:activeTab===k?"#fff":T.faint,fontWeight:700,fontSize:fs(12),cursor:"pointer",fontFamily:T.font}}>{l}</button>
             ))}
           </div>
 
