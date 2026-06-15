@@ -799,7 +799,13 @@ export default function AdminPage() {
             {feedbackList.map(f=>(
               <div key={f.id} style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,padding:"12px 14px",marginBottom:8}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-                  <span style={{color:T.muted,fontSize:10}}>{f.uid?.slice(0,8)}…</span>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    {f.username
+                      ? <button onClick={()=>{ setSearch(f.username); setTab("users"); }} style={{background:"none",border:"none",color:T.purple,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",padding:0}}>@{f.username}</button>
+                      : <span style={{color:T.muted,fontSize:10}}>{f.uid?.slice(0,8)}…</span>
+                    }
+                    {f.profileName && <span style={{color:T.faint,fontSize:10}}>· {f.profileName}</span>}
+                  </div>
                   <div style={{display:"flex",gap:8,alignItems:"center"}}>
                     <span style={{color:T.faint,fontSize:10}}>{f.createdAt?new Date(f.createdAt).toLocaleString():"unknown time"}</span>
                     <button onClick={async()=>{
