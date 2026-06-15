@@ -3,14 +3,13 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import TypingTest from "./TypingTest";
 import GamesTab from "./GamesTab";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback } from "@/lib/firebase";
+import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests } from "@/lib/firebase";
 
 export 
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
 function DatePicker({ value, onChange, T }) {
   const today = new Date();
-  const maxBirth = new Date(today); maxBirth.setFullYear(today.getFullYear() - 3);
-  const maxDate = maxBirth.toISOString().slice(0,10);
+  const maxDate = today.toISOString().slice(0,10); // no future dates
   const minDate = `${today.getFullYear()-120}-01-01`;
   const parsed = value ? new Date(value + "T12:00:00") : null;
   const FULL_MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -31,7 +30,7 @@ function DatePicker({ value, onChange, T }) {
             const v = e.target.value;
             if(!v){ onChange(""); return; }
             const d = new Date(v+"T12:00:00");
-            if(d > maxBirth || d.getFullYear() < today.getFullYear()-120) return;
+            if(d > today || d.getFullYear() < today.getFullYear()-120) return;
             onChange(v);
           }}
           style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",opacity:0.011,cursor:"pointer",zIndex:2,fontSize:16}}
@@ -788,6 +787,10 @@ export default function AccuratKey() {
   const [editName, setEditName] = useState("");
   const [editAvatar, setEditAvatar] = useState("key");
   const [editBirthday, setEditBirthday] = useState("");
+  const [bdayRequest, setBdayRequest] = useState(null); // {status, birthday, reason}
+  const [bdayReqReason, setBdayReqReason] = useState("");
+  const [showBdayReqForm, setShowBdayReqForm] = useState(false);
+  const [bdayReqMsg, setBdayReqMsg] = useState("");
   const [editPhoto, setEditPhoto] = useState(null);
   const [editPhotoPreview, setEditPhotoPreview] = useState(null);
   const [editPhotoB64, setEditPhotoB64] = useState(null);
@@ -1369,15 +1372,18 @@ export default function AccuratKey() {
   const openSettings = () => {
     setEditName(activeProfile?.name || "");
     setEditAvatar(activeProfile?.avatar || "key");
-    // Sanitize stored birthday - reject if future or age < 3
+    // Sanitize: only reject genuinely future dates (past today) or >120yrs
     const rawB = activeProfile?.birthday || "";
     let safeB = "";
     if (rawB) {
       const bd = new Date(rawB + "T12:00:00"); const now = new Date();
-      const maxB = new Date(now); maxB.setFullYear(now.getFullYear() - 3);
-      if (bd <= maxB && bd.getFullYear() >= now.getFullYear() - 120) safeB = rawB;
+      if (bd <= now && bd.getFullYear() >= now.getFullYear() - 120) safeB = rawB;
     }
     setEditBirthday(safeB);
+    setBdayRequest(null); setBdayReqMsg(""); setShowBdayReqForm(false);
+    if (user && activeProfile?.id) {
+      getBirthdayRequestStatus(user.uid, activeProfile.id).then(setBdayRequest).catch(()=>{});
+    }
     setEditPin("");
     setEditPhoto(null); setEditPhotoPreview(null); setEditPhotoB64(null); setSaveMsg("");
     setDeleteConfirmText(""); setShowDeleteProfile(false);
@@ -1392,14 +1398,13 @@ export default function AccuratKey() {
       let photoURL = activeProfile?.photoURL || null;
       if (editPhotoB64) photoURL = editPhotoB64;
       else if (editPhoto) photoURL = await resizeToBase64(editPhoto, 200);
-      // Validate birthday: reject future dates or age < 3
-      const rawBday = editBirthday || activeProfile.birthday || "";
+      // Validate birthday: only reject genuinely future dates
+      const rawBday = editBirthday || "";
       let validBday = "";
       if (rawBday) {
         const bd = new Date(rawBday + "T12:00:00");
-        const today = new Date();
-        const maxBirth = new Date(today); maxBirth.setFullYear(today.getFullYear() - 3);
-        if (bd <= maxBirth && bd.getFullYear() >= today.getFullYear() - 120) validBday = rawBday;
+        const now = new Date();
+        if (bd <= now && bd.getFullYear() >= now.getFullYear() - 120) validBday = rawBday;
       }
       const age = validBday ? calcAge(validBday) : 20;
       const patch = {
@@ -2218,7 +2223,52 @@ const Nav = () => (<>
             <label style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:6}}>Name</label>
             <input value={editName} onChange={e=>setEditName(e.target.value)} style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:14,padding:"10px 14px",marginBottom:14,outline:"none",boxSizing:"border-box"}} />
             <label style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:6}}>Birthday</label>
-            <DatePicker value={editBirthday} onChange={setEditBirthday} T={T} />
+            <DatePicker value={editBirthday} onChange={v=>{setEditBirthday(v);setBdayReqMsg("");}} T={T} />
+            {/* Birthday Approval Request */}
+            <div style={{marginTop:-10,marginBottom:14}}>
+              {bdayRequest?.status==="pending" && (
+                <div style={{fontSize:11,color:"#facc15",padding:"6px 10px",background:"#facc1511",borderRadius:6,border:"1px solid #facc1533"}}>
+                  ⏳ Birthday request pending admin review
+                </div>
+              )}
+              {bdayRequest?.status==="approved" && (
+                <div style={{fontSize:11,color:"#34d399",padding:"6px 10px",background:"#34d39911",borderRadius:6,border:"1px solid #34d39933"}}>
+                  ✅ Birthday approved by admin
+                </div>
+              )}
+              {bdayRequest?.status==="rejected" && (
+                <div style={{fontSize:11,color:"#ef4444",padding:"6px 10px",background:"#ef444411",borderRadius:6,border:"1px solid #ef444433"}}>
+                  ❌ Birthday request rejected
+                </div>
+              )}
+              {!bdayRequest?.status && (
+                <button onClick={()=>setShowBdayReqForm(v=>!v)} style={{background:"none",border:"none",color:T.faint,fontSize:11,cursor:"pointer",fontFamily:T.font,padding:0,textDecoration:"underline"}}>
+                  Age outside normal range? Request birthday approval
+                </button>
+              )}
+              {showBdayReqForm && !bdayRequest?.status && (
+                <div style={{marginTop:8,display:"flex",flexDirection:"column",gap:6}}>
+                  <input
+                    placeholder="Reason (optional — e.g. I am 85 years old)"
+                    value={bdayReqReason}
+                    onChange={e=>setBdayReqReason(e.target.value)}
+                    maxLength={200}
+                    style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:7,color:T.text,fontFamily:T.font,fontSize:12,padding:"7px 10px",outline:"none",boxSizing:"border-box"}}
+                  />
+                  <button onClick={async()=>{
+                    if(!editBirthday){setBdayReqMsg("Select a birthday first");return;}
+                    try{
+                      await submitBirthdayRequest(user.uid, activeProfile.id, activeProfile.name||"unknown", editBirthday, bdayReqReason);
+                      setBdayRequest({status:"pending",birthday:editBirthday});
+                      setShowBdayReqForm(false); setBdayReqMsg("");
+                    }catch(e){setBdayReqMsg("Error sending request");}
+                  }} style={{alignSelf:"flex-start",padding:"6px 14px",background:T.purple,border:"none",borderRadius:7,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>
+                    Submit Request
+                  </button>
+                  {bdayReqMsg && <div style={{color:"#ef4444",fontSize:11}}>{bdayReqMsg}</div>}
+                </div>
+              )}
+            </div>
             {saveMsg && <p style={{color:saveMsg==="Saved!"?T.accent2:"#ef4444",fontSize:12,marginBottom:8}}>{saveMsg}</p>}
             {/* Profile Admin */}
             <div style={{padding:"10px 0",borderTop:`1px solid ${T.faint}`,marginTop:8}}>
