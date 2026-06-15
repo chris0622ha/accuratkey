@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, WORD_CATEGORIES, CATEGORY_NAMES, ALL_WORDS, SPELLING_BEE_WORDS, pickWords, pickByDiff, RHYMES } from "./WordDB";
-const WORDS_EASY=EASY_ARR, WORDS_MED=MED_ARR, WORDS_HARD=HARD_ARR, WORDS_ANIMALS=WORD_CATEGORIES.animals, WORDS_COUNTRIES=WORD_CATEGORIES.countries;
+import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, WORD_CATEGORIES, CATEGORY_NAMES, ALL_WORDS, SPELLING_BEE_WORDS, pickWords, pickByDiff, RHYMES } from "./WordDB";
+const WORDS_EASY=TYPING_BASIC, WORDS_MED=TYPING_MEDIUM, WORDS_HARD=TYPING_HARD, WORDS_ANIMALS=WORD_CATEGORIES.animals, WORDS_COUNTRIES=WORD_CATEGORIES.countries;
 
 function gSave(id, data) { try { localStorage.setItem("ak_gs_"+id, JSON.stringify(data)); } catch{} }
 function gLoad(id) { try { return JSON.parse(localStorage.getItem("ak_gs_"+id)||"null"); } catch{return null;} }
