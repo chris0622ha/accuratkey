@@ -818,6 +818,8 @@ export default function AccuratKey() {
   const [showChallenges, setShowChallenges] = useState(false);
   const [challengeMsg, setChallengeMsg] = useState("");
   const [activeChallengeId, setActiveChallengeId] = useState(null);
+  // Accuracy mode — custom pass threshold per-session
+  const [accuracyTarget, setAccuracyTarget] = useState(75); // 75 | 85 | 95 | 100
   // Weekly summary
   const [showWeeklySummary, setShowWeeklySummary] = useState(false);
   const [weeklySessions, setWeeklySessions] = useState([]);
@@ -1398,9 +1400,9 @@ export default function AccuratKey() {
       if (ni >= TOTAL_LINES) {
         const el = startTimeRef.current ? (Date.now() - startTimeRef.current) / 60000 : 0.01;
         const fw = Math.round((nt / 5) / Math.max(el, 0.01));
-        const passed = newAcc >= 75;
-        if (!passed && newAcc < 75) {
-          setFailReason(`You got ${newAcc}% accuracy. Need 75%.`);
+        const passed = newAcc >= accuracyTarget;
+        if (!passed && newAcc < accuracyTarget) {
+          setFailReason(`You got ${newAcc}% accuracy. Need ${accuracyTarget}%.`);
         }
         const rd = { wpm: fw, accuracy: newAcc, passed, level: playingLevel, chars: nt, isSkipChallenge, skipTargetLevel };
         setResultData(rd);
@@ -1450,7 +1452,7 @@ export default function AccuratKey() {
             }
           }
         }
-        if (!passed && newAcc < 75) {
+        if (!passed && newAcc < accuracyTarget) {
           setScreen("fail");
         } else {
           if(canUse(activeProfile,"sounds"))playSound("complete", activeProfile?.activeSound||"default");
@@ -2186,6 +2188,14 @@ const Nav = () => (<>
           <div style={{background:"#1a0a2a",border:`1px solid ${T.purple}44`,borderRadius:10,padding:"12px 16px",marginBottom:24,fontSize:13,color:T.muted,textAlign:"left"}}>
             ⚠️ <strong style={{color:T.text}}>No corrections.</strong> Once you type a character, it's locked in. Focus on accuracy.
           </div>
+          <div style={{marginBottom:14}}>
+            <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>Accuracy Target</div>
+            <div style={{display:"flex",gap:6}}>
+              {[75,85,95,100].map(n=>(
+                <button key={n} onClick={()=>setAccuracyTarget(n)} style={{flex:1,padding:"7px 0",borderRadius:7,border:`1px solid ${accuracyTarget===n?T.purple:T.border}`,background:accuracyTarget===n?T.purple+"22":"transparent",color:accuracyTarget===n?T.purple:T.muted,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>{n}%</button>
+              ))}
+            </div>
+          </div>
           <button onClick={() => startLevel(pendingLevelId, pendingIsSkip, pendingSkipTarget)}
             style={{width:"100%",padding:"15px",borderRadius:12,border:"none",background:T.purple,color:"#fff",fontSize:16,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>
             Start Typing →
@@ -2414,6 +2424,7 @@ const Nav = () => (<>
                 ["showStreak","Show streak publicly","Display 🔥 streak on your public profile"],
                 ["showSessions","Show session history","Show recent sessions on your public profile"],
                 ["showWpm","Show best WPM","Display your best WPM on your public profile"],
+                ["showBadges","Show badges","Display earned badges on your public profile"],
               ].map(([key, label, desc]) => (
                 <PrivacyRow key={key} privKey={key} label={label} desc={desc} profile={activeProfile} T={T} onToggle={(k,v)=>{
                   const np={...(activeProfile?.privacy||{}),[k]:v};
@@ -3295,7 +3306,7 @@ const Nav = () => (<>
           </h2>
           <p style={{color:T.muted,fontSize:14,marginTop:6,marginBottom:20}}>{lv.emoji} {lv.name}</p>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-            {[["WPM",rWpm,T.purple],["Accuracy",rAcc+"%",T.accent2],["Target",lv.wpmTarget>0?lv.wpmTarget+" WPM":"No target",passed?T.accent2:"#ef4444"],["Keys Earned","+"+(keysEarned||0)+(combo>=20?" (2× combo!)":combo>=10?" (1.5× combo!)":""),T.accent]].map(([l,v,c]) => (
+            {[["WPM",rWpm,T.purple],["Accuracy",rAcc+"%",T.accent2],["Target",(lv.wpmTarget>0?lv.wpmTarget+" WPM":"—")+" / "+accuracyTarget+"%",passed?T.accent2:"#ef4444"],["Keys Earned","+"+(keysEarned||0)+(combo>=20?" (2× combo!)":combo>=10?" (1.5× combo!)":""),T.accent]].map(([l,v,c]) => (
               <div key={l} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:10,padding:"14px 10px"}}><div style={{color:c,fontSize:26,fontWeight:800}}>{v}</div><div style={{color:T.faint,fontSize:11,marginTop:3}}>{l}</div></div>
             ))}
           </div>
