@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback } from "@/lib/firebase";
+import { auth, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback } from "@/lib/firebase";
 const LEVELS = [
   { id:1,  name:"Home Row Hero",         emoji:"🏠", wpmTarget:12,  accuracy:75, color:"#10b981", words:["ffjj","fjfj","asdf","jkl;","add","ask","fall","glad","flask","lads","fads","salads"] },
   { id:2,  name:"Top Row Climber",       emoji:"🧗", wpmTarget:16,  accuracy:75, color:"#3b82f6", words:["quit","wrap","type","your","power","tower","write","pretty","quite","report"] },
@@ -796,9 +796,17 @@ export default function AdminPage() {
             {feedbackList.length===0&&<div style={{color:T.muted,fontSize:12,textAlign:"center",padding:"20px 0"}}>No feedback yet.</div>}
             {feedbackList.map(f=>(
               <div key={f.id} style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,padding:"12px 14px",marginBottom:8}}>
-                <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
                   <span style={{color:T.muted,fontSize:10}}>{f.uid?.slice(0,8)}…</span>
-                  <span style={{color:T.faint,fontSize:10}}>{f.createdAt?new Date(f.createdAt).toLocaleString():"unknown time"}</span>
+                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                    <span style={{color:T.faint,fontSize:10}}>{f.createdAt?new Date(f.createdAt).toLocaleString():"unknown time"}</span>
+                    <button onClick={async()=>{
+                      try{ await dismissFeedback(f.uid,f.id); setFeedbackList(l=>l.filter(x=>x.id!==f.id)); }
+                      catch(e){ alert("Failed to dismiss"); }
+                    }} style={{background:"#ef444422",border:"1px solid #ef444444",borderRadius:6,color:"#ef4444",fontSize:10,fontWeight:700,padding:"2px 8px",cursor:"pointer"}}>
+                      Dismiss
+                    </button>
+                  </div>
                 </div>
                 <div style={{color:T.text,fontSize:13,whiteSpace:"pre-wrap",lineHeight:1.5}}>{f.text}</div>
               </div>
