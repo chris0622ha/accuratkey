@@ -81,23 +81,33 @@ function OptionRow({ label, options, value, onChange, T }) {
 
 // ─── Game list ────────────────────────────────────────────────────────────────
 const GAMES = [
-  { id:"rain",        emoji:"🌧️", name:"Word Rain",     desc:"Type falling words before they hit the bottom" },
-  { id:"survival",    emoji:"💀", name:"Survival",       desc:"Endless typing — mistakes cost you time" },
-  { id:"burst",       emoji:"⚡", name:"Speed Burst",    desc:"Sprint for WPM — how fast are you?" },
-  { id:"scramble",    emoji:"🔀", name:"Word Scramble",  desc:"Unscramble jumbled words against the clock" },
-  { id:"suddendeath", emoji:"☠️", name:"Sudden Death",   desc:"One wrong key and it's all over", tag:"💥 NEW" },
-  { id:"zen",         emoji:"🧘", name:"Zen Mode",       desc:"No timer, no pressure — just type", tag:"✨ NEW" },
-  { id:"ladder",      emoji:"🪜", name:"Speed Ladder",   desc:"Each rung must be faster than the last", tag:"🔥 NEW" },
-  { id:"sniper",      emoji:"🎯", name:"Sniper",         desc:"100% accuracy required — any mistake resets the word", tag:"🆕" },
-  { id:"mirror",      emoji:"🪞", name:"Mirror",          desc:"Words appear backwards — type them forwards", tag:"🆕" },
-  { id:"flash",       emoji:"⚡", name:"Flash",           desc:"Memorize the word before it disappears", tag:"🆕" },
-  { id:"echo",        emoji:"🔁", name:"Echo",            desc:"Repeat growing sequences of words from memory", tag:"🆕" },
-  { id:"ghost",       emoji:"👻", name:"Ghost Words",     desc:"Type the word before it fades away", tag:"🆕" },
-  { id:"coderain",    emoji:"💻", name:"Code Rain",       desc:"Matrix-style falling words in columns", tag:"🆕" },
-  { id:"boss",        emoji:"👾", name:"Boss Battle",     desc:"Deal damage by typing — dodge the boss attacks", tag:"🆕" },
-  { id:"story",       emoji:"🎭", name:"Typewriter Story",desc:"Type classic literature passages", tag:"🆕" },
-  { id:"journal",     emoji:"📝", name:"Typing Journal",  desc:"Free type and save your entries locally", tag:"🆕" },
-  { id:"poetry",      emoji:"📜", name:"Poetry Mode",     desc:"Type poems with ambient synthesized tones", tag:"🆕" },
+  { id:"rain",        emoji:"🌧️", name:"Word Rain",      desc:"Type falling words before they hit the bottom",    cat:"arcade" },
+  { id:"survival",    emoji:"💀", name:"Survival",        desc:"Endless typing — mistakes cost you time",          cat:"arcade" },
+  { id:"burst",       emoji:"⚡", name:"Speed Burst",     desc:"Sprint for WPM — how fast are you?",              cat:"speed" },
+  { id:"scramble",    emoji:"🔀", name:"Word Scramble",   desc:"Unscramble jumbled words against the clock",       cat:"puzzle" },
+  { id:"suddendeath", emoji:"☠️", name:"Sudden Death",    desc:"One wrong key and it's all over",                  cat:"accuracy" },
+  { id:"zen",         emoji:"🧘", name:"Zen Mode",        desc:"No timer, no pressure — just type",               cat:"chill" },
+  { id:"ladder",      emoji:"🪜", name:"Speed Ladder",    desc:"Each rung must be faster than the last",           cat:"speed" },
+  { id:"sniper",      emoji:"🎯", name:"Sniper",          desc:"100% accuracy required — any mistake resets",      cat:"accuracy" },
+  { id:"mirror",      emoji:"🪞", name:"Mirror",           desc:"Words appear backwards — type them forwards",     cat:"accuracy" },
+  { id:"flash",       emoji:"⚡", name:"Flash",            desc:"Memorize the word before it disappears",          cat:"memory" },
+  { id:"echo",        emoji:"🔁", name:"Echo",             desc:"Repeat growing sequences from memory",            cat:"memory" },
+  { id:"ghost",       emoji:"👻", name:"Ghost Words",      desc:"Type the word before it fades away",             cat:"accuracy" },
+  { id:"coderain",    emoji:"💻", name:"Code Rain",        desc:"Matrix-style falling words in columns",           cat:"arcade" },
+  { id:"boss",        emoji:"👾", name:"Boss Battle",      desc:"Deal damage by typing — dodge boss attacks",      cat:"arcade" },
+  { id:"story",       emoji:"🎭", name:"Typewriter Story", desc:"Type classic literature passages",                cat:"chill" },
+  { id:"journal",     emoji:"📝", name:"Typing Journal",   desc:"Free type and save your entries locally",         cat:"chill" },
+  { id:"poetry",      emoji:"📜", name:"Poetry Mode",      desc:"Type poems with ambient tones",                  cat:"chill" },
+];
+
+const CATEGORIES = [
+  { id:"all",      label:"All" },
+  { id:"speed",    label:"⚡ Speed" },
+  { id:"accuracy", label:"🎯 Accuracy" },
+  { id:"memory",   label:"🧠 Memory" },
+  { id:"arcade",   label:"🕹️ Arcade" },
+  { id:"chill",    label:"🧘 Chill" },
+  { id:"puzzle",   label:"🔀 Puzzle" },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -859,6 +869,7 @@ function SettingsPanel({ gameId, T, onStart }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function GamesTab({ T }) {
   // Restore active game from URL on mount
+  const [activeCat, setActiveCat] = useState("all");
   const [activeGame, setActiveGame] = useState(() => {
     if (typeof window === "undefined") return null;
     const path = window.location.pathname;
@@ -931,15 +942,23 @@ export default function GamesTab({ T }) {
   return (
     <div style={{ padding:"8px 0" }}>
       <div style={{ color:T.text, fontWeight:800, fontSize:18, marginBottom:4, fontFamily:T.font }}>🎮 Games</div>
-      <div style={{ color:T.muted, fontSize:12, marginBottom:16, fontFamily:T.font }}>Choose a mini-game</div>
+      {/* Category filter */}
+      <div style={{ display:"flex", gap:6, marginBottom:14, flexWrap:"wrap" }}>
+        {CATEGORIES.map(c => (
+          <button key={c.id} onClick={()=>setActiveCat(c.id)}
+            style={{ padding:"5px 12px", borderRadius:20, border:`1px solid ${activeCat===c.id?T.purple:T.border}`, background:activeCat===c.id?T.purple+"22":"transparent", color:activeCat===c.id?T.purple:T.muted, fontSize:12, fontWeight:activeCat===c.id?700:400, cursor:"pointer", fontFamily:T.font }}>
+            {c.label}
+          </button>
+        ))}
+      </div>
       <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-        {GAMES.map(g => (
+        {GAMES.filter(g => activeCat==="all" || g.cat===activeCat).map(g => (
           <div key={g.id} style={{ display:"flex", alignItems:"center", gap:14, padding:"14px 16px", borderRadius:12, border:`1px solid ${T.border}`, background:T.card, fontFamily:T.font }}>
             <span style={{ fontSize:30, cursor:"pointer" }} onClick={()=>enterGame(g.id)}>{g.emoji}</span>
             <div style={{flex:1,minWidth:0,cursor:"pointer"}} onClick={()=>enterGame(g.id)}>
               <div style={{ color:T.text, fontWeight:700, fontSize:15 }}>{g.name}</div>
               <div style={{ color:T.muted, fontSize:12, marginTop:2 }}>{g.desc}</div>
-              {g.tag && <div style={{ marginTop:4, fontSize:10, fontWeight:700, color:"#a78bfa" }}>{g.tag}</div>}
+              <div style={{ marginTop:4, fontSize:10, color:"#555" }}>{CATEGORIES.find(c=>c.id===g.cat)?.label}</div>
             </div>
             <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
               {(GAME_SETTINGS[g.id]||[]).length > 0 && (
