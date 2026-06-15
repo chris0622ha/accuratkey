@@ -775,3 +775,83 @@ export const CATEGORY_NAMES = {
 };
 
 export default { ALL_WORDS, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, COMMON_ENGLISH, ACADEMIC, WORD_CATEGORIES, CATEGORY_NAMES, SPELLING_BEE_WORDS, pickWords, pickByDiff, RHYMES };
+
+// ── GAME-SPECIFIC POOLS ───────────────────────────────────────────────────────
+// Each game gets its own named pool so words feel appropriate
+
+// Word Rain — short, common, easy to type while falling
+export const POOL_WORD_RAIN = [...new Set([...TYPING_BASIC.filter(w=>w.length>=3&&w.length<=6)])];
+
+// Survival — medium length, steady pace
+export const POOL_SURVIVAL = [...new Set([...TYPING_BASIC.filter(w=>w.length>=4), ...TYPING_MEDIUM.filter(w=>w.length<=6)])];
+
+// Speed Burst — short bursts, common words
+export const POOL_SPEED_BURST = [...new Set([...TYPING_BASIC, ...TYPING_MEDIUM.filter(w=>w.length<=5)])];
+
+// Word Scramble — medium words good for scrambling
+export const POOL_SCRAMBLE = [...new Set([...TYPING_MEDIUM.filter(w=>w.length>=4&&w.length<=8)])];
+
+// Sudden Death — short, high pressure, must type perfectly
+export const POOL_SUDDEN_DEATH = [...new Set([...TYPING_BASIC.filter(w=>w.length>=3&&w.length<=5)])];
+
+// Zen Mode — relaxing, common words, no pressure
+export const POOL_ZEN = [...new Set([...TYPING_BASIC, ...COMMON_ENGLISH.filter(w=>w.length<=6)])];
+
+// Speed Ladder — gets harder each rung
+export const POOL_LADDER_EASY  = TYPING_BASIC.filter(w=>w.length>=3&&w.length<=4);
+export const POOL_LADDER_MED   = TYPING_BASIC.filter(w=>w.length>=4&&w.length<=6);
+export const POOL_LADDER_HARD  = TYPING_MEDIUM.filter(w=>w.length>=5&&w.length<=8);
+export const POOL_LADDER_VHARD = TYPING_HARD.filter(w=>w.length>=6);
+
+// Sniper — medium words, needs full accuracy
+export const POOL_SNIPER = [...new Set([...TYPING_MEDIUM.filter(w=>w.length>=4&&w.length<=7)])];
+
+// Mirror — short words, easier to reverse
+export const POOL_MIRROR = [...new Set([...TYPING_BASIC.filter(w=>w.length>=4&&w.length<=7)])];
+
+// Flash — medium, must memorize quickly
+export const POOL_FLASH = [...new Set([...TYPING_MEDIUM.filter(w=>w.length>=4&&w.length<=7)])];
+
+// Echo — short, easier to remember in sequence
+export const POOL_ECHO = [...new Set([...TYPING_BASIC.filter(w=>w.length>=3&&w.length<=5)])];
+
+// Ghost Words — medium, must type before fade
+export const POOL_GHOST = [...new Set([...TYPING_MEDIUM.filter(w=>w.length>=4&&w.length<=7)])];
+
+// Code Rain — short words for fast matrix typing
+export const POOL_CODE_RAIN = [...new Set([...TYPING_BASIC.filter(w=>w.length>=3&&w.length<=6), ...WORDS_PROGRAMMING.filter(w=>w.length<=6)])];
+
+// Boss Battle — medium, aggressive feel
+export const POOL_BOSS = [...new Set([...TYPING_MEDIUM, ...WORDS_MYTHOLOGY.filter(w=>w.length<=7)])];
+
+// Typewriter Story — uses built-in literary passages, no random pool needed
+
+// 100 Words — common medium words for benchmark
+export const POOL_100_WORDS = [...new Set([...TYPING_MEDIUM.filter(w=>w.length>=4&&w.length<=7)])];
+
+// Endurance — varied length, never ending
+export const POOL_ENDURANCE = [...new Set([...TYPING_BASIC, ...TYPING_MEDIUM])];
+
+// Word Chain — needs large common word list for chain validation
+export const POOL_WORD_CHAIN = [...new Set([...COMMON_ENGLISH, ...TYPING_BASIC, ...TYPING_MEDIUM])];
+
+// Category Blitz — per-category pools (already in WORD_CATEGORIES)
+
+// Vocab Builder — academic words with definitions
+export const POOL_VOCAB = [...new Set([...ACADEMIC.filter(w=>w.length>=5)])];
+
+// Mystery Words — medium length good for symbol replacement
+export const POOL_MYSTERY = [...new Set([...TYPING_MEDIUM.filter(w=>w.length>=5&&w.length<=8)])];
+
+// Typing Invaders — short easy words (under pressure)
+export const POOL_INVADERS = [...new Set([...TYPING_BASIC.filter(w=>w.length>=3&&w.length<=5)])];
+
+// Asteroid Belt — short words (flying fast)
+export const POOL_ASTEROID = [...new Set([...TYPING_BASIC.filter(w=>w.length>=3&&w.length<=6)])];
+
+// Tower Defense — medium words in waves
+export const POOL_TOWER = [...new Set([...TYPING_BASIC.filter(w=>w.length>=3&&w.length<=5), ...TYPING_MEDIUM.filter(w=>w.length<=6)])];
+
+// Rhyme Time — uses RHYMES dict, no separate pool needed
+
+// Mad Libs — uses templates, no pool needed
