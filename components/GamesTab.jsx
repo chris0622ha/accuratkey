@@ -8,6 +8,7 @@ const MED_WORDS = TYPING_MEDIUM;
 const HARD_WORDS = TYPING_HARD;
 import { Sniper, Mirror, Flash, Echo, GhostWords, CodeRain, BossBattle, TypewriterStory, TypingJournal, PoetryMode } from "./GamesExtra";
 import { HundredWords, Endurance, Roulette, WordChain, CategoryBlitz, VocabBuilder, SpellingBee, TypingInvaders, AsteroidBelt, TowerDefense, MysteryWords, RhymeTime, MadLibs } from "./GamesNew2";
+import { SpeedTest, MissingLetters, Anagram, BrickBreaker, Quotes, HaikuMode, Synonyms, Antonyms } from "./GamesNew3";
 
 // ─── Sound Engine ─────────────────────────────────────────────────────────────
 let _sfxCtx = null;
@@ -113,6 +114,14 @@ const GAMES = [
   { id:"mystery",     emoji:"🔮", name:"Mystery Words",     desc:"Symbols slowly reveal as letters — guess the word", cat:"puzzle" },
   { id:"rhyme",       emoji:"🎵", name:"Rhyme Time",        desc:"Type a word that rhymes with the one shown",      cat:"educational" },
   { id:"madlibs",     emoji:"😂", name:"Mad Libs",          desc:"Fill in the blanks to make a funny story",        cat:"creative" },
+  { id:"speedtest",   emoji:"⏱️", name:"Speed Test",        desc:"Classic 1, 2, or 5 minute WPM benchmark",         cat:"speed" },
+  { id:"missing",     emoji:"🔡", name:"Missing Letters",   desc:"Fill in the blanks — w_rd sh_wn l_ke th_s",       cat:"puzzle" },
+  { id:"anagram",     emoji:"🔀", name:"Anagram",           desc:"Unscramble the letters to form a real word",       cat:"puzzle" },
+  { id:"bricks",      emoji:"🧱", name:"Brick Breaker",     desc:"Type words to smash bricks in waves",              cat:"arcade" },
+  { id:"quotes",      emoji:"💬", name:"Quotes",            desc:"Type famous quotes from history",                  cat:"chill" },
+  { id:"haiku",       emoji:"🌸", name:"Haiku",             desc:"Type classic haiku poems line by line",            cat:"chill" },
+  { id:"synonyms",    emoji:"📖", name:"Synonyms",          desc:"Type any word that means the same thing",          cat:"educational" },
+  { id:"antonyms",    emoji:"↔️", name:"Antonyms",          desc:"Type the opposite — any antonym accepted",         cat:"educational" },
 ];
 
 const CATEGORIES = [
@@ -849,6 +858,14 @@ const GAME_SETTINGS = {
   mystery:     [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"med" }],
   rhyme:       [],
   madlibs:     [],
+  speedtest:   [{ key:"duration", label:"Duration", opts:[1,2,5], default:1, suffix:" min" }],
+  missing:     [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"med" }],
+  anagram:     [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"med" }],
+  bricks:      [{ key:"rows", label:"Rows", opts:[3,4,5,6], default:4 }],
+  quotes:      [],
+  haiku:       [],
+  synonyms:    [],
+  antonyms:    [],
 };
 
 function loadSettings(id) {
