@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, ALL_WORDS, WORD_CATEGORIES, CATEGORY_NAMES, SPELLING_BEE_WORDS, pickWords, pickByDiff } from "./WordDB";
+import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, ALL_WORDS, WORD_CATEGORIES, CATEGORY_NAMES, SPELLING_BEE_WORDS, POOL_WORD_RAIN, POOL_SURVIVAL, POOL_SPEED_BURST, POOL_SCRAMBLE, POOL_SUDDEN_DEATH, POOL_ZEN, POOL_LADDER_EASY, POOL_LADDER_MED, POOL_LADDER_HARD, POOL_LADDER_VHARD, POOL_ECHO, POOL_INVADERS, POOL_ASTEROID, POOL_TOWER, POOL_WORD_CHAIN, pickWords, pickByDiff } from "./WordDB";
 // Use TYPING_BASIC/MEDIUM/HARD for gameplay, EASY/MED/HARD for general
+// Game-specific pools imported above
 const EASY_WORDS = TYPING_BASIC;
 const MED_WORDS = TYPING_MEDIUM;
 const HARD_WORDS = TYPING_HARD;
@@ -170,7 +171,7 @@ function WordRain({ T, onBack, settings = {} }) {
     scoreRef.current = 0;
     missedRef.current = 0;
     idRef.current = 0;
-    wordQRef.current = pickWords(100, difficulty);
+    wordQRef.current = pickWords(100, difficulty==='hard'?TYPING_HARD:difficulty==='med'?POOL_SURVIVAL:POOL_WORD_RAIN);
     lastSpawn.current = 0;
     speedMultRef.current = 1;
     setDrops([]); setScore(0); setMissed(0); setTyped(""); setSpeedMult(1);
@@ -179,7 +180,7 @@ function WordRain({ T, onBack, settings = {} }) {
   };
 
   const spawnWord = useCallback((now) => {
-    if (!wordQRef.current.length) wordQRef.current = pickWords(100, difficulty);
+    if (!wordQRef.current.length) wordQRef.current = pickWords(100, difficulty==='hard'?TYPING_HARD:difficulty==='med'?POOL_SURVIVAL:POOL_WORD_RAIN);
     const word = wordQRef.current.shift();
     const x = 4 + Math.random() * 72;
     dropsRef.current = [...dropsRef.current, { id: idRef.current++, word, x, y: 0 }];
@@ -318,6 +319,7 @@ function WordRain({ T, onBack, settings = {} }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 function Survival({ T, onBack, settings = {} }) {
   const sv = gLoad("survival");
+  const SURV_POOL = POOL_SURVIVAL;
   const [status, setStatus]     = useState("idle");
   const [startTime, setStartTime] = useState(30);
   const [muted, setMuted]       = useState(() => localStorage.getItem("ak_sfx_muted") === "1");
