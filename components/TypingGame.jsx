@@ -9,85 +9,38 @@ export
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
 function DatePicker({ value, onChange, T }) {
   const today = new Date();
-  const minYear = today.getFullYear() - 120;
-  const maxYear = today.getFullYear();
+  const maxDate = today.toISOString().slice(0,10);
+  const minDate = `${today.getFullYear()-120}-01-01`;
   const parsed = value ? new Date(value + "T12:00:00") : null;
-  const [month, setMonth] = React.useState(parsed ? parsed.getMonth() : today.getMonth());
-  const [year, setYear] = React.useState(parsed ? parsed.getFullYear() : today.getFullYear());
-  const [open, setOpen] = React.useState(false);
-
-  const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   const FULL_MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-  const years = Array.from({length: maxYear - minYear + 1}, (_,i) => maxYear - i);
-
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDay = new Date(year, month, 1).getDay();
-  const days = [];
-  for (let i = 0; i < firstDay; i++) days.push(null);
-  for (let d = 1; d <= daysInMonth; d++) days.push(d);
-
-  const select = (d) => {
-    const mm = String(month+1).padStart(2,"0");
-    const dd = String(d).padStart(2,"0");
-    const v = `${year}-${mm}-${dd}`;
-    const picked = new Date(v+"T12:00:00");
-    if (picked > today) return;
-    onChange(v);
-    setOpen(false);
-  };
-
-  const isSelected = (d) => {
-    if (!parsed || !d) return false;
-    return parsed.getFullYear()===year && parsed.getMonth()===month && parsed.getDate()===d;
-  };
-  const isFuture = (d) => {
-    if (!d) return false;
-    const dt = new Date(year, month, d);
-    return dt > today;
-  };
-
   const displayStr = parsed
     ? `${FULL_MONTHS[parsed.getMonth()]} ${parsed.getDate()}, ${parsed.getFullYear()}`
     : "Select birthday";
 
   return (
-    <div style={{position:"relative",marginBottom:18,userSelect:"none"}}>
-      <button onClick={()=>setOpen(o=>!o)} style={{width:"100%",background:T.bg,border:`1px solid ${open?T.purple:T.border}`,borderRadius:8,color:parsed?T.text:T.faint,fontFamily:T.font,fontSize:14,padding:"10px 14px",cursor:"pointer",textAlign:"left",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <span>{displayStr}</span>
-        <span style={{fontSize:10,color:T.muted}}>{open?"▲":"▼"}</span>
-      </button>
-      {open && (
-        <div style={{position:"absolute",top:"calc(100% + 6px)",left:0,right:0,background:T.card,border:`1px solid ${T.border}`,borderRadius:12,zIndex:500,padding:14,boxShadow:"0 8px 32px rgba(0,0,0,0.5)"}}>
-          {/* Month/Year selectors */}
-          <div style={{display:"flex",gap:6,marginBottom:12}}>
-            <select value={month} onChange={e=>{setMonth(Number(e.target.value));}} style={{flex:1,background:T.bg,border:`1px solid ${T.border}`,borderRadius:6,color:T.text,fontFamily:T.font,fontSize:12,padding:"5px 8px",cursor:"pointer"}}>
-              {MONTHS.map((m,i)=><option key={i} value={i}>{m}</option>)}
-            </select>
-            <select value={year} onChange={e=>setYear(Number(e.target.value))} style={{flex:1,background:T.bg,border:`1px solid ${T.border}`,borderRadius:6,color:T.text,fontFamily:T.font,fontSize:12,padding:"5px 8px",cursor:"pointer"}}>
-              {years.map(y=><option key={y} value={y}>{y}</option>)}
-            </select>
-          </div>
-          {/* Day of week header */}
-          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginBottom:4}}>
-            {["S","M","T","W","T","F","S"].map((d,i)=>(
-              <div key={i} style={{textAlign:"center",fontSize:10,color:T.faint,fontWeight:700,padding:"2px 0"}}>{d}</div>
-            ))}
-          </div>
-          {/* Days grid */}
-          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2}}>
-            {days.map((d,i)=>(
-              <button key={i} onClick={()=>d&&!isFuture(d)&&select(d)} disabled={!d||isFuture(d)} style={{padding:"6px 0",borderRadius:6,border:"none",background:isSelected(d)?T.purple:"transparent",color:isSelected(d)?"#fff":isFuture(d)?"#333":d?T.text:"transparent",fontSize:12,cursor:d&&!isFuture(d)?"pointer":"default",fontFamily:T.font,fontWeight:isSelected(d)?700:400}}>
-                {d||""}
-              </button>
-            ))}
-          </div>
-          {/* Quick nav */}
-          <div style={{display:"flex",justifyContent:"space-between",marginTop:10,paddingTop:8,borderTop:`1px solid ${T.border}`}}>
-            <button onClick={()=>{const p=month===0?{m:11,y:year-1}:{m:month-1,y:year};if(p.y>=minYear){setMonth(p.m);setYear(p.y);}}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:11,padding:"3px 10px",cursor:"pointer",fontFamily:T.font}}>‹ Prev</button>
-            <button onClick={()=>{setMonth(today.getMonth());setYear(today.getFullYear());}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:11,padding:"3px 10px",cursor:"pointer",fontFamily:T.font}}>Today</button>
-            <button onClick={()=>{const n=month===11?{m:0,y:year+1}:{m:month+1,y:year};if(n.y<=maxYear){setMonth(n.m);setYear(n.y);}}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:11,padding:"3px 10px",cursor:"pointer",fontFamily:T.font}}>Next ›</button>
-          </div>
-        </div>
+    <div style={{position:"relative",marginBottom:18}}>
+      <div style={{display:"flex",alignItems:"center",gap:8,background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,padding:"10px 14px"}}>
+        <span style={{fontSize:16}}>🎂</span>
+        <span style={{flex:1,color:parsed?T.text:T.faint,fontFamily:T.font,fontSize:14}}>{displayStr}</span>
+        <input
+          type="date"
+          value={value||""}
+          min={minDate}
+          max={maxDate}
+          onChange={e=>{
+            const v = e.target.value;
+            if(!v) return;
+            const d = new Date(v+"T12:00:00");
+            if(d > today || d.getFullYear() < today.getFullYear()-120) return;
+            onChange(v);
+          }}
+          style={{position:"absolute",inset:0,opacity:0,cursor:"pointer",width:"100%",height:"100%"}}
+        />
+      </div>
+      {parsed && (
+        <button onClick={()=>onChange("")} style={{marginTop:4,background:"none",border:"none",color:T.faint,fontSize:11,cursor:"pointer",fontFamily:T.font,padding:0}}>
+          Clear birthday
+        </button>
       )}
     </div>
   );
@@ -106,9 +59,9 @@ const LEVELS = [
   { id:10, name:"Turbo Typist",          emoji:"🔥", wpmTarget:55,  accuracy:75, color:"#ef4444", words:["thequickbrownfox","shesellsseashells","howmuchwoodcould","packmyboxwithfive","thefiveboxingwizards","jackdawslovemybig","fixingquartz","jumpingquickly","waxyourfivezinc"] },
   { id:11, name:"Precision Pro",         emoji:"💎", wpmTarget:60,  accuracy:75, color:"#6366f1", words:["extraordinary","indistinguishable","miscommunication","uncharacteristically","counterproductive","straightforwardness","unpredictability","incomprehensible","unconventionally","disproportionate","acknowledgement","characteristically","instantaneously"] },
   { id:12, name:"Key Wizard",            emoji:"🧙", wpmTarget:65,  accuracy:75, color:"#8b5cf6", words:["practiceisthekeytomastery","focusonaccuracybeforespeed","typingisaskillbuiltovertime","keepyoureyesonthescreen","smoothrhythmbeatsbursttyping","thequickbrownfoxjumpedoverthedog","alwaysreturntohomerow"] },
-  { id:13, name:"Lightning Fingers",     emoji:"⚡", wpmTarget:70,  accuracy:75, color:"#facc15", words:["weholdthesetruthstobeselfevident","inthemiddleofeverydifficultyliesopportunity","successisnotfinalfailureisnotfatal","youmissonehandredpercentoftheshotsyoudontake","thebesttimetoplantatreewastwentyyearsago"] },
-  { id:14, name:"Speed Demon",           emoji:"👹", wpmTarget:80,  accuracy:75, color:"#f43f5e", words:["tobeornottobethatisthequestion","allthatglittersisnotgold","thereisnothingeithergoodorbadbutthinkingmakesitso","itwasabrightcoldday","thecourseoftrueloveneverranunsmoothly"] },
-  { id:15, name:"Legend",                emoji:"🏆", wpmTarget:90,  accuracy:75, color:"#fbbf24", words:["itwasthebestoftimesitwastheworstoftimes","asknotwhatyourcountrycandoforyouaskwhatyoucandoforyourcountry","fourscoreandsevenyearsagoourforefathersbroughtforthuponthiscontinent","onesmallstepformanonegiantleapformankind","donotgogentleintothatgoodnightrageinagethedyingofthelight"] },
+  { id:13, name:"Lightning Fingers",     emoji:"⚡", wpmTarget:70,  accuracy:75, color:"#facc15", words:["sprint","rhythm","motion","fluent","reflex","impact","driven","signal","strong","finish","active","launch","charge","quartz","oxygen","breeze","bronze","frozen","figure","golden"] },
+  { id:14, name:"Speed Demon",           emoji:"👹", wpmTarget:80,  accuracy:75, color:"#f43f5e", words:["system","planet","source","sample","matrix","factor","garden","bridge","master","mirror","silver","purple","gentle","fabric","radius","canyon","sector","vessel","tunnel","symbol"] },
+  { id:15, name:"Legend",                emoji:"🏆", wpmTarget:90,  accuracy:75, color:"#fbbf24", words:["achieve","balance","captain","dynamic","explore","forward","gradient","harmony","inspire","journey","kingdom","liberty","mission","natural","outcome","perfect","quantum","respond","success","triumph"] },
 
 
   // Common words sprint
@@ -626,30 +579,122 @@ const getAudioCtx = () => {
   if (_audioCtx.state === "suspended") _audioCtx.resume();
   return _audioCtx;
 };
-const playSound = (type) => {
+const playSound = (type, soundTheme = "default") => {
   try {
     const ctx = getAudioCtx();
     const g = ctx.createGain();
     g.connect(ctx.destination);
-    if (type === "correct") {
-      const o = ctx.createOscillator();
-      o.connect(g); o.type = "sine"; o.frequency.value = 880;
-      g.gain.setValueAtTime(0.07, ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
-      o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.08);
-    } else if (type === "wrong") {
-      const o = ctx.createOscillator();
-      o.connect(g); o.type = "sawtooth"; o.frequency.value = 160;
-      g.gain.setValueAtTime(0.1, ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
-      o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.1);
-    } else if (type === "complete") {
-      const t = ctx.currentTime;
-      [523, 659, 784].forEach((f, i) => {
-        const o2 = ctx.createOscillator();
-        o2.connect(g); o2.frequency.value = f;
-        o2.start(t + i * 0.1); o2.stop(t + i * 0.1 + 0.15);
-      });
+    const t = ctx.currentTime;
+
+    if (soundTheme === "mechanical") {
+      // Clicky mechanical keyboard
+      if (type === "correct") {
+        const buf = ctx.createBuffer(1, ctx.sampleRate * 0.04, ctx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = (Math.random()*2-1) * Math.exp(-i/(ctx.sampleRate*0.015));
+        const s = ctx.createBufferSource(); s.buffer = buf; s.connect(g);
+        g.gain.setValueAtTime(0.3, t); s.start(t);
+      } else if (type === "wrong") {
+        const buf = ctx.createBuffer(1, ctx.sampleRate * 0.06, ctx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = (Math.random()*2-1) * Math.exp(-i/(ctx.sampleRate*0.04)) * 0.5;
+        const s = ctx.createBufferSource(); s.buffer = buf; s.connect(g);
+        g.gain.setValueAtTime(0.2, t); s.start(t);
+      } else if (type === "complete") {
+        [0,0.1,0.2].forEach(dt => {
+          const buf = ctx.createBuffer(1, ctx.sampleRate * 0.05, ctx.sampleRate);
+          const d = buf.getChannelData(0);
+          for (let i = 0; i < d.length; i++) d[i] = (Math.random()*2-1) * Math.exp(-i/(ctx.sampleRate*0.02));
+          const s = ctx.createBufferSource(); s.buffer = buf; s.connect(g);
+          g.gain.setValueAtTime(0.4, t); s.start(t + dt);
+        });
+      }
+    } else if (soundTheme === "typewriter") {
+      if (type === "correct") {
+        const o = ctx.createOscillator(); o.connect(g); o.type = "square";
+        o.frequency.setValueAtTime(800, t); o.frequency.exponentialRampToValueAtTime(200, t+0.05);
+        g.gain.setValueAtTime(0.08, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.05);
+        o.start(t); o.stop(t+0.05);
+      } else if (type === "wrong") {
+        const o = ctx.createOscillator(); o.connect(g); o.type = "square";
+        o.frequency.setValueAtTime(150, t); g.gain.setValueAtTime(0.1, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t+0.08); o.start(t); o.stop(t+0.08);
+      } else if (type === "complete") {
+        [400,600,800,1000].forEach((f,i) => {
+          const o = ctx.createOscillator(); o.connect(g); o.type = "square"; o.frequency.value = f;
+          o.start(t+i*0.07); o.stop(t+i*0.07+0.06);
+        }); g.gain.setValueAtTime(0.06, t);
+      }
+    } else if (soundTheme === "soft") {
+      if (type === "correct") {
+        const o = ctx.createOscillator(); o.connect(g); o.type = "sine"; o.frequency.value = 660;
+        g.gain.setValueAtTime(0.03, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.15);
+        o.start(t); o.stop(t+0.15);
+      } else if (type === "wrong") {
+        const o = ctx.createOscillator(); o.connect(g); o.type = "sine"; o.frequency.value = 220;
+        g.gain.setValueAtTime(0.04, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.2);
+        o.start(t); o.stop(t+0.2);
+      } else if (type === "complete") {
+        [523,659,784,1047].forEach((f,i) => {
+          const o = ctx.createOscillator(); o.connect(g); o.type = "sine"; o.frequency.value = f;
+          g.gain.setValueAtTime(0.04, t+i*0.12); o.start(t+i*0.12); o.stop(t+i*0.12+0.2);
+        });
+      }
+    } else if (soundTheme === "arcade") {
+      if (type === "correct") {
+        const o = ctx.createOscillator(); o.connect(g); o.type = "square"; o.frequency.value = 440;
+        o.frequency.setValueAtTime(440, t); o.frequency.setValueAtTime(880, t+0.03);
+        g.gain.setValueAtTime(0.06, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.07);
+        o.start(t); o.stop(t+0.07);
+      } else if (type === "wrong") {
+        const o = ctx.createOscillator(); o.connect(g); o.type = "square";
+        o.frequency.setValueAtTime(220, t); o.frequency.exponentialRampToValueAtTime(55, t+0.15);
+        g.gain.setValueAtTime(0.08, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.15);
+        o.start(t); o.stop(t+0.15);
+      } else if (type === "complete") {
+        [262,330,392,523,659,784].forEach((f,i) => {
+          const o = ctx.createOscillator(); o.connect(g); o.type = "square"; o.frequency.value = f;
+          g.gain.setValueAtTime(0.05, t+i*0.06); o.start(t+i*0.06); o.stop(t+i*0.06+0.08);
+        });
+      }
+    } else if (soundTheme === "nature") {
+      if (type === "correct") {
+        const o = ctx.createOscillator(); o.connect(g); o.type = "sine";
+        o.frequency.setValueAtTime(1200, t); o.frequency.exponentialRampToValueAtTime(800, t+0.1);
+        g.gain.setValueAtTime(0.04, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.12);
+        o.start(t); o.stop(t+0.12);
+      } else if (type === "wrong") {
+        const o = ctx.createOscillator(); o.connect(g); o.type = "sine"; o.frequency.value = 300;
+        g.gain.setValueAtTime(0.05, t); g.gain.exponentialRampToValueAtTime(0.001, t+0.2);
+        o.start(t); o.stop(t+0.2);
+      } else if (type === "complete") {
+        [800,1000,1200,1500].forEach((f,i) => {
+          const o = ctx.createOscillator(); o.connect(g); o.type = "sine";
+          o.frequency.setValueAtTime(f, t+i*0.1); o.frequency.exponentialRampToValueAtTime(f*0.7, t+i*0.1+0.15);
+          g.gain.setValueAtTime(0.04, t+i*0.1); o.start(t+i*0.1); o.stop(t+i*0.1+0.18);
+        });
+      }
+    } else {
+      // Default synthesized sounds
+      if (type === "correct") {
+        const o = ctx.createOscillator();
+        o.connect(g); o.type = "sine"; o.frequency.value = 880;
+        g.gain.setValueAtTime(0.07, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+        o.start(t); o.stop(t + 0.08);
+      } else if (type === "wrong") {
+        const o = ctx.createOscillator();
+        o.connect(g); o.type = "sawtooth"; o.frequency.value = 160;
+        g.gain.setValueAtTime(0.1, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+        o.start(t); o.stop(t + 0.1);
+      } else if (type === "complete") {
+        [523, 659, 784].forEach((f, i) => {
+          const o2 = ctx.createOscillator();
+          o2.connect(g); o2.frequency.value = f;
+          o2.start(t + i * 0.1); o2.stop(t + i * 0.1 + 0.15);
+        });
+      }
     }
   } catch(e) {}
 };
@@ -791,6 +836,8 @@ export default function AccuratKey() {
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [resultData, setResultData] = useState(null);
   const [keysEarned, setKeysEarned] = useState(0);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [wpmHistory, setWpmHistory] = useState([]);
   const [isMobile, setIsMobile] = useState(false);
   const [birthdayProfile, setBirthdayProfile] = useState(null);
 
@@ -1116,7 +1163,7 @@ export default function AccuratKey() {
     const ov = customWords || levelOverrides[String(levelId)] || null;
     setLines(Array.from({ length: TOTAL_LINES }, () => genLine(levelId, ov)));
     setLineIdx(0); setTyped(""); setTotalChars(0); totalCharsRef.current = 0; setTotalCorrectChars(0);
-    setStartTime(null); startTimeRef.current = null; setWpm(0); setAccuracy(100); setCombo(0); setKeyMistakes({}); setShowHeatmap(false);
+    setStartTime(null); startTimeRef.current = null; setWpm(0); setAccuracy(100); setCombo(0); setKeyMistakes({}); setShowHeatmap(false); setWpmHistory([]);
   }, []);
 
   const startLevel = (levelId, isSkip = false, skipTarget = null) => {
@@ -1169,12 +1216,16 @@ export default function AccuratKey() {
   // Tick WPM every second so it updates without typing
   useEffect(() => {
     if (screen !== "game") return;
+    let tick = 0;
     const iv = setInterval(() => {
       const st = startTimeRef.current;
       if (!st) return;
       const elMs = Date.now() - st;
-      if (elMs < 3000) return; // wait 3s to avoid spike
-      setWpm(Math.round((totalCharsRef.current / 5) / (elMs / 60000)));
+      if (elMs < 3000) return;
+      const w = Math.round((totalCharsRef.current / 5) / (elMs / 60000));
+      setWpm(w);
+      tick++;
+      if (tick % 5 === 0) setWpmHistory(h => [...h.slice(-19), w]); // sample every 5s, keep 20 pts
     }, 1000);
     return () => clearInterval(iv);
   }, [screen]);
@@ -1212,9 +1263,9 @@ export default function AccuratKey() {
     if (ch && ch !== current[pos]) {
       const k = ch.toLowerCase();
       setKeyMistakes(p => ({ ...p, [k]: (p[k] || 0) + 1 }));
-      if(canUse(activeProfile,"sounds"))playSound("wrong");
+      if(canUse(activeProfile,"sounds"))playSound("wrong", activeProfile?.activeSound||"default");
     } else if (ch) {
-      if(canUse(activeProfile,"sounds"))playSound("correct");
+      if(canUse(activeProfile,"sounds"))playSound("correct", activeProfile?.activeSound||"default");
     }
 
     setTyped(newTyped);
@@ -1257,7 +1308,15 @@ export default function AccuratKey() {
         if (user && activeProfile) {
           saveSession(user.uid, activeProfile.id, { wpm: fw, accuracy: newAcc, layout: layoutKey, level: playingLevel, chars: nt, passed })
             .then(async (earned) => {
-              setKeysEarned(earned || 0);
+              // Combo multiplier: 10+ combo = 1.5x, 20+ combo = 2x
+              const multiplier = combo >= 20 ? 2 : combo >= 10 ? 1.5 : 1;
+              const boosted = Math.round((earned || 0) * multiplier);
+              setKeysEarned(boosted);
+              if (boosted > (earned||0) && user && activeProfile) {
+                // Apply bonus keys
+                const bonus = boosted - (earned||0);
+                updateProfile(user.uid, activeProfile.id, { keys: (activeProfile.keys||0) + bonus });
+              }
               const updated = await getProfile(user.uid, activeProfile.id);
               setActiveProfile(updated);
             }).catch(() => {});
@@ -1288,7 +1347,8 @@ export default function AccuratKey() {
         if (!passed && newAcc < 75) {
           setScreen("fail");
         } else {
-          if(canUse(activeProfile,"sounds"))playSound("complete");
+          if(canUse(activeProfile,"sounds"))playSound("complete", activeProfile?.activeSound||"default");
+          if(passed){ setShowConfetti(true); setTimeout(()=>setShowConfetti(false),3500); }
           setScreen("result");
         }
       } else {
@@ -1555,6 +1615,46 @@ const ActivityCalendar = ({sessionDates, T}) => {
         <div style={{width:10,height:10,borderRadius:2,border:`2px solid ${T.purple}`,background:T.bg,marginLeft:6}}/>
         <span style={{fontSize:9,color:T.faint}}>today</span>
       </div>
+    </div>
+  );
+};
+
+const WpmSparkline = ({history}) => {
+  if (history.length < 2) return null;
+  const W=120, H=32, pad=2;
+  const max = Math.max(...history, 1);
+  const pts = history.map((v,i) => {
+    const x = pad + (i/(history.length-1))*(W-pad*2);
+    const y = H - pad - ((v/max)*(H-pad*2));
+    return `${x},${y}`;
+  }).join(" ");
+  return (
+    <svg width={W} height={H} style={{opacity:0.7}}>
+      <polyline points={pts} fill="none" stroke="#a78bfa" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"/>
+      <circle cx={pts.split(" ").pop().split(",")[0]} cy={pts.split(" ").pop().split(",")[1]} r="2.5" fill="#a78bfa"/>
+    </svg>
+  );
+};
+
+const Confetti = () => {
+  const colors = ["#a78bfa","#34d399","#f59e0b","#f472b6","#60a5fa","#fb923c","#facc15"];
+  const pieces = Array.from({length:60},(_,i)=>({
+    id:i, x:Math.random()*100, delay:Math.random()*0.8,
+    color:colors[i%colors.length], size:Math.random()*8+4,
+    drift:(Math.random()-0.5)*200,
+  }));
+  return (
+    <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:9999,overflow:"hidden"}}>
+      {pieces.map(p=>(
+        <div key={p.id} style={{
+          position:"absolute", left:`${p.x}%`, top:"-20px",
+          width:p.size, height:p.size, borderRadius:Math.random()>0.5?"50%":"2px",
+          background:p.color, opacity:0.9,
+          animation:`confettiFall 3s ${p.delay}s ease-in forwards`,
+          transform:`translateX(${p.drift}px) rotate(${Math.random()*360}deg)`,
+        }}/>
+      ))}
+      <style>{`@keyframes confettiFall{0%{top:-20px;opacity:1}100%{top:110vh;opacity:0}}`}</style>
     </div>
   );
 };
@@ -2514,16 +2614,16 @@ const Nav = () => (<>
             </div>
           </div>
           <div style={{display:"flex",gap:14,alignItems:"center"}}>
-            <span style={{color:T.purple,fontWeight:700,fontSize:14}}>{wpm} WPM</span>
-            <span style={{color:T.accent2,fontWeight:700,fontSize:14}}>{accuracy}%</span>
-            {combo > 1 && <span style={{color:T.accent,fontWeight:700,fontSize:13}}>×{combo}</span>}
-            {ghostPos >= 0 && <span style={{color:"#f59e0b",fontSize:11}}>👻</span>}
+            {canUse(activeProfile,"wpmLive") && <span style={{color:T.purple,fontWeight:700,fontSize:14,display:"flex",alignItems:"center",gap:6}}>{wpm} WPM <WpmSparkline history={wpmHistory}/></span>}
+            {canUse(activeProfile,"accuracyLive") && <span style={{color:T.accent2,fontWeight:700,fontSize:14}}>{accuracy}%</span>}
+            {canUse(activeProfile,"combo") && combo > 1 && <span style={{color:T.accent,fontWeight:700,fontSize:13}}>×{combo}{combo>=20?" 🔥🔥":combo>=10?" 🔥":""}</span>}
+            {canUse(activeProfile,"ghost") && ghostPos >= 0 && <span style={{color:"#f59e0b",fontSize:11}}>👻</span>}
             <span style={{color:T.faint,fontSize:12}}>{lineIdx}/{TOTAL_LINES}</span>
           </div>
         </div>
-        <div style={{width:"100%",maxWidth:660,height:4,background:"#1a1a2e",borderRadius:2,marginBottom:14}}>
+        {canUse(activeProfile,"progressBar") && <div style={{width:"100%",maxWidth:660,height:4,background:"#1a1a2e",borderRadius:2,marginBottom:14}}>
           <div style={{height:"100%",background:lv.color,borderRadius:2,width:progress+"%",transition:"width 0.3s"}} />
-        </div>
+        </div>}
         <div style={{width:"100%",maxWidth:660,background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"20px 24px",marginBottom:12}}>
           {lines[lineIdx+1] && <div style={{fontSize:14,letterSpacing:1,marginBottom:10,color:"#2a2a3a",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis",fontFamily:T.font}}>{lines[lineIdx+1]}</div>}
           <div style={{fontSize:20,letterSpacing:2,display:"flex",flexWrap:"wrap",lineHeight:1.8,fontFamily:T.font}}>
@@ -2531,13 +2631,13 @@ const Nav = () => (<>
               let color=T.faint, underline="2px solid transparent";
               if (ci < typed.length) color = typed[ci]===ch ? T.accent2 : "#ef4444";
               else if (ci === typed.length) { color=T.purple; underline=`2px solid ${T.purple}`; }
-              const isGhost = ghostPos >= 0 && (ghostPos % current.length) === ci && ci >= typed.length;
+              const isGhost = canUse(activeProfile,"ghost") && ghostPos >= 0 && (ghostPos % current.length) === ci && ci >= typed.length;
               return <span key={ci} style={{color, borderBottom: isGhost ? "2px solid #f59e0b88" : underline, background: isGhost ? "#f59e0b11" : "transparent"}}>{ch}</span>;
             })}
           </div>
         </div>
         <input ref={inputRef} value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Backspace") e.preventDefault();}} style={{position:"absolute",opacity:0,pointerEvents:"none"}} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
-        <Keyboard />
+        {canUse(activeProfile,"keyboard") && <Keyboard />}
         <button onClick={() => { clearInterval(ghostInterval.current); setScreen("levelMap"); }} style={{marginTop:20,background:"none",border:"none",color:T.faint,fontSize:12,cursor:"pointer",fontFamily:T.font}}>
           ← Back to map
         </button>
@@ -2552,6 +2652,7 @@ const Nav = () => (<>
 
     return (
       <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:20}}>
+        {showConfetti && passed && <Confetti />}
         <div style={{width:"100%",maxWidth:460,textAlign:"center"}}>
           <div style={{fontSize:64,marginBottom:10}}>{passed ? "🎉" : "💪"}</div>
           <h2 style={{color:T.text,fontSize:28,fontWeight:800,margin:0}}>
@@ -2559,7 +2660,7 @@ const Nav = () => (<>
           </h2>
           <p style={{color:T.muted,fontSize:14,marginTop:6,marginBottom:20}}>{lv.emoji} {lv.name}</p>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-            {[["WPM",rWpm,T.purple],["Accuracy",rAcc+"%",T.accent2],["Target",lv.wpmTarget+" WPM",passed?T.accent2:"#ef4444"],["Keys Earned","+"+(keysEarned||0),T.accent]].map(([l,v,c]) => (
+            {[["WPM",rWpm,T.purple],["Accuracy",rAcc+"%",T.accent2],["Target",lv.wpmTarget>0?lv.wpmTarget+" WPM":"No target",passed?T.accent2:"#ef4444"],["Keys Earned","+"+(keysEarned||0)+(combo>=20?" (2× combo!)":combo>=10?" (1.5× combo!)":""),T.accent]].map(([l,v,c]) => (
               <div key={l} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:10,padding:"14px 10px"}}><div style={{color:c,fontSize:26,fontWeight:800}}>{v}</div><div style={{color:T.faint,fontSize:11,marginTop:3}}>{l}</div></div>
             ))}
           </div>

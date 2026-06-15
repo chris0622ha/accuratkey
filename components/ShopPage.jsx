@@ -237,12 +237,21 @@ function loadFont(font) {
 const CATEGORIES_THEMES = ["Classic","Nature","Neon","Soft","Special"];
 const CATEGORIES_FONTS  = ["Monospace","Sans-Serif","Display","Fun","Elegant"];
 
+export const SOUND_THEMES = [
+  { id:"default",   label:"Default",     emoji:"🔊", cost:0,   desc:"Synthesized beeps and chimes" },
+  { id:"mechanical",label:"Mechanical",  emoji:"⌨️", cost:30,  desc:"Satisfying clicky keyboard sounds" },
+  { id:"typewriter",label:"Typewriter",  emoji:"📜", cost:30,  desc:"Classic old-school typewriter" },
+  { id:"soft",      label:"Soft",        emoji:"🎵", cost:20,  desc:"Muted, gentle key presses" },
+  { id:"arcade",    label:"Arcade",      emoji:"🕹️", cost:40,  desc:"8-bit game sound effects" },
+  { id:"nature",    label:"Nature",      emoji:"🌿", cost:50,  desc:"Subtle natural ambient sounds" },
+];
+
 export default function ShopPage() {
   const router = useRouter();
   const [user, setUser]               = useState(null);
   const [profiles, setProfiles]       = useState([]);
   const [activeProfile, setActiveProfile] = useState(null);
-  const [tab, setTab]                 = useState("themes"); // "themes" | "fonts"
+  const [tab, setTab]                 = useState("themes"); // "themes" | "fonts" | "sounds"
   const [catFilter, setCatFilter]     = useState("all");
   const [msg, setMsg]                 = useState("");
   const [loading, setLoading]         = useState(true);
@@ -456,7 +465,7 @@ export default function ShopPage() {
       <div style={{maxWidth:960,margin:"0 auto",padding:"24px 16px"}}>
         {/* Tab bar */}
         <div style={{display:"flex",gap:8,marginBottom:24}}>
-          {[["themes","🎨 Themes"],["fonts","✏️ Fonts"]].map(([k,l])=>(
+          {[["themes","🎨 Themes"],["fonts","✏️ Fonts"],["sounds","🔊 Sounds"]].map(([k,l])=>(
             <button key={k} onClick={()=>{setTab(k);setCatFilter("all");}} style={{padding:"10px 24px",borderRadius:8,border:"none",background:tab===k?T.purple:"transparent",color:tab===k?"#fff":T.muted,fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"inherit",border:`1px solid ${tab===k?T.purple:T.border}`}}>
               {l}
             </button>
@@ -547,6 +556,45 @@ export default function ShopPage() {
                       </button>
                       {f.cost > 0 && <button onClick={()=>startTrial(null, f.id)} style={{padding:"6px 8px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}} title={trial ? "Swap theme in current trial" : "Try for 30s"}>Try</button>}
                     </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {/* SOUND THEMES GRID */}
+        {tab === "sounds" && (
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:14}}>
+            {SOUND_THEMES.map(s => {
+              const owned = s.cost===0 || (activeProfile?.ownedSounds||[]).includes(s.id);
+              const active = (activeProfile?.activeSound||"default") === s.id;
+              const handleEquip = async () => {
+                patchProfile({activeSound:s.id});
+                try { await updateProfile(user.uid, activeProfile.id, {activeSound:s.id}); showMsg(`${s.label} sound equipped!`); }
+                catch(e){ showMsg("Error equipping"); }
+              };
+              const handleBuy = async () => {
+                const newKeys = (activeProfile.keys||0) - s.cost;
+                if(newKeys < 0){ showMsg("Not enough 🔑 Keys"); return; }
+                patchProfile({keys:newKeys, ownedSounds:[...(activeProfile.ownedSounds||[]),s.id], activeSound:s.id});
+                showMsg(`${s.label} purchased!`);
+                try { await updateProfile(user.uid, activeProfile.id, {keys:newKeys, ownedSounds:[...(activeProfile.ownedSounds||[]),s.id], activeSound:s.id}); }
+                catch(e){ showMsg("Error purchasing"); }
+              };
+              return (
+                <div key={s.id} style={{background:T.card,border:`2px solid ${active?T.purple:T.border}`,borderRadius:12,padding:"16px",display:"flex",flexDirection:"column",gap:10}}>
+                  <div style={{fontSize:32,textAlign:"center"}}>{s.emoji}</div>
+                  <div style={{textAlign:"center"}}>
+                    <div style={{fontWeight:700,fontSize:14,color:T.text}}>{s.label}</div>
+                    <div style={{fontSize:11,color:T.muted,marginTop:3}}>{s.desc}</div>
+                    <div style={{fontSize:11,color:T.faint,marginTop:4}}>{s.cost===0?"Free":`${s.cost} 🔑`}</div>
+                  </div>
+                  {active ? (
+                    <div style={{textAlign:"center",color:T.purple,fontSize:11,fontWeight:700,padding:"6px",border:`1px solid ${T.purple}`,borderRadius:6}}>✓ Active</div>
+                  ) : owned ? (
+                    <button onClick={handleEquip} style={{padding:"7px",background:"transparent",border:`1px solid ${T.purple}`,borderRadius:6,color:T.purple,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Equip</button>
+                  ) : (
+                    <button onClick={handleBuy} style={{padding:"7px",background:T.purple+"22",border:`1px solid ${T.purple}`,borderRadius:6,color:T.purple,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Buy {s.cost} 🔑</button>
                   )}
                 </div>
               );
