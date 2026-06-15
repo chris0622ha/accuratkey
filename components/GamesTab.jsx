@@ -775,28 +775,147 @@ function WordScramble({ T, onBack }) {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN GamesTab
+// ─── Per-game settings definitions ───────────────────────────────────────────
+const GAME_SETTINGS = {
+  rain:        [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"easy" }, { key:"lives", label:"Lives", opts:[3,5,7,10], default:5 }],
+  survival:    [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"med" }],
+  burst:       [{ key:"duration",   label:"Duration",   opts:[15,30,60], default:30, suffix:"s" }, { key:"difficulty", label:"Words", opts:["easy","med","hard"], default:"med" }],
+  scramble:    [{ key:"duration",   label:"Time",       opts:[30,60,90], default:60, suffix:"s" }, { key:"count", label:"Words", opts:[5,10,15,20], default:10 }],
+  suddendeath: [{ key:"difficulty", label:"Words",      opts:["easy","med","hard"], default:"med" }],
+  zen:         [{ key:"difficulty", label:"Words",      opts:["easy","med","hard"], default:"easy" }],
+  ladder:      [{ key:"rungs",      label:"Rungs",      opts:[5,8,10,15], default:10 }],
+  sniper:      [{ key:"count",      label:"Words",      opts:[10,25,50], default:25 }, { key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"med" }],
+  mirror:      [{ key:"count",      label:"Words",      opts:[10,20,30], default:20 }],
+  flash:       [{ key:"flashMs",    label:"Flash time", opts:[500,1000,1500,2000], default:1000, suffix:"ms" }, { key:"count", label:"Words", opts:[10,20,30], default:20 }],
+  echo:        [{ key:"lives",      label:"Lives",      opts:[1,2,3,5], default:3 }],
+  ghost:       [{ key:"visibleMs",  label:"Visible for", opts:[1500,2500,3500], default:2500, suffix:"ms" }, { key:"count", label:"Words", opts:[15,25,40], default:25 }],
+  coderain:    [{ key:"maxMissed",  label:"Max missed", opts:[3,5,8,12], default:8 }, { key:"speed", label:"Speed", opts:["slow","normal","fast"], default:"normal" }],
+  boss:        [{ key:"bossHp",     label:"Boss HP",    opts:[50,100,200], default:100 }, { key:"attackMs", label:"Attack every", opts:[2000,4000,6000], default:4000, suffix:"ms" }],
+  story:       [{ key:"passage",    label:"Passage",    opts:["random","raven","frost","dickens","austen","orwell"], default:"random" }],
+  duel:        [{ key:"count",      label:"Words",      opts:[10,20,30], default:20 }],
+  journal:     [],
+  poetry:      [{ key:"poem",       label:"Poem",       opts:["random","byron","dickinson","frost","whitman","poe"], default:"random" }],
+};
+
+function loadSettings(id) {
+  try { return JSON.parse(localStorage.getItem(`ak_game_settings_${id}`) || "{}"); } catch { return {}; }
+}
+function saveSettings(id, s) {
+  try { localStorage.setItem(`ak_game_settings_${id}`, JSON.stringify(s)); } catch {}
+}
+function getSettings(id) {
+  const saved = loadSettings(id);
+  const defs = GAME_SETTINGS[id] || [];
+  const out = {};
+  defs.forEach(d => { out[d.key] = saved[d.key] !== undefined ? saved[d.key] : d.default; });
+  return out;
+}
+
+// ─── Settings Panel ────────────────────────────────────────────────────────────
+function SettingsPanel({ gameId, T, onStart }) {
+  const defs = GAME_SETTINGS[gameId] || [];
+  const [vals, setVals] = useState(() => getSettings(gameId));
+  if (defs.length === 0) { onStart(vals); return null; }
+  const set = (k, v) => {
+    const nv = {...vals, [k]: v};
+    setVals(nv);
+    saveSettings(gameId, nv);
+  };
+  return (
+    <div style={{background:"#13131f",border:"1px solid #1e1e30",borderRadius:12,padding:20,marginBottom:16}}>
+      <div style={{color:"#e0e0ff",fontWeight:700,fontSize:14,marginBottom:14}}>⚙️ Settings</div>
+      {defs.map(d => (
+        <div key={d.key} style={{marginBottom:12}}>
+          <div style={{color:"#888",fontSize:11,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>{d.label}</div>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            {d.opts.map(o => (
+              <button key={o} onClick={()=>set(d.key,o)}
+                style={{padding:"5px 12px",borderRadius:7,border:`1px solid ${vals[d.key]===o?"#7c6af7":"#2a2a4a"}`,background:vals[d.key]===o?"#7c6af722":"transparent",color:vals[d.key]===o?"#a78bfa":"#666",fontSize:12,fontWeight:vals[d.key]===o?700:400,cursor:"pointer",fontFamily:"inherit"}}>
+                {o}{d.suffix||""}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+      <button onClick={()=>{ saveSettings(gameId,vals); onStart(vals); }}
+        style={{width:"100%",marginTop:8,padding:"12px",borderRadius:9,border:"none",background:"#7c6af7",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+        ▶ Start Game
+      </button>
+    </div>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function GamesTab({ T }) {
-  const [activeGame, setActiveGame] = useState(null);
+  // Restore active game from URL on mount
+  const [activeGame, setActiveGame] = useState(() => {
+    if (typeof window === "undefined") return null;
+    const path = window.location.pathname;
+    const match = path.match(/^\/games\/([a-z]+)/);
+    return match ? match[1] : null;
+  });
+  const [settings, setSettings] = useState(null); // null = show settings panel
+  const [showSettings, setShowSettings] = useState(false);
 
-  if (activeGame === "rain")     return <div style={{ padding:"4px 0" }}><WordRain T={T} onBack={() => setActiveGame(null)} /></div>;
-  if (activeGame === "survival") return <div style={{ padding:"4px 0" }}><Survival T={T} onBack={() => setActiveGame(null)} /></div>;
-  if (activeGame === "burst")    return <div style={{ padding:"4px 0" }}><SpeedBurst T={T} onBack={() => setActiveGame(null)} /></div>;
-  if (activeGame === "scramble")    return <div style={{ padding:"4px 0" }}><WordScramble  T={T} onBack={() => setActiveGame(null)} /></div>;
-  if (activeGame === "suddendeath") return <div style={{ padding:"4px 0" }}><SuddenDeath   T={T} onBack={() => setActiveGame(null)} /></div>;
-  if (activeGame === "zen")         return <div style={{ padding:"4px 0" }}><ZenMode        T={T} onBack={() => setActiveGame(null)} /></div>;
-  if (activeGame === "ladder")      return <div style={{ padding:"4px 0" }}><SpeedLadder    T={T} onBack={() => setActiveGame(null)} /></div>;
-  if (activeGame === "sniper")      return <div style={{ padding:"4px 0" }}><Sniper          T={T} onBack={() => setActiveGame(null)} /></div>;
-  if (activeGame === "mirror")      return <div style={{ padding:"4px 0" }}><Mirror          T={T} onBack={() => setActiveGame(null)} /></div>;
-  if (activeGame === "flash")       return <div style={{ padding:"4px 0" }}><Flash           T={T} onBack={() => setActiveGame(null)} /></div>;
-  if (activeGame === "echo")        return <div style={{ padding:"4px 0" }}><Echo            T={T} onBack={() => setActiveGame(null)} /></div>;
-  if (activeGame === "ghost")       return <div style={{ padding:"4px 0" }}><GhostWords      T={T} onBack={() => setActiveGame(null)} /></div>;
-  if (activeGame === "coderain")    return <div style={{ padding:"4px 0" }}><CodeRain        T={T} onBack={() => setActiveGame(null)} /></div>;
-  if (activeGame === "boss")        return <div style={{ padding:"4px 0" }}><BossBattle      T={T} onBack={() => setActiveGame(null)} /></div>;
-  if (activeGame === "story")       return <div style={{ padding:"4px 0" }}><TypewriterStory T={T} onBack={() => setActiveGame(null)} /></div>;
-  if (activeGame === "duel")        return <div style={{ padding:"4px 0" }}><WordDuel        T={T} onBack={() => setActiveGame(null)} /></div>;
-  if (activeGame === "journal")     return <div style={{ padding:"4px 0" }}><TypingJournal   T={T} onBack={() => setActiveGame(null)} /></div>;
-  if (activeGame === "poetry")      return <div style={{ padding:"4px 0" }}><PoetryMode      T={T} onBack={() => setActiveGame(null)} /></div>;
+  const enterGame = (id) => {
+    setActiveGame(id);
+    setSettings(null); // show settings first
+    setShowSettings(true);
+    if (typeof window !== "undefined") {
+      window.history.replaceState({}, "", `/games/${id}`);
+      localStorage.setItem("ak_active_game", id);
+    }
+  };
+
+  const exitGame = () => {
+    setActiveGame(null);
+    setSettings(null);
+    setShowSettings(false);
+    if (typeof window !== "undefined") {
+      window.history.replaceState({}, "", "/game");
+      localStorage.removeItem("ak_active_game");
+    }
+  };
+
+  // On refresh, restore settings too
+  useEffect(() => {
+    if (activeGame && !settings) {
+      const saved = getSettings(activeGame);
+      const defs = GAME_SETTINGS[activeGame] || [];
+      if (defs.length === 0) setSettings(saved);
+      else setShowSettings(true);
+    }
+  }, []);
+
+  const startGame = (s) => { setSettings(s); setShowSettings(false); };
+
+  const GAME_COMPONENTS = {
+    rain: WordRain, survival: Survival, burst: SpeedBurst, scramble: WordScramble,
+    suddendeath: SuddenDeath, zen: ZenMode, ladder: SpeedLadder,
+    sniper: Sniper, mirror: Mirror, flash: Flash, echo: Echo,
+    ghost: GhostWords, coderain: CodeRain, boss: BossBattle,
+    story: TypewriterStory, duel: WordDuel, journal: TypingJournal, poetry: PoetryMode,
+  };
+
+  if (activeGame) {
+    const Comp = GAME_COMPONENTS[activeGame];
+    if (!Comp) { exitGame(); return null; }
+    return (
+      <div style={{ padding:"4px 0" }}>
+        {showSettings || !settings ? (
+          <>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
+              <button onClick={exitGame} style={{background:"none",border:"none",color:"#555",fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>← Games</button>
+              <span style={{color:"#e0e0ff",fontWeight:800,fontSize:18}}>{GAMES.find(g=>g.id===activeGame)?.emoji} {GAMES.find(g=>g.id===activeGame)?.name}</span>
+            </div>
+            <SettingsPanel gameId={activeGame} T={T} onStart={startGame}/>
+          </>
+        ) : (
+          <Comp T={T} settings={settings} onBack={exitGame} onSettings={()=>setShowSettings(true)}/>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding:"8px 0" }}>
@@ -804,18 +923,20 @@ export default function GamesTab({ T }) {
       <div style={{ color:T.muted, fontSize:12, marginBottom:16, fontFamily:T.font }}>Choose a mini-game</div>
       <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
         {GAMES.map(g => (
-          <button key={g.id} onClick={() => setActiveGame(g.id)}
-            style={{ display:"flex", alignItems:"center", gap:14, padding:"14px 16px", borderRadius:12, border:`1px solid ${T.border}`, background:T.card, cursor:"pointer", textAlign:"left", fontFamily:T.font, transition:"border-color 0.15s" }}
-            onMouseEnter={e => e.currentTarget.style.borderColor = T.purple}
-            onMouseLeave={e => e.currentTarget.style.borderColor = T.border}>
-            <span style={{ fontSize:30 }}>{g.emoji}</span>
-            <div>
+          <div key={g.id} style={{ display:"flex", alignItems:"center", gap:14, padding:"14px 16px", borderRadius:12, border:`1px solid ${T.border}`, background:T.card, fontFamily:T.font }}>
+            <span style={{ fontSize:30, cursor:"pointer" }} onClick={()=>enterGame(g.id)}>{g.emoji}</span>
+            <div style={{flex:1,minWidth:0,cursor:"pointer"}} onClick={()=>enterGame(g.id)}>
               <div style={{ color:T.text, fontWeight:700, fontSize:15 }}>{g.name}</div>
               <div style={{ color:T.muted, fontSize:12, marginTop:2 }}>{g.desc}</div>
               {g.tag && <div style={{ marginTop:4, fontSize:10, fontWeight:700, color:"#a78bfa" }}>{g.tag}</div>}
             </div>
-            <span style={{ marginLeft:"auto", color:T.faint, fontSize:18 }}>›</span>
-          </button>
+            <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+              {(GAME_SETTINGS[g.id]||[]).length > 0 && (
+                <button onClick={(e)=>{e.stopPropagation();enterGame(g.id);}} title="Settings" style={{background:"none",border:"1px solid #2a2a4a",borderRadius:7,color:"#555",fontSize:13,padding:"4px 8px",cursor:"pointer"}}>⚙️</button>
+              )}
+              <span style={{color:"#555",fontSize:18}}>›</span>
+            </div>
+          </div>
         ))}
       </div>
     </div>
