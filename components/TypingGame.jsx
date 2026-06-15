@@ -754,8 +754,11 @@ export default function AccuratKey() {
   }, [router]);
 
   // Sync screen to URL (replace so back button works naturally)
+  const STANDALONE_PAGES = ["/about", "/help", "/faq", "/how-to-play"];
   const setScreenWithUrl = React.useCallback((s) => {
     setScreen(s);
+    // Don't redirect if on a standalone content page
+    if (typeof window !== "undefined" && STANDALONE_PAGES.includes(window.location.pathname)) return;
     const url = SCREEN_URLS[s] || "/game";
     if (typeof window !== "undefined" && window.location.pathname !== url) {
       router.replace(url);
