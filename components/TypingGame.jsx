@@ -705,6 +705,11 @@ export default function AccuratKey() {
   const [activeProfile, setActiveProfile] = useState(null);
   // Optimistic profile patch — updates UI instantly without waiting for Firestore
   const patchProfile = (patch) => setActiveProfile(p => p ? {...p, ...patch} : p);
+  const saveCustomLists = (lists) => {
+    setCustomLists(lists);
+    patchProfile({ customLists: lists });
+    if (user && activeProfile) updateProfile(user.uid, activeProfile.id, { customLists: lists }).catch(() => {});
+  };
   const _age = activeProfile?.isProfileAdmin ? 20 : (activeProfile?.age ?? (activeProfile?.birthday ? calcAge(activeProfile.birthday) : 20));
   const _baseT = getTheme(_age);
   const THEME_COLORS = {
@@ -873,6 +878,12 @@ export default function AccuratKey() {
   const [levelOverrides, setLevelOverrides] = useState({});
   const [showCount, setShowCount] = useState(12); // how many levels to show
   const [activeTab, setActiveTab] = useState("map");
+  const [customLists, setCustomLists] = useState([]); // [{name, words:[]}]
+  const [activeListIdx, setActiveListIdx] = useState(null); // which list is selected for typing
+  const [showListEditor, setShowListEditor] = useState(false);
+  const [listEditorName, setListEditorName] = useState("");
+  const [listEditorWords, setListEditorWords] = useState(""); // raw textarea
+  const [listEditorIdx, setListEditorIdx] = useState(null); // null=new, number=edit
   const [showFriends, setShowFriends] = useState(false);
   const [friends, setFriends] = useState([]);
   const [friendReqs, setFriendReqs] = useState([]);
@@ -1498,6 +1509,7 @@ export default function AccuratKey() {
   const openProfileModal = async () => {
     if (user && activeProfile) {
       getRecentSessions(user.uid, activeProfile.id, 10).then(setSessions).catch(() => {});
+      setCustomLists(activeProfile.customLists || []);
     }
     setShowProfileModal(true);
   };
@@ -1778,6 +1790,7 @@ const Nav = () => (<>
       {group:"🗺️ Navigation", items:[
         ["daily","📅 Daily challenge","Access the daily challenge tab"],
         ["test","⌨️ Typing test","Access the free typing test tab"],
+        ["customWords","📝 Custom word lists","Create and use custom word lists in Test tab"],
         ["leaderboard","🏆 Leaderboard","View global leaderboards"],
         ["levelMap","🗺 Level map","See full level progression map"],
         ["sessionHistory","📋 Session history","View past typing sessions"],
@@ -2457,7 +2470,75 @@ const Nav = () => (<>
             ))}
           </div>}
 
-          {activeTab==="test" && <TypingTest T={T}/>}
+          {activeTab==="test" && (
+            <div style={{padding:"10px 0"}}>
+              {/* Custom Word Lists */}
+              <div style={{marginBottom:16}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+                  <span style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase"}}>Word Lists</span>
+                  <button onClick={()=>{setListEditorIdx(null);setListEditorName("");setListEditorWords("");setShowListEditor(true);}} style={{background:T.purple,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:700,padding:"4px 10px",cursor:"pointer",fontFamily:T.font}}>+ New List</button>
+                </div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:8}}>
+                  <button onClick={()=>setActiveListIdx(null)} style={{padding:"5px 12px",borderRadius:20,border:`1px solid ${activeListIdx===null?T.purple:T.border}`,background:activeListIdx===null?T.purple+"22":"transparent",color:activeListIdx===null?T.purple:T.muted,fontSize:12,cursor:"pointer",fontFamily:T.font}}>
+                    Default
+                  </button>
+                  {customLists.map((lst,i)=>(
+                    <div key={i} style={{display:"flex",alignItems:"center",gap:2}}>
+                      <button onClick={()=>setActiveListIdx(i)} style={{padding:"5px 12px",borderRadius:20,border:`1px solid ${activeListIdx===i?T.purple:T.border}`,background:activeListIdx===i?T.purple+"22":"transparent",color:activeListIdx===i?T.purple:T.muted,fontSize:12,cursor:"pointer",fontFamily:T.font}}>
+                        {lst.name} <span style={{opacity:.5,fontSize:10}}>({lst.words.length}w)</span>
+                      </button>
+                      <button onClick={()=>{setListEditorIdx(i);setListEditorName(lst.name);setListEditorWords(lst.words.join("\n"));setShowListEditor(true);}} style={{background:"none",border:"none",color:T.faint,fontSize:11,cursor:"pointer",padding:"2px 4px"}}>✏️</button>
+                    </div>
+                  ))}
+                </div>
+                {/* List Editor */}
+                {showListEditor && (
+                  <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:10,padding:14,marginBottom:12}}>
+                    <div style={{color:T.text,fontSize:12,fontWeight:700,marginBottom:8}}>{listEditorIdx===null?"New List":"Edit List"}</div>
+                    <input
+                      placeholder="List name (e.g. Spanish vocab)"
+                      value={listEditorName}
+                      onChange={e=>setListEditorName(e.target.value)}
+                      maxLength={30}
+                      style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:7,color:T.text,fontFamily:T.font,fontSize:12,padding:"7px 10px",outline:"none",boxSizing:"border-box",marginBottom:8}}
+                    />
+                    <textarea
+                      placeholder={"One word per line, or space-separated\nExamples:\nhola adios gracias\nOR\nhola\nadios\ngracias"}
+                      value={listEditorWords}
+                      onChange={e=>setListEditorWords(e.target.value)}
+                      rows={6}
+                      style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:7,color:T.text,fontFamily:T.font,fontSize:12,padding:"7px 10px",outline:"none",boxSizing:"border-box",resize:"vertical"}}
+                    />
+                    <div style={{color:T.faint,fontSize:10,marginTop:4,marginBottom:10}}>
+                      {listEditorWords.trim().split(/[\s\n]+/).filter(Boolean).length} words
+                    </div>
+                    <div style={{display:"flex",gap:8}}>
+                      <button onClick={()=>{
+                        const words = listEditorWords.trim().split(/[\s\n]+/).filter(Boolean);
+                        if(!listEditorName.trim()||words.length<2) return;
+                        const newLists = [...customLists];
+                        if(listEditorIdx===null) newLists.push({name:listEditorName.trim(),words});
+                        else newLists[listEditorIdx]={name:listEditorName.trim(),words};
+                        saveCustomLists(newLists);
+                        if(listEditorIdx!==null) setActiveListIdx(listEditorIdx);
+                        setShowListEditor(false);
+                      }} style={{padding:"7px 16px",background:T.purple,border:"none",borderRadius:7,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>Save</button>
+                      {listEditorIdx!==null && (
+                        <button onClick={()=>{
+                          const newLists=customLists.filter((_,i)=>i!==listEditorIdx);
+                          saveCustomLists(newLists);
+                          if(activeListIdx===listEditorIdx) setActiveListIdx(null);
+                          setShowListEditor(false);
+                        }} style={{padding:"7px 14px",background:"#ef444422",border:"1px solid #ef444444",borderRadius:7,color:"#ef4444",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>Delete</button>
+                      )}
+                      <button onClick={()=>setShowListEditor(false)} style={{padding:"7px 14px",background:"none",border:`1px solid ${T.border}`,borderRadius:7,color:T.muted,fontSize:12,cursor:"pointer",fontFamily:T.font}}>Cancel</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <TypingTest T={T} customWords={activeListIdx!==null&&customLists[activeListIdx]?customLists[activeListIdx].words:null} key={activeListIdx} />
+            </div>
+          )}
 
           <div style={{height:40}}/>
         </div>
