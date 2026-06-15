@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import TypingTest from "./TypingTest";
 import GamesTab from "./GamesTab";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests } from "@/lib/firebase";
+import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges } from "@/lib/firebase";
 
 export 
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
@@ -698,6 +698,26 @@ const playSound = (type, soundTheme = "default") => {
   } catch(e) {}
 };
 
+function SendChallengeForm({ T, friends, LEVELS, onSend }) {
+  const [toFriend, setToFriend] = React.useState(null);
+  const [levelId, setLevelId] = React.useState(1);
+  const [sending, setSending] = React.useState(false);
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:8}}>
+      <select value={toFriend?.uid||""} onChange={e=>{const f=friends.find(fr=>fr.uid===e.target.value);setToFriend(f||null);}} style={{background:"#1a1030",border:"1px solid #2a2050",borderRadius:7,color:"#e0e0ff",fontSize:12,padding:"6px 10px",fontFamily:"inherit",outline:"none"}}>
+        <option value="">Select friend…</option>
+        {friends.map(f=><option key={f.uid} value={f.uid}>@{f.username}</option>)}
+      </select>
+      <select value={levelId} onChange={e=>setLevelId(Number(e.target.value))} style={{background:"#1a1030",border:"1px solid #2a2050",borderRadius:7,color:"#e0e0ff",fontSize:12,padding:"6px 10px",fontFamily:"inherit",outline:"none"}}>
+        {LEVELS.filter(l=>l.id>0&&l.id<=60).map(l=><option key={l.id} value={l.id}>{l.emoji} Level {l.id}: {l.name}</option>)}
+      </select>
+      <button disabled={!toFriend||sending} onClick={async()=>{setSending(true);try{await onSend(toFriend,levelId);}finally{setSending(false);setToFriend(null);}}} style={{padding:"7px",borderRadius:7,border:"none",background:toFriend?"#ef4444":"#333",color:"#fff",fontSize:12,fontWeight:700,cursor:toFriend?"pointer":"default",fontFamily:"inherit",opacity:sending?0.6:1}}>
+        {sending?"Sending…":"⚔️ Send Challenge"}
+      </button>
+    </div>
+  );
+}
+
 export default function AccuratKey() {
   const [screen, setScreen] = useState("loading");
   const [user, setUser] = useState(null);
@@ -792,7 +812,12 @@ export default function AccuratKey() {
   const [editName, setEditName] = useState("");
   const [editAvatar, setEditAvatar] = useState("key");
   const [editBirthday, setEditBirthday] = useState("");
-  const [bdayRequest, setBdayRequest] = useState(null); // {status, birthday, reason}
+  const [bdayRequest, setBdayRequest] = useState(null);
+  // Challenges
+  const [challenges, setChallenges] = useState([]);
+  const [showChallenges, setShowChallenges] = useState(false);
+  const [challengeMsg, setChallengeMsg] = useState("");
+  const [activeChallengeId, setActiveChallengeId] = useState(null); // playing a challenge // {status, birthday, reason}
   const [bdayReqReason, setBdayReqReason] = useState("");
   const [showBdayReqForm, setShowBdayReqForm] = useState(false);
   const [bdayReqMsg, setBdayReqMsg] = useState("");
@@ -1375,6 +1400,12 @@ export default function AccuratKey() {
         }
         const rd = { wpm: fw, accuracy: newAcc, passed, level: playingLevel, chars: nt, isSkipChallenge, skipTargetLevel };
         setResultData(rd);
+        // If this was a challenge, auto-submit result
+        if (activeChallengeId && user) {
+          submitChallengeResult(activeChallengeId, user.uid, fw, newAcc, passed).catch(() => {});
+          setActiveChallengeId(null);
+          getPendingChallenges(user.uid).then(setChallenges).catch(() => {});
+        }
         setWpm(fw);
         if (user && activeProfile) {
           saveSession(user.uid, activeProfile.id, { wpm: fw, accuracy: newAcc, layout: layoutKey, level: playingLevel, chars: nt, passed })
@@ -1561,6 +1592,9 @@ export default function AccuratKey() {
     if (user && activeProfile) {
       getRecentSessions(user.uid, activeProfile.id, 10).then(setSessions).catch(() => {});
       setCustomLists(activeProfile.customLists || []);
+      if (canUse(activeProfile, 'challenges')) {
+        getPendingChallenges(user.uid).then(setChallenges).catch(() => {});
+      }
     }
     setShowProfileModal(true);
   };
@@ -1766,6 +1800,7 @@ const Nav = () => (<>
           </button>}
           {canUse(activeProfile,"keys")&&<span style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:"4px 10px",fontSize:fs(13),color:T.accent,fontWeight:700,display:"flex",alignItems:"center",gap:4}}><KKey size={14}/>{((k)=>k>=1e6?""+Math.round(k/1e6)+"M":k>=1e3?""+Math.round(k/1e3)+"k":k)(activeProfile.keys||0)}</span>}
                     {canUse(activeProfile,"friends")&&<button onClick={()=>{getFriends(user?.uid).then(setFriends);getIncomingRequests(user?.uid).then(setFriendReqs);setShowFriends(true);}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:fs(13),padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Friends">👥</button>}
+          {canUse(activeProfile,"challenges")&&<button onClick={()=>{getPendingChallenges(user.uid).then(setChallenges);setShowChallenges(true);setChallengeMsg("");}} style={{background:challenges.some(c=>c.toUid===user?.uid&&c.status==="pending")?"#ef444422":"none",border:`1px solid ${challenges.some(c=>c.toUid===user?.uid&&c.status==="pending")?"#ef4444":T.border}`,borderRadius:6,color:challenges.some(c=>c.toUid===user?.uid&&c.status==="pending")?"#ef4444":T.muted,fontSize:fs(13),padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Challenges">⚔️</button>}
           {canUse(activeProfile,"shop")&&<button onClick={()=>{
     localStorage.setItem('ak_returnScreen', screen||'levelMap');
     localStorage.setItem('ak_returnProfileId', activeProfile?.id||'');
@@ -2597,6 +2632,93 @@ const Nav = () => (<>
 
           <div style={{height:40}}/>
         </div>
+
+        {showChallenges && (
+          <div onClick={()=>setShowChallenges(false)} style={{position:"fixed",inset:0,background:"#000a",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1010,padding:20}}>
+            <div onClick={e=>e.stopPropagation()} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:16,padding:24,width:"100%",maxWidth:440,maxHeight:"80vh",overflowY:"auto"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                <span style={{color:T.text,fontWeight:800,fontSize:16}}>⚔️ Challenges</span>
+                <button onClick={()=>setShowChallenges(false)} style={{background:"none",border:"none",color:T.faint,fontSize:20,cursor:"pointer"}}>×</button>
+              </div>
+
+              {/* Send new challenge */}
+              {canUse(activeProfile,"challenges") && friends.length > 0 && (
+                <div style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:10,padding:12,marginBottom:14}}>
+                  <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>Challenge a Friend</div>
+                  <SendChallengeForm
+                    T={T} friends={friends} LEVELS={LEVELS}
+                    onSend={async(toFriend, levelId)=>{
+                      const lv = LEVELS.find(l=>l.id===levelId);
+                      await sendChallengeEx(user.uid, currentUsername, activeProfile.avatar||"key", toFriend.uid, toFriend.username, levelId, lv?.name||"");
+                      getPendingChallenges(user.uid).then(setChallenges);
+                      setChallengeMsg("Challenge sent! ⚔️");
+                    }}
+                  />
+                  {challengeMsg && <div style={{color:T.accent2,fontSize:12,marginTop:6}}>{challengeMsg}</div>}
+                </div>
+              )}
+              {friends.length === 0 && canUse(activeProfile,"challenges") && (
+                <div style={{color:T.muted,fontSize:12,marginBottom:12,textAlign:"center"}}>Add friends first to send challenges</div>
+              )}
+
+              {/* Incoming challenges */}
+              {challenges.filter(c=>c.toUid===user?.uid&&c.status==="pending").length > 0 && (
+                <div style={{marginBottom:12}}>
+                  <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>Incoming</div>
+                  {challenges.filter(c=>c.toUid===user?.uid&&c.status==="pending").map(c=>(
+                    <div key={c.id} style={{background:T.bg,border:"1px solid #ef444433",borderRadius:9,padding:"10px 12px",marginBottom:6}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                        <span style={{color:T.text,fontSize:13,fontWeight:700}}>@{c.fromUsername} challenged you!</span>
+                        <span style={{color:T.faint,fontSize:10}}>{c.fromAvatar?AVATARS.find(a=>a.id===c.fromAvatar)?.e||"⌨️":"⌨️"}</span>
+                      </div>
+                      <div style={{color:T.muted,fontSize:12,marginBottom:8}}>Level {c.levelId}: {c.levelName}</div>
+                      <div style={{display:"flex",gap:6}}>
+                        <button onClick={()=>{setActiveChallengeId(c.id);setShowChallenges(false);requestStartLevel(c.levelId);}} style={{flex:1,padding:"7px",borderRadius:7,border:"none",background:"#ef4444",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>⚔️ Accept & Play</button>
+                        <button onClick={async()=>{await declineChallenge(c.id);getPendingChallenges(user.uid).then(setChallenges);}} style={{padding:"7px 12px",borderRadius:7,border:`1px solid ${T.border}`,background:"transparent",color:T.muted,fontSize:12,cursor:"pointer",fontFamily:T.font}}>Decline</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Sent / completed */}
+              {challenges.filter(c=>c.fromUid===user?.uid||c.status==="completed").length > 0 && (
+                <div>
+                  <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>Recent</div>
+                  {challenges.filter(c=>c.fromUid===user?.uid||c.status==="completed").slice(0,8).map(c=>{
+                    const isSender = c.fromUid===user?.uid;
+                    const myResult = isSender ? c.fromResult : c.toResult;
+                    const theirResult = isSender ? c.toResult : c.fromResult;
+                    const won = myResult&&theirResult&&myResult.wpm>theirResult.wpm;
+                    const statusColor = c.status==="completed"?(won?"#34d399":"#ef4444"):c.status==="declined"?"#555":T.muted;
+                    return (
+                      <div key={c.id} style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:9,padding:"10px 12px",marginBottom:6}}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                          <span style={{color:T.text,fontSize:12}}>
+                            {isSender ? `→ @${c.toUsername}` : `← @${c.fromUsername}`} · Lv {c.levelId}
+                          </span>
+                          <span style={{color:statusColor,fontSize:11,fontWeight:700}}>
+                            {c.status==="pending"?"⏳ Waiting":c.status==="accepted"?"🎮 In progress":c.status==="declined"?"❌ Declined":won?"🏆 Won":"💀 Lost"}
+                          </span>
+                        </div>
+                        {c.status==="completed"&&myResult&&theirResult&&(
+                          <div style={{display:"flex",gap:12,marginTop:6,fontSize:11,color:T.muted}}>
+                            <span>You: <span style={{color:T.purple,fontWeight:700}}>{myResult.wpm} WPM</span></span>
+                            <span>Them: <span style={{color:T.faint,fontWeight:700}}>{theirResult.wpm} WPM</span></span>
+                          </div>
+                        )}
+                        {c.status==="pending"&&!isSender&&(
+                          <button onClick={()=>{setActiveChallengeId(c.id);setShowChallenges(false);requestStartLevel(c.levelId);}} style={{marginTop:6,width:"100%",padding:"6px",borderRadius:7,border:"none",background:"#ef4444",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>⚔️ Play Now</button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {challenges.length===0&&<div style={{color:T.muted,fontSize:12,textAlign:"center",padding:"20px 0"}}>No challenges yet</div>}
+            </div>
+          </div>
+        )}
 
         {showPomodoro && (() => {
           const mins = Math.floor(pomodoroSecs/60);
