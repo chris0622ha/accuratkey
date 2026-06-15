@@ -2494,7 +2494,7 @@ const Nav = () => (<>
                       if(!feedbackText.trim())return;
                       setFeedbackSending(true);
                       try{
-                        await submitFeedback(user?.uid||null, activeProfile?.id||null, feedbackText.trim());
+                        await submitFeedback(user?.uid||null, activeProfile?.id||null, feedbackText.trim(), currentUsername, activeProfile?.name||null);
                         setFeedbackSent(true);
                       } catch(err){
                         console.error("Feedback error:",err);
