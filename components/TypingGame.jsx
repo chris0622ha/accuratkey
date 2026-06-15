@@ -1820,7 +1820,7 @@ const Nav = () => (<>
     localStorage.setItem('ak_returnProfileId', activeProfile?.id||'');
     window.location.href='/shop';
   }} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:13,padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Shop">🛍️</button>}
-          <button onClick={openSettings} style={{background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",alignItems:"center",gap:7}} title="Edit profile">
+          <button onClick={openProfileModal} style={{background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",alignItems:"center",gap:7}} title="Profile">
             <AvatarImg profile={activeProfile} size={30} />
             <span style={{fontSize:12,color:T.muted,maxWidth:90,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{activeProfile.name}</span>
           </button>
