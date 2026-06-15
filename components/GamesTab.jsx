@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Sniper, Mirror, Flash, Echo, GhostWords, CodeRain, BossBattle, TypewriterStory, TypingJournal, PoetryMode } from "./GamesExtra";
+import { HundredWords, Endurance, Roulette, WordChain, CategoryBlitz, VocabBuilder, SpellingBee, TypingInvaders, AsteroidBelt, TowerDefense, MysteryWords, RhymeTime, MadLibs } from "./GamesNew2";
 
 // ─── Sound Engine ─────────────────────────────────────────────────────────────
 let _sfxCtx = null;
@@ -98,16 +99,33 @@ const GAMES = [
   { id:"story",       emoji:"🎭", name:"Typewriter Story", desc:"Type classic literature passages",                cat:"chill" },
   { id:"journal",     emoji:"📝", name:"Typing Journal",   desc:"Free type and save your entries locally",         cat:"chill" },
   { id:"poetry",      emoji:"📜", name:"Poetry Mode",      desc:"Type poems with ambient tones",                  cat:"chill" },
+  { id:"hundred",     emoji:"💯", name:"100 Words",         desc:"Type exactly 100 words as fast as possible",      cat:"challenge" },
+  { id:"endurance",   emoji:"🏃", name:"Endurance",         desc:"Never stop typing or it's game over",             cat:"challenge" },
+  { id:"roulette",    emoji:"🎰", name:"Roulette",          desc:"Spin for a random game mode",                     cat:"random" },
+  { id:"wordchain",   emoji:"🔗", name:"Word Chain",        desc:"Each word must start with the last letter",       cat:"puzzle" },
+  { id:"blitz",       emoji:"⚡", name:"Category Blitz",    desc:"Type as many words in a category as possible",    cat:"challenge" },
+  { id:"vocab",       emoji:"📚", name:"Vocab Builder",     desc:"Read the definition — type the word",             cat:"educational" },
+  { id:"spellingbee", emoji:"🐝", name:"Spelling Bee",      desc:"Memorize and spell words correctly",              cat:"educational" },
+  { id:"invaders",    emoji:"👾", name:"Typing Invaders",   desc:"Shoot invaders by typing their words",            cat:"arcade" },
+  { id:"asteroid",    emoji:"☄️", name:"Asteroid Belt",     desc:"Destroy asteroids before they hit your ship",     cat:"arcade" },
+  { id:"tower",       emoji:"🏰", name:"Tower Defense",     desc:"Stop enemies from reaching your base",            cat:"arcade" },
+  { id:"mystery",     emoji:"🔮", name:"Mystery Words",     desc:"Symbols slowly reveal as letters — guess the word", cat:"puzzle" },
+  { id:"rhyme",       emoji:"🎵", name:"Rhyme Time",        desc:"Type a word that rhymes with the one shown",      cat:"educational" },
+  { id:"madlibs",     emoji:"😂", name:"Mad Libs",          desc:"Fill in the blanks to make a funny story",        cat:"creative" },
 ];
 
 const CATEGORIES = [
-  { id:"all",      label:"All" },
-  { id:"speed",    label:"⚡ Speed" },
-  { id:"accuracy", label:"🎯 Accuracy" },
-  { id:"memory",   label:"🧠 Memory" },
-  { id:"arcade",   label:"🕹️ Arcade" },
-  { id:"chill",    label:"🧘 Chill" },
-  { id:"puzzle",   label:"🔀 Puzzle" },
+  { id:"all",         label:"All" },
+  { id:"speed",       label:"⚡ Speed" },
+  { id:"accuracy",    label:"🎯 Accuracy" },
+  { id:"memory",      label:"🧠 Memory" },
+  { id:"arcade",      label:"🕹️ Arcade" },
+  { id:"chill",       label:"🧘 Chill" },
+  { id:"puzzle",      label:"🔀 Puzzle" },
+  { id:"challenge",   label:"🏆 Challenge" },
+  { id:"educational", label:"📚 Educational" },
+  { id:"creative",    label:"🎨 Creative" },
+  { id:"random",      label:"🎲 Random" },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -816,6 +834,19 @@ const GAME_SETTINGS = {
   story:       [{ key:"passage",    label:"Passage",    opts:["random","raven","frost","dickens","austen","orwell"], default:"random" }],
   journal:     [],
   poetry:      [{ key:"poem",       label:"Poem",       opts:["random","byron","dickinson","frost","whitman","poe"], default:"random" }],
+  hundred:     [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"med" }],
+  endurance:   [{ key:"pauseMs",    label:"Pause limit", opts:[1,2,3,5], default:2, suffix:"s" }],
+  roulette:    [],
+  wordchain:   [{ key:"timePerWord", label:"Time per word", opts:[5,10,15,20], default:10, suffix:"s" }],
+  blitz:       [{ key:"duration",   label:"Duration",   opts:[15,30,60], default:30, suffix:"s" }, { key:"category", label:"Category", opts:["animals","countries","fruits","food","science","sports","tech","programming"], default:"animals" }],
+  vocab:       [{ key:"count",      label:"Words",      opts:[10,15,20,25], default:15 }],
+  spellingbee: [{ key:"difficulty", label:"Difficulty", opts:["super_easy","easy","normal","medium","hard","super_hard","impossible"], default:"normal" }],
+  invaders:    [{ key:"waves",      label:"Waves",      opts:[3,5,10], default:5 }],
+  asteroid:    [{ key:"lives",      label:"Lives",      opts:[2,3,5], default:3 }],
+  tower:       [],
+  mystery:     [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"med" }],
+  rhyme:       [],
+  madlibs:     [],
 };
 
 function loadSettings(id) {
