@@ -858,14 +858,14 @@ const GAME_SETTINGS = {
   mystery:     [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"med" }],
   rhyme:       [],
   madlibs:     [],
-  speedtest:   [{ key:"duration", label:"Duration", opts:[1,2,5], default:1, suffix:" min" }],
-  missing:     [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"med" }],
-  anagram:     [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"med" }],
-  bricks:      [{ key:"rows", label:"Rows", opts:[3,4,5,6], default:4 }],
-  quotes:      [],
-  haiku:       [],
-  synonyms:    [],
-  antonyms:    [],
+  speedtest:   [{ key:"duration", label:"Duration", opts:[1,2,5], default:1, suffix:" min" }, { key:"difficulty", label:"Words", opts:["easy","med","hard"], default:"med" }],
+  missing:     [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"med" }, { key:"count", label:"Words", opts:[10,15,20,30], default:20 }, { key:"hideRate", label:"Hide amount", opts:["low","medium","high"], default:"medium" }],
+  anagram:     [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"med" }, { key:"count", label:"Words", opts:[10,15,20], default:20 }],
+  bricks:      [{ key:"rows", label:"Rows", opts:[3,4,5,6], default:4 }, { key:"cols", label:"Columns", opts:[4,5,6,8], default:6 }],
+  quotes:      [{ key:"author", label:"Author filter", opts:["all","einstein","shakespeare","wilde","twain","gandhi"], default:"all" }],
+  haiku:       [{ key:"poet", label:"Poet", opts:["all","basho","issa","buson","pound"], default:"all" }],
+  synonyms:    [{ key:"count", label:"Words", opts:[10,20,30,"all"], default:20 }],
+  antonyms:    [{ key:"count", label:"Words", opts:[10,20,30,"all"], default:20 }],
 };
 
 function loadSettings(id) {
