@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, ALL_WORDS, pickWords } from "./WordDB";
+import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, ALL_WORDS, POOL_SNIPER, POOL_MIRROR, POOL_FLASH, POOL_GHOST, POOL_CODE_RAIN, POOL_BOSS, WORDS_PROGRAMMING, pickWords } from "./WordDB";
 const EASY_WORDS = TYPING_BASIC;
 const MED_WORDS = TYPING_MEDIUM;
 const HARD_WORDS = TYPING_HARD;
@@ -496,7 +496,7 @@ export function BossBattle({ T, onBack, onSettings, settings = {} }) {
   const saved = bossLoad();
   const [bossHp, setBossHp] = useState(()=> saved?.bossHp ?? BOSS_HP);
   const [playerHp, setPlayerHp] = useState(()=> saved?.playerHp ?? 100);
-  const [words] = useState(()=> saved?.words || pickN(60, MED_WORDS));
+  const [words] = useState(()=> saved?.words || pickWords(60, POOL_BOSS));
   const [idx, setIdx] = useState(()=> saved?.idx || 0);
   const [typed, setTyped] = useState("");
   const [phase, setPhase] = useState(()=> saved?.phase || "fight");
