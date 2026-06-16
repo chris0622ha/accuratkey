@@ -4,6 +4,13 @@ import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, EASY_ARR, MED_ARR, HARD_ARR, 
 const WORDS_EASY=TYPING_BASIC, WORDS_MED=TYPING_MEDIUM, WORDS_HARD=TYPING_HARD, WORDS_ANIMALS=WORD_CATEGORIES.animals, WORDS_COUNTRIES=WORD_CATEGORIES.countries;
 
 function gSave(id, data) { try { localStorage.setItem("ak_gs_"+id, JSON.stringify(data)); } catch{} }
+function speakWord(word, rate=0.8) {
+  if (typeof window === "undefined" || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(word);
+  u.rate = rate; u.pitch = 1; u.lang = "en-US";
+  window.speechSynthesis.speak(u);
+}
 function gLoad(id) { try { return JSON.parse(localStorage.getItem("ak_gs_"+id)||"null"); } catch{return null;} }
 function gClear(id) { try { localStorage.removeItem("ak_gs_"+id); } catch{} }
 function getSfxCtx() { if(typeof window==="undefined") return null; if(!window._akCtx||window._akCtx.state==="closed") window._akCtx=new(window.AudioContext||window.webkitAudioContext)(); return window._akCtx; }
@@ -385,7 +392,11 @@ export function SpellingBee({ T, onBack, onSettings, settings = {} }) {
   const item = words[idx] || words[0];
   const target = item?.word || "";
   useEffect(()=>{ if(!done) gSave("spellingbee",{words,idx,correct}); },[idx,correct,done]);
-  useEffect(()=>{ setRevealed(false); setTyped(""); setTimeout(()=>ref.current?.focus(),50); },[idx]);
+  useEffect(()=>{
+    setRevealed(false); setTyped("");
+    if(!muted) setTimeout(()=>speakWord(target, 0.7), 300);
+    setTimeout(()=>ref.current?.focus(),50);
+  },[idx]);
 
   const handleType = e => {
     const v = e.target.value;
@@ -428,6 +439,9 @@ export function SpellingBee({ T, onBack, onSettings, settings = {} }) {
       <div style={{color:"#e0e0ff",fontSize:16,lineHeight:1.6,fontStyle:"italic"}}>"{item?.def}"</div>
       {revealed && <div style={{color:"#facc15",fontFamily:"'JetBrains Mono',monospace",fontSize:22,fontWeight:800,marginTop:12,letterSpacing:3}}>{target}</div>}
     </div>
+    <button onClick={()=>speakWord(target, 0.7)} style={{width:"100%",marginBottom:10,padding:"8px",borderRadius:8,border:"1px solid #facc1533",background:"#1a1500",color:"#facc15",fontSize:13,cursor:"pointer",fontFamily:T.font}}>
+      🔊 Hear the word again
+    </button>
     {/* Typed display */}
     <div style={{background:T.card,border:`1px solid ${wrong?"#ef4444":T.border}`,borderRadius:12,padding:"16px",marginBottom:10,fontFamily:"'JetBrains Mono',monospace",fontSize:22,textAlign:"center",letterSpacing:3,minHeight:60,transition:"border-color .15s"}}>
       {wrong ? (
