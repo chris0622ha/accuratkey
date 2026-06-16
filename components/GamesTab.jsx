@@ -1,14 +1,13 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, ALL_WORDS, WORD_CATEGORIES, CATEGORY_NAMES, SPELLING_BEE_WORDS, POOL_WORD_RAIN, POOL_SURVIVAL, POOL_SPEED_BURST, POOL_SCRAMBLE, POOL_SUDDEN_DEATH, POOL_ZEN, POOL_LADDER_EASY, POOL_LADDER_MED, POOL_LADDER_HARD, POOL_LADDER_VHARD, POOL_ECHO, POOL_INVADERS, POOL_ASTEROID, POOL_TOWER, POOL_WORD_CHAIN, pickWords, pickByDiff } from "./WordDB";
-// Use TYPING_BASIC/MEDIUM/HARD for gameplay, EASY/MED/HARD for general
-// Game-specific pools imported above
-const EASY_WORDS = TYPING_BASIC;
-const MED_WORDS = TYPING_MEDIUM;
-const HARD_WORDS = TYPING_HARD;
 import { Sniper, Mirror, Flash, Echo, GhostWords, CodeRain, BossBattle, TypewriterStory, TypingJournal, PoetryMode } from "./GamesExtra";
 import { HundredWords, Endurance, Roulette, WordChain, CategoryBlitz, VocabBuilder, SpellingBee, TypingInvaders, AsteroidBelt, TowerDefense, MysteryWords, RhymeTime, MadLibs } from "./GamesNew2";
 import { SpeedTest, MissingLetters, Anagram, BrickBreaker, Quotes, HaikuMode, Synonyms, Antonyms } from "./GamesNew3";
+// Word pools
+const EASY_WORDS = TYPING_BASIC;
+const MED_WORDS = TYPING_MEDIUM;
+const HARD_WORDS = TYPING_HARD;
 
 // ─── Sound Engine ─────────────────────────────────────────────────────────────
 let _sfxCtx = null;
