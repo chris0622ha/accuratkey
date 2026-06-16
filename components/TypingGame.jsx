@@ -1208,7 +1208,8 @@ export default function AccuratKey() {
               setShowCount((prof.currentLevel || 1) + 5);
               setScreen(returnScreen === "profilePicker" ? "levelMap" : returnScreen);
             } else {
-              setScreenWithUrl("profilePicker");
+              // Only show picker if no profile active — prevents flash on token refresh
+              setActiveProfile(p => { if (!p) setScreenWithUrl("profilePicker"); return p; });
             }
           }
         }
