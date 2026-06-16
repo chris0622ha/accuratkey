@@ -1280,11 +1280,10 @@ export default function AccuratKey() {
     setAuthLoading(false);
   };
 
-  const handleOAuth = async (ProviderOrFactory) => {
+  const handleOAuth = async (provider) => {
     setAuthErr(""); setAuthLoading(true);
     try {
-      const isClass = typeof ProviderOrFactory === "function" && /^[A-Z]/.test(ProviderOrFactory.name);
-      const provider = isClass ? new ProviderOrFactory() : ProviderOrFactory();
+      // provider is already instantiated
       // Use redirect on mobile, popup on desktop
       const isMob = typeof window !== "undefined" && window.matchMedia("(pointer: coarse) and (hover: none)").matches;
       if (isMob) {
@@ -2114,7 +2113,7 @@ const Nav = () => (<>
             ))}
           </div>
           {/* Google */}
-          <button onClick={() => handleOAuth(GoogleAuthProvider)} disabled={authLoading}
+          <button onClick={() => handleOAuth(new GoogleAuthProvider())} disabled={authLoading}
             style={{width:"100%",background:"#0a0a0f",border:"1px solid #2a2a4a",borderRadius:8,color:"#e0e0ff",fontFamily:"'JetBrains Mono',monospace",fontSize:13,padding:"11px",cursor:"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:10}}
             onMouseEnter={e=>e.currentTarget.style.borderColor="#7c6af7"}
             onMouseLeave={e=>e.currentTarget.style.borderColor="#2a2a4a"}>
@@ -2127,7 +2126,7 @@ const Nav = () => (<>
             Continue with Google
           </button>
           {/* GitHub */}
-          <button onClick={() => handleOAuth(GithubAuthProvider)} disabled={authLoading}
+          <button onClick={() => handleOAuth(new GithubAuthProvider())} disabled={authLoading}
             style={{width:"100%",background:"#0a0a0f",border:"1px solid #2a2a4a",borderRadius:8,color:"#e0e0ff",fontFamily:"'JetBrains Mono',monospace",fontSize:13,padding:"11px",cursor:"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:10}}
             onMouseEnter={e=>e.currentTarget.style.borderColor="#7c6af7"}
             onMouseLeave={e=>e.currentTarget.style.borderColor="#2a2a4a"}>
