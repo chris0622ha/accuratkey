@@ -340,8 +340,9 @@ const TOPICS: Record<string, Topic> = {
   },
 };
 
-export default function HelpTopicPage({ params }: { params: { id: string } }) {
-  const topic = TOPICS[params.id];
+export default async function HelpTopicPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const topic = TOPICS[id];
   if (!topic) notFound();
   const { title, emoji, color, intro, sections, faqs } = topic;
   const [openFaq, setOpenFaq] = useState<number|null>(null);
