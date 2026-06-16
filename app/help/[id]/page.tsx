@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
+import { notFound } from 'next/navigation';
 
 type Section = { heading: string; body: string };
 type Topic = { title: string; emoji: string; color: string; intro: string; sections: Section[]; faqs?: [string,string][] };
@@ -8,19 +9,19 @@ type Topic = { title: string; emoji: string; color: string; intro: string; secti
 const TOPICS: Record<string, Topic> = {
   'keyboard': {
     title: 'Keyboard Setup', emoji: '⌨️', color: '#06b6d4',
-    intro: 'AccuratKey requires a physical keyboard. Here are all the ways to connect one to your phone, tablet, or computer.',
+    intro: 'AccuratKey requires a physical keyboard. Here are all the ways to connect one.',
     sections: [
-      { heading: 'Bluetooth keyboard', body: 'Put the keyboard in pairing mode, go to Settings → Bluetooth on your device, and tap the keyboard when it appears. Works with any Bluetooth keyboard. Best option for phones and tablets. See the detailed guide at /keyboard/bluetooth.' },
-      { heading: 'Wired USB keyboard', body: 'Plug a USB-C to USB-A adapter into your phone or tablet, then plug the keyboard into the adapter. Works on most Android phones and iPads with USB-C. No setup required — it works instantly. See /keyboard/usb for details.' },
-      { heading: 'iPad Smart Connector', body: 'Snap an Apple Magic Keyboard or Logitech Combo Touch onto the Smart Connector port on the side of your iPad. No pairing, no battery — it just works. See /keyboard/ipad-smart.' },
-      { heading: 'Samsung DeX', body: 'Connect your Samsung Galaxy phone to a monitor and attach any Bluetooth or USB keyboard. AccuratKey runs as a full desktop app in DeX mode. See /keyboard/samsung-dex.' },
-      { heading: 'Chromebook', body: 'Open AccuratKey in Chrome on any Chromebook. Your built-in keyboard works immediately — no setup needed. External keyboards also work.' },
-      { heading: 'Laptop or Desktop (recommended)', body: 'The best experience. Open any browser, go to accuratkey.vercel.app, and press any key. Works on Windows, Mac, Linux, and ChromeOS with any keyboard.' },
+      { heading: 'Bluetooth keyboard', body: 'Put the keyboard in pairing mode, go to Settings → Bluetooth, and tap it when it appears. Works with any Bluetooth keyboard. Best option for phones and tablets. Full guide at /keyboard/bluetooth.' },
+      { heading: 'Wired USB keyboard', body: 'Plug a USB-C to USB-A adapter into your device, then plug the keyboard in. Works on most Android phones and iPads with USB-C. No setup needed. Full guide at /keyboard/usb.' },
+      { heading: 'iPad Smart Connector', body: 'Snap an Apple Magic Keyboard or Logitech Combo Touch onto the Smart Connector port. No pairing, no battery — instant connection. See /keyboard/ipad-smart.' },
+      { heading: 'Samsung DeX', body: 'Connect your Galaxy phone to a monitor and attach any keyboard. AccuratKey runs as a full desktop app in DeX. See /keyboard/samsung-dex.' },
+      { heading: 'Chromebook', body: 'Open AccuratKey in Chrome on any Chromebook. Built-in keyboard works immediately.' },
+      { heading: 'Laptop or Desktop (recommended)', body: 'The best experience. Open any browser, go to accuratkey.vercel.app, press any key. Works on Windows, Mac, Linux, ChromeOS.' },
     ],
     faqs: [
-      ['Which method is easiest?', 'Bluetooth for phones/tablets — pair once and reconnect automatically. Desktop is the easiest overall — just open the browser.'],
-      ['Does my specific keyboard work?', 'If it's Bluetooth HID or USB HID (which all consumer keyboards are), it works. See /keyboard/bluetooth or /keyboard/usb for long compatibility lists.'],
-      ['Where is the full keyboard guide?', 'At /keyboard — with expandable compatibility lists, detailed instructions, and troubleshooting for each connection method.'],
+      ['Which method is easiest?', 'Bluetooth for phones/tablets. Desktop overall — just open the browser.'],
+      ['Does my keyboard work?', 'If it says Bluetooth HID or USB HID (all consumer keyboards), yes. See /keyboard for full compatibility lists.'],
+      ['Where is the full guide?', 'At /keyboard — with compatibility lists, detailed steps, and troubleshooting.'],
     ],
   },
 
@@ -37,7 +38,7 @@ const TOPICS: Record<string, Topic> = {
     ],
     faqs: [
       ['Do I need an account?', 'No. Guest mode gives full access to all 15 levels and all 38 games. Progress saves in your browser. Sign up to sync across devices, use friends and daily challenge features.'],
-      ['Is AccuratKey free?', 'Yes — completely free. No subscriptions, no real-money purchases. Keys are earned only by playing.'],
+      ['Is AccuratKey free?', 'The core app is free forever. A Pro subscription is available for power users — it unlocks advanced stats, exclusive themes, and extra features. Keys are earned by playing and can also be purchased directly.'],
       ['What browsers are supported?', 'Chrome, Firefox, Safari, and Edge. Chrome is recommended for best performance.'],
       ['Can kids use AccuratKey?', 'Yes. The age-adaptive system adjusts font sizes, word complexity, and level cap based on the birthday you enter. Kids under 10 get larger fonts and simpler words.'],
     ],
@@ -82,7 +83,7 @@ const TOPICS: Record<string, Topic> = {
       ['Do games save progress?', 'Each game saves your last session score locally. Personal bests are tracked per game per profile.'],
       ['Are games in guest mode?', 'Yes — all 38 games are fully playable as a guest.'],
       ['How does Spelling Bee TTS work?', 'Your device\'s built-in text-to-speech reads the word aloud. Tap 🔊 to hear it again. You type without seeing the word — purely from how it sounds.'],
-      ['Do games earn Keys?', 'No — only typing levels earn Keys. Games are for practice and fun.'],
+      ['Do games earn Keys?', 'Yes — games earn Keys too, just like levels. Every completed game session rewards Keys based on your performance.'],
     ],
   },
 
@@ -317,7 +318,7 @@ const TOPICS: Record<string, Topic> = {
     faqs: [
       ['Why can\'t I use Backspace?', 'AccuratKey disables Backspace intentionally. The goal is to train accurate typing from the start — pressing the right key the first time, not typing fast and fixing errors. This builds genuine muscle memory faster than any other method.'],
       ['Why does it need a physical keyboard?', 'Touchscreen typing doesn\'t have key travel or tactile feedback. Skills built on a glass screen don\'t transfer to physical keyboard typing. AccuratKey is specifically for physical keyboard training.'],
-      ['Is AccuratKey free?', 'Yes. No subscriptions, no paywalls, no ads, no real-money purchases. Keys are earned only by playing.'],
+      ['Is AccuratKey free?', 'The base app is free. A Pro subscription unlocks bonus features for power users. Keys can be earned by playing or purchased directly.'],
       ['What is WPM?', 'Words Per Minute. Calculated as (characters typed ÷ 5) ÷ minutes elapsed. Dividing by 5 is the standard way to normalize "word" length. The average office worker types 40 WPM. Professional typists reach 80–120+. World record is over 200.'],
       ['What does accuracy mean in AccuratKey?', 'The percentage of characters you typed correctly on the first keypress. Unlike most typing sites, there\'s no Backspace — every typo is permanent. Your true accuracy is measured, not your corrected accuracy.'],
       ['Does AccuratKey work offline?', 'You need internet to load the page. Once loaded, most features work offline. Progress syncs to the cloud when you reconnect. Guest mode works fully offline once the page is loaded.'],
@@ -340,9 +341,8 @@ const TOPICS: Record<string, Topic> = {
 };
 
 export default function HelpTopicPage({ params }: { params: { id: string } }) {
-  const id = params.id;
-  const topic = TOPICS[id];
-  if (!topic) return <div style={{minHeight:'100vh',background:'#0a0a0f',display:'flex',alignItems:'center',justifyContent:'center',color:'#555',fontFamily:"'JetBrains Mono',monospace"}}>Topic not found. <a href="/help" style={{color:'#7c6af7',marginLeft:8}}>← Help Center</a></div>;
+  const topic = TOPICS[params.id];
+  if (!topic) notFound();
   const { title, emoji, color, intro, sections, faqs } = topic;
   const [openFaq, setOpenFaq] = useState<number|null>(null);
 
