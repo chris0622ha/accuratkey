@@ -1871,6 +1871,7 @@ const Confetti = () => {
   );
 };
 
+const isMobileOwner = isMobile && user?.uid === "qM3qeYBLwvRXy8D0gOKGCQbGuA12";
 const Nav = () => (<>
     <UidTag />
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
@@ -1910,7 +1911,6 @@ const Nav = () => (<>
   );
 
   // SCREENS
-  const isMobileOwner = isMobile && user?.uid === "qM3qeYBLwvRXy8D0gOKGCQbGuA12";
 
   if (isMobile && !hasKeyboard && authReady && screen !== "auth" && user?.uid !== "qM3qeYBLwvRXy8D0gOKGCQbGuA12") return (
     <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:32,textAlign:"center"}}>
