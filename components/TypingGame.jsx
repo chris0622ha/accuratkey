@@ -1701,7 +1701,7 @@ export default function AccuratKey() {
             getPendingChallenges(user.uid).then(setChallenges).catch(() => {});
           }
           if (new Date().getDay() === 1) {
-            const seenKey = `ak_weekly_seen_${new Date().toISOString().slice(0,10)}`;
+            const seenKey = `ak_weekly_seen_${new Date().toLocaleDateString('en-CA',{timeZone:'America/New_York'})}`;
             if (!localStorage.getItem(seenKey)) {
               localStorage.setItem(seenKey, '1');
               getWeeklySessions(user.uid, activeProfile.id, 1).then(s => {
