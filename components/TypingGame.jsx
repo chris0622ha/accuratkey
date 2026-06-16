@@ -1209,7 +1209,7 @@ export default function AccuratKey() {
               setScreen(returnScreen === "profilePicker" ? "levelMap" : returnScreen);
             } else {
               // Only show picker if no profile active — prevents flash on token refresh
-              setActiveProfile(p => { if (!p) setScreenWithUrl("profilePicker"); return p; });
+              setScreenWithUrl("profilePicker");
             }
           }
         }
@@ -1263,21 +1263,23 @@ export default function AccuratKey() {
       if (currentUsername) localStorage.setItem("ak_username", currentUsername);
       localStorage.setItem("ak_uid", user.uid);
     }
-    const isBday = await checkAndUpdateBirthday(user.uid, profile.id, profile);
-    if (isBday) {
-      const updated = await getProfile(user.uid, profile.id);
-      setActiveProfile(updated);
-      setBirthdayProfile(updated);
-      setScreen("birthday");
-    } else {
-      // Restore screen if returning from shop or other external page
-      const returnScreen = typeof window !== "undefined" ? localStorage.getItem("ak_returnScreen") : null;
-      if (returnScreen && returnScreen !== "profilePicker") {
-        localStorage.removeItem("ak_returnScreen");
-        setScreen(returnScreen);
-      } else {
-        setScreenWithUrl("levelMap");
+    try {
+      const isBday = await checkAndUpdateBirthday(user.uid, profile.id, profile);
+      if (isBday) {
+        const updated = await getProfile(user.uid, profile.id);
+        setActiveProfile(updated);
+        setBirthdayProfile(updated);
+        setScreen("birthday");
+        return;
       }
+    } catch(e) { /* birthday check failed, proceed normally */ }
+    // Restore screen if returning from shop or other external page
+    const returnScreen = typeof window !== "undefined" ? localStorage.getItem("ak_returnScreen") : null;
+    if (returnScreen && returnScreen !== "profilePicker") {
+      localStorage.removeItem("ak_returnScreen");
+      setScreen(returnScreen);
+    } else {
+      setScreenWithUrl("levelMap");
     }
   };
 
@@ -2202,7 +2204,7 @@ const Nav = () => (<>
               </div>
               <div style={{color:T.text,fontWeight:700,fontSize:14,marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</div>
               <div style={{color:T.muted,fontSize:11}}>Level {p.currentLevel || 1}</div>
-              <div style={{color:T.accent,fontSize:11,marginTop:2,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}><KKey size={11}/>{p.keys || 0}</div>
+              <div style={{color:T.accent,fontSize:11,marginTop:2,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}><KKey size={11}/>{((k)=>k>=1e6?""+Math.round(k/1e6)+"M":k>=1e3?""+Math.round(k/1e3)+"k":k)(p.keys||0)}</div>
             </div>
             <button onClick={(e) => { e.stopPropagation(); const prof = p; setActiveProfile(prof); setLayoutKey(prof.favoriteLayout||"qwerty"); setEditName(prof.name||""); setEditAvatar(prof.avatar||"key"); setEditBirthday(prof.birthday||""); setEditPhoto(null); setEditPhotoPreview(null); setEditPhotoB64(null); setSaveMsg(""); setDeleteConfirmText(""); setShowDeleteProfile(false); setDeleteAccConfirmText(""); setShowDeleteAccount(false); setScreenWithUrl("levelMap"); setShowSettingsModal(true);}}
               style={{position:"absolute",top:6,right:6,background:T.purple,border:"none",borderRadius:8,padding:"4px 8px",display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:11,fontWeight:700,color:"#fff",zIndex:10,opacity:hoveredProfileId===p.id?1:0,pointerEvents:hoveredProfileId===p.id?"all":"none",transition:"opacity 0.15s",fontFamily:T.font,whiteSpace:"nowrap"}}>
