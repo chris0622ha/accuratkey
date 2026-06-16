@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
+import { notFound } from 'next/navigation';
 
 type Section = { heading: string; body: string };
 type Topic = { title: string; emoji: string; color: string; intro: string; sections: Section[]; faqs?: [string,string][] };
@@ -33,13 +34,12 @@ const TOPICS: Record<string, Topic> = {
       { heading: '3. Connect a keyboard', body: 'AccuratKey requires a physical keyboard. On laptop/desktop you\'re already good. On a phone or tablet you\'ll need to connect a Bluetooth or USB keyboard. See the Keyboard Setup guide for step-by-step instructions.' },
       { heading: '4. Pick a level', body: 'From the Level Map tab, tap Level 1. Each level has a brief tip about a specific typing skill. Read it, then tap Start Typing.' },
       { heading: '5. Type — no Backspace', body: 'Type the words shown on screen. Backspace is disabled — every keystroke is final. This is intentional: it trains accurate fingers, not fast-and-fix habits.' },
-      { heading: '6. Pass and progress', body: 'Each level has a WPM target and minimum accuracy. Pass to unlock the next level and earn Keys. You can replay levels anytime to improve your personal best.' },
+      { heading: '6. Pass and progress', body: 'Each level has a WPM target and minimum accuracy. Pass to unlock the next level and earn 🔑 Keys. You can replay levels anytime to improve your personal best.' },
     ],
     faqs: [
       ['Do I need an account?', 'No. Guest mode gives full access to all 15 levels and all 38 games. Progress saves in your browser. Sign up to sync across devices, use friends and daily challenge features.'],
       ['Is AccuratKey free?', 'The core app is free forever. A Pro subscription is available for power users — it unlocks advanced stats, exclusive themes, and extra features. Keys are earned by playing and can also be purchased directly.'],
       ['What browsers are supported?', 'Chrome, Firefox, Safari, and Edge. Chrome is recommended for best performance.'],
-      ['What is a streak?', 'A streak 🔥 is the number of consecutive days you have used AccuratKey. Type at least one level or complete the daily challenge each day to keep it going. Shown in the nav bar as 🔥N.'],
       ['Can kids use AccuratKey?', 'Yes. The age-adaptive system adjusts font sizes, word complexity, and level cap based on the birthday you enter. Kids under 10 get larger fonts and simpler words.'],
     ],
   },
@@ -54,13 +54,13 @@ const TOPICS: Record<string, Topic> = {
       { heading: 'Why no Backspace?', body: 'AccuratKey deliberately disables Backspace. The goal is to train your fingers to press the right key the first time, building genuine muscle memory. Sites that allow Backspace teach speed-and-fix, not accuracy. You\'ll improve faster this way.' },
       { heading: 'Personal Bests', body: 'Your best WPM and accuracy for each level are saved per profile. Replaying a level shows your previous best so you can try to beat it. Replays still earn Keys.' },
       { heading: 'Show More / Show Less', body: 'By default the map shows your current level plus 5 upcoming. Tap Show More to reveal further levels. Tap Show Less to collapse back.' },
-      { heading: 'Keys earned', body: 'Completing a level earns Keys. Higher levels pay more. A combo multiplier applies if you type 10+ words correctly in a row (1.5×) or 20+ (2×).' },
+      { heading: 'Keys earned', body: 'Completing a level earns 🔑 Keys. Higher levels pay more. A combo multiplier applies if you type 10+ words correctly in a row (1.5×) or 20+ (2×).' },
     ],
     faqs: [
       ['Can I skip levels?', 'You can attempt any unlocked level or the next locked one. But you must pass each level to unlock further ones.'],
       ['What happens if I fail?', 'Nothing — just try again. There are no penalties and no attempt limits.'],
       ['Do guest levels sync if I sign up?', 'No — guest progress stays in the browser. Create an account first, then play to build cloud-synced progress.'],
-      ['What\'s the highest level?', 'Level 15 — no age restrictions on level access.'],
+      ['What\'s the highest level?', '15 for adults. Kids under 10 are capped at level 5, under 13 at level 10. This adjusts as they get older.'],
     ],
   },
 
@@ -88,15 +88,15 @@ const TOPICS: Record<string, Topic> = {
   },
 
   'keys-shop': {
-    title: 'Keys & Shop', emoji: 'Keys', color: '#fb923c',
-    intro: 'Keys are AccuratKey\'s in-game currency. Earn them by completing levels, spend them on cosmetics.',
+    title: 'Keys & Shop', emoji: '🔑', color: '#fb923c',
+    intro: '🔑 Keys are AccuratKey\'s in-game currency. Earn them by completing levels, spend them on cosmetics.',
     sections: [
       { heading: 'Earning Keys', body: 'Keys are earned every time you complete a typing level. Higher levels pay more Keys. Combo multipliers boost earnings: 1.5× for a 10-word streak, 2× for a 20-word streak. Replaying levels also earns Keys each time.' },
       { heading: 'The Shop', body: 'Access the Shop via the 🛍️ button in the nav bar. Browse Themes, Fonts, and Sound Packs. All items are purely cosmetic — nothing in the shop affects gameplay. Once purchased, items are permanently yours on that profile.' },
       { heading: 'Themes', body: 'Themes change the entire color scheme — background, text, accents, borders. Options include dark, light, neon, retro, pastel, ocean, forest, and more. Preview before buying. Equip from the Shop or Edit Profile.' },
       { heading: 'Fonts', body: 'Change the typeface used throughout the app and during typing tests. Choose from monospace (JetBrains Mono, Fira Code, Cascadia), sans-serif (Inter, Outfit, Poppins), display fonts (Orbitron, Press Start 2P), and more.' },
       { heading: 'Sound Packs', body: 'Each keypress can play a satisfying click, clack, pop, or thock sound. Sound packs change the audio profile. Toggle sounds with the 🔇/🔊 button in the nav bar.' },
-      { heading: 'Gifting Keys', body: 'If the Send Keys feature is enabled on your profile, you can gift Keys to friends. Open a friend\'s profile from the Friends panel and tap Gift Keys.' },
+      { heading: 'Gifting Keys', body: 'If the Send Keys feature is enabled on your profile, you can gift Keys to friends. Open a friend\'s profile from the Friends panel and tap Gift 🔑.' },
       { heading: 'Keys display', body: 'Your current Key balance shows in the nav bar (if enabled in Feature Access). Tap it to go directly to the Shop.' },
     ],
     faqs: [
@@ -132,14 +132,14 @@ const TOPICS: Record<string, Topic> = {
     intro: 'A fresh typing challenge every day. Complete it to appear on the global daily leaderboard.',
     sections: [
       { heading: 'How it works', body: 'Every day at midnight a new word set is generated. Every player types the exact same words. Your score (WPM × accuracy ÷ 100) goes on the leaderboard. Only your first attempt counts — no retries.' },
-      { heading: 'Streaks 🔥', body: 'A streak is the number of consecutive days you have typed at least one level or the daily challenge. Miss a day and it resets to 0. Shown in the nav bar as 🔥N. Streaks reset at midnight ET (Eastern Time).' },
+      { heading: 'Streaks 🔥', body: 'Complete at least one typing level or the daily challenge each calendar day to keep your streak alive. Streaks reset at midnight if you miss a day. Your current streak shows in the nav bar.' },
       { heading: 'Daily Leaderboard', body: 'After completing, tap the Daily tab to see today\'s global rankings. The leaderboard updates in real time. Rankings reset every day at midnight.' },
       { heading: 'Availability', body: 'Daily challenge requires a logged-in account. Guest mode does not have access. The challenge becomes available again each day at midnight in your local timezone.' },
       { heading: 'Weekly Summary', body: 'At the end of each week a summary shows your total sessions, average WPM, accuracy trend, and how many daily challenges you completed.' },
     ],
     faqs: [
       ['Can I retry the daily challenge?', 'No — only your first attempt is recorded on the leaderboard.'],
-      ['What time does it reset?', 'Midnight ET (Eastern Time) — UTC-4 during daylight saving (March–November), UTC-5 otherwise.'],
+      ['What time does it reset?', 'Midnight in your local timezone.'],
       ['What happens if I miss a day?', 'Your streak resets to 0. Nothing else happens — you can start a new streak immediately.'],
       ['Is the daily challenge the same for everyone?', 'Yes — every user worldwide types the same words each day.'],
     ],
@@ -196,7 +196,7 @@ const TOPICS: Record<string, Topic> = {
       { heading: 'Feature Access', body: 'Tap your avatar → Feature Access to see and toggle all features for the current profile. Features are grouped: Navigation, Stats & History, Social, Shop & Customization, Advanced. Some features require specific conditions (e.g. having friends added).' },
       { heading: 'Sounds', body: 'Toggle typing sounds with the 🔇 button in the top bar of any game. AccuratKey generates sounds procedurally — each keypress plays a satisfying click. Sound packs from the Shop change the audio style.' },
       { heading: 'Ghost typing', body: 'Ghost typing shows a faint "shadow" of the correct character as you type. Useful for beginners. Toggle in Feature Access.' },
-
+      { heading: 'Pomodoro timer ⏱', body: 'A built-in focus timer appears in the nav bar when enabled. Default: 25-minute work sessions, 5-minute breaks. Customize intervals in settings. The timer turns red when you\'re in break mode.' },
       { heading: 'Session history', body: 'View your past typing sessions from Edit Profile → Session History. Shows WPM, accuracy, level, and date for each session. Toggle visibility in Feature Access.' },
       { heading: 'Public profile', body: 'Enable to make your profile viewable at /user/[username]. Shows your stats, level progress, and recent activity. Disable to keep everything private.' },
       { heading: 'Keyboard layout', body: 'Select your physical keyboard layout in Edit Profile. AccuratKey uses this to correctly map keypresses to characters for non-QWERTY layouts.' },
@@ -221,7 +221,7 @@ const TOPICS: Record<string, Topic> = {
       { heading: 'WPM trend', body: 'The weekly summary shows whether your average WPM went up or down compared to the previous week. This gives you a simple indicator of whether your practice is paying off.' },
     ],
     faqs: [
-      ['Does streak reset at midnight exactly?', 'Yes — midnight ET (Eastern Time). UTC-4 during daylight saving (March–November), UTC-5 otherwise.'],
+      ['Does streak reset at midnight exactly?', 'Yes — midnight in your local timezone.'],
       ['Can I see my all-time stats?', 'Profile stats show cumulative totals. Detailed session-by-session history is available in Session History.'],
       ['Are stats backed up?', 'Yes — stats sync to Firebase for logged-in users. Guest stats are local-only.'],
     ],
@@ -252,17 +252,17 @@ const TOPICS: Record<string, Topic> = {
     intro: 'AccuratKey adapts automatically based on the user\'s age and supports a range of accessibility needs.',
     sections: [
       { heading: 'Age-adaptive system', body: 'When you create a profile and enter a birthday, AccuratKey calculates the user\'s current age and applies an age-appropriate experience. The app recalculates on each birthday automatically.' },
-      { heading: 'Under 7 years old', body: 'Purple/indigo theme. Comic Sans or Chalkboard font (larger, rounder). Only the simplest 3–4 letter words. Large emoji icons. Simplified navigation.' },
-      { heading: '7–9 years old', body: 'Soft purple theme. Slightly larger fonts. Simple words, some medium-length words. Full navigation but with simplified labels.' },
-      { heading: '10–12 years old', body: 'Indigo theme. Standard font with slightly larger size. Normal word pool up to 7 letters.' },
-      { heading: '13+ years old', body: 'Full dark theme. JetBrains Mono font at standard size. Full word pool. All 15 levels. All features available.' },
+      { heading: 'Under 7 years old', body: 'Purple/indigo theme. Comic Sans or Chalkboard font (larger, rounder). Only the simplest 3–4 letter words. Maximum level 5. Large emoji icons. Simplified navigation.' },
+      { heading: '7–9 years old', body: 'Soft purple theme. Slightly larger fonts. Simple words, some medium-length words. Maximum level 10. Full navigation but with simplified labels.' },
+      { heading: '10–12 years old', body: 'Indigo theme. Standard font with slightly larger size. Normal word pool up to 7 letters. Maximum level 12.' },
+      { heading: '13+ years old', body: 'Full dark theme. JetBrains Mono font at standard size. Full word pool. All 15 levels. All features available (subject to Feature Access settings).' },
       { heading: 'Font size scaling', body: 'The app uses relative sizing throughout. If you find text too small, try a theme with a larger base font, or use your browser\'s zoom (Ctrl/Cmd + on desktop).' },
       { heading: 'Color themes', body: 'Many themes are available in the Shop. High-contrast options are available. Dark mode is the default. Switch to a light theme in the Shop if you prefer.' },
       { heading: 'Keyboard-only navigation', body: 'AccuratKey is primarily keyboard-driven by design. All interactions during typing tests are keyboard-only. Navigation buttons are large and touch-friendly for mobile users with a connected keyboard.' },
     ],
     faqs: [
       ['What if I entered the wrong birthday?', 'Edit Profile → change your birthday → Save. The age-adaptive theme updates immediately.'],
-      
+      ['Can I override the age restrictions?', 'Admins can override level caps per profile. Contact support if needed.'],
       ['Does AccuratKey support screen readers?', 'Partial support. The typing test area is not screen-reader friendly by design, but navigation and menus work with basic screen readers.'],
     ],
   },
@@ -331,7 +331,7 @@ const TOPICS: Record<string, Topic> = {
       ['How do I change my keyboard layout in AccuratKey?', 'Edit Profile → Keyboard Layout → select your layout (QWERTY, AZERTY, QWERTZ, Colemak, Dvorak, etc.). Make sure it matches your OS keyboard language setting.'],
       ['Can I have multiple profiles?', 'Yes — one account can have unlimited profiles. Each has its own name, progress, Keys, themes, and settings. Great for families.'],
       ['How do I delete my account?', 'Edit Profile → Delete Account. This permanently deletes all profiles, progress, Keys, and your login. Cannot be undone.'],
-      ['What are Keys Keys?', 'The in-game currency. Earned by completing typing levels. Spent in the Shop on themes, fonts, and sound packs. Can be gifted to friends. No real-money involvement.'],
+      ['What are Keys 🔑?', 'The in-game currency. Earned by completing typing levels. Spent in the Shop on themes, fonts, and sound packs. Can be gifted to friends. No real-money involvement.'],
       ['How do I report a bug?', 'Tap the 💬 button in the nav bar (when logged in) and describe what happened. The developer reads every message.'],
       ['Is there a mobile app?', 'Not yet — AccuratKey runs as a web app in any modern browser. It can be added to your home screen as a PWA (Progressive Web App) on both iOS and Android for an app-like experience.'],
       ['Can I use AccuratKey in a classroom?', 'Yes. Create one account per student or use guest mode (no accounts needed). The age-adaptive system adjusts difficulty automatically. Teacher mode / class management is not available yet but is planned.'],
@@ -342,7 +342,7 @@ const TOPICS: Record<string, Topic> = {
 
 export default function HelpTopicPage({ params }: { params: { id: string } }) {
   const topic = TOPICS[params.id];
-  if (!topic) return <div style={{minHeight:'100vh',background:'#0a0a0f',display:'flex',alignItems:'center',justifyContent:'center',color:'#555',fontFamily:"'JetBrains Mono',monospace"}}>Not found — <a href='/help' style={{color:'#7c6af7',marginLeft:6}}>Help Center</a></div>;
+  if (!topic) notFound();
   const { title, emoji, color, intro, sections, faqs } = topic;
   const [openFaq, setOpenFaq] = useState<number|null>(null);
 
