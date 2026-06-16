@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
+import { notFound } from 'next/navigation';
 
 type Section = { heading: string; body: string };
 type Topic = { title: string; emoji: string; color: string; intro: string; sections: Section[]; faqs?: [string,string][] };
@@ -130,15 +131,15 @@ const TOPICS: Record<string, Topic> = {
     title: 'Daily Challenge', emoji: '📅', color: '#f472b6',
     intro: 'A fresh typing challenge every day. Complete it to appear on the global daily leaderboard.',
     sections: [
-      { heading: 'How it works', body: 'Every day at midnight ET a new word set is generated. Every player types the exact same words. Your score (WPM × accuracy ÷ 100) goes on the leaderboard. Only your first attempt counts — no retries.' },
-      { heading: 'Streaks 🔥', body: 'Complete at least one typing level or the daily challenge each calendar day to keep your streak alive. Streaks reset at midnight ET if you miss a day. Your current streak shows in the nav bar.' },
-      { heading: 'Daily Leaderboard', body: 'After completing, tap the Daily tab to see today\'s global rankings. The leaderboard updates in real time. Rankings reset every day at midnight ET.' },
-      { heading: 'Availability', body: 'Daily challenge requires a logged-in account. Guest mode does not have access. The challenge becomes available again each day at midnight ET (Eastern Time). During daylight saving (March–November) that's UTC-4; otherwise UTC-5.' },
+      { heading: 'How it works', body: 'Every day at midnight a new word set is generated. Every player types the exact same words. Your score (WPM × accuracy ÷ 100) goes on the leaderboard. Only your first attempt counts — no retries.' },
+      { heading: 'Streaks 🔥', body: 'Complete at least one typing level or the daily challenge each calendar day to keep your streak alive. Streaks reset at midnight if you miss a day. Your current streak shows in the nav bar.' },
+      { heading: 'Daily Leaderboard', body: 'After completing, tap the Daily tab to see today\'s global rankings. The leaderboard updates in real time. Rankings reset every day at midnight.' },
+      { heading: 'Availability', body: 'Daily challenge requires a logged-in account. Guest mode does not have access. The challenge becomes available again each day at midnight in your local timezone.' },
       { heading: 'Weekly Summary', body: 'At the end of each week a summary shows your total sessions, average WPM, accuracy trend, and how many daily challenges you completed.' },
     ],
     faqs: [
       ['Can I retry the daily challenge?', 'No — only your first attempt is recorded on the leaderboard.'],
-      ['What time does it reset?', 'Midnight ET (Eastern Time) — UTC-4 during daylight saving (March–November), UTC-5 otherwise.'],
+      ['What time does it reset?', 'Midnight in your local timezone.'],
       ['What happens if I miss a day?', 'Your streak resets to 0. Nothing else happens — you can start a new streak immediately.'],
       ['Is the daily challenge the same for everyone?', 'Yes — every user worldwide types the same words each day.'],
     ],
@@ -220,7 +221,7 @@ const TOPICS: Record<string, Topic> = {
       { heading: 'WPM trend', body: 'The weekly summary shows whether your average WPM went up or down compared to the previous week. This gives you a simple indicator of whether your practice is paying off.' },
     ],
     faqs: [
-      ['Does streak reset at midnight exactly?', 'Yes — midnight ET (Eastern Time). During daylight saving (March–November) that's UTC-4; otherwise UTC-5.'],
+      ['Does streak reset at midnight exactly?', 'Yes — midnight in your local timezone.'],
       ['Can I see my all-time stats?', 'Profile stats show cumulative totals. Detailed session-by-session history is available in Session History.'],
       ['Are stats backed up?', 'Yes — stats sync to Firebase for logged-in users. Guest stats are local-only.'],
     ],
@@ -300,7 +301,7 @@ const TOPICS: Record<string, Topic> = {
       { heading: 'Shop not opening', body: 'The Shop button requires a logged-in account. Guest mode doesn\'t have Shop access. If logged in, make sure the Shop feature is enabled in Feature Access.' },
       { heading: 'Profile picker appearing randomly', body: 'This can happen if Firebase\'s auth state fires multiple times. Refresh the page. If it keeps happening, sign out and sign back in.' },
       { heading: 'Sound not working', body: 'Check that your device volume is not muted. Check that the 🔊 button in AccuratKey is not toggled to muted (🔇). On iOS, check the silent/ring switch on the side of the device.' },
-      { heading: 'Streak reset unexpectedly', body: 'Streaks reset at midnight ET. If you completed a level close to midnight, it may have counted for the wrong day. All times are ET — midnight ET is when streaks and daily challenges reset.' },
+      { heading: 'Streak reset unexpectedly', body: 'Streaks reset at midnight local time. If you completed a level close to midnight, it may have counted for the wrong day. Check your device\'s timezone is set correctly.' },
     ],
     faqs: [
       ['The app worked yesterday but not today', 'Most likely a cached version is conflicting with a recent update. Hard refresh (Ctrl+Shift+R) and try again.'],
@@ -325,7 +326,7 @@ const TOPICS: Record<string, Topic> = {
       ['What keyboard layout should I use?', 'QWERTY for almost everyone. Colemak or Dvorak only if starting from scratch and willing to invest months relearning. The efficiency gain over QWERTY is real but small for most people.'],
       ['Why is my accuracy lower here than on other typing sites?', 'Because AccuratKey measures raw accuracy — no Backspace to hide mistakes. Other sites measure corrected accuracy. Both are valid but they measure different things. Raw accuracy is a stricter and more honest measure.'],
       ['Can I use AccuratKey on my phone?', 'Only with a physical keyboard connected (Bluetooth or USB). Mobile touchscreens are not supported. Once a keyboard is connected, the full app is accessible.'],
-      ['How do streaks work?', 'Complete one level or the daily challenge each calendar day to keep your streak. Streaks reset at midnight ET if you miss a day. Streaks show in the nav bar as 🔥N.'],
+      ['How do streaks work?', 'Complete one level or the daily challenge each calendar day to keep your streak. Streaks reset at midnight local time if you miss a day. Streaks show in the nav bar as 🔥N.'],
       ['What is the Daily Challenge?', 'A new set of words generated fresh each day. Everyone types the same words. One attempt only. Scores go on the global daily leaderboard. Requires a logged-in account.'],
       ['How do I change my keyboard layout in AccuratKey?', 'Edit Profile → Keyboard Layout → select your layout (QWERTY, AZERTY, QWERTZ, Colemak, Dvorak, etc.). Make sure it matches your OS keyboard language setting.'],
       ['Can I have multiple profiles?', 'Yes — one account can have unlimited profiles. Each has its own name, progress, Keys, themes, and settings. Great for families.'],
@@ -341,7 +342,7 @@ const TOPICS: Record<string, Topic> = {
 
 export default function HelpTopicPage({ params }: { params: { id: string } }) {
   const topic = TOPICS[params.id];
-  if (!topic) return <div style={{minHeight:'100vh',background:'#0a0a0f',display:'flex',alignItems:'center',justifyContent:'center',color:'#555',fontFamily:"'JetBrains Mono',monospace"}}>Not found — <a href='/help' style={{color:'#7c6af7',marginLeft:6}}>Help Center</a></div>;
+  if (!topic) notFound();
   const { title, emoji, color, intro, sections, faqs } = topic;
   const [openFaq, setOpenFaq] = useState<number|null>(null);
 
