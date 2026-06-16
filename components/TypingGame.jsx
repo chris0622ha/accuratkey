@@ -355,7 +355,34 @@ const KKey=({size=16,style={}})=>(<svg width={size} height={size*1.1} viewBox="0
 
 const isTeen=p=>((p?.age??0)||0)>=13,isKid=p=>{const a=p?.age;return a!=null&&a>0&&a<13;};
 const KID_FEATURES=["keys","friends","shop","daily","test","skip","sounds"];
-const canUse=(p,feat)=>{if(!p)return false;return p.features?.[feat]!==false;};
+const canUse=(p,feat)=>{if(!p)return false;if(p.isGuest)return ["sounds","keyboard","ghost"].includes(feat);return p.features?.[feat]!==false;};
+
+// Guest profile — localStorage only, no Firebase
+const GUEST_DEFAULTS = { currentLevel:1, highestUnlocked:1, keys:0, accuracy:0, streak:0, highScore:0, levelBests:{} };
+function loadGuest() {
+  try { const d={...GUEST_DEFAULTS,...JSON.parse(localStorage.getItem("ak_guest")||"{}")}; return d; } catch{return {...GUEST_DEFAULTS};}
+}
+function saveGuest(patch) {
+  try {
+    const cur = loadGuest();
+    localStorage.setItem("ak_guest", JSON.stringify({...cur,...patch}));
+  } catch{}
+}
+function makeGuestProfile() {
+  const g = loadGuest();
+  return {
+    id:"guest", name:"Guest", age:20, isGuest:true,
+    features:{ sounds:true, keyboard:true, ghost:true },
+    avatar:"🎮", activeTheme:"dark", activeFont:"mono",
+    currentLevel: g.currentLevel||1,
+    highestUnlocked: g.highestUnlocked||1,
+    keys: g.keys||0,
+    accuracy: g.accuracy||0,
+    streak: g.streak||0,
+    levelBests: g.levelBests||{},
+  };
+}
+const GUEST_PROFILE = makeGuestProfile();
 
 const QRCanvas=({url,size=160})=>{const r=useRef(null);useEffect(()=>{if(url&&r.current)import("qrcode").then(Q=>Q.toCanvas(r.current,url,{width:size,margin:1,color:{dark:"#000",light:"#fff"}})).catch(()=>{});},[url,size]);return <canvas ref={r} style={{borderRadius:8,display:"block"}}/>;};
 
@@ -1492,7 +1519,21 @@ export default function AccuratKey() {
           getPendingChallenges(user.uid).then(setChallenges).catch(() => {});
         }
         setWpm(fw);
-        if (user && activeProfile) {
+        if (activeProfile?.isGuest && passed) {
+          // Save guest progress to localStorage
+          const gd = loadGuest();
+          const newBests = {...(gd.levelBests||{})};
+          if (!newBests[playingLevel] || fw > newBests[playingLevel]) newBests[playingLevel] = fw;
+          saveGuest({
+            currentLevel: Math.max(gd.currentLevel||1, passed?playingLevel+1:playingLevel),
+            highestUnlocked: Math.max(gd.highestUnlocked||1, passed?playingLevel+1:playingLevel),
+            accuracy: Math.round(newAcc),
+            highScore: Math.max(gd.highScore||0, fw),
+            levelBests: newBests,
+          });
+          setActiveProfile(p => ({...p, ...loadGuest()}));
+        }
+        if (user && activeProfile && !activeProfile?.isGuest) {
           saveSession(user.uid, activeProfile.id, { wpm: fw, accuracy: newAcc, layout: layoutKey, level: playingLevel, chars: nt, passed })
             .then(async (earned) => {
               // Combo multiplier: 10+ combo = 1.5x, 20+ combo = 2x
@@ -1523,7 +1564,7 @@ export default function AccuratKey() {
               const newBest = { wpm: Math.max(fw, prevBest?.wpm || 0), accuracy: Math.max(newAcc, prevBest?.accuracy || 0), stars: Math.max(stars, prevBest?.stars || 0) };
               updateProfile(user.uid, activeProfile.id, { [`levelBests.${playingLevel}`]: newBest }).catch(() => {});
             }
-            updateStreak(user.uid, activeProfile.id).then(s=>{ if(s) setStreak(s); }).catch(()=>{});
+            if(!activeProfile?.isGuest) updateStreak(user.uid, activeProfile.id).then(s=>{ if(s) setStreak(s); }).catch(()=>{});
             if (playingLevel === -1) {
               submitDailyScore(user.uid, currentUsername, activeProfile.avatar, {wpm:fw, accuracy:newAcc}).catch(()=>{});
               setDailyDone(true);
@@ -1675,7 +1716,7 @@ export default function AccuratKey() {
 
   const openProfileModal = async () => {
     if (user && activeProfile) {
-      getRecentSessions(user.uid, activeProfile.id, 10).then(setSessions).catch(() => {});
+      if (!activeProfile?.isGuest) getRecentSessions(user.uid, activeProfile.id, 10).then(setSessions).catch(() => {});
       setCustomLists(activeProfile.customLists || []);
       // Auto-show weekly summary on Mondays
       if (new Date().getDay() === 1) {
@@ -1691,7 +1732,7 @@ export default function AccuratKey() {
         getPendingChallenges(user.uid).then(setChallenges).catch(() => {});
       }
       // Check for admin replies / notifications
-      getPendingNotifications(user.uid).then(notifs => {
+      if(!activeProfile?.isGuest) getPendingNotifications(user.uid).then(notifs => {
         if (notifs.length > 0) {
           setPendingNotifications(notifs);
           setActiveNotification(notifs[0]);
@@ -1886,7 +1927,7 @@ const Nav = () => (<>
           {canUse(activeProfile,"keys")&&<span style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:"4px 10px",fontSize:fs(13),color:T.accent,fontWeight:700,display:"flex",alignItems:"center",gap:4}}><KKey size={14}/>{((k)=>k>=1e6?""+Math.round(k/1e6)+"M":k>=1e3?""+Math.round(k/1e3)+"k":k)(activeProfile.keys||0)}</span>}
                     {canUse(activeProfile,"friends")&&<button onClick={()=>{getFriends(user?.uid).then(setFriends);getIncomingRequests(user?.uid).then(setFriendReqs);setShowFriends(true);}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:fs(13),padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Friends">👥</button>}
           {canUse(activeProfile,"challenges")&&<button onClick={()=>{getPendingChallenges(user.uid).then(setChallenges);setShowChallenges(true);setChallengeMsg("");}} style={{background:challenges.some(c=>c.toUid===user?.uid&&c.status==="pending")?"#ef444422":"none",border:`1px solid ${challenges.some(c=>c.toUid===user?.uid&&c.status==="pending")?"#ef4444":T.border}`,borderRadius:6,color:challenges.some(c=>c.toUid===user?.uid&&c.status==="pending")?"#ef4444":T.muted,fontSize:fs(13),padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Challenges">⚔️</button>}
-          {canUse(activeProfile,"shop")&&<button onClick={()=>{
+          {canUse(activeProfile,"shop")&&!activeProfile?.isGuest&&<button onClick={()=>{
     localStorage.setItem('ak_returnScreen', screen||'levelMap');
     localStorage.setItem('ak_returnProfileId', activeProfile?.id||'');
     window.location.href='/shop';
@@ -1942,6 +1983,15 @@ const Nav = () => (<>
   );
 
   // Notification popup (feedback reply from admin)
+  const GuestBanner = activeProfile?.isGuest ? (
+    <div style={{background:"#1a1200",border:"1px solid #f59e0b44",borderRadius:10,padding:"10px 14px",marginBottom:12,display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+      <span style={{color:"#f59e0b",fontSize:12}}>👤 Playing as Guest — progress saved locally only</span>
+      <button onClick={()=>setScreenWithUrl("auth")} style={{background:"#f59e0b",border:"none",borderRadius:6,color:"#000",fontSize:11,fontWeight:700,padding:"4px 10px",cursor:"pointer",fontFamily:T.font,whiteSpace:"nowrap"}}>
+        Sign up →
+      </button>
+    </div>
+  ) : null;
+
   const NotificationPopup = activeNotification ? (
     <div style={{position:"fixed",inset:0,background:"#000000aa",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
       <div style={{background:T.card,border:`1px solid ${T.purple}`,borderRadius:16,padding:28,maxWidth:420,width:"100%",fontFamily:T.font}}>
@@ -2165,8 +2215,12 @@ const Nav = () => (<>
             style={{width:"100%",padding:"13px",borderRadius:9,border:"none",background:"#7c6af7",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"'JetBrains Mono',monospace",opacity:authLoading?0.6:1}}>
             {authLoading ? "..." : authMode === "login" ? "Log in" : "Sign up"}
           </button>
-          <button onClick={() => setScreenWithUrl("levelMap")} style={{width:"100%",marginTop:12,background:"transparent",border:"none",color:"#444",fontSize:12,cursor:"pointer",fontFamily:"'JetBrains Mono',monospace"}}>
-            Continue without signing in
+          <button onClick={() => {
+            const g = makeGuestProfile();
+            setActiveProfile(g);
+            setScreenWithUrl("levelMap");
+          }} style={{width:"100%",marginTop:12,background:"transparent",border:"none",color:"#444",fontSize:12,cursor:"pointer",fontFamily:"'JetBrains Mono',monospace"}}>
+            Continue as Guest
           </button>
         </div>
       </div>
