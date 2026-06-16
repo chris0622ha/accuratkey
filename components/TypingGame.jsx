@@ -761,7 +761,9 @@ export default function AccuratKey() {
     if (typeof window !== "undefined" && STANDALONE_PAGES.includes(window.location.pathname)) return;
     const url = SCREEN_URLS[s] || "/game";
     if (typeof window !== "undefined" && window.location.pathname !== url) {
-      router.replace(url);
+      // Use history.replaceState directly — Next.js router.replace can silently fail
+      // on same-origin page-to-page navigation in the App Router
+      window.history.replaceState({}, "", url);
     }
   }, [router]);
   const [user, setUser] = useState(null);
