@@ -964,6 +964,13 @@ export default function GamesTab({ T }) {
     sniper: Sniper, mirror: Mirror, flash: Flash, echo: Echo,
     ghost: GhostWords, coderain: CodeRain, boss: BossBattle,
     story: TypewriterStory, journal: TypingJournal, poetry: PoetryMode,
+    hundred: HundredWords, endurance: Endurance, roulette: Roulette,
+    wordchain: WordChain, blitz: CategoryBlitz, vocab: VocabBuilder,
+    spellingbee: SpellingBee, invaders: TypingInvaders, asteroid: AsteroidBelt,
+    tower: TowerDefense, mystery: MysteryWords, rhyme: RhymeTime, madlibs: MadLibs,
+    speedtest: SpeedTest, missing: MissingLetters, anagram: Anagram,
+    bricks: BrickBreaker, quotes: Quotes, haiku: HaikuMode,
+    synonyms: Synonyms, antonyms: Antonyms,
   };
 
   if (activeGame) {
