@@ -1,7 +1,6 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
-import { notFound } from 'next/navigation';
 
 type Section = { heading: string; body: string };
 type Topic = { title: string; emoji: string; color: string; intro: string; sections: Section[]; faqs?: [string,string][] };
@@ -343,7 +342,7 @@ const TOPICS: Record<string, Topic> = {
 
 export default function HelpTopicPage({ params }: { params: { id: string } }) {
   const topic = TOPICS[params.id];
-  if (!topic) notFound();
+  if (!topic) return <div style={{minHeight:'100vh',background:'#0a0a0f',display:'flex',alignItems:'center',justifyContent:'center',color:'#555',fontFamily:"'JetBrains Mono',monospace"}}>Not found — <a href='/help' style={{color:'#7c6af7',marginLeft:6}}>Help Center</a></div>;
   const { title, emoji, color, intro, sections, faqs } = topic;
   const [openFaq, setOpenFaq] = useState<number|null>(null);
 
