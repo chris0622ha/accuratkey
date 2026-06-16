@@ -1202,7 +1202,7 @@ export default function AccuratKey() {
             setActiveProfile(prof);
             setLayoutKey(prof.favoriteLayout || "qwerty");
             if (prof.streak) setStreak(prof.streak);
-            setShowCount((prof.currentLevel || 1) + 10);
+            setShowCount((prof.currentLevel || 1) + 5);
             setScreen(returnScreen === "profilePicker" ? "levelMap" : returnScreen);
           } else if (!activeProfile) {
             // Only go to profile picker if no profile is already active
@@ -1252,7 +1252,7 @@ export default function AccuratKey() {
     setActiveProfile(profile);
     setLayoutKey(profile.favoriteLayout || "qwerty");
     if(profile.streak) setStreak(profile.streak);
-    setShowCount((profile.currentLevel||1)+10);
+    setShowCount((profile.currentLevel||1)+5);
     if (typeof window !== "undefined" && user) {
       localStorage.setItem("ak_lastProfile_" + user.uid, profile.id);
       localStorage.setItem("ak_profileName", profile.name);
@@ -1583,7 +1583,8 @@ export default function AccuratKey() {
     setSaving(true); setSaveMsg("");
     try {
       let photoURL = activeProfile?.photoURL || null;
-      if (editPhotoB64) photoURL = editPhotoB64;
+      if (editPhotoB64 === "remove") photoURL = null;
+      else if (editPhotoB64) photoURL = editPhotoB64;
       else if (editPhoto) photoURL = await resizeToBase64(editPhoto, 200);
       // Validate birthday: only reject genuinely future dates
       const rawBday = editBirthday || "";
@@ -2460,8 +2461,8 @@ const Nav = () => (<>
               }
               <div>
                 <button onClick={()=>editPhotoRef.current?.click()} style={{display:"block",background:"transparent",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:12,padding:"6px 12px",cursor:"pointer",marginBottom:5,fontFamily:T.font}}>Upload photo</button>
-                <button onClick={(e)=>{e.stopPropagation();startQrUpload("edit");}} style={{display:"block",background:"transparent",border:`1px solid ${T.purple}66`,borderRadius:6,color:T.purple,fontSize:12,padding:"6px 12px",cursor:"pointer",marginBottom:5,fontFamily:T.font}}>📱 Use phone</button>
-                {(editPhotoPreview||activeProfile?.photoURL) && <button onClick={()=>{setEditPhoto(null);setEditPhotoPreview(null);setEditPhotoB64(null);}} style={{background:"transparent",border:"none",color:T.faint,fontSize:11,cursor:"pointer",fontFamily:T.font}}>Remove</button>}
+                {!isMobile&&<button onClick={(e)=>{e.stopPropagation();startQrUpload("edit");}} style={{display:"block",background:"transparent",border:`1px solid ${T.purple}66`,borderRadius:6,color:T.purple,fontSize:12,padding:"6px 12px",cursor:"pointer",marginBottom:5,fontFamily:T.font}}>📱 Use phone</button>}
+                {(editPhotoPreview||activeProfile?.photoURL) && <button onClick={()=>{setEditPhoto(null);setEditPhotoPreview(null);setEditPhotoB64("remove");}} style={{background:"transparent",border:"none",color:T.faint,fontSize:11,cursor:"pointer",fontFamily:T.font}}>Remove photo</button>}
                 <input ref={editPhotoRef} type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){setEditPhoto(f);setEditPhotoPreview(URL.createObjectURL(f));setEditPhotoB64(null);}}} />
               </div>
             </div>
@@ -2527,16 +2528,7 @@ const Nav = () => (<>
               )}
             </div>
             {saveMsg && <p style={{color:saveMsg==="Saved!"?T.accent2:"#ef4444",fontSize:12,marginBottom:8}}>{saveMsg}</p>}
-            {/* Profile Admin */}
-            <div style={{padding:"10px 0",borderTop:`1px solid ${T.faint}`,marginTop:8}}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
-                <div>
-                  <div style={{color:T.text,fontSize:12,fontWeight:700}}>Profile Admin</div>
-                  <div style={{color:T.faint,fontSize:10,marginTop:2}}>{activeProfile?.isProfileAdmin ? "✓ All features unlocked" : "Unlocks all features for this profile"}</div>
-                </div>
-                <button onClick={async()=>{const v=!(activeProfile?.isProfileAdmin);patchProfile({isProfileAdmin:v});await updateProfile(user.uid,activeProfile.id,{isProfileAdmin:v});}} style={{padding:"5px 14px",background:(activeProfile?.isProfileAdmin)?"#7c6af7":"transparent",border:`1px solid ${(activeProfile?.isProfileAdmin)?"#7c6af7":T.border}`,borderRadius:7,color:(activeProfile?.isProfileAdmin)?"#fff":T.muted,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>{activeProfile?.isProfileAdmin?"ON":"OFF"}</button>
-              </div>
-            </div>
+
             <div style={{padding:"10px 0",borderTop:`1px solid ${T.faint}`}}>
               <button onClick={()=>{if(!activeProfile?.isProfileAdmin){setShowSettingsModal(false);setShowFeatureAccess(true);}}} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",background:"none",border:`1px solid ${T.border}`,borderRadius:8,padding:"10px 14px",cursor:activeProfile?.isProfileAdmin?"default":"pointer",fontFamily:T.font,opacity:activeProfile?.isProfileAdmin?0.5:1}}>
                 <span style={{color:T.text,fontSize:13,fontWeight:700}}>Feature Access</span>
@@ -2693,8 +2685,8 @@ const Nav = () => (<>
               );
             })}
           </div>
-          {showCount < LEVELS.length && <button onClick={()=>setShowCount(c=>Math.min(c+10,LEVELS.length))} style={{width:"100%",marginTop:14,padding:"10px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.muted,fontSize:13,cursor:"pointer",fontFamily:T.font}}>Show 10 More ↓ ({LEVELS.length - showCount} remaining)</button>}
-          {showCount > currentLevel+10 && <button onClick={()=>setShowCount(currentLevel+10)} style={{width:"100%",marginTop:8,padding:"8px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:12,cursor:"pointer",fontFamily:T.font}}>Show Less ↑</button>}
+          {showCount < LEVELS.length && <button onClick={()=>setShowCount(c=>Math.min(c+10,LEVELS.length))} style={{width:"100%",marginTop:14,padding:"10px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.muted,fontSize:13,cursor:"pointer",fontFamily:T.font}}>Show More ↓ ({LEVELS.length - showCount} more)</button>}
+          {showCount > currentLevel+5 && <button onClick={()=>setShowCount(currentLevel+5)} style={{width:"100%",marginTop:8,padding:"8px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:12,cursor:"pointer",fontFamily:T.font}}>Show Less ↑</button>}
           <div style={{height:40}}/>
           </>}
 
