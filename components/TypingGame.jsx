@@ -564,7 +564,7 @@ function resizeToBase64(file, maxPx = 200) {
 
 function cleanErr(e) {
   const m = { "auth/invalid-credential":"Wrong email or password.", "auth/user-not-found":"No account found.", "auth/email-already-in-use":"Email already in use.", "auth/weak-password":"Password needs 6+ characters." };
-  return m[e.code] || "Something went wrong.";
+  return m[e.code] || (e.code ? e.code : e.message || "Something went wrong.");
 }
 
 // MAIN COMPONENT
