@@ -7,6 +7,24 @@ type Section = { heading: string; body: string };
 type Topic = { title: string; emoji: string; color: string; intro: string; sections: Section[]; faqs?: [string,string][] };
 
 const TOPICS: Record<string, Topic> = {
+  'keyboard': {
+    title: 'Keyboard Setup', emoji: '⌨️', color: '#06b6d4',
+    intro: 'AccuratKey requires a physical keyboard. Here are all the ways to connect one to your phone, tablet, or computer.',
+    sections: [
+      { heading: 'Bluetooth keyboard', body: 'Put the keyboard in pairing mode, go to Settings → Bluetooth on your device, and tap the keyboard when it appears. Works with any Bluetooth keyboard. Best option for phones and tablets. See the detailed guide at /keyboard/bluetooth.' },
+      { heading: 'Wired USB keyboard', body: 'Plug a USB-C to USB-A adapter into your phone or tablet, then plug the keyboard into the adapter. Works on most Android phones and iPads with USB-C. No setup required — it works instantly. See /keyboard/usb for details.' },
+      { heading: 'iPad Smart Connector', body: 'Snap an Apple Magic Keyboard or Logitech Combo Touch onto the Smart Connector port on the side of your iPad. No pairing, no battery — it just works. See /keyboard/ipad-smart.' },
+      { heading: 'Samsung DeX', body: 'Connect your Samsung Galaxy phone to a monitor and attach any Bluetooth or USB keyboard. AccuratKey runs as a full desktop app in DeX mode. See /keyboard/samsung-dex.' },
+      { heading: 'Chromebook', body: 'Open AccuratKey in Chrome on any Chromebook. Your built-in keyboard works immediately — no setup needed. External keyboards also work.' },
+      { heading: 'Laptop or Desktop (recommended)', body: 'The best experience. Open any browser, go to accuratkey.vercel.app, and press any key. Works on Windows, Mac, Linux, and ChromeOS with any keyboard.' },
+    ],
+    faqs: [
+      ['Which method is easiest?', 'Bluetooth for phones/tablets — pair once and reconnect automatically. Desktop is the easiest overall — just open the browser.'],
+      ['Does my specific keyboard work?', 'If it's Bluetooth HID or USB HID (which all consumer keyboards are), it works. See /keyboard/bluetooth or /keyboard/usb for long compatibility lists.'],
+      ['Where is the full keyboard guide?', 'At /keyboard — with expandable compatibility lists, detailed instructions, and troubleshooting for each connection method.'],
+    ],
+  },
+
   'getting-started': {
     title: 'Getting Started', emoji: '🚀', color: '#7c6af7',
     intro: 'New to AccuratKey? Here\'s everything you need to get up and running in under 5 minutes.',
