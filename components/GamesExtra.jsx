@@ -383,6 +383,7 @@ export function CodeRain({ T, onBack, onSettings, settings = {} }) {
   const MAX_MISSED = settings.maxMissed || 8;
   const SPEED_MAP = { slow: 0.012, normal: 0.02, fast: 0.032 };
   const FALL_SPEED = SPEED_MAP[settings.speed || "normal"];
+  const POOL = POOL_CODE_RAIN;
   const sv = gLoad("coderain");
   const [score, setScore] = useState(()=> sv?.score || 0);
   const [missed, setMissed] = useState(()=> sv?.missed || 0);
@@ -397,8 +398,6 @@ export function CodeRain({ T, onBack, onSettings, settings = {} }) {
   const inputRef = useRef(null);
   const frameRef = useRef(null);
   const lastSpawn = useRef(0);
-  const MAX_MISSED = 8;
-  const POOL = MED_WORDS;
 
   useEffect(() => {
     inputRef.current?.focus();
