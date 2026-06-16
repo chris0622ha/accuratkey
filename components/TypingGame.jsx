@@ -1,5 +1,4 @@
 "use client";
-import React from "react";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import TypingTest from "./TypingTest";
