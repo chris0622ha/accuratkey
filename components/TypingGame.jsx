@@ -1291,13 +1291,8 @@ export default function AccuratKey() {
     setAuthErr(""); setAuthLoading(true);
     try {
       // provider is already instantiated
-      // Use redirect on mobile, popup on desktop
-      const isMob = typeof window !== "undefined" && window.matchMedia("(pointer: coarse) and (hover: none)").matches;
-      if (isMob) {
-        await signInWithRedirect(auth, provider);
-      } else {
-        await signInWithPopup(auth, provider);
-      }
+      // Always use popup - works on mobile and desktop, shows account picker
+      await signInWithPopup(auth, provider);
     }
     catch (e) { setAuthErr(cleanErr(e)); }
     setAuthLoading(false);
