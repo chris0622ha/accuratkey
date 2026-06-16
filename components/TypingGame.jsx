@@ -355,7 +355,7 @@ const KKey=({size=16,style={}})=>(<svg width={size} height={size*1.1} viewBox="0
 
 const isTeen=p=>((p?.age??0)||0)>=13,isKid=p=>{const a=p?.age;return a!=null&&a>0&&a<13;};
 const KID_FEATURES=["keys","friends","shop","daily","test","skip","sounds"];
-const canUse=(p,feat)=>{if(!p)return false;if(p.isProfileAdmin)return true;return p.features?.[feat]!==false;};
+const canUse=(p,feat)=>{if(!p)return false;return p.features?.[feat]!==false;};
 
 const QRCanvas=({url,size=160})=>{const r=useRef(null);useEffect(()=>{if(url&&r.current)import("qrcode").then(Q=>Q.toCanvas(r.current,url,{width:size,margin:1,color:{dark:"#000",light:"#fff"}})).catch(()=>{});},[url,size]);return <canvas ref={r} style={{borderRadius:8,display:"block"}}/>;};
 
@@ -774,7 +774,7 @@ export default function AccuratKey() {
     patchProfile({ customLists: lists });
     if (user && activeProfile) updateProfile(user.uid, activeProfile.id, { customLists: lists }).catch(() => {});
   };
-  const _age = activeProfile?.isProfileAdmin ? 20 : (activeProfile?.age ?? (activeProfile?.birthday ? calcAge(activeProfile.birthday) : 20));
+  const _age = activeProfile?.age ?? (activeProfile?.birthday ? calcAge(activeProfile.birthday) : 20);
   const _baseT = getTheme(_age);
   const THEME_COLORS = {
     dark:{},
@@ -2530,22 +2530,6 @@ const Nav = () => (<>
               )}
             </div>
             {saveMsg && <p style={{color:saveMsg==="Saved!"?T.accent2:"#ef4444",fontSize:12,marginBottom:8}}>{saveMsg}</p>}
-            {/* Profile Admin */}
-            <div style={{padding:"10px 0",borderTop:`1px solid ${T.faint}`,marginTop:8}}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
-                <div>
-                  <div style={{color:T.text,fontSize:12,fontWeight:700}}>Profile Admin</div>
-                  <div style={{color:T.faint,fontSize:10,marginTop:2}}>{activeProfile?.isProfileAdmin ? "✓ All features unlocked" : "Unlocks all features for this profile"}</div>
-                </div>
-                <button onClick={async()=>{const v=!(activeProfile?.isProfileAdmin);patchProfile({isProfileAdmin:v});await updateProfile(user.uid,activeProfile.id,{isProfileAdmin:v});}} style={{padding:"5px 14px",background:(activeProfile?.isProfileAdmin)?"#7c6af7":"transparent",border:`1px solid ${(activeProfile?.isProfileAdmin)?"#7c6af7":T.border}`,borderRadius:7,color:(activeProfile?.isProfileAdmin)?"#fff":T.muted,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>{activeProfile?.isProfileAdmin?"ON":"OFF"}</button>
-              </div>
-            </div>
-            <div style={{padding:"10px 0",borderTop:`1px solid ${T.faint}`}}>
-              <button onClick={()=>{if(!activeProfile?.isProfileAdmin){setShowSettingsModal(false);setShowFeatureAccess(true);}}} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",background:"none",border:`1px solid ${T.border}`,borderRadius:8,padding:"10px 14px",cursor:activeProfile?.isProfileAdmin?"default":"pointer",fontFamily:T.font,opacity:activeProfile?.isProfileAdmin?0.5:1}}>
-                <span style={{color:T.text,fontSize:13,fontWeight:700}}>Feature Access</span>
-                <span style={{color:T.muted,fontSize:14}}>{activeProfile?.isProfileAdmin?"(all unlocked via Admin)":"›"}</span>
-              </button>
-            </div>
             {/* Change PIN */}
             <div style={{padding:"10px 0",borderTop:`1px solid ${T.faint}`}}>
               <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>PIN</div>
