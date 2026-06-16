@@ -1687,26 +1687,31 @@ export default function AccuratKey() {
     setQrToken(null);
   };
 
-  const openProfileModal = async () => {
-    if (user && activeProfile) {
-      getRecentSessions(user.uid, activeProfile.id, 10).then(setSessions).catch(() => {});
-      setCustomLists(activeProfile.customLists || []);
-      // Auto-show weekly summary on Mondays
-      if (new Date().getDay() === 1) {
-        const seenKey = `ak_weekly_seen_${new Date().toISOString().slice(0,10)}`;
-        if (!localStorage.getItem(seenKey) && user) {
-          localStorage.setItem(seenKey, '1');
-          getWeeklySessions(user.uid, activeProfile.id, 1).then(s => {
-            if (s.length > 0) { setWeeklySessions(s); setShowWeeklySummary(true); }
-          }).catch(() => {});
-        }
-      }
-      if (canUse(activeProfile, 'challenges')) {
-        getPendingChallenges(user.uid).then(setChallenges).catch(() => {});
-      }
-      getPendingNotifications(user.uid).then(notifs=>{ if(notifs.length>0){setPendingNotifications(notifs);setActiveNotification(notifs[0]);} }).catch(()=>{});
-    }
+  const openProfileModal = () => {
+    // Show modal immediately - no state changes before this
     setShowProfileModal(true);
+    // Load data after modal is open (non-blocking, won't cause flash)
+    if (user && activeProfile) {
+      setTimeout(() => {
+        setCustomLists(activeProfile.customLists || []);
+        if (!activeProfile?.isGuest) {
+          getRecentSessions(user.uid, activeProfile.id, 10).then(setSessions).catch(() => {});
+          getPendingNotifications(user.uid).then(notifs=>{ if(notifs.length>0){setPendingNotifications(notifs);setActiveNotification(notifs[0]);} }).catch(()=>{});
+          if (canUse(activeProfile, 'challenges')) {
+            getPendingChallenges(user.uid).then(setChallenges).catch(() => {});
+          }
+          if (new Date().getDay() === 1) {
+            const seenKey = `ak_weekly_seen_${new Date().toISOString().slice(0,10)}`;
+            if (!localStorage.getItem(seenKey)) {
+              localStorage.setItem(seenKey, '1');
+              getWeeklySessions(user.uid, activeProfile.id, 1).then(s => {
+                if (s.length > 0) { setWeeklySessions(s); setShowWeeklySummary(true); }
+              }).catch(() => {});
+            }
+          }
+        }
+      }, 50);
+    }
   };
 
   const AvatarImg = ({ profile, size = 36, style = {} }) => {
