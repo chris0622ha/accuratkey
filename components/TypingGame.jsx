@@ -6,7 +6,22 @@ import GamesTab from "./GamesTab";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
 import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback } from "@/lib/firebase";
 
-export 
+const canUse=(p,feat)=>{if(!p)return false;if(p.isGuest)return ["sounds","keyboard","ghost"].includes(feat);return p.features?.[feat]!==false;};
+
+// Guest profile — localStorage only, no Firebase
+const GUEST_DEFAULTS = { currentLevel:1, highestUnlocked:1, keys:0, accuracy:0, streak:0, highScore:0, levelBests:{} };
+function loadGuest() {
+  if (typeof window === "undefined") return {...GUEST_DEFAULTS};
+  try { return {...GUEST_DEFAULTS,...JSON.parse(localStorage.getItem("ak_guest")||"{}")}; } catch{return {...GUEST_DEFAULTS};}
+}
+function saveGuest(patch) {
+  try { localStorage.setItem("ak_guest", JSON.stringify({...loadGuest(),...patch})); } catch{}
+}
+function makeGuestProfile() {
+  const g = loadGuest();
+  return { id:"guest", name:"Guest", age:20, isGuest:true, features:{sounds:true,keyboard:true,ghost:true}, avatar:"🎮", activeTheme:"dark", activeFont:"mono", currentLevel:g.currentLevel||1, highestUnlocked:g.highestUnlocked||1, keys:g.keys||0, accuracy:g.accuracy||0, streak:g.streak||0, levelBests:g.levelBests||{} };
+}
+
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
 function DatePicker({ value, onChange, T }) {
   const today = new Date();
