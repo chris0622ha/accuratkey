@@ -149,7 +149,7 @@ export default function HelpPage() {
               ['🔌 USB keyboard','/keyboard/usb'],['🍎 iPad Smart Connector','/keyboard/ipad-smart'],
               ['💻 Desktop','/keyboard/desktop'],['🚀 Getting started','/help/getting-started'],
               ['📈 Levels','/help/levels'],['🎮 Games','/help/games'],
-              ['Keys Keys & Shop','/help/keys-shop'],['👥 Friends','/help/social'],
+              ['🔑 Keys & Shop','/help/keys-shop'],['👥 Friends','/help/social'],
               ['📅 Daily','/help/daily'],['✍️ Typing tips','/help/typing-tips'],
               ['🎹 Layouts','/help/layouts'],['♿ Accessibility','/help/accessibility'],
               ['🔒 Privacy','/help/security'],['🔧 Troubleshooting','/help/troubleshooting'],
