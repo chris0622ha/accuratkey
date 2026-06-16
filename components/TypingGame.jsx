@@ -837,6 +837,7 @@ export default function AccuratKey() {
   const [authPass, setAuthPass] = useState("");
   const [authErr, setAuthErr] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
 
   const [newName, setNewName] = useState("");
   const [newBirthday, setNewBirthday] = useState("");
@@ -1151,6 +1152,7 @@ export default function AccuratKey() {
 
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
+      setAuthReady(true);
       if (u) {
         // Check maintenance mode
         const maint = await getMaintenanceMode();
@@ -1910,7 +1912,7 @@ const Nav = () => (<>
   // SCREENS
   const isMobileOwner = isMobile && user?.uid === "qM3qeYBLwvRXy8D0gOKGCQbGuA12";
 
-  if (isMobile && !hasKeyboard && user?.uid !== "qM3qeYBLwvRXy8D0gOKGCQbGuA12" && screen !== "auth") return (
+  if (isMobile && !hasKeyboard && authReady && screen !== "auth" && user?.uid !== "qM3qeYBLwvRXy8D0gOKGCQbGuA12") return (
     <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:32,textAlign:"center"}}>
       <div style={{fontSize:64,marginBottom:20}}>⌨️</div>
       <h1 style={{color:T.text,fontSize:24,fontWeight:700,marginBottom:12}}>⌨️ Press any key</h1>
