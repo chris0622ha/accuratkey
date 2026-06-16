@@ -838,6 +838,7 @@ export default function AccuratKey() {
   const [authErr, setAuthErr] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [authReady, setAuthReady] = useState(false);
+  const profileRoutedRef = useRef(false);
 
   const [newName, setNewName] = useState("");
   const [newBirthday, setNewBirthday] = useState("");
@@ -1189,24 +1190,26 @@ export default function AccuratKey() {
         if (profs.length === 0) {
           setScreenWithUrl("createProfile");
         } else {
-          // If returning from shop or another page, auto-restore last profile
-          const returnScreen = typeof window !== "undefined" ? localStorage.getItem("ak_returnScreen") : null;
-          const lastProfileId = typeof window !== "undefined" ? localStorage.getItem("ak_lastProfile_" + u.uid) : null;
-          const lastProf = lastProfileId ? profs.find(p => p.id === lastProfileId) : null;
-          const returnProfileId = typeof window !== "undefined" ? localStorage.getItem("ak_returnProfileId") : null;
-          const returnProf = returnProfileId ? profs.find(p => p.id === returnProfileId) : lastProf;
-          if (returnScreen && (returnProf || lastProf)) {
-            const prof = returnProf || lastProf;
-            localStorage.removeItem("ak_returnScreen");
-            localStorage.removeItem("ak_returnProfileId");
-            setActiveProfile(prof);
-            setLayoutKey(prof.favoriteLayout || "qwerty");
-            if (prof.streak) setStreak(prof.streak);
-            setShowCount((prof.currentLevel || 1) + 5);
-            setScreen(returnScreen === "profilePicker" ? "levelMap" : returnScreen);
-          } else if (!activeProfile) {
-            // Only go to profile picker if no profile is already active
-            setScreenWithUrl("profilePicker");
+          // Only route to profile picker once per session
+          if (!profileRoutedRef.current) {
+            profileRoutedRef.current = true;
+            const returnScreen = typeof window !== "undefined" ? localStorage.getItem("ak_returnScreen") : null;
+            const lastProfileId = typeof window !== "undefined" ? localStorage.getItem("ak_lastProfile_" + u.uid) : null;
+            const lastProf = lastProfileId ? profs.find(p => p.id === lastProfileId) : null;
+            const returnProfileId = typeof window !== "undefined" ? localStorage.getItem("ak_returnProfileId") : null;
+            const returnProf = returnProfileId ? profs.find(p => p.id === returnProfileId) : lastProf;
+            if (returnScreen && (returnProf || lastProf)) {
+              const prof = returnProf || lastProf;
+              localStorage.removeItem("ak_returnScreen");
+              localStorage.removeItem("ak_returnProfileId");
+              setActiveProfile(prof);
+              setLayoutKey(prof.favoriteLayout || "qwerty");
+              if (prof.streak) setStreak(prof.streak);
+              setShowCount((prof.currentLevel || 1) + 5);
+              setScreen(returnScreen === "profilePicker" ? "levelMap" : returnScreen);
+            } else {
+              setScreenWithUrl("profilePicker");
+            }
           }
         }
       } else {
@@ -1923,7 +1926,7 @@ const Nav = () => (<>
       <a href="/keyboard" style={{color:"#a78bfa",fontSize:13,fontWeight:600,marginTop:20,display:"block",textDecoration:"none",cursor:"pointer",padding:"10px 20px",border:"1px solid #7c6af755",borderRadius:8,background:"#7c6af711"}}>⌨️ How to connect a keyboard →</a>
       <div style={{marginTop:24,display:"flex",flexDirection:"column",gap:10,width:"100%",maxWidth:280}}>
         {user ? (
-          <button onClick={()=>{ if(typeof window!=="undefined"){localStorage.removeItem("ak_profileName");localStorage.removeItem("ak_uid");localStorage.removeItem("ak_lastProfile_"+(user?.uid||""));localStorage.removeItem("ak_username");} signOut(auth); setActiveProfile(null); setProfiles([]); setCurrentUsername(null); setScreenWithUrl("auth"); }}
+          <button onClick={()=>{ if(typeof window!=="undefined"){localStorage.removeItem("ak_profileName");localStorage.removeItem("ak_uid");localStorage.removeItem("ak_lastProfile_"+(user?.uid||""));localStorage.removeItem("ak_username");} signOut(auth); setActiveProfile(null); setProfiles([]); setCurrentUsername(null); profileRoutedRef.current = false; setScreenWithUrl("auth"); }}
             style={{padding:"12px",borderRadius:10,border:"none",background:T.card,color:T.muted,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
             Sign Out
           </button>
