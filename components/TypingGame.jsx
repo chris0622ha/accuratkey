@@ -1290,11 +1290,16 @@ export default function AccuratKey() {
   const handleOAuth = async (provider) => {
     setAuthErr(""); setAuthLoading(true);
     try {
-      // provider is already instantiated
-      // Always use popup - works on mobile and desktop, shows account picker
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      if (!result?.user) setAuthErr("Sign in failed — try again.");
     }
-    catch (e) { setAuthErr(cleanErr(e)); }
+    catch (e) {
+      if (e?.code === "auth/popup-closed-by-user" || e?.code === "auth/cancelled-popup-request") {
+        setAuthErr("Popup was closed. Tap the button to try again.");
+      } else {
+        setAuthErr(cleanErr(e));
+      }
+    }
     setAuthLoading(false);
   };
 
