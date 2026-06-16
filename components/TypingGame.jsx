@@ -4,7 +4,7 @@ import { useRouter, usePathname } from "next/navigation";
 import TypingTest from "./TypingTest";
 import GamesTab from "./GamesTab";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback } from "@/lib/firebase";
+import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, removeLeaderboardScore, requestScoreRestore, getFlaggedScores } from "@/lib/firebase";
 
 export 
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
@@ -354,7 +354,6 @@ const AV = Object.fromEntries(AVATARS.map(a => [a.id, a.e]));
 const KKey=({size=16,style={}})=>(<svg width={size} height={size*1.1} viewBox="0 0 20 22" fill="none" style={{display:"inline-block",verticalAlign:"middle",...style}}><rect x="1" y="1" width="18" height="17" rx="3" fill="#2a2a3e" stroke="#5a5870" strokeWidth="1.2"/><rect x="1" y="15" width="18" height="5" rx="2" fill="#1a1a2e" stroke="#3a3850" strokeWidth="1"/><rect x="2.5" y="2" width="15" height="13" rx="2" fill="#1e1e30"/><text x="10" y="12" textAnchor="middle" fill="#c4baff" fontSize="9" fontWeight="bold" fontFamily="'JetBrains Mono',monospace">K</text></svg>);
 
 const isTeen=p=>((p?.age??0)||0)>=13,isKid=p=>{const a=p?.age;return a!=null&&a>0&&a<13;};
-const KID_FEATURES=["keys","friends","shop","daily","test","skip","sounds"];
 const canUse=(p,feat)=>{if(!p)return false;if(p.isProfileAdmin)return true;return p.features?.[feat]!==false;};
 
 const QRCanvas=({url,size=160})=>{const r=useRef(null);useEffect(()=>{if(url&&r.current)import("qrcode").then(Q=>Q.toCanvas(r.current,url,{width:size,margin:1,color:{dark:"#000",light:"#fff"}})).catch(()=>{});},[url,size]);return <canvas ref={r} style={{borderRadius:8,display:"block"}}/>;};
@@ -978,17 +977,12 @@ export default function AccuratKey() {
   const [pendingNotifications, setPendingNotifications] = useState([]);
   const [activeNotification, setActiveNotification] = useState(null);
   // Pomodoro
-  const [showPomodoro, setShowPomodoro] = useState(false);
   const [pomodoroMode, setPomodoroMode] = useState("work"); // "work"|"break"|"longBreak"
-  const [pomodoroSecs, setPomodoroSecs] = useState(25*60);
-  const [pomodoroRunning, setPomodoroRunning] = useState(false);
   const [pomodoroCount, setPomodoroCount] = useState(0); // completed work sessions
-  const [pomodoroGoal, setPomodoroGoal] = useState(4);
   const [pomodoroWpm, setPomodoroWpm] = useState([]); // wpm logged during session
-  const pomodoroIntervalRef = useRef(null);
-  const POMO_DURATIONS = { work: 25*60, break: 5*60, longBreak: 15*60 };
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackSent, setFeedbackSent] = useState(false);
+  const [feedbackScreenshot, setFeedbackScreenshot] = useState(null);
   const [feedbackSending, setFeedbackSending] = useState(false);
   const [streak, setStreak] = useState(0);
 
@@ -1542,7 +1536,16 @@ export default function AccuratKey() {
             }
             updateStreak(user.uid, activeProfile.id).then(s=>{ if(s) setStreak(s); }).catch(()=>{});
             if (playingLevel === -1) {
-              submitDailyScore(user.uid, currentUsername, activeProfile.avatar, {wpm:fw, accuracy:newAcc}).catch(()=>{});
+              submitDailyScore(user.uid, currentUsername, activeProfile.avatar, {wpm:fw, accuracy:newAcc}).then(result => {
+                if (result?.suspicious) {
+                  setTimeout(() => {
+                    if (window.confirm(`Your score of ${Math.round(fw)} WPM was flagged as unusually high and removed from the leaderboard.\n\nIf this is legitimate, tap OK to request a manual review.`)) {
+                      requestScoreRestore(user.uid, null, `User claims ${Math.round(fw)} WPM is legitimate`).catch(()=>{});
+                      window.alert("Review requested! We'll check it soon.");
+                    }
+                  }, 1500);
+                }
+              }).catch(()=>{});
               setDailyDone(true);
               getDailyLeaderboard().then(setDailyBoard).catch(()=>{});
             }
@@ -1898,9 +1901,7 @@ const Nav = () => (<>
         <div style={{display:"flex",alignItems:"center",gap:isMobileOwner?6:10,flexWrap:"nowrap",overflowX:"auto",maxWidth:isMobileOwner?"60vw":"none"}}>
           {streak>0&&<span style={{color:"#f97316",fontWeight:700,fontSize:12}}>🔥{streak}</span>}
           {!isMobileOwner&&<button onClick={e=>{e.stopPropagation();setShowFeedback(true);setFeedbackSent(false);setFeedbackText("");}} title="Send feedback" style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:12,padding:"3px 7px",cursor:"pointer",fontFamily:T.font,lineHeight:1}}>💬</button>}
-          {!isMobileOwner&&canUse(activeProfile,"pomodoro")&&<button onClick={e=>{e.stopPropagation();setShowPomodoro(true);}} title="Pomodoro timer" style={{background:pomodoroRunning?"#ef444422":"none",border:`1px solid ${pomodoroRunning?"#ef4444":T.border}`,borderRadius:6,color:pomodoroRunning?"#ef4444":T.muted,fontSize:12,padding:"3px 7px",cursor:"pointer",fontFamily:T.font,lineHeight:1}}>
-            {pomodoroRunning ? `⏱ ${String(Math.floor(pomodoroSecs/60)).padStart(2,"0")}:${String(pomodoroSecs%60).padStart(2,"0")}` : "⏱"}
-          </button>}
+          
           {canUse(activeProfile,"keys")&&<span style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:"4px 10px",fontSize:fs(13),color:T.accent,fontWeight:700,display:"flex",alignItems:"center",gap:4}}><KKey size={14}/>{((k)=>{const n=Math.round(k);return n>=1e6?""+Math.round(n/1e6)+"M":n>=1e3?""+Math.round(n/1e3)+"k":n})(activeProfile.keys||0)}</span>}
                     {canUse(activeProfile,"friends")&&<button onClick={()=>{getFriends(user?.uid).then(setFriends);getIncomingRequests(user?.uid).then(setFriendReqs);setShowFriends(true);}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:fs(13),padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Friends">👥</button>}
           {canUse(activeProfile,"challenges")&&<button onClick={()=>{getPendingChallenges(user.uid).then(setChallenges);setShowChallenges(true);setChallengeMsg("");}} style={{background:challenges.some(c=>c.toUid===user?.uid&&c.status==="pending")?"#ef444422":"none",border:`1px solid ${challenges.some(c=>c.toUid===user?.uid&&c.status==="pending")?"#ef4444":T.border}`,borderRadius:6,color:challenges.some(c=>c.toUid===user?.uid&&c.status==="pending")?"#ef4444":T.muted,fontSize:fs(13),padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Challenges">⚔️</button>}
@@ -2011,7 +2012,6 @@ const Nav = () => (<>
         ["daily","📅 Daily challenge","Access the daily challenge tab"],
         ["test","⌨️ Typing test","Access the free typing test tab"],
         ["customWords","📝 Custom word lists","Create and use custom word lists in Test tab"],
-        ["pomodoro","⏱ Pomodoro timer","Focus timer with work/break cycles in nav bar"],
         ["leaderboard","🏆 Leaderboard","View global leaderboards"],
         ["levelMap","🗺 Level map","See full level progression map"],
         ["sessionHistory","📋 Session history","View past typing sessions"],
@@ -2971,69 +2971,7 @@ const Nav = () => (<>
           </div>
         )}
 
-        {showPomodoro && (() => {
-          const mins = Math.floor(pomodoroSecs/60);
-          const secs = pomodoroSecs%60;
-          const modeLabel = pomodoroMode==="work" ? "🍅 Focus" : pomodoroMode==="break" ? "☕ Short Break" : "🛋️ Long Break";
-          const modeColor = pomodoroMode==="work" ? "#ef4444" : pomodoroMode==="break" ? "#34d399" : "#7c6af7";
-          const pct = 1 - pomodoroSecs / POMO_DURATIONS[pomodoroMode];
-          const r=54, circ=2*Math.PI*r;
-          return (
-            <div onClick={()=>setShowPomodoro(false)} style={{position:"fixed",inset:0,background:"#000a",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1010,padding:20}}>
-              <div onClick={e=>e.stopPropagation()} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:16,padding:28,width:"100%",maxWidth:360,textAlign:"center"}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-                  <span style={{color:T.text,fontWeight:800,fontSize:16}}>⏱ Pomodoro</span>
-                  <button onClick={()=>setShowPomodoro(false)} style={{background:"none",border:"none",color:T.faint,fontSize:20,cursor:"pointer"}}>×</button>
-                </div>
-
-                {/* Mode pills */}
-                <div style={{display:"flex",gap:6,justifyContent:"center",marginBottom:20}}>
-                  {[["work","🍅 Focus"],["break","☕ Break"],["longBreak","🛋️ Long"]].map(([m,l])=>(
-                    <button key={m} onClick={()=>{setPomodoroMode(m);setPomodoroSecs(POMO_DURATIONS[m]);setPomodoroRunning(false);}} style={{padding:"4px 10px",borderRadius:20,border:`1px solid ${pomodoroMode===m?modeColor:T.border}`,background:pomodoroMode===m?modeColor+"22":"transparent",color:pomodoroMode===m?modeColor:T.muted,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>{l}</button>
-                  ))}
-                </div>
-
-                {/* Ring timer */}
-                <div style={{position:"relative",display:"inline-block",marginBottom:16}}>
-                  <svg width="130" height="130" style={{transform:"rotate(-90deg)"}}>
-                    <circle cx="65" cy="65" r={r} fill="none" stroke={T.border} strokeWidth="6"/>
-                    <circle cx="65" cy="65" r={r} fill="none" stroke={modeColor} strokeWidth="6"
-                      strokeDasharray={circ} strokeDashoffset={circ*(1-pct)} strokeLinecap="round"
-                      style={{transition:"stroke-dashoffset 0.8s ease"}}/>
-                  </svg>
-                  <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-                    <div style={{color:T.text,fontWeight:800,fontSize:28,fontFamily:"'JetBrains Mono',monospace"}}>
-                      {String(mins).padStart(2,"0")}:{String(secs).padStart(2,"0")}
-                    </div>
-                    <div style={{color:modeColor,fontSize:10,fontWeight:700,marginTop:2}}>{modeLabel}</div>
-                  </div>
-                </div>
-
-                {/* Session dots */}
-                <div style={{display:"flex",gap:6,justifyContent:"center",marginBottom:20}}>
-                  {Array.from({length:pomodoroGoal}).map((_,i)=>(
-                    <div key={i} style={{width:10,height:10,borderRadius:"50%",background:i<pomodoroCount%pomodoroGoal||(pomodoroCount%pomodoroGoal===0&&pomodoroCount>0&&i===pomodoroGoal-1)?"#ef4444":T.border}}/>
-                  ))}
-                </div>
-
-                {/* Controls */}
-                <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:16}}>
-                  <button onClick={()=>setPomodoroRunning(r=>!r)} style={{padding:"10px 28px",borderRadius:10,border:"none",background:modeColor,color:"#fff",fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:T.font}}>
-                    {pomodoroRunning?"⏸ Pause":"▶ Start"}
-                  </button>
-                  <button onClick={()=>{setPomodoroRunning(false);setPomodoroSecs(POMO_DURATIONS[pomodoroMode]);}} style={{padding:"10px 14px",borderRadius:10,border:`1px solid ${T.border}`,background:"transparent",color:T.muted,fontSize:15,cursor:"pointer",fontFamily:T.font}}>↺</button>
-                </div>
-
-                {/* Goal setting */}
-                <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                  <span style={{color:T.faint,fontSize:11}}>Goal:</span>
-                  {[2,3,4,6,8].map(n=>(
-                    <button key={n} onClick={()=>setPomodoroGoal(n)} style={{padding:"2px 8px",borderRadius:6,border:`1px solid ${pomodoroGoal===n?"#ef4444":T.border}`,background:pomodoroGoal===n?"#ef444422":"transparent",color:pomodoroGoal===n?"#ef4444":T.faint,fontSize:11,cursor:"pointer",fontFamily:T.font}}>{n}</button>
-                  ))}
-                  <span style={{color:T.faint,fontSize:11}}>sessions</span>
-                </div>
-                {pomodoroCount>0&&<div style={{color:T.muted,fontSize:11,marginTop:10}}>✅ {pomodoroCount} session{pomodoroCount!==1?"s":""} completed today</div>}
-              </div>
+                      </div>
             </div>
           );
         })()}
@@ -3063,6 +3001,19 @@ const Nav = () => (<>
                     rows={5}
                     style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontSize:13,padding:"10px 12px",fontFamily:T.font,resize:"vertical",outline:"none",boxSizing:"border-box"}}
                   />
+                  <div style={{marginTop:8}}>
+                    <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",color:T.faint,fontSize:12}}>
+                      <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{
+                        const f=e.target.files?.[0];
+                        if(!f)return;
+                        const r=new FileReader();
+                        r.onload=ev=>setFeedbackScreenshot(ev.target?.result);
+                        r.readAsDataURL(f);
+                      }}/>
+                      📎 {feedbackScreenshot ? "Screenshot attached ✓" : "Attach screenshot (optional)"}
+                    </label>
+                    {feedbackScreenshot && <button onClick={()=>setFeedbackScreenshot(null)} style={{marginTop:4,background:"none",border:"none",color:T.faint,fontSize:11,cursor:"pointer",fontFamily:T.font}}>Remove</button>}
+                  </div>
                   <div style={{display:"flex",justifyContent:"flex-end",marginTop:10,gap:8}}>
                     <button onClick={()=>setShowFeedback(false)} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,fontSize:13,padding:"8px 16px",cursor:"pointer",fontFamily:T.font}}>Cancel</button>
                     <button disabled={!feedbackText.trim()||feedbackSending} onClick={async(e)=>{
@@ -3070,7 +3021,7 @@ const Nav = () => (<>
                       if(!feedbackText.trim())return;
                       setFeedbackSending(true);
                       try{
-                        await submitFeedback(user?.uid||null, activeProfile?.id||null, feedbackText.trim(), currentUsername, activeProfile?.name||null);
+                        await submitFeedback(user?.uid||null, activeProfile?.id||null, feedbackText.trim(), currentUsername, activeProfile?.name||null, feedbackScreenshot||null);
                         setFeedbackSent(true);
                       } catch(err){
                         console.error("Feedback error:",err);
@@ -3143,7 +3094,7 @@ const Nav = () => (<>
                       {active?<div style={{color:T.purple,fontSize:11,fontWeight:700}}>Active</div>
                         :!canCustomTheme&&th.id!=="dark"?<div style={{color:T.faint,fontSize:11}}>🔒 Locked</div>
                         :owned?<button onClick={async()=>{patchProfile({activeTheme:th.id});setShopMsg(`${th.label} activated!`);setActiveTheme(user.uid,activeProfile.id,th.id);}} style={{width:"100%",padding:"6px",background:"transparent",border:`1px solid ${T.purple}`,borderRadius:6,color:T.purple,fontSize:11,fontWeight:700,cursor:"pointer"}}>Equip</button>
-                        :<button onClick={async()=>{const newKeys=(activeProfile.keys||0)-th.cost;if(newKeys<0){setShopMsg("Not enough 🔑 Keys");return;}patchProfile({keys:newKeys,ownedThemes:[...(activeProfile.ownedThemes||[]),th.id],activeTheme:th.id});setShopMsg(`${th.label} purchased!`);try{await purchaseTheme(user.uid,activeProfile.id,th.id,th.cost);await setActiveTheme(user.uid,activeProfile.id,th.id);}catch(e){setShopMsg(e.message||"Error");}}} style={{width:"100%",padding:"6px",background:T.purple,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>Buy</button>
+                        :<button onClick={async()=>{if(!window.confirm(`Buy "${th.name}" for ${th.cost} 🔑 Keys?`))return;const newKeys=(activeProfile.keys||0)-th.cost;if(newKeys<0){setShopMsg("Not enough 🔑 Keys");return;}patchProfile({keys:newKeys,ownedThemes:[...(activeProfile.ownedThemes||[]),th.id],activeTheme:th.id});setShopMsg(`${th.label} purchased!`);try{await purchaseTheme(user.uid,activeProfile.id,th.id,th.cost);await setActiveTheme(user.uid,activeProfile.id,th.id);}catch(e){setShopMsg(e.message||"Error");}}} style={{width:"100%",padding:"6px",background:T.purple,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>Buy</button>
                       }
                     </div>
                   );
