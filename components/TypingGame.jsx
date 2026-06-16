@@ -1249,6 +1249,7 @@ export default function AccuratKey() {
   };
 
   const selectProfile = async (profile) => {
+    profileRoutedRef.current = true; // Prevent onAuthStateChanged from overriding screen
     setActiveProfile(profile);
     setLayoutKey(profile.favoriteLayout || "qwerty");
     if(profile.streak) setStreak(profile.streak);
