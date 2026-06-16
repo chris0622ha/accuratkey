@@ -1139,8 +1139,15 @@ export default function AccuratKey() {
   }, []);
 
   useEffect(() => {
-    // Handle redirect result from OAuth (GitHub/Google)
-    getRedirectResult(auth).catch(() => {});
+    // Handle redirect result from OAuth (GitHub/Google mobile redirect)
+    getRedirectResult(auth).then(result => {
+      if (result?.user) {
+        // onAuthStateChanged will fire automatically, but set loading state
+        setAuthLoading(true);
+      }
+    }).catch(e => {
+      if (e?.code) setAuthErr(cleanErr(e));
+    });
 
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
