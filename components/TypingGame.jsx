@@ -1877,10 +1877,10 @@ const Nav = () => (<>
         {currentUsername && <div style={{fontSize:9,color:T.muted,marginTop:1}}>@{currentUsername}</div>}
       </div>
       {activeProfile && (
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
+        <div style={{display:"flex",alignItems:"center",gap:isMobileOwner?6:10,flexWrap:"nowrap",overflowX:"auto",maxWidth:isMobileOwner?"60vw":"none"}}>
           {streak>0&&<span style={{color:"#f97316",fontWeight:700,fontSize:12}}>🔥{streak}</span>}
-          <button onClick={e=>{e.stopPropagation();setShowFeedback(true);setFeedbackSent(false);setFeedbackText("");}} title="Send feedback" style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:12,padding:"3px 7px",cursor:"pointer",fontFamily:T.font,lineHeight:1}}>💬</button>
-          {canUse(activeProfile,"pomodoro")&&<button onClick={e=>{e.stopPropagation();setShowPomodoro(true);}} title="Pomodoro timer" style={{background:pomodoroRunning?"#ef444422":"none",border:`1px solid ${pomodoroRunning?"#ef4444":T.border}`,borderRadius:6,color:pomodoroRunning?"#ef4444":T.muted,fontSize:12,padding:"3px 7px",cursor:"pointer",fontFamily:T.font,lineHeight:1}}>
+          {!isMobileOwner&&<button onClick={e=>{e.stopPropagation();setShowFeedback(true);setFeedbackSent(false);setFeedbackText("");}} title="Send feedback" style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:12,padding:"3px 7px",cursor:"pointer",fontFamily:T.font,lineHeight:1}}>💬</button>}
+          {!isMobileOwner&&canUse(activeProfile,"pomodoro")&&<button onClick={e=>{e.stopPropagation();setShowPomodoro(true);}} title="Pomodoro timer" style={{background:pomodoroRunning?"#ef444422":"none",border:`1px solid ${pomodoroRunning?"#ef4444":T.border}`,borderRadius:6,color:pomodoroRunning?"#ef4444":T.muted,fontSize:12,padding:"3px 7px",cursor:"pointer",fontFamily:T.font,lineHeight:1}}>
             {pomodoroRunning ? `⏱ ${String(Math.floor(pomodoroSecs/60)).padStart(2,"0")}:${String(pomodoroSecs%60).padStart(2,"0")}` : "⏱"}
           </button>}
           {canUse(activeProfile,"keys")&&<span style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:"4px 10px",fontSize:fs(13),color:T.accent,fontWeight:700,display:"flex",alignItems:"center",gap:4}}><KKey size={14}/>{((k)=>k>=1e6?""+Math.round(k/1e6)+"M":k>=1e3?""+Math.round(k/1e3)+"k":k)(activeProfile.keys||0)}</span>}
@@ -1893,11 +1893,9 @@ const Nav = () => (<>
   }} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:13,padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Shop">🛍️</button>}
           <button onClick={openProfileModal} style={{background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",alignItems:"center",gap:7}} title="Profile">
             <AvatarImg profile={activeProfile} size={30} />
-            <span style={{fontSize:12,color:T.muted,maxWidth:90,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{activeProfile.name}</span>
+            {!isMobileOwner&&<span style={{fontSize:12,color:T.muted,maxWidth:90,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{activeProfile.name}</span>}
           </button>
-          <button onClick={() => requirePin("switch", () => setScreenWithUrl("profilePicker"))} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.faint,fontSize:fs(11),padding:"4px 8px",cursor:"pointer",fontFamily:T.font}}>
-            Switch
-          </button>
+          {!isMobileOwner&&<button onClick={() => requirePin("switch", () => setScreenWithUrl("profilePicker"))} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.faint,fontSize:fs(11),padding:"4px 8px",cursor:"pointer",fontFamily:T.font}}>Switch</button>}
         </div>
       )}
       {!activeProfile && (
@@ -1910,6 +1908,7 @@ const Nav = () => (<>
   );
 
   // SCREENS
+  const isMobileOwner = isMobile && user?.uid === "qM3qeYBLwvRXy8D0gOKGCQbGuA12";
 
   if (isMobile && !hasKeyboard && user?.uid !== "qM3qeYBLwvRXy8D0gOKGCQbGuA12" && screen !== "auth") return (
     <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:32,textAlign:"center"}}>
@@ -2374,7 +2373,7 @@ const Nav = () => (<>
     const currentLevel = activeProfile?.currentLevel || 1;
 
     return (
-      <div style={{minHeight:"100vh",background:T.bg,fontFamily:T.font,padding:"20px 16px"}}>
+      <div style={{minHeight:"100vh",background:T.bg,fontFamily:T.font,padding:isMobileOwner?"10px 8px":"20px 16px",boxSizing:"border-box",overflowX:"hidden",width:"100%",maxWidth:"100vw"}}>
         {activeProfile && <style>{`* { font-family: ${T.font} !important; } body { background: ${T.bg}; }`}</style>}
         {showProfileModal && (
           <Overlay onClose={() => setShowProfileModal(false)}>
@@ -2634,8 +2633,8 @@ const Nav = () => (<>
           <Nav />
           {/* Tabs */}
           <div style={{display:"flex",gap:6,marginBottom:16,background:T.card,borderRadius:10,padding:3,border:`1px solid ${T.border}`}}>
-            {([["games","🎮 Games",true],["map","🗺️ Level Map",true],["daily","📅 Daily",canUse(activeProfile,"daily")],["test","⌨️ Test",canUse(activeProfile,"test")]]).filter(t=>t[2]).map(([k,l])=>(
-              <button key={k} onClick={()=>setActiveTabWithUrl(k)} style={{flex:1,padding:"8px 0",borderRadius:7,border:"none",background:activeTab===k?T.purple:"transparent",color:activeTab===k?"#fff":T.faint,fontWeight:700,fontSize:fs(12),cursor:"pointer",fontFamily:T.font}}>{l}</button>
+            {([["games",isMobileOwner?"🎮":"🎮 Games",true],["map",isMobileOwner?"🗺️":"🗺️ Map",true],["daily",isMobileOwner?"📅":"📅 Daily",canUse(activeProfile,"daily")],["test",isMobileOwner?"⌨️":"⌨️ Test",canUse(activeProfile,"test")]]).filter(t=>t[2]).map(([k,l])=>(
+              <button key={k} onClick={()=>setActiveTabWithUrl(k)} style={{flex:1,padding:isMobileOwner?"6px 0":"8px 0",borderRadius:7,border:"none",background:activeTab===k?T.purple:"transparent",color:activeTab===k?"#fff":T.faint,fontWeight:700,fontSize:isMobileOwner?12:fs(12),cursor:"pointer",fontFamily:T.font}}>{l}</button>
             ))}
           </div>
 
