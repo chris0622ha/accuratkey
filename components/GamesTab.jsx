@@ -338,7 +338,6 @@ function Survival({ T, onBack, settings = {} }) {
   const [timeLeft, setTimeLeft]  = useState(30);
   const [score, setScore]        = useState(0);
   const [best, setBest] = useState(()=> sv?.best || 0);
-  const [best, setBest]          = useState(0);
   const [flash, setFlash]        = useState(null);
   const inputRef = useRef(null);
   const timerRef = useRef(null);
