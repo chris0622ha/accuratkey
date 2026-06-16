@@ -1,7 +1,6 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
-import { notFound } from 'next/navigation';
 
 const METHODS: Record<string, {
   emoji: string; title: string; tag: string;
@@ -277,7 +276,7 @@ const METHODS: Record<string, {
 export default function KeyboardDetailPage({ params }: { params: { id: string } }) {
   const paramId = params.id;
   const method = METHODS[paramId];
-  if (!method) notFound();
+  if (!method) return <div style={{minHeight:'100vh',background:'#0a0a0f',display:'flex',alignItems:'center',justifyContent:'center',color:'#555',fontFamily:"'JetBrains Mono',monospace"}}>Not found. <a href="/keyboard" style={{color:'#7c6af7',marginLeft:8}}>← All methods</a></div>;
 
   const { emoji, title, tag, steps, detail, tips, troubleshoot, keyboards } = method;
   const [showKbs, setShowKbs] = useState(false);
