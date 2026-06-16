@@ -746,7 +746,25 @@ function SendChallengeForm({ T, friends, LEVELS, onSend }) {
   );
 }
 
-export default function AccuratKey() {
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(e) { return { error: e }; }
+  componentDidCatch(e, info) { console.error("AccuratKey crash:", e, info); }
+  render() {
+    if (this.state.error) return (
+      <div style={{minHeight:"100vh",background:"#0a0a0f",color:"#e0e0ff",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"monospace",textAlign:"center"}}>
+        <div style={{fontSize:48,marginBottom:16}}>⚠️</div>
+        <div style={{color:"#ef4444",fontSize:18,fontWeight:700,marginBottom:12}}>Something went wrong</div>
+        <div style={{color:"#555",fontSize:12,marginBottom:4,maxWidth:400}}>{this.state.error?.message}</div>
+        <div style={{color:"#333",fontSize:10,marginBottom:20,maxWidth:400,wordBreak:"break-all"}}>{this.state.error?.stack?.slice(0,200)}</div>
+        <button onClick={()=>window.location.reload()} style={{padding:"10px 24px",borderRadius:8,border:"none",background:"#7c6af7",color:"#fff",fontSize:14,cursor:"pointer"}}>Reload</button>
+      </div>
+    );
+    return this.props.children;
+  }
+}
+
+function AccuratKeyInner() {
   const router = useRouter();
   const [screen, setScreen] = useState("loading");
 
@@ -3549,4 +3567,8 @@ const Nav = () => (<>
   }
 
   return null;
+}
+
+export default function AccuratKey() {
+  return <ErrorBoundary><AccuratKeyInner /></ErrorBoundary>;
 }
