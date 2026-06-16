@@ -358,7 +358,7 @@ const canUse=(p,feat)=>{if(!p)return false;if(p.isProfileAdmin)return true;retur
 
 const QRCanvas=({url,size=160})=>{const r=useRef(null);useEffect(()=>{if(url&&r.current)import("qrcode").then(Q=>Q.toCanvas(r.current,url,{width:size,margin:1,color:{dark:"#000",light:"#fff"}})).catch(()=>{});},[url,size]);return <canvas ref={r} style={{borderRadius:8,display:"block"}}/>;};
 
-function getTheme(age){const base={accent:"#fb923c",accent2:"#34d399",bg:"#0a0a0f",card:"#13131f",border:"#1e1e30",font:"'JetBrains Mono',monospace",bigEmoji:false,simpleWords:false,maxLevel:15};if(age<7)return{...base,bg:"#0d0b1a",card:"#1a1030",border:"#2d1f50",purple:"#c084fc",text:"#f0e8ff",muted:"#a78bfa",faint:"#7c5cbf",font:"'Comic Sans MS','Chalkboard SE',cursive",bigEmoji:true,simpleWords:true,maxLevel:5};if(age<10)return{...base,bg:"#0a0a18",card:"#141428",border:"#2a2050",purple:"#a78bfa",accent:"#f472b6",text:"#e8e0ff",muted:"#8b78d0",faint:"#5a4898",bigEmoji:true,simpleWords:true,maxLevel:10};if(age<13)return{...base,purple:"#818cf8",text:"#e2e8ff",muted:"#6b72a0",faint:"#454870"};return{...base,purple:"#7c6af7",text:"#e0e0ff",muted:"#555",faint:"#444"};}
+function getTheme(age){const base={accent:"#fb923c",accent2:"#34d399",bg:"#0a0a0f",card:"#13131f",border:"#1e1e30",font:"'JetBrains Mono',monospace",bigEmoji:false,simpleWords:false,maxLevel:15};if(age<7)return{...base,bg:"#0d0b1a",card:"#1a1030",border:"#2d1f50",purple:"#c084fc",text:"#f0e8ff",muted:"#a78bfa",faint:"#7c5cbf",font:"'Comic Sans MS','Chalkboard SE',cursive",bigEmoji:true,simpleWords:true,maxLevel:15};if(age<10)return{...base,bg:"#0a0a18",card:"#141428",border:"#2a2050",purple:"#a78bfa",accent:"#f472b6",text:"#e8e0ff",muted:"#8b78d0",faint:"#5a4898",bigEmoji:true,simpleWords:true,maxLevel:15};if(age<13)return{...base,purple:"#818cf8",text:"#e2e8ff",muted:"#6b72a0",faint:"#454870"};return{...base,purple:"#7c6af7",text:"#e0e0ff",muted:"#555",faint:"#444"};}
 
 function genLine(levelId,overrideWords){const lv=LEVELS.find(l=>l.id===levelId)||LEVELS[0];const pool=overrideWords||lv.words;if(pool[0]&&pool[0].length>20)return pool[Math.floor(Math.random()*pool.length)];let r="",n=0;while(n<25){const w=pool[Math.floor(Math.random()*pool.length)];r+=w;n+=w.length;}return r;}
 
@@ -2558,7 +2558,7 @@ const Nav = () => (<>
 
             {/* Change Username */}
             <button onClick={() => { setShowChangeUsername(true); setShowSettingsModal(false);}} style={{width:"100%",padding:"9px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:T.font,marginTop:8}}>
-              @{currentUsername || "Set username"} · Change username (5 🔑)
+              @{currentUsername || "Set username"} · Change username (5 Keys)
             </button>
 
             {/* Privacy Settings */}
@@ -3081,7 +3081,7 @@ const Nav = () => (<>
                 <span style={{color:T.text,fontWeight:800,fontSize:16}}>🛍️ Theme Shop</span>
                 <button onClick={()=>{setShowShop(false);setShopMsg("");}} style={{background:"none",border:"none",color:T.faint,fontSize:20,cursor:"pointer"}}>×</button>
               </div>
-              <div style={{color:T.muted,fontSize:12,marginBottom:16}}>You have <strong style={{color:T.accent}}>{activeProfile?.keys||0} 🔑</strong></div>
+              <div style={{color:T.muted,fontSize:12,marginBottom:16}}>You have <strong style={{color:T.accent}}>{activeProfile?.keys||0} <KKey size={13}/></strong></div>
               {shopMsg&&<div style={{color:T.accent2,fontSize:12,marginBottom:12}}>{shopMsg}</div>}
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                 {SHOP_THEMES.map(th=>{
@@ -3090,11 +3090,11 @@ const Nav = () => (<>
                   return (
                     <div key={th.id} style={{background:T.bg,border:`1px solid ${active?T.purple:T.border}`,borderRadius:10,padding:"12px",textAlign:"center"}}>
                       <div style={{fontWeight:700,fontSize:13,color:T.text,marginBottom:4}}>{th.label}</div>
-                      <div style={{color:T.faint,fontSize:11,marginBottom:8}}>{th.cost===0?"Free":`${th.cost} 🔑`}</div>
+                      <div style={{color:T.faint,fontSize:11,marginBottom:8}}>{th.cost===0?"Free":`${th.cost}`} <KKey size={11}/></div>
                       {active?<div style={{color:T.purple,fontSize:11,fontWeight:700}}>Active</div>
                         :!canCustomTheme&&th.id!=="dark"?<div style={{color:T.faint,fontSize:11}}>🔒 Locked</div>
                         :owned?<button onClick={async()=>{patchProfile({activeTheme:th.id});setShopMsg(`${th.label} activated!`);setActiveTheme(user.uid,activeProfile.id,th.id);}} style={{width:"100%",padding:"6px",background:"transparent",border:`1px solid ${T.purple}`,borderRadius:6,color:T.purple,fontSize:11,fontWeight:700,cursor:"pointer"}}>Equip</button>
-                        :<button onClick={async()=>{if(!window.confirm(`Buy "${th.name}" for ${th.cost} 🔑 Keys?`))return;const newKeys=(activeProfile.keys||0)-th.cost;if(newKeys<0){setShopMsg("Not enough 🔑 Keys");return;}patchProfile({keys:newKeys,ownedThemes:[...(activeProfile.ownedThemes||[]),th.id],activeTheme:th.id});setShopMsg(`${th.label} purchased!`);try{await purchaseTheme(user.uid,activeProfile.id,th.id,th.cost);await setActiveTheme(user.uid,activeProfile.id,th.id);}catch(e){setShopMsg(e.message||"Error");}}} style={{width:"100%",padding:"6px",background:T.purple,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>Buy</button>
+                        :<button onClick={async()=>{if(!window.confirm(`Buy "${th.name}" for ${th.cost} 🔑 Keys?`))return;const newKeys=(activeProfile.keys||0)-th.cost;if(newKeys<0){setShopMsg("Not enough Keys");return;}patchProfile({keys:newKeys,ownedThemes:[...(activeProfile.ownedThemes||[]),th.id],activeTheme:th.id});setShopMsg(`${th.label} purchased!`);try{await purchaseTheme(user.uid,activeProfile.id,th.id,th.cost);await setActiveTheme(user.uid,activeProfile.id,th.id);}catch(e){setShopMsg(e.message||"Error");}}} style={{width:"100%",padding:"6px",background:T.purple,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>Buy</button>
                       }
                     </div>
                   );
@@ -3157,11 +3157,11 @@ const Nav = () => (<>
           <div style={{position:"fixed",inset:0,background:"#00000099",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:20}}>
             <div style={{background:"#0f0f1a",border:"1px solid #1e1e30",borderRadius:14,padding:24,width:"100%",maxWidth:380}}>
               <div style={{color:"#e0e0ff",fontWeight:700,fontSize:15,marginBottom:4}}>Change Username</div>
-              <div style={{color:"#6b7280",fontSize:12,marginBottom:16}}>Costs 5 🔑 keys. Current: @{currentUsername}</div>
+              <div style={{color:"#6b7280",fontSize:12,marginBottom:16}}>Costs 5 <KKey size={12}/> keys. Current: @{currentUsername}</div>
               <input value={newUsernameInput} onChange={e=>{setNewUsernameInput(e.target.value);setUsernameError("");}} onKeyDown={e=>e.key==="Enter"&&handleChangeUsername()} placeholder="new_username" maxLength={20} autoFocus style={{width:"100%",background:"#1e1e30",border:"1px solid #2e2e44",borderRadius:8,color:"#e0e0ff",fontFamily:T.font,fontSize:14,padding:"10px 12px",outline:"none",boxSizing:"border-box",marginBottom:8}} />
               {usernameError && <div style={{color:"#ef4444",fontSize:11,marginBottom:8}}>{usernameError}</div>}
               <div style={{display:"flex",gap:8}}>
-                <button onClick={handleChangeUsername} disabled={usernameLoading||!newUsernameInput.trim()} style={{flex:1,padding:"10px",background:T.purple,border:"none",borderRadius:8,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:T.font}}>{usernameLoading?"...":"Change (5 🔑)"}</button>
+                <button onClick={handleChangeUsername} disabled={usernameLoading||!newUsernameInput.trim()} style={{flex:1,padding:"10px",background:T.purple,border:"none",borderRadius:8,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:T.font}}>{usernameLoading?"...":<>Change (5 <KKey size={12}/>)</>}</button>
                 <button onClick={()=>{setShowChangeUsername(false);setNewUsernameInput("");setUsernameError("");}} style={{padding:"10px 16px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,cursor:"pointer",fontFamily:T.font}}>Cancel</button>
               </div>
             </div>
