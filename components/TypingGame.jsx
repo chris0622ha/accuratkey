@@ -370,34 +370,6 @@ const KKey=({size=16,style={}})=>(<svg width={size} height={size*1.1} viewBox="0
 
 const isTeen=p=>((p?.age??0)||0)>=13,isKid=p=>{const a=p?.age;return a!=null&&a>0&&a<13;};
 const KID_FEATURES=["keys","friends","shop","daily","test","skip","sounds"];
-const canUse=(p,feat)=>{if(!p)return false;if(p.isGuest)return ["sounds","keyboard","ghost"].includes(feat);return p.features?.[feat]!==false;};
-
-// Guest profile — localStorage only, no Firebase
-const GUEST_DEFAULTS = { currentLevel:1, highestUnlocked:1, keys:0, accuracy:0, streak:0, highScore:0, levelBests:{} };
-function loadGuest() {
-  if (typeof window === "undefined") return {...GUEST_DEFAULTS};
-  try { const d={...GUEST_DEFAULTS,...JSON.parse(localStorage.getItem("ak_guest")||"{}")}; return d; } catch{return {...GUEST_DEFAULTS};}
-}
-function saveGuest(patch) {
-  try {
-    const cur = loadGuest();
-    localStorage.setItem("ak_guest", JSON.stringify({...cur,...patch}));
-  } catch{}
-}
-function makeGuestProfile() {
-  const g = loadGuest();
-  return {
-    id:"guest", name:"Guest", age:20, isGuest:true,
-    features:{ sounds:true, keyboard:true, ghost:true },
-    avatar:"🎮", activeTheme:"dark", activeFont:"mono",
-    currentLevel: g.currentLevel||1,
-    highestUnlocked: g.highestUnlocked||1,
-    keys: g.keys||0,
-    accuracy: g.accuracy||0,
-    streak: g.streak||0,
-    levelBests: g.levelBests||{},
-  };
-}
 
 const QRCanvas=({url,size=160})=>{const r=useRef(null);useEffect(()=>{if(url&&r.current)import("qrcode").then(Q=>Q.toCanvas(r.current,url,{width:size,margin:1,color:{dark:"#000",light:"#fff"}})).catch(()=>{});},[url,size]);return <canvas ref={r} style={{borderRadius:8,display:"block"}}/>;};
 
