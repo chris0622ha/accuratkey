@@ -1195,7 +1195,7 @@ export default function AccuratKey() {
           const lastProf = lastProfileId ? profs.find(p => p.id === lastProfileId) : null;
           const returnProfileId = typeof window !== "undefined" ? localStorage.getItem("ak_returnProfileId") : null;
           const returnProf = returnProfileId ? profs.find(p => p.id === returnProfileId) : lastProf;
-          if (returnProf || lastProf) {
+          if (returnScreen && (returnProf || lastProf)) {
             const prof = returnProf || lastProf;
             localStorage.removeItem("ak_returnScreen");
             localStorage.removeItem("ak_returnProfileId");
@@ -1203,9 +1203,9 @@ export default function AccuratKey() {
             setLayoutKey(prof.favoriteLayout || "qwerty");
             if (prof.streak) setStreak(prof.streak);
             setShowCount((prof.currentLevel || 1) + 10);
-            const dest = returnScreen && returnScreen !== "profilePicker" ? returnScreen : "levelMap";
-            setScreen(dest);
-          } else {
+            setScreen(returnScreen === "profilePicker" ? "levelMap" : returnScreen);
+          } else if (!activeProfile) {
+            // Only go to profile picker if no profile is already active
             setScreenWithUrl("profilePicker");
           }
         }
