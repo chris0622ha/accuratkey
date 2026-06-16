@@ -2818,6 +2818,28 @@ rose safou salak santol sapote satsuma seagrape sopadilla starApple sweetsop
 tamanu tangelo uglifruit wampee wolfsberry yangmei ziziphus
 `);
 
+// ── CATEGORY MAP ─────────────────────────────────────────────────────────────
+export const WORD_CATEGORIES = {
+  animals:     WORDS_ANIMALS,
+  countries:   WORDS_COUNTRIES,
+  food:        WORDS_FOOD,
+  science:     WORDS_SCIENCE,
+  sports:      WORDS_SPORTS,
+  tech:        WORDS_TECH,
+  programming: WORDS_PROGRAMMING,
+  mythology:   WORDS_MYTHOLOGY,
+  geography:   WORDS_GEOGRAPHY,
+  colors:      WORDS_COLORS,
+  fruits:      WORDS_FRUITS,
+};
+
+export const CATEGORY_NAMES = {
+  animals:"🐾 Animals", countries:"🌍 Countries", food:"🍕 Food",
+  science:"🔬 Science", sports:"⚽ Sports", tech:"💻 Tech",
+  programming:"👨‍💻 Programming", mythology:"⚡ Mythology",
+  geography:"🗺️ Geography", colors:"🎨 Colors", fruits:"🍎 Fruits",
+};
+
 // ── SPELLING BEE WORDS with definitions ──────────────────────────────────────
 export const SPELLING_BEE_WORDS = {
   super_easy: [
