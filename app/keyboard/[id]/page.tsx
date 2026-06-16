@@ -274,8 +274,9 @@ const METHODS: Record<string, {
   },
 };
 
-export default function KeyboardDetailPage({ params }: { params: { id: string } }) {
-  const method = METHODS[params.id];
+export default async function KeyboardDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: paramId } = await params;
+  const method = METHODS[paramId];
   if (!method) notFound();
 
   const { emoji, title, tag, steps, detail, tips, troubleshoot, keyboards } = method;
