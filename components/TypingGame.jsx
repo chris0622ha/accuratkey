@@ -360,6 +360,7 @@ const canUse=(p,feat)=>{if(!p)return false;if(p.isGuest)return ["sounds","keyboa
 // Guest profile — localStorage only, no Firebase
 const GUEST_DEFAULTS = { currentLevel:1, highestUnlocked:1, keys:0, accuracy:0, streak:0, highScore:0, levelBests:{} };
 function loadGuest() {
+  if (typeof window === "undefined") return {...GUEST_DEFAULTS};
   try { const d={...GUEST_DEFAULTS,...JSON.parse(localStorage.getItem("ak_guest")||"{}")}; return d; } catch{return {...GUEST_DEFAULTS};}
 }
 function saveGuest(patch) {
@@ -382,7 +383,6 @@ function makeGuestProfile() {
     levelBests: g.levelBests||{},
   };
 }
-const GUEST_PROFILE = makeGuestProfile();
 
 const QRCanvas=({url,size=160})=>{const r=useRef(null);useEffect(()=>{if(url&&r.current)import("qrcode").then(Q=>Q.toCanvas(r.current,url,{width:size,margin:1,color:{dark:"#000",light:"#fff"}})).catch(()=>{});},[url,size]);return <canvas ref={r} style={{borderRadius:8,display:"block"}}/>;};
 
