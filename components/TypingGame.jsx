@@ -1094,7 +1094,7 @@ export default function AccuratKey() {
       // Reset so switching back to the Map tab scrolls again.
       levelMapScrolledRef.current = false;
     }
-  }, [activeTab, currentLevel]);
+  }, [activeTab, activeProfile?.currentLevel]);
 
   
   const akTimer = useRef(null);
