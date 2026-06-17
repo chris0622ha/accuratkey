@@ -957,7 +957,6 @@ export default function AccuratKey() {
   const [warning, setWarning] = useState(null);
   const [broadcast, setBroadcast] = useState(null);
   const [levelOverrides, setLevelOverrides] = useState({});
-  const [showCount, setShowCount] = useState(12); // how many levels to show
   const [activeTab, setActiveTab] = useState("map");
   const [customLists, setCustomLists] = useState([]); // [{name, words:[]}]
   const [activeListIdx, setActiveListIdx] = useState(null); // which list is selected for typing
@@ -973,6 +972,8 @@ export default function AccuratKey() {
   const [showShop, setShowShop] = useState(false);
   const [shopMsg, setShopMsg] = useState("");
   const [confirmBuy, setConfirmBuy] = useState(null); // { th } | null
+  const currentLevelNodeRef = useRef(null);
+  const levelMapScrolledRef = useRef(false); // only auto-scroll once per tab visit
   const [dailyWords, setDailyWords] = useState(null);
   const [dailyBoard, setDailyBoard] = useState([]);
   const [dailyDone, setDailyDone] = useState(false);
@@ -1077,6 +1078,23 @@ export default function AccuratKey() {
     }
   }, [activeTab]);
 
+  // Auto-scroll the level map to the current level when the Map tab opens.
+  useEffect(() => {
+    if (activeTab === "map") {
+      if (!levelMapScrolledRef.current && currentLevelNodeRef.current) {
+        levelMapScrolledRef.current = true;
+        // Small delay lets the tab's layout settle before measuring scroll position.
+        const t = setTimeout(() => {
+          currentLevelNodeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 150);
+        return () => clearTimeout(t);
+      }
+    } else {
+      // Reset so switching back to the Map tab scrolls again.
+      levelMapScrolledRef.current = false;
+    }
+  }, [activeTab, currentLevel]);
+
   
   const akTimer = useRef(null);
   const TOTAL_LINES = 5;
@@ -1164,7 +1182,6 @@ export default function AccuratKey() {
               setActiveProfile(prof);
               setLayoutKey(prof.favoriteLayout || "qwerty");
               if (prof.streak) setStreak(prof.streak);
-              setShowCount((prof.currentLevel || 1) + 5);
               setScreen(returnScreen === "profilePicker" ? "levelMap" : returnScreen);
             } else {
               // Only show picker if no profile active — prevents flash on token refresh
@@ -1216,7 +1233,6 @@ export default function AccuratKey() {
     setActiveProfile(profile);
     setLayoutKey(profile.favoriteLayout || "qwerty");
     if(profile.streak) setStreak(profile.streak);
-    setShowCount((profile.currentLevel||1)+5);
     if (typeof window !== "undefined" && user) {
       localStorage.setItem("ak_lastProfile_" + user.uid, profile.id);
       localStorage.setItem("ak_profileName", profile.name);
@@ -2607,57 +2623,64 @@ const Nav = () => (<>
           {activeTab==="games" && <GamesTab T={T} />}
 
           {activeTab==="map" && <>
-          <div style={{display:"flex",flexDirection:"column",gap:10}}>
-            {LEVELS.slice(0, Math.min(showCount, LEVELS.length)).map((lv,idx)=>{
-              const unlocked=lv.id<=highestUnlocked,current=lv.id===currentLevel,completed=lv.id<highestUnlocked,locked=!unlocked,canSkipTo=lv.id===highestUnlocked+1;
-              return (
-                <div key={lv.id} style={{display:"flex",alignItems:"center",gap:12}}>
-                  <div style={{display:"flex",flexDirection:"column",alignItems:"center",width:44,flexShrink:0}}>
-                    {/* Top connector line */}
-                    <div style={{width:4,height:idx===0?0:24,background:idx===0?"transparent":completed?lv.color:current?lv.color+"88":"#1e1e30",borderRadius:2,transition:"background 0.3s"}}/>
-                    {/* Level node */}
-                    <div style={{width:44,height:44,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0,background:completed?lv.color+"22":current?lv.color+"33":locked?"#0a0a15":"#0d0d18",border:`3px solid ${completed?lv.color:current?lv.color:locked?"#1e1e30":"#2a2a3e"}`,boxShadow:current?`0 0 20px ${lv.color}77,0 0 40px ${lv.color}33`:"none",transition:"all 0.3s",position:"relative"}}>
-                      {completed ? <span style={{color:lv.color,fontSize:16,fontWeight:900}}>✓</span> : locked ? "🔒" : lv.emoji}
-                      {/* Pulse ring for current level */}
-                      {current && <div style={{position:"absolute",inset:-6,borderRadius:"50%",border:`2px solid ${lv.color}44`,animation:"none"}}/>}
-                    </div>
-                    {/* Bottom connector line */}
-                    <div style={{width:4,flex:1,minHeight:10,background:completed?lv.color:"#1e1e30",borderRadius:2,transition:"background 0.3s"}}/>
-                  </div>
-                  <div style={{flex:1,padding:"14px 16px",borderRadius:12,cursor:locked&&!canSkipTo?"default":"pointer",background:current?lv.color+"18":completed?"#0a180f":locked?"#0a0a12":T.card,border:`1px solid ${current?lv.color:completed?lv.color+"44":locked?"#1a1a28":T.border}`,opacity:locked&&!canSkipTo?0.45:1}}
-                    onClick={()=>{
-                      if(current||(!locked&&unlocked))requestStartLevel(lv.id);
-                      else if(canSkipTo&&canUse(activeProfile,'skip')&&confirm(`Skip to Level ${lv.id}: ${lv.name}?\n\nCustom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.id);
-                   }}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-                      <div>
-                        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
-                          <span style={{color:T.faint,fontSize:fs(10),letterSpacing:1}}>LEVEL {lv.id}</span>
-                          {current&&<span style={{background:lv.color,color:"#fff",fontSize:fs(9),fontWeight:700,padding:"1px 7px",borderRadius:10}}>CURRENT</span>}
-                          {canSkipTo&&<span style={{background:"#f59e0b22",color:"#f59e0b",fontSize:9,fontWeight:700,padding:"1px 7px",borderRadius:10}}>SKIP?</span>}
-                        </div>
-                        <div style={{color:T.text,fontWeight:700,fontSize:15}}>{lv.name}</div>
-                        <div style={{color:T.muted,fontSize:12,marginTop:2}}>{lv.accuracy}% accuracy</div>
+          {(() => {
+            const ROW_H = 92; // vertical spacing between level nodes
+            const NODE = 52; // node diameter
+            // Zigzag x-position as a fraction of track width: alternates left → center-right → right → center-left → repeat
+            const xFrac = (idx) => {
+              const cycle = idx % 4;
+              return cycle===0?0.22:cycle===1?0.5:cycle===2?0.78:0.5;
+            };
+            const trackH = LEVELS.length * ROW_H + NODE;
+            // Build one smooth SVG path through every node center, in track-local coordinates (0–100 width units)
+            const pathD = LEVELS.map((lv,idx) => {
+              const x = xFrac(idx) * 100;
+              const y = idx * ROW_H + NODE/2;
+              return `${idx===0?"M":"L"} ${x} ${y}`;
+            }).join(" ");
+            return (
+              <div style={{position:"relative",width:"100%",height:trackH,padding:"20px 0 40px"}}>
+                <svg viewBox={`0 0 100 ${trackH}`} preserveAspectRatio="none" style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none"}}>
+                  <path d={pathD} fill="none" stroke={T.border} strokeWidth="0.6" vectorEffect="non-scaling-stroke"/>
+                  <path d={LEVELS.slice(0, Math.max(highestUnlocked,1)).map((lv,idx)=>{
+                    const x=xFrac(idx)*100, y=idx*ROW_H+NODE/2;
+                    return `${idx===0?"M":"L"} ${x} ${y}`;
+                  }).join(" ")} fill="none" stroke={LEVELS.find(l=>l.id===currentLevel)?.color||T.purple} strokeWidth="0.8" strokeLinecap="round" vectorEffect="non-scaling-stroke" opacity={0.7}/>
+                </svg>
+                {LEVELS.map((lv,idx)=>{
+                  const unlocked=lv.id<=highestUnlocked,current=lv.id===currentLevel,completed=lv.id<highestUnlocked,locked=!unlocked,canSkipTo=lv.id===highestUnlocked+1;
+                  const xPct = xFrac(idx)*100;
+                  const leftSide = xPct < 50;
+                  const topPx = idx*ROW_H;
+                  return (
+                    <div key={lv.id} ref={current?currentLevelNodeRef:null} style={{position:"absolute",top:topPx,left:`${xPct}%`,transform:"translateX(-50%)",display:"flex",flexDirection:"column",alignItems:"center",zIndex:1}}>
+                      <div onClick={()=>{
+                          if(current||(!locked&&unlocked))requestStartLevel(lv.id);
+                          else if(canSkipTo&&canUse(activeProfile,'skip')&&confirm(`Skip to Level ${lv.id}: ${lv.name}?\n\nCustom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.id);
+                        }} style={{width:NODE,height:NODE,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0,background:completed?lv.color+"22":current?lv.color+"33":locked?"#0a0a15":"#0d0d18",border:`3px solid ${completed?lv.color:current?lv.color:locked?"#1e1e30":"#2a2a3e"}`,boxShadow:current?`0 0 20px ${lv.color}77,0 0 40px ${lv.color}33`:"none",transition:"all 0.3s",position:"relative",cursor:locked&&!canSkipTo?"default":"pointer",opacity:locked&&!canSkipTo?0.45:1}}>
+                        {completed ? <span style={{color:lv.color,fontSize:16,fontWeight:900}}>✓</span> : locked ? "🔒" : lv.emoji}
+                        {current && <div style={{position:"absolute",inset:-6,borderRadius:"50%",border:`2px solid ${lv.color}44`}}/>}
                       </div>
-                      <div style={{textAlign:"right"}}>
+                      {/* Info chip — tucked to whichever side has room so it doesn't run off the edge */}
+                      <div style={{marginTop:6,maxWidth:128,textAlign:"center",pointerEvents:"none",overflowWrap:"break-word"}}>
+                        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,marginBottom:1,flexWrap:"wrap"}}>
+                          <span style={{color:T.faint,fontSize:fs(9),letterSpacing:1}}>LV {lv.id}</span>
+                          {current&&<span style={{background:lv.color,color:"#fff",fontSize:fs(8),fontWeight:700,padding:"1px 5px",borderRadius:8}}>YOU</span>}
+                          {canSkipTo&&<span style={{background:"#f59e0b22",color:"#f59e0b",fontSize:8,fontWeight:700,padding:"1px 5px",borderRadius:8}}>SKIP?</span>}
+                        </div>
+                        <div style={{color:T.text,fontWeight:700,fontSize:12,lineHeight:1.3}}>{lv.name}</div>
                         {completed && (() => {
                           const lb = activeProfile?.levelBests?.[lv.id];
                           const s = lb?.stars || 1;
-                          return <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2}}>
-                            <div style={{fontSize:12}}>{"⭐".repeat(s)}{"☆".repeat(3-s)}</div>
-                            {lb?.wpm>0&&<div style={{color:lv.color,fontSize:11,fontWeight:700}}>{lb.wpm} WPM</div>}
-                            <div style={{color:lv.color,fontSize:10}}>✓ Done</div>
-                          </div>;
+                          return <div style={{fontSize:10,marginTop:2,color:lv.color}}>{"⭐".repeat(s)}{"☆".repeat(3-s)}{lb?.wpm>0?` · ${lb.wpm} WPM`:""}</div>;
                         })()}
                       </div>
                     </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          {showCount < LEVELS.length && <button onClick={()=>setShowCount(c=>Math.min(c+10,LEVELS.length))} style={{width:"100%",marginTop:14,padding:"10px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.muted,fontSize:13,cursor:"pointer",fontFamily:T.font}}>Show More ↓ ({LEVELS.length - showCount} more)</button>}
-          {showCount > currentLevel+5 && <button onClick={()=>setShowCount(currentLevel+5)} style={{width:"100%",marginTop:8,padding:"8px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:12,cursor:"pointer",fontFamily:T.font}}>Show Less ↑</button>}
+                  );
+                })}
+              </div>
+            );
+          })()}
           <div style={{height:40}}/>
           </>}
 
