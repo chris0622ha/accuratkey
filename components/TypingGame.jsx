@@ -3,8 +3,10 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import TypingTest from "./TypingTest";
 import GamesTab from "./GamesTab";
+import { KKey } from "./icons/KKey";
+import { formatKeys } from "@/lib/format";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback } from "@/lib/firebase";
+import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback } from "@/lib/firebase";
 
 export 
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
@@ -351,7 +353,7 @@ function buildKeyFinger(rows){const m={};rows.forEach((r,ri)=>r.forEach((k,ci)=>
 const AVATARS=[{id:"key",e:"⌨️"},{id:"rocket",e:"🚀"},{id:"fire",e:"🔥"},{id:"lightning",e:"⚡"},{id:"brain",e:"🧠"},{id:"trophy",e:"🏆"},{id:"cat",e:"🐱"},{id:"robot",e:"🤖"},{id:"star",e:"⭐"},{id:"gem",e:"💎"},{id:"target",e:"🎯"},{id:"ghost",e:"👻"},{id:"dragon",e:"🐉"},{id:"unicorn",e:"🦄"},{id:"dino",e:"🦕"},{id:"penguin",e:"🐧"}];
 const AV = Object.fromEntries(AVATARS.map(a => [a.id, a.e]));
 
-const KKey=({size=16,style={}})=>(<svg width={size} height={size*1.1} viewBox="0 0 20 22" fill="none" style={{display:"inline-block",verticalAlign:"middle",...style}}><rect x="1" y="1" width="18" height="17" rx="3" fill="#2a2a3e" stroke="#5a5870" strokeWidth="1.2"/><rect x="1" y="15" width="18" height="5" rx="2" fill="#1a1a2e" stroke="#3a3850" strokeWidth="1"/><rect x="2.5" y="2" width="15" height="13" rx="2" fill="#1e1e30"/><text x="10" y="12" textAnchor="middle" fill="#c4baff" fontSize="9" fontWeight="bold" fontFamily="'JetBrains Mono',monospace">K</text></svg>);
+// KKey icon and formatKeys imported from shared modules (see top imports)
 
 const isTeen=p=>((p?.age??0)||0)>=13,isKid=p=>{const a=p?.age;return a!=null&&a>0&&a<13;};
 const KID_FEATURES=["keys","friends","shop","daily","test","skip","sounds"];
@@ -970,6 +972,7 @@ export default function AccuratKey() {
   const [friendMsg, setFriendMsg] = useState("");
   const [showShop, setShowShop] = useState(false);
   const [shopMsg, setShopMsg] = useState("");
+  const [confirmBuy, setConfirmBuy] = useState(null); // { th } | null
   const [dailyWords, setDailyWords] = useState(null);
   const [dailyBoard, setDailyBoard] = useState([]);
   const [dailyDone, setDailyDone] = useState(false);
@@ -977,19 +980,14 @@ export default function AccuratKey() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [pendingNotifications, setPendingNotifications] = useState([]);
   const [activeNotification, setActiveNotification] = useState(null);
-  // Pomodoro
-  const [showPomodoro, setShowPomodoro] = useState(false);
-  const [pomodoroMode, setPomodoroMode] = useState("work"); // "work"|"break"|"longBreak"
-  const [pomodoroSecs, setPomodoroSecs] = useState(25*60);
-  const [pomodoroRunning, setPomodoroRunning] = useState(false);
-  const [pomodoroCount, setPomodoroCount] = useState(0); // completed work sessions
-  const [pomodoroGoal, setPomodoroGoal] = useState(4);
-  const [pomodoroWpm, setPomodoroWpm] = useState([]); // wpm logged during session
-  const pomodoroIntervalRef = useRef(null);
-  const POMO_DURATIONS = { work: 25*60, break: 5*60, longBreak: 15*60 };
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackSent, setFeedbackSent] = useState(false);
   const [feedbackSending, setFeedbackSending] = useState(false);
+  const [feedbackScreenshot, setFeedbackScreenshot] = useState(null); // base64 data URL
+  const [feedbackScreenshotName, setFeedbackScreenshotName] = useState("");
+  const feedbackFileRef = useRef(null);
+  const [flaggedScorePopup, setFlaggedScorePopup] = useState(null); // { wpm, date } | null
+  const [restoreRequestSent, setRestoreRequestSent] = useState(false);
   const [streak, setStreak] = useState(0);
 
   const SHOP_THEMES = [
@@ -1078,47 +1076,6 @@ export default function AccuratKey() {
       getSessionDates(user.uid, activeProfile.id, 90).then(setSessionDates).catch(()=>{});
     }
   }, [activeTab]);
-
-  // Pomodoro ticker
-  React.useEffect(() => {
-    if (pomodoroRunning) {
-      pomodoroIntervalRef.current = setInterval(() => {
-        setPomodoroSecs(s => {
-          if (s <= 1) {
-            // Session complete
-            clearInterval(pomodoroIntervalRef.current);
-            setPomodoroRunning(false);
-            if (pomodoroMode === "work") {
-              const newCount = pomodoroCount + 1;
-              setPomodoroCount(newCount);
-              const nextMode = newCount % 4 === 0 ? "longBreak" : "break";
-              setPomodoroMode(nextMode);
-              setPomodoroSecs(POMO_DURATIONS[nextMode]);
-            } else {
-              setPomodoroMode("work");
-              setPomodoroSecs(POMO_DURATIONS.work);
-            }
-            // Beep
-            try {
-              const ctx = new (window.AudioContext || window.webkitAudioContext)();
-              [0,0.3,0.6].forEach(t => {
-                const o = ctx.createOscillator(); const g = ctx.createGain();
-                o.connect(g); g.connect(ctx.destination);
-                o.frequency.value = 880; g.gain.setValueAtTime(0.3, ctx.currentTime+t);
-                g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+t+0.3);
-                o.start(ctx.currentTime+t); o.stop(ctx.currentTime+t+0.3);
-              });
-            } catch(e) {}
-            return 0;
-          }
-          return s - 1;
-        });
-      }, 1000);
-    } else {
-      clearInterval(pomodoroIntervalRef.current);
-    }
-    return () => clearInterval(pomodoroIntervalRef.current);
-  }, [pomodoroRunning, pomodoroMode, pomodoroCount]);
 
   
   const akTimer = useRef(null);
@@ -1516,12 +1473,10 @@ export default function AccuratKey() {
               // Combo multiplier: 10+ combo = 1.5x, 20+ combo = 2x
               const multiplier = combo >= 20 ? 2 : combo >= 10 ? 1.5 : 1;
               const boosted = Math.round((earned || 0) * multiplier);
-              setKeysEarned(boosted);
-              if (boosted > (earned||0) && user && activeProfile) {
-                // Apply bonus keys
-                const bonus = boosted - (earned||0);
-                updateProfile(user.uid, activeProfile.id, { keys: (activeProfile.keys||0) + bonus });
-              }
+              const bonus = boosted - (earned || 0);
+              // Bonus keys still respect the daily earning cap (addBonusKeys re-checks server-side)
+              const bonusGranted = bonus > 0 && user && activeProfile ? await addBonusKeys(user.uid, activeProfile.id, bonus) : 0;
+              setKeysEarned((earned || 0) + bonusGranted);
               const updated = await getProfile(user.uid, activeProfile.id);
               setActiveProfile(updated);
             }).catch(() => {});
@@ -1543,7 +1498,13 @@ export default function AccuratKey() {
             }
             updateStreak(user.uid, activeProfile.id).then(s=>{ if(s) setStreak(s); }).catch(()=>{});
             if (playingLevel === -1) {
-              submitDailyScore(user.uid, currentUsername, activeProfile.avatar, {wpm:fw, accuracy:newAcc}).catch(()=>{});
+              submitDailyScore(user.uid, currentUsername, activeProfile.avatar, {wpm:fw, accuracy:newAcc})
+                .then(result => {
+                  if (result?.suspicious) {
+                    setFlaggedScorePopup({ wpm: fw, date: getETDateStr() });
+                  }
+                })
+                .catch(()=>{});
               setDailyDone(true);
               getDailyLeaderboard().then(setDailyBoard).catch(()=>{});
             }
@@ -1899,10 +1860,7 @@ const Nav = () => (<>
         <div style={{display:"flex",alignItems:"center",gap:isMobileOwner?6:10,flexWrap:"nowrap",overflowX:"auto",maxWidth:isMobileOwner?"60vw":"none"}}>
           {streak>0&&<span style={{color:"#f97316",fontWeight:700,fontSize:12}}>🔥{streak}</span>}
           {!isMobileOwner&&<button onClick={e=>{e.stopPropagation();setShowFeedback(true);setFeedbackSent(false);setFeedbackText("");}} title="Send feedback" style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:12,padding:"3px 7px",cursor:"pointer",fontFamily:T.font,lineHeight:1}}>💬</button>}
-          {!isMobileOwner&&canUse(activeProfile,"pomodoro")&&<button onClick={e=>{e.stopPropagation();setShowPomodoro(true);}} title="Pomodoro timer" style={{background:pomodoroRunning?"#ef444422":"none",border:`1px solid ${pomodoroRunning?"#ef4444":T.border}`,borderRadius:6,color:pomodoroRunning?"#ef4444":T.muted,fontSize:12,padding:"3px 7px",cursor:"pointer",fontFamily:T.font,lineHeight:1}}>
-            {pomodoroRunning ? `⏱ ${String(Math.floor(pomodoroSecs/60)).padStart(2,"0")}:${String(pomodoroSecs%60).padStart(2,"0")}` : "⏱"}
-          </button>}
-          {canUse(activeProfile,"keys")&&<span style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:"4px 10px",fontSize:fs(13),color:T.accent,fontWeight:700,display:"flex",alignItems:"center",gap:4}}><KKey size={14}/>{((k)=>k>=1e6?""+Math.round(k/1e6)+"M":k>=1e3?""+Math.round(k/1e3)+"k":k)(activeProfile.keys||0)}</span>}
+          {canUse(activeProfile,"keys")&&<span style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:"4px 10px",fontSize:fs(13),color:T.accent,fontWeight:700,display:"flex",alignItems:"center",gap:4}}><KKey size={14}/>{formatKeys(activeProfile.keys)}</span>}
                     {canUse(activeProfile,"friends")&&<button onClick={()=>{getFriends(user?.uid).then(setFriends);getIncomingRequests(user?.uid).then(setFriendReqs);setShowFriends(true);}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:fs(13),padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Friends">👥</button>}
           {canUse(activeProfile,"challenges")&&<button onClick={()=>{getPendingChallenges(user.uid).then(setChallenges);setShowChallenges(true);setChallengeMsg("");}} style={{background:challenges.some(c=>c.toUid===user?.uid&&c.status==="pending")?"#ef444422":"none",border:`1px solid ${challenges.some(c=>c.toUid===user?.uid&&c.status==="pending")?"#ef4444":T.border}`,borderRadius:6,color:challenges.some(c=>c.toUid===user?.uid&&c.status==="pending")?"#ef4444":T.muted,fontSize:fs(13),padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Challenges">⚔️</button>}
           {(canUse(activeProfile,"shop")||user?.uid==="qM3qeYBLwvRXy8D0gOKGCQbGuA12")&&!activeProfile?.isGuest&&<button onClick={()=>{
@@ -2012,7 +1970,6 @@ const Nav = () => (<>
         ["daily","📅 Daily challenge","Access the daily challenge tab"],
         ["test","⌨️ Typing test","Access the free typing test tab"],
         ["customWords","📝 Custom word lists","Create and use custom word lists in Test tab"],
-        ["pomodoro","⏱ Pomodoro timer","Focus timer with work/break cycles in nav bar"],
         ["leaderboard","🏆 Leaderboard","View global leaderboards"],
         ["levelMap","🗺 Level map","See full level progression map"],
         ["sessionHistory","📋 Session history","View past typing sessions"],
@@ -2021,13 +1978,13 @@ const Nav = () => (<>
         ["tips","💡 Tips & tricks","Show typing tips between levels"],
       ]},
       {group:"👥 Social", items:[
-        ["keys","🔑 Keys display","Show 🔑 key count in nav bar"],
+        ["keys","Keys display","Show Keys count in nav bar"],
         ["streak","🔥 Streak display","Show 🔥 streak count in nav bar"],
         ["friends","👥 Friends","Access friends panel and requests"],
         ["publicProfile","🌐 Public profile","Profile visible to other users"],
         ["chat","💬 Chat & messaging","Messaging with friends"],
         ["challenges","⚔️ Level challenges","Challenge friends to typing duels"],
-        ["sendKeys","🎁 Send keys","Send 🔑 keys to friends"],
+        ["sendKeys","🎁 Send keys","Send Keys to friends"],
         ["spectate","👀 Spectate","Watch friends play in real time"],
         ["friendLeaderboard","📊 Friend leaderboard","See how you rank vs friends"],
       ]},
@@ -2039,7 +1996,7 @@ const Nav = () => (<>
         ["profilePhoto","📸 Profile photo","Upload a custom profile photo"],
         ["bio","📝 Profile bio","Set a public bio on your profile"],
         ["keyboardLayout","⌨️ Layout switcher","Switch between QWERTY/DVORAK/etc"],
-        ["purchaseKeys","💰 Buy keys","Purchase 🔑 keys"],
+        ["purchaseKeys","💰 Buy keys","Purchase Keys"],
       ]},
       {group:"🔒 Privacy & Safety", items:[
         ["shareStats","📈 Share stats","Stats visible on public profile"],
@@ -2207,7 +2164,7 @@ const Nav = () => (<>
               </div>
               <div style={{color:T.text,fontWeight:700,fontSize:14,marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</div>
               <div style={{color:T.muted,fontSize:11}}>Level {p.currentLevel || 1}</div>
-              <div style={{color:T.accent,fontSize:11,marginTop:2,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}><KKey size={11}/>{((k)=>k>=1e6?""+Math.round(k/1e6)+"M":k>=1e3?""+Math.round(k/1e3)+"k":k)(p.keys||0)}</div>
+              <div style={{color:T.accent,fontSize:11,marginTop:2,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}><KKey size={11}/>{formatKeys(p.keys)}</div>
             </div>
             <button onClick={(e) => { e.stopPropagation(); const prof = p; setActiveProfile(prof); setLayoutKey(prof.favoriteLayout||"qwerty"); setEditName(prof.name||""); setEditAvatar(prof.avatar||"key"); setEditBirthday(prof.birthday||""); setEditPhoto(null); setEditPhotoPreview(null); setEditPhotoB64(null); setSaveMsg(""); setDeleteConfirmText(""); setShowDeleteProfile(false); setDeleteAccConfirmText(""); setShowDeleteAccount(false); setScreenWithUrl("levelMap"); setShowSettingsModal(true);}}
               style={{position:"absolute",top:6,right:6,background:T.purple,border:"none",borderRadius:8,padding:"4px 8px",display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:11,fontWeight:700,color:"#fff",zIndex:10,opacity:hoveredProfileId===p.id?1:0,pointerEvents:hoveredProfileId===p.id?"all":"none",transition:"opacity 0.15s",fontFamily:T.font,whiteSpace:"nowrap"}}>
@@ -2558,8 +2515,8 @@ const Nav = () => (<>
             <button onClick={handleSettingsSave} disabled={saving} style={{width:"100%",padding:"13px",borderRadius:9,border:"none",background:T.purple,color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:T.font,opacity:saving?0.6:1}}>{saving?"Saving...":"Save Changes"}</button>
 
             {/* Change Username */}
-            <button onClick={() => { setShowChangeUsername(true); setShowSettingsModal(false);}} style={{width:"100%",padding:"9px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:T.font,marginTop:8}}>
-              @{currentUsername || "Set username"} · Change username (5 🔑)
+            <button onClick={() => { setShowChangeUsername(true); setShowSettingsModal(false);}} style={{width:"100%",padding:"9px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:T.font,marginTop:8,display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+              @{currentUsername || "Set username"} · Change username (5 <KKey size={11}/>)
             </button>
 
             {/* Privacy Settings */}
@@ -2972,73 +2929,6 @@ const Nav = () => (<>
           </div>
         )}
 
-        {showPomodoro && (() => {
-          const mins = Math.floor(pomodoroSecs/60);
-          const secs = pomodoroSecs%60;
-          const modeLabel = pomodoroMode==="work" ? "🍅 Focus" : pomodoroMode==="break" ? "☕ Short Break" : "🛋️ Long Break";
-          const modeColor = pomodoroMode==="work" ? "#ef4444" : pomodoroMode==="break" ? "#34d399" : "#7c6af7";
-          const pct = 1 - pomodoroSecs / POMO_DURATIONS[pomodoroMode];
-          const r=54, circ=2*Math.PI*r;
-          return (
-            <div onClick={()=>setShowPomodoro(false)} style={{position:"fixed",inset:0,background:"#000a",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1010,padding:20}}>
-              <div onClick={e=>e.stopPropagation()} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:16,padding:28,width:"100%",maxWidth:360,textAlign:"center"}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-                  <span style={{color:T.text,fontWeight:800,fontSize:16}}>⏱ Pomodoro</span>
-                  <button onClick={()=>setShowPomodoro(false)} style={{background:"none",border:"none",color:T.faint,fontSize:20,cursor:"pointer"}}>×</button>
-                </div>
-
-                {/* Mode pills */}
-                <div style={{display:"flex",gap:6,justifyContent:"center",marginBottom:20}}>
-                  {[["work","🍅 Focus"],["break","☕ Break"],["longBreak","🛋️ Long"]].map(([m,l])=>(
-                    <button key={m} onClick={()=>{setPomodoroMode(m);setPomodoroSecs(POMO_DURATIONS[m]);setPomodoroRunning(false);}} style={{padding:"4px 10px",borderRadius:20,border:`1px solid ${pomodoroMode===m?modeColor:T.border}`,background:pomodoroMode===m?modeColor+"22":"transparent",color:pomodoroMode===m?modeColor:T.muted,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>{l}</button>
-                  ))}
-                </div>
-
-                {/* Ring timer */}
-                <div style={{position:"relative",display:"inline-block",marginBottom:16}}>
-                  <svg width="130" height="130" style={{transform:"rotate(-90deg)"}}>
-                    <circle cx="65" cy="65" r={r} fill="none" stroke={T.border} strokeWidth="6"/>
-                    <circle cx="65" cy="65" r={r} fill="none" stroke={modeColor} strokeWidth="6"
-                      strokeDasharray={circ} strokeDashoffset={circ*(1-pct)} strokeLinecap="round"
-                      style={{transition:"stroke-dashoffset 0.8s ease"}}/>
-                  </svg>
-                  <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-                    <div style={{color:T.text,fontWeight:800,fontSize:28,fontFamily:"'JetBrains Mono',monospace"}}>
-                      {String(mins).padStart(2,"0")}:{String(secs).padStart(2,"0")}
-                    </div>
-                    <div style={{color:modeColor,fontSize:10,fontWeight:700,marginTop:2}}>{modeLabel}</div>
-                  </div>
-                </div>
-
-                {/* Session dots */}
-                <div style={{display:"flex",gap:6,justifyContent:"center",marginBottom:20}}>
-                  {Array.from({length:pomodoroGoal}).map((_,i)=>(
-                    <div key={i} style={{width:10,height:10,borderRadius:"50%",background:i<pomodoroCount%pomodoroGoal||(pomodoroCount%pomodoroGoal===0&&pomodoroCount>0&&i===pomodoroGoal-1)?"#ef4444":T.border}}/>
-                  ))}
-                </div>
-
-                {/* Controls */}
-                <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:16}}>
-                  <button onClick={()=>setPomodoroRunning(r=>!r)} style={{padding:"10px 28px",borderRadius:10,border:"none",background:modeColor,color:"#fff",fontWeight:800,fontSize:15,cursor:"pointer",fontFamily:T.font}}>
-                    {pomodoroRunning?"⏸ Pause":"▶ Start"}
-                  </button>
-                  <button onClick={()=>{setPomodoroRunning(false);setPomodoroSecs(POMO_DURATIONS[pomodoroMode]);}} style={{padding:"10px 14px",borderRadius:10,border:`1px solid ${T.border}`,background:"transparent",color:T.muted,fontSize:15,cursor:"pointer",fontFamily:T.font}}>↺</button>
-                </div>
-
-                {/* Goal setting */}
-                <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                  <span style={{color:T.faint,fontSize:11}}>Goal:</span>
-                  {[2,3,4,6,8].map(n=>(
-                    <button key={n} onClick={()=>setPomodoroGoal(n)} style={{padding:"2px 8px",borderRadius:6,border:`1px solid ${pomodoroGoal===n?"#ef4444":T.border}`,background:pomodoroGoal===n?"#ef444422":"transparent",color:pomodoroGoal===n?"#ef4444":T.faint,fontSize:11,cursor:"pointer",fontFamily:T.font}}>{n}</button>
-                  ))}
-                  <span style={{color:T.faint,fontSize:11}}>sessions</span>
-                </div>
-                {pomodoroCount>0&&<div style={{color:T.muted,fontSize:11,marginTop:10}}>✅ {pomodoroCount} session{pomodoroCount!==1?"s":""} completed today</div>}
-              </div>
-            </div>
-          );
-        })()}
-
         {showFeedback && (
           <div onClick={()=>setShowFeedback(false)} style={{position:"fixed",inset:0,background:"#000a",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1010,padding:20}}>
             <div onClick={e=>e.stopPropagation()} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:16,padding:24,width:"100%",maxWidth:420}}>
@@ -3051,7 +2941,7 @@ const Nav = () => (<>
                   <div style={{fontSize:36,marginBottom:8}}>🙏</div>
                   <div style={{color:T.text,fontWeight:700,fontSize:15,marginBottom:6}}>Thanks for your feedback!</div>
                   <div style={{color:T.muted,fontSize:13}}>We read every message.</div>
-                  <button onClick={()=>setShowFeedback(false)} style={{marginTop:16,background:T.purple,border:"none",borderRadius:8,color:"#fff",fontSize:13,fontWeight:700,padding:"8px 20px",cursor:"pointer",fontFamily:T.font}}>Close</button>
+                  <button onClick={()=>{setShowFeedback(false);setFeedbackScreenshot(null);setFeedbackScreenshotName("");}} style={{marginTop:16,background:T.purple,border:"none",borderRadius:8,color:"#fff",fontSize:13,fontWeight:700,padding:"8px 20px",cursor:"pointer",fontFamily:T.font}}>Close</button>
                 </div>
               ) : (
                 <>
@@ -3064,15 +2954,37 @@ const Nav = () => (<>
                     rows={5}
                     style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontSize:13,padding:"10px 12px",fontFamily:T.font,resize:"vertical",outline:"none",boxSizing:"border-box"}}
                   />
+                  <input ref={feedbackFileRef} type="file" accept="image/*" style={{display:"none"}} onChange={async e=>{
+                    const f=e.target.files[0];
+                    if(!f) return;
+                    try{
+                      const dataUrl = await resizeToBase64(f, 1000);
+                      setFeedbackScreenshot(dataUrl);
+                      setFeedbackScreenshotName(f.name);
+                    }catch(err){ console.error("Screenshot resize failed:", err); }
+                  }} />
+                  {feedbackScreenshot ? (
+                    <div style={{display:"flex",alignItems:"center",gap:10,marginTop:10,background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,padding:"8px 10px"}}>
+                      <img src={feedbackScreenshot} alt="Screenshot preview" style={{width:48,height:48,objectFit:"cover",borderRadius:6,border:`1px solid ${T.border}`}} />
+                      <div style={{flex:1,color:T.muted,fontSize:11,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{feedbackScreenshotName||"Screenshot attached"}</div>
+                      <button onClick={()=>{setFeedbackScreenshot(null);setFeedbackScreenshotName("");}} style={{background:"none",border:"none",color:T.faint,fontSize:16,cursor:"pointer",padding:"0 4px"}} title="Remove screenshot">×</button>
+                    </div>
+                  ) : (
+                    <button onClick={()=>feedbackFileRef.current?.click()} style={{marginTop:10,background:"none",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,fontSize:12,padding:"7px 12px",cursor:"pointer",fontFamily:T.font,display:"flex",alignItems:"center",gap:6}}>
+                      📎 Attach screenshot
+                    </button>
+                  )}
                   <div style={{display:"flex",justifyContent:"flex-end",marginTop:10,gap:8}}>
-                    <button onClick={()=>setShowFeedback(false)} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,fontSize:13,padding:"8px 16px",cursor:"pointer",fontFamily:T.font}}>Cancel</button>
+                    <button onClick={()=>{setShowFeedback(false);setFeedbackScreenshot(null);setFeedbackScreenshotName("");}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,fontSize:13,padding:"8px 16px",cursor:"pointer",fontFamily:T.font}}>Cancel</button>
                     <button disabled={!feedbackText.trim()||feedbackSending} onClick={async(e)=>{
                       e.stopPropagation();
                       if(!feedbackText.trim())return;
                       setFeedbackSending(true);
                       try{
-                        await submitFeedback(user?.uid||null, activeProfile?.id||null, feedbackText.trim(), currentUsername, activeProfile?.name||null);
+                        await submitFeedback(user?.uid||null, activeProfile?.id||null, feedbackText.trim(), currentUsername, activeProfile?.name||null, feedbackScreenshot||null);
                         setFeedbackSent(true);
+                        setFeedbackScreenshot(null);
+                        setFeedbackScreenshotName("");
                       } catch(err){
                         console.error("Feedback error:",err);
                         setFeedbackText(t => t + "\n\n[send failed — please screenshot and share]");
@@ -3080,6 +2992,36 @@ const Nav = () => (<>
                     }} style={{background:feedbackText.trim()&&!feedbackSending?T.purple:"#444",border:"none",borderRadius:8,color:"#fff",fontSize:13,fontWeight:700,padding:"8px 20px",cursor:feedbackText.trim()&&!feedbackSending?"pointer":"default",fontFamily:T.font,opacity:feedbackSending?0.6:1}}>
                       {feedbackSending?"Sending…":"Send →"}
                     </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {flaggedScorePopup && (
+          <div onClick={()=>{setFlaggedScorePopup(null);setRestoreRequestSent(false);}} style={{position:"fixed",inset:0,background:"#000a",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1012,padding:20}}>
+            <div onClick={e=>e.stopPropagation()} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:16,padding:24,width:"100%",maxWidth:380,textAlign:"center"}}>
+              {restoreRequestSent ? (
+                <>
+                  <div style={{fontSize:32,marginBottom:8}}>📨</div>
+                  <div style={{color:T.text,fontWeight:700,fontSize:15,marginBottom:6}}>Review requested</div>
+                  <div style={{color:T.muted,fontSize:13,marginBottom:16}}>An admin will take a look. We'll restore it if it checks out.</div>
+                  <button onClick={()=>{setFlaggedScorePopup(null);setRestoreRequestSent(false);}} style={{background:T.purple,border:"none",borderRadius:8,color:"#fff",fontSize:13,fontWeight:700,padding:"8px 20px",cursor:"pointer",fontFamily:T.font}}>Close</button>
+                </>
+              ) : (
+                <>
+                  <div style={{fontSize:32,marginBottom:8}}>🚩</div>
+                  <div style={{color:T.text,fontWeight:700,fontSize:15,marginBottom:6}}>Score not added to leaderboard</div>
+                  <div style={{color:T.muted,fontSize:13,marginBottom:16}}>Your {flaggedScorePopup.wpm} WPM result was unusually high and was automatically held back from the public leaderboard. If this was a genuine result, you can ask an admin to review it.</div>
+                  <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+                    <button onClick={()=>{setFlaggedScorePopup(null);setRestoreRequestSent(false);}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,fontSize:13,padding:"8px 16px",cursor:"pointer",fontFamily:T.font}}>Dismiss</button>
+                    <button onClick={async()=>{
+                      try{
+                        await requestScoreRestore(user.uid, { type:'daily', date: flaggedScorePopup.date }, `Player reports ${flaggedScorePopup.wpm} WPM is a genuine result.`);
+                        setRestoreRequestSent(true);
+                      }catch(e){ console.error("Restore request failed:", e); }
+                    }} style={{background:T.purple,border:"none",borderRadius:8,color:"#fff",fontSize:13,fontWeight:700,padding:"8px 16px",cursor:"pointer",fontFamily:T.font}}>Request review</button>
                   </div>
                 </>
               )}
@@ -3131,24 +3073,40 @@ const Nav = () => (<>
                 <span style={{color:T.text,fontWeight:800,fontSize:16}}>🛍️ Theme Shop</span>
                 <button onClick={()=>{setShowShop(false);setShopMsg("");}} style={{background:"none",border:"none",color:T.faint,fontSize:20,cursor:"pointer"}}>×</button>
               </div>
-              <div style={{color:T.muted,fontSize:12,marginBottom:16}}>You have <strong style={{color:T.accent}}>{activeProfile?.keys||0} 🔑</strong></div>
+              <div style={{color:T.muted,fontSize:12,marginBottom:16,display:"flex",alignItems:"center",gap:4}}>You have <strong style={{color:T.accent,display:"flex",alignItems:"center",gap:3}}>{formatKeys(activeProfile?.keys)} <KKey size={12}/></strong></div>
               {shopMsg&&<div style={{color:T.accent2,fontSize:12,marginBottom:12}}>{shopMsg}</div>}
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                 {SHOP_THEMES.map(th=>{
                   const owned=(activeProfile?.ownedThemes||[]).includes(th.id)||th.cost===0;
                   const active=activeProfile?.activeTheme===th.id||(th.id==="dark"&&!activeProfile?.activeTheme);const canCustomTheme=canUse(activeProfile,"customTheme");
+                  const doBuyTheme=async()=>{const newKeys=(activeProfile.keys||0)-th.cost;if(newKeys<0){setShopMsg("Not enough Keys");return;}patchProfile({keys:newKeys,ownedThemes:[...(activeProfile.ownedThemes||[]),th.id],activeTheme:th.id});setShopMsg(`${th.label} purchased!`);try{await purchaseTheme(user.uid,activeProfile.id,th.id,th.cost);await setActiveTheme(user.uid,activeProfile.id,th.id);}catch(e){setShopMsg(e.message||"Error");}};
                   return (
                     <div key={th.id} style={{background:T.bg,border:`1px solid ${active?T.purple:T.border}`,borderRadius:10,padding:"12px",textAlign:"center"}}>
                       <div style={{fontWeight:700,fontSize:13,color:T.text,marginBottom:4}}>{th.label}</div>
-                      <div style={{color:T.faint,fontSize:11,marginBottom:8}}>{th.cost===0?"Free":`${th.cost} 🔑`}</div>
+                      <div style={{color:T.faint,fontSize:11,marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>{th.cost===0?"Free":<>{th.cost} <KKey size={10}/></>}</div>
                       {active?<div style={{color:T.purple,fontSize:11,fontWeight:700}}>Active</div>
                         :!canCustomTheme&&th.id!=="dark"?<div style={{color:T.faint,fontSize:11}}>🔒 Locked</div>
                         :owned?<button onClick={async()=>{patchProfile({activeTheme:th.id});setShopMsg(`${th.label} activated!`);setActiveTheme(user.uid,activeProfile.id,th.id);}} style={{width:"100%",padding:"6px",background:"transparent",border:`1px solid ${T.purple}`,borderRadius:6,color:T.purple,fontSize:11,fontWeight:700,cursor:"pointer"}}>Equip</button>
-                        :<button onClick={async()=>{const newKeys=(activeProfile.keys||0)-th.cost;if(newKeys<0){setShopMsg("Not enough 🔑 Keys");return;}patchProfile({keys:newKeys,ownedThemes:[...(activeProfile.ownedThemes||[]),th.id],activeTheme:th.id});setShopMsg(`${th.label} purchased!`);try{await purchaseTheme(user.uid,activeProfile.id,th.id,th.cost);await setActiveTheme(user.uid,activeProfile.id,th.id);}catch(e){setShopMsg(e.message||"Error");}}} style={{width:"100%",padding:"6px",background:T.purple,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>Buy</button>
+                        :<button onClick={()=>setConfirmBuy({th,doBuy:doBuyTheme})} style={{width:"100%",padding:"6px",background:T.purple,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>Buy</button>
                       }
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {confirmBuy && (
+          <div style={{position:"fixed",inset:0,background:"#000a",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1011,padding:20}} onClick={()=>setConfirmBuy(null)}>
+            <div onClick={e=>e.stopPropagation()} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:24,width:"100%",maxWidth:320,textAlign:"center"}}>
+              <div style={{color:T.text,fontWeight:700,fontSize:15,marginBottom:8}}>Confirm Purchase</div>
+              <div style={{color:T.muted,fontSize:13,marginBottom:20,display:"flex",alignItems:"center",justifyContent:"center",gap:5,flexWrap:"wrap"}}>
+                Spend <strong style={{color:T.accent,display:"flex",alignItems:"center",gap:3}}>{confirmBuy.th.cost} <KKey size={12}/></strong> on {confirmBuy.th.label}?
+              </div>
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={()=>{confirmBuy.doBuy();setConfirmBuy(null);}} style={{flex:1,padding:"10px",background:T.purple,border:"none",borderRadius:8,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:T.font}}>Confirm</button>
+                <button onClick={()=>setConfirmBuy(null)} style={{flex:1,padding:"10px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:T.font}}>Cancel</button>
               </div>
             </div>
           </div>
@@ -3207,11 +3165,11 @@ const Nav = () => (<>
           <div style={{position:"fixed",inset:0,background:"#00000099",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:20}}>
             <div style={{background:"#0f0f1a",border:"1px solid #1e1e30",borderRadius:14,padding:24,width:"100%",maxWidth:380}}>
               <div style={{color:"#e0e0ff",fontWeight:700,fontSize:15,marginBottom:4}}>Change Username</div>
-              <div style={{color:"#6b7280",fontSize:12,marginBottom:16}}>Costs 5 🔑 keys. Current: @{currentUsername}</div>
+              <div style={{color:"#6b7280",fontSize:12,marginBottom:16,display:"flex",alignItems:"center",gap:4}}>Costs 5 <KKey size={11}/> Keys. Current: @{currentUsername}</div>
               <input value={newUsernameInput} onChange={e=>{setNewUsernameInput(e.target.value);setUsernameError("");}} onKeyDown={e=>e.key==="Enter"&&handleChangeUsername()} placeholder="new_username" maxLength={20} autoFocus style={{width:"100%",background:"#1e1e30",border:"1px solid #2e2e44",borderRadius:8,color:"#e0e0ff",fontFamily:T.font,fontSize:14,padding:"10px 12px",outline:"none",boxSizing:"border-box",marginBottom:8}} />
               {usernameError && <div style={{color:"#ef4444",fontSize:11,marginBottom:8}}>{usernameError}</div>}
               <div style={{display:"flex",gap:8}}>
-                <button onClick={handleChangeUsername} disabled={usernameLoading||!newUsernameInput.trim()} style={{flex:1,padding:"10px",background:T.purple,border:"none",borderRadius:8,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:T.font}}>{usernameLoading?"...":"Change (5 🔑)"}</button>
+                <button onClick={handleChangeUsername} disabled={usernameLoading||!newUsernameInput.trim()} style={{flex:1,padding:"10px",background:T.purple,border:"none",borderRadius:8,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:T.font,display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>{usernameLoading?"...":<>Change (5 <KKey size={11}/>)</>}</button>
                 <button onClick={()=>{setShowChangeUsername(false);setNewUsernameInput("");setUsernameError("");}} style={{padding:"10px 16px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,cursor:"pointer",fontFamily:T.font}}>Cancel</button>
               </div>
             </div>
