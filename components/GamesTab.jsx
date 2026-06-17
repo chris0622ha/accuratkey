@@ -1000,10 +1000,6 @@ function SuddenDeath({ T, onBack }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// ZEN MODE
-// ═══════════════════════════════════════════════════════════════════════════════
-
 function ZenMode({ T, onBack }) {
   const [words, setWords] = useState(() => pickWords(80, "easy"));
   const [typed, setTyped] = useState("");
@@ -1060,10 +1056,6 @@ function ZenMode({ T, onBack }) {
     </div>
   );
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// SPEED LADDER
-// ═══════════════════════════════════════════════════════════════════════════════
 
 function SpeedLadder({ T, onBack }) {
   const RUNGS = 10;
@@ -1140,7 +1132,53 @@ function SpeedLadder({ T, onBack }) {
   );
 }
 
-const GAME_COMPONENTS = {
+export default function GamesTab({ T }) {
+  // Restore active game from URL on mount
+  const [activeCat, setActiveCat] = useState("all");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 6;
+  const [activeGame, setActiveGame] = useState(() => {
+    if (typeof window === "undefined") return null;
+    const path = window.location.pathname;
+    const match = path.match(/^\/games\/([a-z]+)/);
+    return match ? match[1] : null;
+  });
+  const [settings, setSettings] = useState(null); // null = show settings panel
+  const [showSettings, setShowSettings] = useState(false);
+
+  const enterGame = (id) => {
+    setActiveGame(id);
+    setSettings(null); // show settings first
+    setShowSettings(true);
+    if (typeof window !== "undefined") {
+      window.history.replaceState({}, "", `/games/${id}`);
+      localStorage.setItem("ak_active_game", id);
+    }
+  };
+
+  const exitGame = () => {
+    setActiveGame(null);
+    setSettings(null);
+    setShowSettings(false);
+    if (typeof window !== "undefined") {
+      window.history.replaceState({}, "", "/game");
+      localStorage.removeItem("ak_active_game");
+    }
+  };
+
+  // On refresh, restore settings too
+  useEffect(() => {
+    if (activeGame && !settings) {
+      const saved = getSettings(activeGame);
+      const defs = GAME_SETTINGS[activeGame] || [];
+      if (defs.length === 0) setSettings(saved);
+      else setShowSettings(true);
+    }
+  }, []);
+
+  const startGame = (s) => { setSettings(s); setShowSettings(false); };
+
+  const GAME_COMPONENTS = {
     rain: WordRain, survival: Survival, burst: SpeedBurst, scramble: WordScramble,
     suddendeath: SuddenDeath, zen: ZenMode, ladder: SpeedLadder,
     sniper: Sniper, mirror: Mirror, flash: Flash, echo: Echo,
@@ -1233,3 +1271,4 @@ const GAME_COMPONENTS = {
       })()}
     </div>
   );
+}
