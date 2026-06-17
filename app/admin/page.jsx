@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { onAuthStateChanged, signInWithPopup, signOut, signInWithEmailAndPassword, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth";
-import { auth, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, adminSetProfileAdmin, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest, replyToFeedback, getFlaggedScores, getRestoreRequests, approveFlaggedScore, dismissFlaggedScore, resolveRestoreRequest } from "@/lib/firebase";
+import { adminAuth, adminDb, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, adminSetProfileAdmin, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest, replyToFeedback, getFlaggedScores, getRestoreRequests, approveFlaggedScore, dismissFlaggedScore, resolveRestoreRequest } from "@/lib/firebase";
 const LEVELS = [
   { id:1,  name:"Home Row Hero",         emoji:"🏠", wpmTarget:12,  accuracy:75, color:"#10b981", words:["ffjj","fjfj","asdf","jkl;","add","ask","fall","glad","flask","lads","fads","salads"] },
   { id:2,  name:"Top Row Climber",       emoji:"🧗", wpmTarget:16,  accuracy:75, color:"#3b82f6", words:["quit","wrap","type","your","power","tower","write","pretty","quite","report"] },
@@ -363,17 +363,16 @@ export default function AdminPage() {
   const [profileAdminLoading,setProfileAdminLoading]=useState(false);
   const [showSwitcher,setShowSwitcher]=useState(false);
   const [switcherMode,setSwitcherMode]=useState("menu"); // "menu" | "account"
-  const [confirmSwitchAccount,setConfirmSwitchAccount]=useState(null); // pending provider/action while we confirm
 
   const flash = m => { setMsg(m); setTimeout(()=>setMsg(""),3000); };
 
-  useEffect(()=>{ return onAuthStateChanged(auth, async u => {
+  useEffect(()=>{ return onAuthStateChanged(adminAuth, async u => {
     setUser(u);
     setAdminProfiles(null); setChosenAdminProfile(null); setAccountIsAdmin(false);
     if(!u){ setAdminOk(false); setAuthChecked(true); return; }
-    const accountOk = await isAdmin(u.uid).catch(()=>false);
+    const accountOk = await isAdmin(u.uid,adminDb).catch(()=>false);
     setAccountIsAdmin(accountOk);
-    const profiles = await getProfilesForAdmin(u.uid).catch(()=>[]);
+    const profiles = await getProfilesForAdmin(u.uid,adminDb).catch(()=>[]);
     setAdminProfiles(profiles||[]);
     if(accountOk){
       // Account-level admin: in immediately, default the switcher to the first profile.
@@ -400,7 +399,7 @@ export default function AdminPage() {
     setAdminSignInErr(""); setAdminSignInLoading(true);
     try {
       const provider = providerName === "github" ? new GithubAuthProvider() : new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(adminAuth, provider);
       if (!result?.user) setAdminSignInErr("Sign in failed — try again.");
     } catch (e) {
       if (e?.code === "auth/popup-closed-by-user" || e?.code === "auth/cancelled-popup-request") {
@@ -426,7 +425,7 @@ export default function AdminPage() {
     // action: () => Promise<...> — the actual sign-in call to run after sign-out
     setSwitchErr(""); setSwitchLoading(true);
     try {
-      await signOut(auth);
+      await signOut(adminAuth);
       await action();
       setShowSwitcher(false); setSwitcherMode("menu");
       setSwitchEmail(""); setSwitchPass(""); setConfirmSwitchAccount(null);
@@ -436,22 +435,20 @@ export default function AdminPage() {
     setSwitchLoading(false);
   };
 
-  const requestSwitchAccount = (action) => setConfirmSwitchAccount(action);
-
   useEffect(()=>{ if(adminOk) loadAll(); },[adminOk]);
-  useEffect(()=>{ if(adminOk&&tab==="log") getActivityLog(100).then(setLog).catch(()=>{}); },[tab,adminOk]);
-  useEffect(()=>{ if(adminOk&&tab==="feedback") getAdminFeedback(50).then(setFeedbackList).catch(()=>{}); },[tab,adminOk]);
-  useEffect(()=>{ if(adminOk&&tab==="anticheat"){ getFlaggedScores().then(setFlaggedScores).catch(()=>{}); getRestoreRequests().then(setRestoreRequests).catch(()=>{}); } },[tab,adminOk]);
-  useEffect(()=>{ if(adminOk&&tab==="birthday") getAdminBirthdayRequests().then(setBdayReqList).catch(()=>{}); },[tab,adminOk]);
+  useEffect(()=>{ if(adminOk&&tab==="log") getActivityLog(100,adminDb).then(setLog).catch(()=>{}); },[tab,adminOk]);
+  useEffect(()=>{ if(adminOk&&tab==="feedback") getAdminFeedback(50,adminDb).then(setFeedbackList).catch(()=>{}); },[tab,adminOk]);
+  useEffect(()=>{ if(adminOk&&tab==="anticheat"){ getFlaggedScores(adminDb).then(setFlaggedScores).catch(()=>{}); getRestoreRequests(adminDb).then(setRestoreRequests).catch(()=>{}); } },[tab,adminOk]);
+  useEffect(()=>{ if(adminOk&&tab==="birthday") getAdminBirthdayRequests(adminDb).then(setBdayReqList).catch(()=>{}); },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="settings") getMaintenanceMode().then(m=>{setMaintEnabled(m.enabled);setMaintMsg(m.message||"");if(m.triggers)setMaintTriggers(m.triggers);}); },[tab,adminOk]);
-  useEffect(()=>{ if(adminOk&&tab==="analytics"&&!failStats){setFailStatsLoading(true);getLevelFailStats().then(d=>{setFailStats(d);setFailStatsLoading(false);}).catch(()=>setFailStatsLoading(false));} },[tab,adminOk]);
+  useEffect(()=>{ if(adminOk&&tab==="analytics"&&!failStats){setFailStatsLoading(true);getLevelFailStats(adminDb).then(d=>{setFailStats(d);setFailStatsLoading(false);}).catch(()=>setFailStatsLoading(false));} },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="broadcast") getBroadcast().then(b=>{if(b)setCurrentBroadcast(b);}); },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="levels") getLevelOverrides().then(setLevelOverrides).catch(()=>{}); },[tab,adminOk]);
-  useEffect(()=>{ if(adminOk&&tab==="stats") getAppStats().then(setStats).catch(()=>{}); },[tab,adminOk]);
+  useEffect(()=>{ if(adminOk&&tab==="stats") getAppStats(adminDb).then(setStats).catch(()=>{}); },[tab,adminOk]);
 
   async function loadAll() {
     setLoading(true);
-    const [u,b,a] = await Promise.all([getAllUsers(),getAllBans(),getAllAdmins()]);
+    const [u,b,a] = await Promise.all([getAllUsers(adminDb),getAllBans(adminDb),getAllAdmins(adminDb)]);
     setUsers(u); setBans(b); setAdmins(a); setLoading(false);
   }
 
@@ -467,106 +464,106 @@ export default function AdminPage() {
   async function handleBan() {
     if(!banTarget) return;
     const data = { reason: banReason||"No reason given", bannedBy: user.uid };
-    if (banExpiry) { await tempBanUser(banTarget.uid, { ...data, expiresAt: new Date(banExpiry).toISOString() }); }
-    else { await banUser(banTarget.uid, data); }
-    await logActivity("ban", { adminUid:user.uid, targetUid:banTarget.uid, targetUsername:banTarget.username, detail:banReason+(banExpiry?` (expires ${banExpiry})` :"") });
+    if (banExpiry) { await tempBanUser(banTarget.uid, { ...data, expiresAt: new Date(banExpiry).toISOString() }, adminDb); }
+    else { await banUser(banTarget.uid, data, adminDb); }
+    await logActivity("ban", { adminUid:user.uid, targetUid:banTarget.uid, targetUsername:banTarget.username, detail:banReason+(banExpiry?` (expires ${banExpiry})` :"") }, adminDb);
     flash(`Banned ${banTarget.username||banTarget.email}`);
     setBanTarget(null); setBanReason(""); setBanExpiry(""); loadAll();
   }
 
   async function handleUnban(uid,username) {
-    await unbanUser(uid);
-    await logActivity("unban",{adminUid:user.uid,targetUid:uid,targetUsername:username});
+    await unbanUser(uid,adminDb);
+    await logActivity("unban",{adminUid:user.uid,targetUid:uid,targetUsername:username},adminDb);
     flash("Unbanned"); loadAll();
   }
 
   async function handleGrant() {
     const found = await resolve(grantInput); if(!found) return;
-    await grantAdmin(found.uid, user.uid);
-    await logActivity("grant_admin",{adminUid:user.uid,targetUid:found.uid,targetUsername:found.username});
+    await grantAdmin(found.uid, user.uid, adminDb);
+    await logActivity("grant_admin",{adminUid:user.uid,targetUid:found.uid,targetUsername:found.username},adminDb);
     flash(`Admin granted`); setGrantInput(""); loadAll();
   }
 
   async function handleRevoke(uid,username) {
     if(uid===user.uid){flash("Can't revoke yourself");return;}
-    await revokeAdmin(uid);
-    await logActivity("revoke_admin",{adminUid:user.uid,targetUid:uid,targetUsername:username});
+    await revokeAdmin(uid,adminDb);
+    await logActivity("revoke_admin",{adminUid:user.uid,targetUid:uid,targetUsername:username},adminDb);
     flash("Revoked"); loadAll();
   }
 
   async function handleProfileAdminLookup() {
     const found = await resolve(profileAdminInput); if(!found) return;
     setProfileAdminLoading(true);
-    const profiles = await getProfilesForAdmin(found.uid);
+    const profiles = await getProfilesForAdmin(found.uid,adminDb);
     setProfileAdminProfiles(profiles||[]); setProfileAdminLookupUid(found.uid);
     setProfileAdminLoading(false);
   }
 
   async function handleToggleProfileAdmin(profileId,profileName,nextValue) {
-    await adminSetProfileAdmin(profileAdminLookupUid,profileId,nextValue);
-    await logActivity(nextValue?"grant_profile_admin":"revoke_profile_admin",{adminUid:user.uid,targetUid:profileAdminLookupUid,detail:`Profile "${profileName}"`});
+    await adminSetProfileAdmin(profileAdminLookupUid,profileId,nextValue,adminDb);
+    await logActivity(nextValue?"grant_profile_admin":"revoke_profile_admin",{adminUid:user.uid,targetUid:profileAdminLookupUid,detail:`Profile "${profileName}"`},adminDb);
     flash(nextValue?`Granted Profile Admin to "${profileName}"`:`Revoked Profile Admin from "${profileName}"`);
-    const updated = await getProfilesForAdmin(profileAdminLookupUid);
+    const updated = await getProfilesForAdmin(profileAdminLookupUid,adminDb);
     setProfileAdminProfiles(updated);
   }
 
   async function handleSkip(profileId) {
     if(!skipTarget) return;
-    await adminSkipLevel(skipTarget.uid, profileId, skipLevel);
-    await logActivity("skip_level",{adminUid:user.uid,targetUid:skipTarget.uid,targetUsername:skipTarget.username,detail:`level ${skipLevel}`});
+    await adminSkipLevel(skipTarget.uid, profileId, skipLevel, adminDb);
+    await logActivity("skip_level",{adminUid:user.uid,targetUid:skipTarget.uid,targetUsername:skipTarget.username,detail:`level ${skipLevel}`},adminDb);
     flash(`Skipped to level ${skipLevel}`);
   }
 
   async function handleSaveNote() {
     if(!noteTarget) return;
-    await setAdminNote(noteTarget.uid, noteText, user.uid);
+    await setAdminNote(noteTarget.uid, noteText, user.uid, adminDb);
     flash("Note saved"); setNoteTarget(null); setNoteText("");
   }
 
-  async function openNote(u) { const e=await getAdminNote(u.uid); setNoteText(e?.note||""); setNoteTarget(u); }
+  async function openNote(u) { const e=await getAdminNote(u.uid,adminDb); setNoteText(e?.note||""); setNoteTarget(u); }
 
   async function openSessions(u) {
     setSessionTarget(u); setSessionLoading(true); setSessionData([]);
-    const s = await getUserSessions(u.uid);
+    const s = await getUserSessions(u.uid,adminDb);
     setSessionData(s); setSessionLoading(false);
   }
 
   async function handleWarn() {
     if(!warnTarget||!warnMsg.trim()) return;
-    await warnUser(warnTarget.uid,{message:warnMsg,warnedBy:user.uid});
-    await logActivity("warn",{adminUid:user.uid,targetUid:warnTarget.uid,targetUsername:warnTarget.username,detail:warnMsg});
+    await warnUser(warnTarget.uid,{message:warnMsg,warnedBy:user.uid},adminDb);
+    await logActivity("warn",{adminUid:user.uid,targetUid:warnTarget.uid,targetUsername:warnTarget.username,detail:warnMsg},adminDb);
     flash(`Warned ${warnTarget.username||warnTarget.email}`);
     setWarnTarget(null); setWarnMsg("");
   }
 
   async function handleClearWarn(uid,username) {
     await clearWarning(uid);
-    await logActivity("clear_warn",{adminUid:user.uid,targetUid:uid,targetUsername:username});
+    await logActivity("clear_warn",{adminUid:user.uid,targetUid:uid,targetUsername:username},adminDb);
     flash("Warning cleared");
   }
 
   async function handleKeysLookup() {
     const found = await resolve(keysInput); if(!found) return;
     setKeysLoading(true);
-    const profiles = await getProfilesForAdmin(found.uid);
+    const profiles = await getProfilesForAdmin(found.uid,adminDb);
     setKeysProfiles(profiles||[]); setKeysTargetUid(found.uid);
     setKeysLoading(false);
   }
 
   async function handleSetKeys(profileId,profileName) {
     const amount = parseInt(keysAmount[profileId]); if(isNaN(amount)||amount<0) return;
-    await adminSetKeys(keysTargetUid,profileId,amount);
-    await logActivity("set_keys",{adminUid:user.uid,targetUid:keysTargetUid,detail:`Set to ${amount} keys for "${profileName}"`});
+    await adminSetKeys(keysTargetUid,profileId,amount,adminDb);
+    await logActivity("set_keys",{adminUid:user.uid,targetUid:keysTargetUid,detail:`Set to ${amount} keys for "${profileName}"`},adminDb);
     setKeysMsgs(p=>({...p,[profileId]:`Set to ${amount}!`}));
     setTimeout(()=>setKeysMsgs(p=>({...p,[profileId]:null})),3000);
-    const updated = await getProfilesForAdmin(keysTargetUid);
+    const updated = await getProfilesForAdmin(keysTargetUid,adminDb);
     setKeysProfiles(updated);
   }
 
   async function handleSetTrials(profileId,profileName) {
     const amount = parseInt(trialsAmount[profileId]); if(isNaN(amount)||amount<0||amount>99) return;
-    await adminSetTrials(keysTargetUid,profileId,amount);
-    await logActivity("set_trials",{adminUid:user.uid,targetUid:keysTargetUid,detail:`Set trials to ${amount} for "${profileName}"`});
+    await adminSetTrials(keysTargetUid,profileId,amount,adminDb);
+    await logActivity("set_trials",{adminUid:user.uid,targetUid:keysTargetUid,detail:`Set trials to ${amount} for "${profileName}"`},adminDb);
     setTrialsMsgs(p=>({...p,[profileId]:`Trials set to ${amount}!`}));
     setTimeout(()=>setTrialsMsgs(p=>({...p,[profileId]:null})),3000);
   }
@@ -581,14 +578,14 @@ export default function AdminPage() {
 
   async function handleBroadcast() {
     await setBroadcast(broadcastMsg, user.uid);
-    await logActivity("broadcast",{adminUid:user.uid,detail:broadcastMsg});
+    await logActivity("broadcast",{adminUid:user.uid,detail:broadcastMsg},adminDb);
     setCurrentBroadcast(broadcastMsg ? {message:broadcastMsg,active:true} : null);
     flash(broadcastMsg?"Broadcast sent":"Broadcast cleared");
   }
 
   async function handleMaintenance() {
-    await setMaintenanceMode(maintEnabled,maintMsg,maintTriggers);
-    await logActivity("maintenance",{adminUid:user.uid,detail:maintEnabled?`on: ${maintMsg}`:"off",triggers:maintTriggers});
+    await setMaintenanceMode(maintEnabled,maintMsg,maintTriggers,adminDb);
+    await logActivity("maintenance",{adminUid:user.uid,detail:maintEnabled?`on: ${maintMsg}`:"off",triggers:maintTriggers},adminDb);
     flash(maintEnabled?"Maintenance ON":"Maintenance OFF");
   }
 
@@ -596,8 +593,8 @@ export default function AdminPage() {
     if(!editingLevel) return;
     const words = editWords.split('\n').map(w=>w.trim()).filter(Boolean);
     if(!words.length) return;
-    await updateLevelWords(editingLevel, words);
-    await logActivity("edit_level",{adminUid:user.uid,detail:`level ${editingLevel}: ${words.length} words`});
+    await updateLevelWords(editingLevel, words, adminDb);
+    await logActivity("edit_level",{adminUid:user.uid,detail:`level ${editingLevel}: ${words.length} words`},adminDb);
     setLevelOverrides(p=>({...p,[String(editingLevel)]:words}));
     flash(`Level ${editingLevel} words updated`);
     setEditingLevel(null); setEditWords("");
@@ -691,8 +688,8 @@ export default function AdminPage() {
                     ))}
                   </div>
                   <div style={{color:T.faint,fontSize:10,letterSpacing:1,marginBottom:8}}>SWITCH ACCOUNT</div>
-                  <div style={{color:"#f59e0b",fontSize:11,marginBottom:10,background:"#f59e0b18",border:"1px solid #f59e0b33",borderRadius:7,padding:"7px 10px"}}>
-                    ⚠️ This signs you out of the game too — there's only one login for the whole app.
+                  <div style={{color:T.muted,fontSize:11,marginBottom:10}}>
+                    Admin has its own separate login — switching accounts here won't affect your game session.
                   </div>
                   <button onClick={()=>setSwitcherMode("account")} style={{width:"100%",padding:"9px 12px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.text,fontWeight:600,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
                     Sign in as a different account →
@@ -702,28 +699,14 @@ export default function AdminPage() {
 
               {switcherMode==="account" && (
                 <>
-                  {!confirmSwitchAccount ? (
-                    <>
-                      <div style={{display:"flex",gap:8,marginBottom:10}}>
-                        <button onClick={()=>requestSwitchAccount(()=>signInWithPopup(auth,new GoogleAuthProvider()))} style={{flex:1,padding:"9px",borderRadius:8,border:"none",background:T.purple,color:"#fff",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>Google</button>
-                        <button onClick={()=>requestSwitchAccount(()=>signInWithPopup(auth,new GithubAuthProvider()))} style={{flex:1,padding:"9px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.text,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>GitHub</button>
-                      </div>
-                      <div style={{color:T.faint,fontSize:10,letterSpacing:1,marginBottom:8}}>OR EMAIL</div>
-                      <input type="email" value={switchEmail} onChange={e=>setSwitchEmail(e.target.value)} placeholder="Email" style={{...st.input,width:"100%",marginBottom:8,boxSizing:"border-box"}} />
-                      <input type="password" value={switchPass} onChange={e=>setSwitchPass(e.target.value)} placeholder="Password" style={{...st.input,width:"100%",marginBottom:10,boxSizing:"border-box"}} />
-                      <button onClick={()=>requestSwitchAccount(()=>signInWithEmailAndPassword(auth,switchEmail,switchPass))} disabled={!switchEmail||!switchPass} style={{width:"100%",padding:"9px",borderRadius:8,border:"none",background:(!switchEmail||!switchPass)?"#444":T.purple,color:"#fff",fontWeight:700,fontSize:12,cursor:(!switchEmail||!switchPass)?"default":"pointer",fontFamily:"inherit"}}>Sign in with email</button>
-                    </>
-                  ) : (
-                    <>
-                      <div style={{color:"#f59e0b",fontSize:12,marginBottom:14,lineHeight:1.5}}>
-                        This will sign you out of the game and admin under the current account, then sign in as the new account. Continue?
-                      </div>
-                      <div style={{display:"flex",gap:8}}>
-                        <button onClick={()=>doSwitchAccount(confirmSwitchAccount)} disabled={switchLoading} style={{flex:1,padding:"9px",borderRadius:8,border:"none",background:T.danger,color:"#fff",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit",opacity:switchLoading?0.6:1}}>{switchLoading?"…":"Yes, switch"}</button>
-                        <button onClick={()=>setConfirmSwitchAccount(null)} style={{flex:1,padding:"9px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.muted,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>Cancel</button>
-                      </div>
-                    </>
-                  )}
+                  <div style={{display:"flex",gap:8,marginBottom:10}}>
+                    <button onClick={()=>doSwitchAccount(()=>signInWithPopup(adminAuth,new GoogleAuthProvider()))} disabled={switchLoading} style={{flex:1,padding:"9px",borderRadius:8,border:"none",background:T.purple,color:"#fff",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit",opacity:switchLoading?0.6:1}}>{switchLoading?"…":"Google"}</button>
+                    <button onClick={()=>doSwitchAccount(()=>signInWithPopup(adminAuth,new GithubAuthProvider()))} disabled={switchLoading} style={{flex:1,padding:"9px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.text,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit",opacity:switchLoading?0.6:1}}>{switchLoading?"…":"GitHub"}</button>
+                  </div>
+                  <div style={{color:T.faint,fontSize:10,letterSpacing:1,marginBottom:8}}>OR EMAIL</div>
+                  <input type="email" value={switchEmail} onChange={e=>setSwitchEmail(e.target.value)} placeholder="Email" style={{...st.input,width:"100%",marginBottom:8,boxSizing:"border-box"}} />
+                  <input type="password" value={switchPass} onChange={e=>setSwitchPass(e.target.value)} placeholder="Password" style={{...st.input,width:"100%",marginBottom:10,boxSizing:"border-box"}} />
+                  <button onClick={()=>doSwitchAccount(()=>signInWithEmailAndPassword(adminAuth,switchEmail,switchPass))} disabled={!switchEmail||!switchPass||switchLoading} style={{width:"100%",padding:"9px",borderRadius:8,border:"none",background:(!switchEmail||!switchPass)?"#444":T.purple,color:"#fff",fontWeight:700,fontSize:12,cursor:(!switchEmail||!switchPass)?"default":"pointer",fontFamily:"inherit",opacity:switchLoading?0.6:1}}>{switchLoading?"Signing in…":"Sign in with email"}</button>
                   {switchErr && <div style={{color:T.danger,fontSize:11,marginTop:10}}>{switchErr}</div>}
                 </>
               )}
@@ -1047,7 +1030,7 @@ export default function AdminPage() {
                   <div style={{display:"flex",gap:8,alignItems:"center"}}>
                     <span style={{color:T.faint,fontSize:10}}>{f.createdAt?new Date(f.createdAt).toLocaleString():"unknown time"}</span>
                     <button onClick={async()=>{
-                      try{ await dismissFeedback(f.uid,f.id); setFeedbackList(l=>l.filter(x=>x.id!==f.id)); }
+                      try{ await dismissFeedback(f.uid,f.id,adminDb); setFeedbackList(l=>l.filter(x=>x.id!==f.id)); }
                       catch(e){ alert("Failed to dismiss"); }
                     }} style={{background:"#ef444422",border:"1px solid #ef444444",borderRadius:6,color:"#ef4444",fontSize:10,fontWeight:700,padding:"2px 8px",cursor:"pointer"}}>
                       Dismiss
@@ -1065,7 +1048,7 @@ export default function AdminPage() {
                         if(!replyText.trim()||!f.uid) return;
                         setReplySending(true);
                         try {
-                          await replyToFeedback(f.id, f.uid, replyText.trim(), "AccuratKey Admin");
+                          await replyToFeedback(f.id, f.uid, replyText.trim(), "AccuratKey Admin", adminDb);
                           setFeedbackList(l=>l.map(x=>x.id===f.id?{...x,reply:replyText.trim(),replyBy:"AccuratKey Admin"}:x));
                           setReplyingTo(null);setReplyText("");
                         } catch(e){ alert("Failed to send reply"); }
@@ -1116,13 +1099,13 @@ export default function AdminPage() {
                       <div style={{display:"flex",gap:8}}>
                         <button onClick={async()=>{
                           try{
-                            await approveFlaggedScore(f.id, { type:f.type, uid:f.uid, date:f.date, levelId:f.levelId });
+                            await approveFlaggedScore(f.id, { type:f.type, uid:f.uid, date:f.date, levelId:f.levelId }, adminDb);
                             setFlaggedScores(l=>l.map(x=>x.id===f.id?{...x,status:"approved"}:x));
                           }catch(e){ alert("Failed to approve"); }
                         }} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #34d39944",background:"#34d39922",color:"#34d399",fontSize:11,fontWeight:700,cursor:"pointer"}}>✓ Restore (legit)</button>
                         <button onClick={async()=>{
                           try{
-                            await dismissFlaggedScore(f.id);
+                            await dismissFlaggedScore(f.id,adminDb);
                             setFlaggedScores(l=>l.map(x=>x.id===f.id?{...x,status:"dismissed"}:x));
                           }catch(e){ alert("Failed to dismiss"); }
                         }} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #ef444444",background:"#ef444422",color:"#ef4444",fontSize:11,fontWeight:700,cursor:"pointer"}}>✕ Keep removed</button>
@@ -1150,7 +1133,7 @@ export default function AdminPage() {
                     {r.status==="pending" ? (
                       <div style={{display:"flex",gap:8}}>
                         <button onClick={async()=>{
-                          try{ await resolveRestoreRequest(r.id,"acknowledged"); setRestoreRequests(l=>l.map(x=>x.id===r.id?{...x,status:"acknowledged"}:x)); }
+                          try{ await resolveRestoreRequest(r.id,"acknowledged",adminDb); setRestoreRequests(l=>l.map(x=>x.id===r.id?{...x,status:"acknowledged"}:x)); }
                           catch(e){ alert("Failed to update"); }
                         }} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #7c6af744",background:"#7c6af722",color:"#7c6af7",fontSize:11,fontWeight:700,cursor:"pointer"}}>Mark reviewed</button>
                       </div>
@@ -1178,7 +1161,7 @@ export default function AdminPage() {
                   <div style={{display:"flex",gap:6}}>
                     <button onClick={async()=>{
                       try{
-                        await approveBirthdayRequest(r.uid,r.id,r.birthday);
+                        await approveBirthdayRequest(r.uid,r.id,r.birthday,adminDb);
                         setBdayReqList(l=>l.filter(x=>!(x.id===r.id&&x.uid===r.uid)));
                       }catch(e){alert("Error: "+e.message);}
                     }} style={{background:"#34d39922",border:"1px solid #34d39944",borderRadius:6,color:"#34d399",fontSize:10,fontWeight:700,padding:"3px 10px",cursor:"pointer"}}>
@@ -1186,7 +1169,7 @@ export default function AdminPage() {
                     </button>
                     <button onClick={async()=>{
                       try{
-                        await rejectBirthdayRequest(r.uid,r.id);
+                        await rejectBirthdayRequest(r.uid,r.id,adminDb);
                         setBdayReqList(l=>l.filter(x=>!(x.id===r.id&&x.uid===r.uid)));
                       }catch(e){alert("Error: "+e.message);}
                     }} style={{background:"#ef444422",border:"1px solid #ef444444",borderRadius:6,color:"#ef4444",fontSize:10,fontWeight:700,padding:"3px 10px",cursor:"pointer"}}>
@@ -1327,7 +1310,7 @@ export default function AdminPage() {
           <textarea value={editWords} onChange={e=>setEditWords(e.target.value)} rows={12} style={{...st.input,resize:"vertical",marginBottom:14,fontFamily:"monospace"}} />
           <div style={{display:"flex",gap:8}}>
             <button onClick={handleSaveLevel} style={{...st.btn(),flex:1,padding:"10px"}}>Save Words</button>
-            <button onClick={()=>{ setLevelOverrides(p=>{const n={...p};delete n[String(editingLevel)];return n;}); updateLevelWords(editingLevel,LEVELS.find(l=>l.id===editingLevel)?.words||[]); flash("Reset to default"); setEditingLevel(null); }} style={st.btn(T.warn,T.warn+"22")}>Reset Default</button>
+            <button onClick={()=>{ setLevelOverrides(p=>{const n={...p};delete n[String(editingLevel)];return n;}); updateLevelWords(editingLevel,LEVELS.find(l=>l.id===editingLevel)?.words||[],adminDb); flash("Reset to default"); setEditingLevel(null); }} style={st.btn(T.warn,T.warn+"22")}>Reset Default</button>
             <button onClick={()=>{setEditingLevel(null);setEditWords("");}} style={{...st.btn(T.muted,T.faint),padding:"10px 14px"}}>Cancel</button>
           </div>
         </Modal>
