@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth";
+import { onAuthStateChanged, signInWithPopup, signOut, signInWithEmailAndPassword, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth";
 import { auth, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, adminSetProfileAdmin, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest, replyToFeedback, getFlaggedScores, getRestoreRequests, approveFlaggedScore, dismissFlaggedScore, resolveRestoreRequest } from "@/lib/firebase";
 const LEVELS = [
   { id:1,  name:"Home Row Hero",         emoji:"🏠", wpmTarget:12,  accuracy:75, color:"#10b981", words:["ffjj","fjfj","asdf","jkl;","add","ask","fall","glad","flask","lads","fads","salads"] },
@@ -361,6 +361,9 @@ export default function AdminPage() {
   const [profileAdminLookupUid,setProfileAdminLookupUid]=useState(null);
   const [profileAdminProfiles,setProfileAdminProfiles]=useState([]);
   const [profileAdminLoading,setProfileAdminLoading]=useState(false);
+  const [showSwitcher,setShowSwitcher]=useState(false);
+  const [switcherMode,setSwitcherMode]=useState("menu"); // "menu" | "account"
+  const [confirmSwitchAccount,setConfirmSwitchAccount]=useState(null); // pending provider/action while we confirm
 
   const flash = m => { setMsg(m); setTimeout(()=>setMsg(""),3000); };
 
@@ -370,11 +373,15 @@ export default function AdminPage() {
     if(!u){ setAdminOk(false); setAuthChecked(true); return; }
     const accountOk = await isAdmin(u.uid).catch(()=>false);
     setAccountIsAdmin(accountOk);
-    if(accountOk){ setAdminOk(true); setAuthChecked(true); return; }
-    // Not an account-level admin — check if any profile under this account
-    // is a Profile Admin, so the person can pick which profile to act as.
     const profiles = await getProfilesForAdmin(u.uid).catch(()=>[]);
     setAdminProfiles(profiles||[]);
+    if(accountOk){
+      // Account-level admin: in immediately, default the switcher to the first profile.
+      setChosenAdminProfile(profiles?.[0]||null);
+      setAdminOk(true); setAuthChecked(true); return;
+    }
+    // Not an account-level admin — check if any profile under this account
+    // is a Profile Admin, so the person can pick which profile to act as.
     setAdminOk(false); // no profile chosen yet; picking one (if eligible) flips this to true
     setAuthChecked(true);
   }); },[]);
@@ -382,7 +389,7 @@ export default function AdminPage() {
   // Once a profile is chosen, confirm it's actually a Profile Admin before granting access.
   const chooseAdminProfile = (p) => {
     setChosenAdminProfile(p);
-    setAdminOk(p?.isProfileAdmin === true);
+    setAdminOk(accountIsAdmin || p?.isProfileAdmin === true);
   };
 
   // Sign in directly from the admin page. onAuthStateChanged above reacts
@@ -404,6 +411,32 @@ export default function AdminPage() {
     }
     setAdminSignInLoading(false);
   };
+
+  // Switch-account/profile bar. IMPORTANT: this shares the same `auth` as the
+  // main game (there's only one Firebase Auth session per browser), so
+  // switching the signed-in account here WILL also change which account is
+  // signed into the game in any open tab. We confirm before doing it so
+  // that's never a surprise.
+  const [switchEmail,setSwitchEmail]=useState("");
+  const [switchPass,setSwitchPass]=useState("");
+  const [switchErr,setSwitchErr]=useState("");
+  const [switchLoading,setSwitchLoading]=useState(false);
+
+  const doSwitchAccount = async (action) => {
+    // action: () => Promise<...> — the actual sign-in call to run after sign-out
+    setSwitchErr(""); setSwitchLoading(true);
+    try {
+      await signOut(auth);
+      await action();
+      setShowSwitcher(false); setSwitcherMode("menu");
+      setSwitchEmail(""); setSwitchPass(""); setConfirmSwitchAccount(null);
+    } catch (e) {
+      setSwitchErr(e?.message || "Sign in failed.");
+    }
+    setSwitchLoading(false);
+  };
+
+  const requestSwitchAccount = (action) => setConfirmSwitchAccount(action);
 
   useEffect(()=>{ if(adminOk) loadAll(); },[adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="log") getActivityLog(100).then(setLog).catch(()=>{}); },[tab,adminOk]);
@@ -630,10 +663,73 @@ export default function AdminPage() {
     <div style={st.page}>
       <div style={{maxWidth:780,margin:"0 auto"}}>
 
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
-          <div><div style={{fontSize:15,fontWeight:700,color:T.purple}}>AccuratKey Admin</div><div style={{fontSize:10,color:T.muted}}>{user?.email}</div></div>
-          <a href="/game" style={{color:T.muted,fontSize:11,textDecoration:"none"}}>← Back</a>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18,flexWrap:"wrap",gap:8}}>
+          <div><div style={{fontSize:15,fontWeight:700,color:T.purple}}>AccuratKey Admin</div><div style={{fontSize:10,color:T.muted}}>{user?.email}{chosenAdminProfile?` · ${chosenAdminProfile.name}`:""}</div></div>
+          <div style={{display:"flex",gap:10,alignItems:"center"}}>
+            <button onClick={()=>{setShowSwitcher(true);setSwitcherMode("menu");setSwitchErr("");}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:7,color:T.muted,fontSize:11,padding:"5px 10px",cursor:"pointer",fontFamily:"inherit"}}>Switch account/profile</button>
+            <a href="/game" style={{color:T.muted,fontSize:11,textDecoration:"none"}}>← Back</a>
+          </div>
         </div>
+
+        {showSwitcher && (
+          <div onClick={()=>{setShowSwitcher(false);setSwitcherMode("menu");setConfirmSwitchAccount(null);}} style={{position:"fixed",inset:0,background:"#000a",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:20}}>
+            <div onClick={e=>e.stopPropagation()} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:22,width:"100%",maxWidth:360,maxHeight:"80vh",overflowY:"auto"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                <span style={{color:T.text,fontWeight:700,fontSize:14}}>{switcherMode==="account"?"Switch account":"Switch account/profile"}</span>
+                <button onClick={()=>{setShowSwitcher(false);setSwitcherMode("menu");setConfirmSwitchAccount(null);}} style={{background:"none",border:"none",color:T.faint,fontSize:18,cursor:"pointer"}}>×</button>
+              </div>
+
+              {switcherMode==="menu" && (
+                <>
+                  <div style={{color:T.faint,fontSize:10,letterSpacing:1,marginBottom:8}}>SWITCH PROFILE (same account)</div>
+                  {(adminProfiles||[]).length===0 && <div style={{color:T.muted,fontSize:12,marginBottom:12}}>No profiles found on this account.</div>}
+                  <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:18}}>
+                    {(adminProfiles||[]).map(p=>(
+                      <button key={p.id} onClick={()=>{chooseAdminProfile(p);setShowSwitcher(false);}} style={{padding:"9px 12px",borderRadius:8,border:`1px solid ${chosenAdminProfile?.id===p.id?T.purple:T.border}`,background:chosenAdminProfile?.id===p.id?T.purple+"22":"transparent",color:chosenAdminProfile?.id===p.id?T.purple:T.text,fontWeight:600,fontSize:12,cursor:"pointer",fontFamily:"inherit",textAlign:"left"}}>
+                        {p.name} {p.isProfileAdmin?"⭐":""}
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{color:T.faint,fontSize:10,letterSpacing:1,marginBottom:8}}>SWITCH ACCOUNT</div>
+                  <div style={{color:"#f59e0b",fontSize:11,marginBottom:10,background:"#f59e0b18",border:"1px solid #f59e0b33",borderRadius:7,padding:"7px 10px"}}>
+                    ⚠️ This signs you out of the game too — there's only one login for the whole app.
+                  </div>
+                  <button onClick={()=>setSwitcherMode("account")} style={{width:"100%",padding:"9px 12px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.text,fontWeight:600,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+                    Sign in as a different account →
+                  </button>
+                </>
+              )}
+
+              {switcherMode==="account" && (
+                <>
+                  {!confirmSwitchAccount ? (
+                    <>
+                      <div style={{display:"flex",gap:8,marginBottom:10}}>
+                        <button onClick={()=>requestSwitchAccount(()=>signInWithPopup(auth,new GoogleAuthProvider()))} style={{flex:1,padding:"9px",borderRadius:8,border:"none",background:T.purple,color:"#fff",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>Google</button>
+                        <button onClick={()=>requestSwitchAccount(()=>signInWithPopup(auth,new GithubAuthProvider()))} style={{flex:1,padding:"9px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.text,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>GitHub</button>
+                      </div>
+                      <div style={{color:T.faint,fontSize:10,letterSpacing:1,marginBottom:8}}>OR EMAIL</div>
+                      <input type="email" value={switchEmail} onChange={e=>setSwitchEmail(e.target.value)} placeholder="Email" style={{...st.input,width:"100%",marginBottom:8,boxSizing:"border-box"}} />
+                      <input type="password" value={switchPass} onChange={e=>setSwitchPass(e.target.value)} placeholder="Password" style={{...st.input,width:"100%",marginBottom:10,boxSizing:"border-box"}} />
+                      <button onClick={()=>requestSwitchAccount(()=>signInWithEmailAndPassword(auth,switchEmail,switchPass))} disabled={!switchEmail||!switchPass} style={{width:"100%",padding:"9px",borderRadius:8,border:"none",background:(!switchEmail||!switchPass)?"#444":T.purple,color:"#fff",fontWeight:700,fontSize:12,cursor:(!switchEmail||!switchPass)?"default":"pointer",fontFamily:"inherit"}}>Sign in with email</button>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{color:"#f59e0b",fontSize:12,marginBottom:14,lineHeight:1.5}}>
+                        This will sign you out of the game and admin under the current account, then sign in as the new account. Continue?
+                      </div>
+                      <div style={{display:"flex",gap:8}}>
+                        <button onClick={()=>doSwitchAccount(confirmSwitchAccount)} disabled={switchLoading} style={{flex:1,padding:"9px",borderRadius:8,border:"none",background:T.danger,color:"#fff",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit",opacity:switchLoading?0.6:1}}>{switchLoading?"…":"Yes, switch"}</button>
+                        <button onClick={()=>setConfirmSwitchAccount(null)} style={{flex:1,padding:"9px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.muted,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>Cancel</button>
+                      </div>
+                    </>
+                  )}
+                  {switchErr && <div style={{color:T.danger,fontSize:11,marginTop:10}}>{switchErr}</div>}
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
         {msg && <div style={{background:T.purple+"22",border:`1px solid ${T.purple}44`,borderRadius:8,padding:"9px 13px",marginBottom:12,color:T.purple,fontSize:12}}>{msg}</div>}
 
