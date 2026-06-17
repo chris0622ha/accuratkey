@@ -823,10 +823,16 @@ function gClear(id) { try { localStorage.removeItem("ak_gs_"+id); } catch{} }
 
 // ─── Per-game settings definitions ───────────────────────────────────────────
 const GAME_SETTINGS = {
-  rain:        [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"easy" }, { key:"lives", label:"Lives", opts:[3,5,7,10], default:5 }],
-  survival:    [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"med" }],
-  burst:       [{ key:"duration",   label:"Duration",   opts:[15,30,60], default:30, suffix:"s" }, { key:"difficulty", label:"Words", opts:["easy","med","hard"], default:"med" }],
-  scramble:    [{ key:"duration",   label:"Time",       opts:[30,60,90], default:60, suffix:"s" }, { key:"count", label:"Words", opts:[5,10,15,20], default:10 }],
+  // rain/survival/burst/scramble each have their own built-in settings UI
+  // (shown on their own idle screen, with values saved via gLoad/localStorage),
+  // predating the shared SettingsPanel below. Leaving these non-empty made the
+  // wrapper show ITS settings panel first, then the game's own idle screen
+  // showed a second one — two settings screens back to back. Empty arrays
+  // here make the wrapper skip straight to the game, same as journal/roulette/tower.
+  rain:        [],
+  survival:    [],
+  burst:       [],
+  scramble:    [],
   suddendeath: [{ key:"difficulty", label:"Words",      opts:["easy","med","hard"], default:"med" }],
   zen:         [{ key:"difficulty", label:"Words",      opts:["easy","med","hard"], default:"easy" }],
   ladder:      [{ key:"rungs",      label:"Rungs",      opts:[5,8,10,15], default:10 }],
