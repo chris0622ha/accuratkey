@@ -38,7 +38,7 @@ const TOPICS: Record<string, Topic> = {
     ],
     faqs: [
       ['Do I need an account?', 'No. Guest mode gives full access to all 15 levels and all 38 games. Progress saves in your browser. Sign up to sync across devices, use friends and daily challenge features.'],
-      ['Is AccuratKey free?', 'The core app is free forever. A Pro subscription is available for power users — it unlocks advanced stats, exclusive themes, and extra features. Keys are earned by playing and can also be purchased directly.'],
+      ['Is AccuratKey free?', 'Yes, AccuratKey is completely free (may add subscriptions or one-time payments in the future). Keys are earned by playing and can also be purchased directly.'],
       ['What browsers are supported?', 'Chrome, Firefox, Safari, and Edge. Chrome is recommended for best performance.'],
       ['Can kids use AccuratKey?', 'Yes. The age-adaptive system adjusts font sizes, word complexity, and level cap based on the birthday you enter. Kids under 10 get larger fonts and simpler words.'],
     ],
@@ -317,7 +317,7 @@ const TOPICS: Record<string, Topic> = {
     faqs: [
       ['Why can\'t I use Backspace?', 'AccuratKey disables Backspace intentionally. The goal is to train accurate typing from the start — pressing the right key the first time, not typing fast and fixing errors. This builds genuine muscle memory faster than any other method.'],
       ['Why does it need a physical keyboard?', 'Touchscreen typing doesn\'t have key travel or tactile feedback. Skills built on a glass screen don\'t transfer to physical keyboard typing. AccuratKey is specifically for physical keyboard training.'],
-      ['Is AccuratKey free?', 'The base app is free. A Pro subscription unlocks bonus features for power users. Keys can be earned by playing or purchased directly.'],
+      ['Is AccuratKey free?', 'Yes, AccuratKey is completely free (may add subscriptions or one-time payments in the future). Keys can be earned by playing or purchased directly.'],
       ['What is WPM?', 'Words Per Minute. Calculated as (characters typed ÷ 5) ÷ minutes elapsed. Dividing by 5 is the standard way to normalize "word" length. The average office worker types 40 WPM. Professional typists reach 80–120+. World record is over 200.'],
       ['What does accuracy mean in AccuratKey?', 'The percentage of characters you typed correctly on the first keypress. Unlike most typing sites, there\'s no Backspace — every typo is permanent. Your true accuracy is measured, not your corrected accuracy.'],
       ['Does AccuratKey work offline?', 'You need internet to load the page. Once loaded, most features work offline. Progress syncs to the cloud when you reconnect. Guest mode works fully offline once the page is loaded.'],
