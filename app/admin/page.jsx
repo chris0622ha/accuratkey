@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest, replyToFeedback } from "@/lib/firebase";
+import { auth, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest, replyToFeedback, getFlaggedScores, getRestoreRequests, approveFlaggedScore, dismissFlaggedScore, resolveRestoreRequest } from "@/lib/firebase";
 const LEVELS = [
   { id:1,  name:"Home Row Hero",         emoji:"🏠", wpmTarget:12,  accuracy:75, color:"#10b981", words:["ffjj","fjfj","asdf","jkl;","add","ask","fall","glad","flask","lads","fads","salads"] },
   { id:2,  name:"Top Row Climber",       emoji:"🧗", wpmTarget:16,  accuracy:75, color:"#3b82f6", words:["quit","wrap","type","your","power","tower","write","pretty","quite","report"] },
@@ -283,7 +283,7 @@ const st = {
   input:{ width:"100%",background:T.faint,border:`1px solid ${T.border}`,borderRadius:7,color:T.text,fontFamily:T.font,fontSize:12,padding:"8px 11px",outline:"none",boxSizing:"border-box" },
   label:{ color:T.muted,fontSize:9,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:5 },
 };
-const TABS = ["stats","users","bans","admins","keys","trials","warn","broadcast","levels","analytics","log","feedback","birthday","settings"];
+const TABS = ["stats","users","bans","admins","keys","trials","warn","broadcast","levels","analytics","log","feedback","anticheat","birthday","settings"];
 
 export default function AdminPage() {
   const [user,setUser]=useState(null);
@@ -298,6 +298,9 @@ export default function AdminPage() {
   const [replyText,setReplyText]=useState("");
   const [replySending,setReplySending]=useState(false);
   const [bdayReqList,setBdayReqList]=useState([]);
+  const [flaggedScores,setFlaggedScores]=useState([]);
+  const [restoreRequests,setRestoreRequests]=useState([]);
+  const [anticheatSubtab,setAnticheatSubtab]=useState("flagged"); // "flagged" | "requests"
   const [stats,setStats]=useState(null);
   const [loading,setLoading]=useState(false);
   const [msg,setMsg]=useState("");
@@ -355,6 +358,7 @@ export default function AdminPage() {
   useEffect(()=>{ if(adminOk) loadAll(); },[adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="log") getActivityLog(100).then(setLog).catch(()=>{}); },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="feedback") getAdminFeedback(50).then(setFeedbackList).catch(()=>{}); },[tab,adminOk]);
+  useEffect(()=>{ if(adminOk&&tab==="anticheat"){ getFlaggedScores().then(setFlaggedScores).catch(()=>{}); getRestoreRequests().then(setRestoreRequests).catch(()=>{}); } },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="birthday") getAdminBirthdayRequests().then(setBdayReqList).catch(()=>{}); },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="settings") getMaintenanceMode().then(m=>{setMaintEnabled(m.enabled);setMaintMsg(m.message||"");if(m.triggers)setMaintTriggers(m.triggers);}); },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="analytics"&&!failStats){setFailStatsLoading(true);getLevelFailStats().then(d=>{setFailStats(d);setFailStatsLoading(false);}).catch(()=>setFailStatsLoading(false));} },[tab,adminOk]);
@@ -540,7 +544,7 @@ export default function AdminPage() {
         <div style={{display:"flex",gap:4,marginBottom:16,background:T.card,borderRadius:10,padding:4,border:`1px solid ${T.border}`,flexWrap:"wrap"}}>
           {TABS.map(t=>(
             <button key={t} onClick={()=>setTab(t)} style={st.tab(tab===t)}>
-              {t==="stats"?"📊 Stats":t==="users"?`👥 Users (${users.length})`:t==="bans"?`🔨 Bans (${bans.length})`:t==="admins"?`🔑 Admins`:t==="keys"?"💰 Keys":t==="trials"?"⏱ Trials":t==="warn"?"⚠️ Warn":t==="broadcast"?"📢 Broadcast":t==="levels"?"🗺️ Levels":t==="analytics"?"📈 Analytics":t==="log"?"📋 Log":t==="feedback"?"💬 Feedback":t==="birthday"?`🎂 Birthdays (${bdayReqList.length})`:t==="settings"?"⚙️ Settings":""}
+              {t==="stats"?"📊 Stats":t==="users"?`👥 Users (${users.length})`:t==="bans"?`🔨 Bans (${bans.length})`:t==="admins"?`🔑 Admins`:t==="keys"?"💰 Keys":t==="trials"?"⏱ Trials":t==="warn"?"⚠️ Warn":t==="broadcast"?"📢 Broadcast":t==="levels"?"🗺️ Levels":t==="analytics"?"📈 Analytics":t==="log"?"📋 Log":t==="feedback"?"💬 Feedback":t==="anticheat"?`🚩 Anti-cheat (${flaggedScores.filter(f=>f.status==="pending").length+restoreRequests.filter(r=>r.status==="pending").length})`:t==="birthday"?`🎂 Birthdays (${bdayReqList.length})`:t==="settings"?"⚙️ Settings":""}
             </button>
           ))}
         </div>
@@ -848,6 +852,84 @@ export default function AdminPage() {
                 )}
               </div>
             ))}
+          </div>
+        )}
+
+        {tab==="anticheat"&&(
+          <div style={st.card}>
+            <div style={{display:"flex",gap:8,marginBottom:14}}>
+              <button onClick={()=>setAnticheatSubtab("flagged")} style={{padding:"5px 12px",borderRadius:6,border:`1px solid ${anticheatSubtab==="flagged"?"#ef4444":T.border}`,background:anticheatSubtab==="flagged"?"#ef444422":"transparent",color:anticheatSubtab==="flagged"?"#ef4444":T.muted,fontSize:11,fontWeight:700,cursor:"pointer"}}>🚩 Flagged Scores ({flaggedScores.filter(f=>f.status==="pending").length})</button>
+              <button onClick={()=>setAnticheatSubtab("requests")} style={{padding:"5px 12px",borderRadius:6,border:`1px solid ${anticheatSubtab==="requests"?"#7c6af7":T.border}`,background:anticheatSubtab==="requests"?"#7c6af722":"transparent",color:anticheatSubtab==="requests"?"#7c6af7":T.muted,fontSize:11,fontWeight:700,cursor:"pointer"}}>📨 Restore Requests ({restoreRequests.filter(r=>r.status==="pending").length})</button>
+            </div>
+
+            {anticheatSubtab==="flagged" && (
+              <>
+                <div style={{fontWeight:700,color:T.text,marginBottom:14,fontSize:13}}>Auto-flagged Scores (WPM &gt; 250)</div>
+                {flaggedScores.length===0&&<div style={{color:T.muted,fontSize:12,textAlign:"center",padding:"20px 0"}}>No flagged scores.</div>}
+                {flaggedScores.map(f=>(
+                  <div key={f.id} style={{background:T.bg,border:`1px solid ${f.status==="pending"?"#ef444444":T.border}`,borderRadius:8,padding:"12px 14px",marginBottom:8}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}>
+                        {f.username
+                          ? <button onClick={()=>{ setFilter(f.username); setTab("users"); }} style={{background:"none",border:"none",color:T.purple,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",padding:0}}>@{f.username}</button>
+                          : <span style={{color:T.muted,fontSize:10}}>{f.uid?.slice(0,8)}…</span>
+                        }
+                        <span style={{color:"#ef4444",fontSize:11,fontWeight:700}}>{f.wpm} WPM</span>
+                        <span style={{color:T.faint,fontSize:10}}>· {f.accuracy}% acc</span>
+                        <span style={{color:T.faint,fontSize:10}}>· {f.type==="daily"?`daily ${f.date}`:`level ${f.levelId}`}</span>
+                      </div>
+                      <span style={{color:T.faint,fontSize:10}}>{f.createdAt?.toDate?new Date(f.createdAt.toDate()).toLocaleString():""}</span>
+                    </div>
+                    <div style={{color:T.muted,fontSize:11,marginBottom:8}}>{f.reason}</div>
+                    {f.status==="pending" ? (
+                      <div style={{display:"flex",gap:8}}>
+                        <button onClick={async()=>{
+                          try{
+                            await approveFlaggedScore(f.id, { type:f.type, uid:f.uid, date:f.date, levelId:f.levelId });
+                            setFlaggedScores(l=>l.map(x=>x.id===f.id?{...x,status:"approved"}:x));
+                          }catch(e){ alert("Failed to approve"); }
+                        }} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #34d39944",background:"#34d39922",color:"#34d399",fontSize:11,fontWeight:700,cursor:"pointer"}}>✓ Restore (legit)</button>
+                        <button onClick={async()=>{
+                          try{
+                            await dismissFlaggedScore(f.id);
+                            setFlaggedScores(l=>l.map(x=>x.id===f.id?{...x,status:"dismissed"}:x));
+                          }catch(e){ alert("Failed to dismiss"); }
+                        }} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #ef444444",background:"#ef444422",color:"#ef4444",fontSize:11,fontWeight:700,cursor:"pointer"}}>✕ Keep removed</button>
+                      </div>
+                    ) : (
+                      <span style={{fontSize:10,fontWeight:700,color:f.status==="approved"?"#34d399":T.faint}}>{f.status==="approved"?"✓ Restored":"✕ Dismissed"}</span>
+                    )}
+                  </div>
+                ))}
+              </>
+            )}
+
+            {anticheatSubtab==="requests" && (
+              <>
+                <div style={{fontWeight:700,color:T.text,marginBottom:14,fontSize:13}}>User Review Requests</div>
+                {restoreRequests.length===0&&<div style={{color:T.muted,fontSize:12,textAlign:"center",padding:"20px 0"}}>No review requests.</div>}
+                {restoreRequests.map(r=>(
+                  <div key={r.id} style={{background:T.bg,border:`1px solid ${r.status==="pending"?"#7c6af744":T.border}`,borderRadius:8,padding:"12px 14px",marginBottom:8}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                      <span style={{color:T.muted,fontSize:10}}>{r.uid?.slice(0,8)}…</span>
+                      <span style={{color:T.faint,fontSize:10}}>{r.createdAt?.toDate?new Date(r.createdAt.toDate()).toLocaleString():""}</span>
+                    </div>
+                    <div style={{color:T.text,fontSize:12,marginBottom:4}}>{r.context?.type==="daily"?`Daily challenge · ${r.context.date}`:r.context?.type==="level"?`Level ${r.context.levelId}`:"Unknown context"}</div>
+                    {r.reason && <div style={{color:T.muted,fontSize:11,marginBottom:8}}>{r.reason}</div>}
+                    {r.status==="pending" ? (
+                      <div style={{display:"flex",gap:8}}>
+                        <button onClick={async()=>{
+                          try{ await resolveRestoreRequest(r.id,"acknowledged"); setRestoreRequests(l=>l.map(x=>x.id===r.id?{...x,status:"acknowledged"}:x)); }
+                          catch(e){ alert("Failed to update"); }
+                        }} style={{padding:"5px 12px",borderRadius:6,border:"1px solid #7c6af744",background:"#7c6af722",color:"#7c6af7",fontSize:11,fontWeight:700,cursor:"pointer"}}>Mark reviewed</button>
+                      </div>
+                    ) : (
+                      <span style={{fontSize:10,fontWeight:700,color:T.faint}}>✓ {r.status}</span>
+                    )}
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         )}
 
