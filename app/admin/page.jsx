@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { onAuthStateChanged, signInWithPopup, signOut, signInWithEmailAndPassword, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth";
-import { adminAuth, adminDb, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, adminSetProfileAdmin, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest, replyToFeedback, getFlaggedScores, getRestoreRequests, approveFlaggedScore, dismissFlaggedScore, resolveRestoreRequest } from "@/lib/firebase";
+import { getAdminAuth, getAdminDb, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, adminSetProfileAdmin, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest, replyToFeedback, getFlaggedScores, getRestoreRequests, approveFlaggedScore, dismissFlaggedScore, resolveRestoreRequest } from "@/lib/firebase";
 const LEVELS = [
   { id:1,  name:"Home Row Hero",         emoji:"🏠", wpmTarget:12,  accuracy:75, color:"#10b981", words:["ffjj","fjfj","asdf","jkl;","add","ask","fall","glad","flask","lads","fads","salads"] },
   { id:2,  name:"Top Row Climber",       emoji:"🧗", wpmTarget:16,  accuracy:75, color:"#3b82f6", words:["quit","wrap","type","your","power","tower","write","pretty","quite","report"] },
@@ -286,6 +286,13 @@ const st = {
 const TABS = ["stats","users","bans","admins","keys","trials","warn","broadcast","levels","analytics","log","feedback","anticheat","birthday","settings"];
 
 export default function AdminPage() {
+  // adminDb is safe to create anywhere (no browser-only APIs). adminAuth uses
+  // browser-only persistence, so it's only constructed client-side — this
+  // component is "use client", but Next.js still prerenders its initial
+  // shell server-side, so we can't call getAdminAuth() unconditionally here.
+  const adminDb = getAdminDb();
+  const adminAuth = typeof window !== 'undefined' ? getAdminAuth() : null;
+
   const [user,setUser]=useState(null);
   const [authChecked,setAuthChecked]=useState(false); // has onAuthStateChanged fired at least once
   const [adminOk,setAdminOk]=useState(false);
