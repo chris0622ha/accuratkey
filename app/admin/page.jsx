@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
-import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
-import { auth, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest, replyToFeedback, getFlaggedScores, getRestoreRequests, approveFlaggedScore, dismissFlaggedScore, resolveRestoreRequest } from "@/lib/firebase";
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth";
+import { auth, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, adminSetProfileAdmin, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest, replyToFeedback, getFlaggedScores, getRestoreRequests, approveFlaggedScore, dismissFlaggedScore, resolveRestoreRequest } from "@/lib/firebase";
 const LEVELS = [
   { id:1,  name:"Home Row Hero",         emoji:"🏠", wpmTarget:12,  accuracy:75, color:"#10b981", words:["ffjj","fjfj","asdf","jkl;","add","ask","fall","glad","flask","lads","fads","salads"] },
   { id:2,  name:"Top Row Climber",       emoji:"🧗", wpmTarget:16,  accuracy:75, color:"#3b82f6", words:["quit","wrap","type","your","power","tower","write","pretty","quite","report"] },
@@ -287,9 +287,13 @@ const TABS = ["stats","users","bans","admins","keys","trials","warn","broadcast"
 
 export default function AdminPage() {
   const [user,setUser]=useState(null);
-  const [adminOk,setAdminOk]=useState(null);
+  const [authChecked,setAuthChecked]=useState(false); // has onAuthStateChanged fired at least once
+  const [adminOk,setAdminOk]=useState(false);
   const [adminSignInLoading,setAdminSignInLoading]=useState(false);
   const [adminSignInErr,setAdminSignInErr]=useState("");
+  const [accountIsAdmin,setAccountIsAdmin]=useState(false); // account-level admins/{uid}
+  const [adminProfiles,setAdminProfiles]=useState(null); // this account's profiles, once fetched
+  const [chosenAdminProfile,setChosenAdminProfile]=useState(null); // the profile picked to act as
   const [tab,setTab]=useState("stats");
   const [users,setUsers]=useState([]);
   const [bans,setBans]=useState([]);
@@ -353,18 +357,43 @@ export default function AdminPage() {
 
   // Grant
   const [grantInput,setGrantInput]=useState("");
+  const [profileAdminInput,setProfileAdminInput]=useState("");
+  const [profileAdminLookupUid,setProfileAdminLookupUid]=useState(null);
+  const [profileAdminProfiles,setProfileAdminProfiles]=useState([]);
+  const [profileAdminLoading,setProfileAdminLoading]=useState(false);
 
   const flash = m => { setMsg(m); setTimeout(()=>setMsg(""),3000); };
 
-  useEffect(()=>{ return onAuthStateChanged(auth, async u => { setUser(u); if(!u){setAdminOk(false);return;} const ok=await isAdmin(u.uid); setAdminOk(ok); }); },[]);
+  useEffect(()=>{ return onAuthStateChanged(auth, async u => {
+    setUser(u);
+    setAdminProfiles(null); setChosenAdminProfile(null); setAccountIsAdmin(false);
+    if(!u){ setAdminOk(false); setAuthChecked(true); return; }
+    const accountOk = await isAdmin(u.uid).catch(()=>false);
+    setAccountIsAdmin(accountOk);
+    if(accountOk){ setAdminOk(true); setAuthChecked(true); return; }
+    // Not an account-level admin — check if any profile under this account
+    // is a Profile Admin, so the person can pick which profile to act as.
+    const profiles = await getProfilesForAdmin(u.uid).catch(()=>[]);
+    setAdminProfiles(profiles||[]);
+    setAdminOk(false); // no profile chosen yet; picking one (if eligible) flips this to true
+    setAuthChecked(true);
+  }); },[]);
+
+  // Once a profile is chosen, confirm it's actually a Profile Admin before granting access.
+  const chooseAdminProfile = (p) => {
+    setChosenAdminProfile(p);
+    setAdminOk(p?.isProfileAdmin === true);
+  };
 
   // Sign in directly from the admin page. onAuthStateChanged above reacts
   // automatically once sign-in succeeds — no manual redirect needed, the
-  // page just re-renders into the admin panel if the account is an admin.
-  const handleAdminSignIn = async () => {
+  // page just re-renders into the admin panel (or the profile picker) once
+  // the new auth state resolves.
+  const handleAdminSignIn = async (providerName) => {
     setAdminSignInErr(""); setAdminSignInLoading(true);
     try {
-      const result = await signInWithPopup(auth, new GoogleAuthProvider());
+      const provider = providerName === "github" ? new GithubAuthProvider() : new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
       if (!result?.user) setAdminSignInErr("Sign in failed — try again.");
     } catch (e) {
       if (e?.code === "auth/popup-closed-by-user" || e?.code === "auth/cancelled-popup-request") {
@@ -430,6 +459,22 @@ export default function AdminPage() {
     await revokeAdmin(uid);
     await logActivity("revoke_admin",{adminUid:user.uid,targetUid:uid,targetUsername:username});
     flash("Revoked"); loadAll();
+  }
+
+  async function handleProfileAdminLookup() {
+    const found = await resolve(profileAdminInput); if(!found) return;
+    setProfileAdminLoading(true);
+    const profiles = await getProfilesForAdmin(found.uid);
+    setProfileAdminProfiles(profiles||[]); setProfileAdminLookupUid(found.uid);
+    setProfileAdminLoading(false);
+  }
+
+  async function handleToggleProfileAdmin(profileId,profileName,nextValue) {
+    await adminSetProfileAdmin(profileAdminLookupUid,profileId,nextValue);
+    await logActivity(nextValue?"grant_profile_admin":"revoke_profile_admin",{adminUid:user.uid,targetUid:profileAdminLookupUid,detail:`Profile "${profileName}"`});
+    flash(nextValue?`Granted Profile Admin to "${profileName}"`:`Revoked Profile Admin from "${profileName}"`);
+    const updated = await getProfilesForAdmin(profileAdminLookupUid);
+    setProfileAdminProfiles(updated);
   }
 
   async function handleSkip(profileId) {
@@ -533,17 +578,52 @@ export default function AdminPage() {
     return u.email?.toLowerCase().includes(s)||u.username?.toLowerCase().includes(s)||u.uid.includes(s);
   });
 
-  if(adminOk===null) return <div style={{...st.page,display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{color:T.muted}}>Checking...</div></div>;
-  if(!adminOk && !user) return (
+  if(!authChecked) return <div style={{...st.page,display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{color:T.muted}}>Checking...</div></div>;
+
+  if(!user) return (
     <div style={{...st.page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:14}}>
       <div style={{fontSize:32}}>🔒</div>
       <div style={{color:T.text,fontWeight:700}}>Sign in to access admin</div>
-      <button onClick={handleAdminSignIn} disabled={adminSignInLoading} style={{padding:"10px 24px",borderRadius:8,border:"none",background:T.purple,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit",opacity:adminSignInLoading?0.6:1}}>
-        {adminSignInLoading?"Signing in…":"Sign in with Google"}
-      </button>
+      <div style={{display:"flex",gap:10}}>
+        <button onClick={()=>handleAdminSignIn("google")} disabled={adminSignInLoading} style={{padding:"10px 22px",borderRadius:8,border:"none",background:T.purple,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit",opacity:adminSignInLoading?0.6:1}}>
+          {adminSignInLoading?"…":"Sign in with Google"}
+        </button>
+        <button onClick={()=>handleAdminSignIn("github")} disabled={adminSignInLoading} style={{padding:"10px 22px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.text,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit",opacity:adminSignInLoading?0.6:1}}>
+          {adminSignInLoading?"…":"Sign in with GitHub"}
+        </button>
+      </div>
       {adminSignInErr && <div style={{color:T.danger,fontSize:11,maxWidth:280,textAlign:"center"}}>{adminSignInErr}</div>}
     </div>
   );
+
+  // Signed in, not an account-level admin, and hasn't picked a profile yet —
+  // let them choose which profile they're acting as. Only profiles with
+  // isProfileAdmin will actually grant access once chosen.
+  if(!accountIsAdmin && !chosenAdminProfile && adminProfiles) {
+    const eligible = adminProfiles.filter(p=>p.isProfileAdmin===true);
+    return (
+      <div style={{...st.page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:14,padding:20}}>
+        <div style={{fontSize:32}}>👤</div>
+        <div style={{color:T.text,fontWeight:700}}>Choose your profile</div>
+        {eligible.length===0 ? (
+          <>
+            <div style={{color:T.danger,fontSize:12,textAlign:"center",maxWidth:280}}>None of your profiles have admin access.</div>
+            <div style={{color:T.faint,fontSize:11}}>UID: {user.uid}</div>
+          </>
+        ) : (
+          <div style={{display:"flex",flexDirection:"column",gap:8,width:"100%",maxWidth:300}}>
+            {adminProfiles.map(p=>(
+              <button key={p.id} onClick={()=>chooseAdminProfile(p)} disabled={!p.isProfileAdmin}
+                style={{padding:"10px 16px",borderRadius:8,border:`1px solid ${p.isProfileAdmin?T.purple:T.border}`,background:p.isProfileAdmin?T.purple+"22":"transparent",color:p.isProfileAdmin?T.purple:T.faint,fontWeight:700,fontSize:13,cursor:p.isProfileAdmin?"pointer":"default",fontFamily:"inherit",textAlign:"left",opacity:p.isProfileAdmin?1:0.5}}>
+                {p.name} {p.isProfileAdmin?"":"(not admin)"}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   if(!adminOk) return <div style={{...st.page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12}}><div style={{fontSize:32}}>🔒</div><div style={{color:T.danger,fontWeight:700}}>Access denied</div><div style={{color:T.muted,fontSize:11}}>{user?`UID: ${user.uid}`:"Not logged in"}</div></div>;
 
   return (
@@ -638,7 +718,7 @@ export default function AdminPage() {
         {!loading&&tab==="admins"&&(
           <div>
             <div style={st.card}>
-              <div style={st.label}>Grant admin (@username or UID)</div>
+              <div style={st.label}>Grant account-level admin (@username or UID)</div>
               <div style={{display:"flex",gap:8}}>
                 <input value={grantInput} onChange={e=>setGrantInput(e.target.value)} placeholder="@username or UID..." style={{...st.input,flex:1}} />
                 <button onClick={handleGrant} style={st.btn()}>Grant</button>
@@ -655,6 +735,30 @@ export default function AdminPage() {
                 </div>
               </div>
             );})}
+
+            <div style={{...st.card,marginTop:20}}>
+              <div style={st.label}>Grant Profile Admin (look up account, then pick a profile)</div>
+              <div style={{color:T.muted,fontSize:11,marginBottom:8}}>Profile Admin unlocks parental-gated features on that one profile, and lets it sign into this admin panel.</div>
+              <div style={{display:"flex",gap:8}}>
+                <input value={profileAdminInput} onChange={e=>setProfileAdminInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleProfileAdminLookup()} placeholder="@username or UID..." style={{...st.input,flex:1}} />
+                <button onClick={handleProfileAdminLookup} style={st.btn()}>{profileAdminLoading?"...":"Look up"}</button>
+              </div>
+            </div>
+            {profileAdminLookupUid&&profileAdminProfiles.length===0&&!profileAdminLoading&&<div style={{color:T.danger,fontSize:12,padding:"8px 0"}}>No profiles found</div>}
+            {profileAdminProfiles.map(p=>(
+              <div key={p.id} style={st.card}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div>
+                    <div style={{color:T.text,fontWeight:700,fontSize:12}}>{p.name}</div>
+                    <div style={{color:p.isProfileAdmin?T.purple:T.faint,fontSize:10,marginTop:2}}>{p.isProfileAdmin?"Profile Admin":"Not admin"}</div>
+                  </div>
+                  {p.isProfileAdmin
+                    ? <button onClick={()=>handleToggleProfileAdmin(p.id,p.name,false)} style={st.btn(T.danger,T.danger+"22")}>Revoke</button>
+                    : <button onClick={()=>handleToggleProfileAdmin(p.id,p.name,true)} style={st.btn()}>Grant</button>
+                  }
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
