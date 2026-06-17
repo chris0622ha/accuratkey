@@ -4,6 +4,8 @@ import { auth, getProfile, getProfiles, purchaseTheme, setActiveTheme, purchaseF
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { KKey } from "./icons/KKey";
+import { formatKeys } from "@/lib/format";
 
 // ─── ALL THEMES ──────────────────────────────────────────────────────────────
 export const ALL_THEMES = [
@@ -274,6 +276,8 @@ export default function ShopPage() {
   const [catFilter, setCatFilter]     = useState("all");
   const [msg, setMsg]                 = useState("");
   const [loading, setLoading]         = useState(true);
+  // Purchase confirmation dialog: { label, cost, onConfirm } | null
+  const [confirmPurchase, setConfirmPurchase] = useState(null);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async u => {
@@ -382,7 +386,7 @@ export default function ShopPage() {
   const handleBuyTheme = async (th) => {
     if (!activeProfile) return;
     const newKeys = (activeProfile.keys || 0) - th.cost;
-    if (newKeys < 0) { showMsg("Not enough 🔑 Keys"); return; }
+    if (newKeys < 0) { showMsg("Not enough Keys"); return; }
     // Instant UI update
     optimistic({ keys: newKeys, ownedThemes: [...(activeProfile.ownedThemes || []), th.id] });
     showMsg(`${th.label} unlocked! 🎉`);
@@ -391,8 +395,14 @@ export default function ShopPage() {
     } catch(e) {
       // Revert if Firestore says no
       optimistic({ keys: activeProfile.keys, ownedThemes: activeProfile.ownedThemes });
-      showMsg("Not enough 🔑 Keys");
+      showMsg("Not enough Keys");
     }
+  };
+
+  // Opens the confirmation dialog before spending Keys on a theme
+  const requestBuyTheme = (th) => {
+    if (!activeProfile) return;
+    setConfirmPurchase({ label: th.label, cost: th.cost, onConfirm: () => handleBuyTheme(th) });
   };
 
   const handleEquipTheme = async (th) => {
@@ -405,15 +415,21 @@ export default function ShopPage() {
   const handleBuyFont = async (f) => {
     if (!activeProfile) return;
     const newKeys = (activeProfile.keys || 0) - f.cost;
-    if (newKeys < 0) { showMsg("Not enough 🔑 Keys"); return; }
+    if (newKeys < 0) { showMsg("Not enough Keys"); return; }
     optimistic({ keys: newKeys, ownedFonts: [...(activeProfile.ownedFonts || []), f.id] });
     showMsg(`${f.label} unlocked! 🎉`);
     try {
       await purchaseFont(user.uid, activeProfile.id, f.id, f.cost);
     } catch(e) {
       optimistic({ keys: activeProfile.keys, ownedFonts: activeProfile.ownedFonts });
-      showMsg("Not enough 🔑 Keys");
+      showMsg("Not enough Keys");
     }
+  };
+
+  // Opens the confirmation dialog before spending Keys on a font
+  const requestBuyFont = (f) => {
+    if (!activeProfile) return;
+    setConfirmPurchase({ label: f.label, cost: f.cost, onConfirm: () => handleBuyFont(f) });
   };
 
   const handleEquipFont = async (f) => {
@@ -460,8 +476,8 @@ export default function ShopPage() {
           }} style={{background:T.bg,border:`1px solid ${T.border}`,color:T.text,borderRadius:6,padding:"4px 8px",fontSize:12,fontFamily:"inherit"}}>
             {profiles.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
-          <span style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:"4px 12px",fontSize:13,color:T.accent,fontWeight:700}}>
-            🔑 {keys >= 1e6 ? Math.round(keys/1e6)+"M" : keys >= 1e3 ? Math.round(keys/1e3)+"k" : keys}
+          <span style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:"4px 12px",fontSize:13,color:T.accent,fontWeight:700,display:"inline-flex",alignItems:"center",gap:5}}>
+            <KKey size={13}/> {formatKeys(keys)}
           </span>
         </div>
       </div>
@@ -516,7 +532,7 @@ export default function ShopPage() {
                   </div>
                   <div style={{padding:"12px 14px"}}>
                     <div style={{fontWeight:700,fontSize:13,color:th.text,marginBottom:2}}>{th.label}</div>
-                    <div style={{fontSize:10,color:th.muted,marginBottom:8}}>{th.category} · {th.cost===0?"Free":`${th.cost} 🔑`}</div>
+                    <div style={{fontSize:10,color:th.muted,marginBottom:8,display:"flex",alignItems:"center",gap:3}}>{th.category} · {th.cost===0?"Free":<>{th.cost} <KKey size={9}/></>}</div>
                     {/* Mini typing preview */}
                     <div style={{background:th.card,border:`1px solid ${th.border}`,borderRadius:6,padding:"6px 8px",marginBottom:10,fontSize:11,letterSpacing:1,fontFamily:th.font||"'JetBrains Mono',monospace"}}>
                       <span style={{color:th.purple}}>the</span>
@@ -532,8 +548,8 @@ export default function ShopPage() {
                       </button>
                     ) : (
                       <div style={{display:"flex",gap:4}}>
-                        <button onClick={()=>handleBuyTheme(th)} style={{flex:1,padding:"6px 0",background:th.purple+"22",border:`1px solid ${th.purple}`,borderRadius:6,color:th.purple,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                          Buy {th.cost} 🔑
+                        <button onClick={()=>requestBuyTheme(th)} style={{flex:1,padding:"6px 0",background:th.purple+"22",border:`1px solid ${th.purple}`,borderRadius:6,color:th.purple,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
+                          Buy {th.cost} <KKey size={10}/>
                         </button>
                         {th.cost > 0 && <button onClick={()=>startTrial(th.id, null)} style={{padding:"6px 8px",background:"transparent",border:`1px solid ${th.border}`,borderRadius:6,color:th.muted,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}} title={trial ? "Swap theme in current trial" : "Try for 30s"}>Try</button>}
                       </div>
@@ -556,7 +572,7 @@ export default function ShopPage() {
                   onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"}
                   onMouseLeave={e=>e.currentTarget.style.transform="none"}>
                   <div style={{fontWeight:700,fontSize:13,color:T.text,marginBottom:2}}>{f.label}</div>
-                  <div style={{fontSize:10,color:T.muted,marginBottom:10}}>{f.category} · {f.cost===0?"Free":`${f.cost} 🔑`}</div>
+                  <div style={{fontSize:10,color:T.muted,marginBottom:10,display:"flex",alignItems:"center",gap:3}}>{f.category} · {f.cost===0?"Free":<>{f.cost} <KKey size={9}/></>}</div>
                   {/* Font preview */}
                   <div style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:6,padding:"8px 10px",marginBottom:10}}>
                     <div style={{fontFamily:f.css,fontSize:15,color:T.text,letterSpacing:0.5,marginBottom:4}}>{f.preview}</div>
@@ -570,8 +586,8 @@ export default function ShopPage() {
                     </button>
                   ) : (
                     <div style={{display:"flex",gap:4}}>
-                      <button onClick={()=>handleBuyFont(f)} style={{flex:1,padding:"6px 0",background:T.purple+"22",border:`1px solid ${T.purple}`,borderRadius:6,color:T.purple,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                        Buy {f.cost} 🔑
+                      <button onClick={()=>requestBuyFont(f)} style={{flex:1,padding:"6px 0",background:T.purple+"22",border:`1px solid ${T.purple}`,borderRadius:6,color:T.purple,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
+                        Buy {f.cost} <KKey size={10}/>
                       </button>
                       {f.cost > 0 && <button onClick={()=>startTrial(null, f.id)} style={{padding:"6px 8px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}} title={trial ? "Swap theme in current trial" : "Try for 30s"}>Try</button>}
                     </div>
@@ -594,19 +610,20 @@ export default function ShopPage() {
               };
               const handleBuy = async () => {
                 const newKeys = (activeProfile.keys||0) - s.cost;
-                if(newKeys < 0){ showMsg("Not enough 🔑 Keys"); return; }
+                if(newKeys < 0){ showMsg("Not enough Keys"); return; }
                 patchProfile({keys:newKeys, ownedSounds:[...(activeProfile.ownedSounds||[]),s.id], activeSound:s.id});
                 showMsg(`${s.label} purchased!`);
                 try { await updateProfile(user.uid, activeProfile.id, {keys:newKeys, ownedSounds:[...(activeProfile.ownedSounds||[]),s.id], activeSound:s.id}); }
                 catch(e){ showMsg("Error purchasing"); }
               };
+              const requestBuy = () => setConfirmPurchase({ label: s.label, cost: s.cost, onConfirm: handleBuy });
               return (
                 <div key={s.id} style={{background:T.card,border:`2px solid ${active?T.purple:T.border}`,borderRadius:12,padding:"16px",display:"flex",flexDirection:"column",gap:10}}>
                   <div style={{fontSize:32,textAlign:"center"}}>{s.emoji}</div>
                   <div style={{textAlign:"center"}}>
                     <div style={{fontWeight:700,fontSize:14,color:T.text}}>{s.label}</div>
                     <div style={{fontSize:11,color:T.muted,marginTop:3}}>{s.desc}</div>
-                    <div style={{fontSize:11,color:T.faint,marginTop:4}}>{s.cost===0?"Free":`${s.cost} 🔑`}</div>
+                    <div style={{fontSize:11,color:T.faint,marginTop:4,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>{s.cost===0?"Free":<>{s.cost} <KKey size={9}/></>}</div>
                   </div>
                   <button onClick={()=>previewSound(s.id)} style={{padding:"5px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:11,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>▶ Preview</button>
                   {active ? (
@@ -614,7 +631,7 @@ export default function ShopPage() {
                   ) : owned ? (
                     <button onClick={handleEquip} style={{padding:"7px",background:"transparent",border:`1px solid ${T.purple}`,borderRadius:6,color:T.purple,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Equip</button>
                   ) : (
-                    <button onClick={handleBuy} style={{padding:"7px",background:T.purple+"22",border:`1px solid ${T.purple}`,borderRadius:6,color:T.purple,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Buy {s.cost} 🔑</button>
+                    <button onClick={requestBuy} style={{padding:"7px",background:T.purple+"22",border:`1px solid ${T.purple}`,borderRadius:6,color:T.purple,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>Buy {s.cost} <KKey size={10}/></button>
                   )}
                 </div>
               );
@@ -622,6 +639,22 @@ export default function ShopPage() {
           </div>
         )}
       </div>
+
+      {/* Purchase confirmation dialog */}
+      {confirmPurchase && (
+        <div style={{position:"fixed",inset:0,background:"#00000099",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:20}} onClick={()=>setConfirmPurchase(null)}>
+          <div onClick={e=>e.stopPropagation()} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:24,width:"100%",maxWidth:340,textAlign:"center"}}>
+            <div style={{color:T.text,fontWeight:700,fontSize:15,marginBottom:8}}>Confirm Purchase</div>
+            <div style={{color:T.muted,fontSize:13,marginBottom:20,display:"flex",alignItems:"center",justifyContent:"center",gap:5,flexWrap:"wrap"}}>
+              Spend <strong style={{color:T.accent,display:"flex",alignItems:"center",gap:3}}>{confirmPurchase.cost} <KKey size={12}/></strong> on {confirmPurchase.label}?
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>{ confirmPurchase.onConfirm(); setConfirmPurchase(null); }} style={{flex:1,padding:"10px",background:T.purple,border:"none",borderRadius:8,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Confirm</button>
+              <button onClick={()=>setConfirmPurchase(null)} style={{flex:1,padding:"10px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
