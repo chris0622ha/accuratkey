@@ -1,13 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, ALL_WORDS, WORD_CATEGORIES, CATEGORY_NAMES, SPELLING_BEE_WORDS, POOL_WORD_RAIN, POOL_SURVIVAL, POOL_SPEED_BURST, POOL_SCRAMBLE, POOL_SUDDEN_DEATH, POOL_ZEN, POOL_LADDER_EASY, POOL_LADDER_MED, POOL_LADDER_HARD, POOL_LADDER_VHARD, POOL_ECHO, POOL_INVADERS, POOL_ASTEROID, POOL_TOWER, POOL_WORD_CHAIN, pickWords, pickByDiff } from "./WordDB";
-import { Sniper, Mirror, Flash, Echo, GhostWords, CodeRain, BossBattle, TypewriterStory, TypingJournal, PoetryMode } from "./GamesExtra";
-import { HundredWords, Endurance, Roulette, WordChain, CategoryBlitz, VocabBuilder, SpellingBee, TypingInvaders, AsteroidBelt, TowerDefense, MysteryWords, RhymeTime, MadLibs } from "./GamesNew2";
-import { SpeedTest, MissingLetters, Anagram, BrickBreaker, Quotes, HaikuMode, Synonyms, Antonyms } from "./GamesNew3";
-// Word pools
-const EASY_WORDS = TYPING_BASIC;
-const MED_WORDS = TYPING_MEDIUM;
-const HARD_WORDS = TYPING_HARD;
+import { Sniper, Mirror, Flash, Echo, GhostWords, CodeRain, BossBattle, TypewriterStory, WordDuel, TypingJournal, PoetryMode } from "./GamesExtra";
 
 // ─── Sound Engine ─────────────────────────────────────────────────────────────
 let _sfxCtx = null;
@@ -57,9 +50,17 @@ function SoundBtn({ muted, toggle, T }) {
 }
 
 // ─── Word pools ───────────────────────────────────────────────────────────────
-// REPLACED BY WORDDB
+const EASY_WORDS = ["the","and","you","for","with","that","this","from","have","they","will","your","time","make","look","come","like","then","over","also","back","after","only","them","well","been","were","each","many","much","such","long","good","very","most","even","does","know","just","some","into","take","than","here","both","next","last","same","used","turn","said","did","get","way","may","day","who","its","how","all","new","out","use","can","now","our","see","two","has","but","set","put","end","why","let","big","few","run","far","off","car","eat","low","ask","own","boy","yet","age","due"];
+const MED_WORDS  = ["people","before","should","between","through","because","without","another","against","thought","looking","children","problem","school","always","found","three","still","world","never","right","where","every","might","place","state","small","large","often","along","since","until","while","point","house","again","away","hand","light","city","high","need","home","water","more","game","play","work","life","form","help","feel","talk","turn","each","face","show","move","live","hold","days","line","side","open","keep","read","mind","head","stop","left","real","near","book","land","thing","kind","mean","same","tell","want","seem","call","come","give","than","when","them","then","look"];
+const HARD_WORDS = ["strength","keyboard","through","beautiful","challenge","wonderful","important","different","available","carefully","excellent","sometimes","knowledge","necessary","community","following","according","something","together","mountain","whatever","remember","question","probably","absolute","previous","solution","position","language","practice","describe","continue","personal","students","consider","although","happened","thousand","everyone","anything","building","business","however","evening","already","medical","natural","culture","serious"];
 
-// pickWords from WordDB handles this now
+function pickWords(count = 20, level = "easy") {
+  const pool = level === "hard" ? HARD_WORDS : level === "med" ? MED_WORDS : EASY_WORDS;
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  const result = [];
+  while (result.length < count) result.push(...shuffled);
+  return result.slice(0, count);
+}
 
 // ─── Option Row helper ─────────────────────────────────────────────────────────
 function OptionRow({ label, options, value, onChange, T }) {
@@ -80,74 +81,39 @@ function OptionRow({ label, options, value, onChange, T }) {
 
 // ─── Game list ────────────────────────────────────────────────────────────────
 const GAMES = [
-  { id:"rain",        emoji:"🌧️", name:"Word Rain",      desc:"Type falling words before they hit the bottom",    cat:"arcade" },
-  { id:"survival",    emoji:"💀", name:"Survival",        desc:"Endless typing — mistakes cost you time",          cat:"arcade" },
-  { id:"burst",       emoji:"⚡", name:"Speed Burst",     desc:"Sprint for WPM — how fast are you?",              cat:"speed" },
-  { id:"scramble",    emoji:"🔀", name:"Word Scramble",   desc:"Unscramble jumbled words against the clock",       cat:"puzzle" },
-  { id:"suddendeath", emoji:"☠️", name:"Sudden Death",    desc:"One wrong key and it's all over",                  cat:"accuracy" },
-  { id:"zen",         emoji:"🧘", name:"Zen Mode",        desc:"No timer, no pressure — just type",               cat:"chill" },
-  { id:"ladder",      emoji:"🪜", name:"Speed Ladder",    desc:"Each rung must be faster than the last",           cat:"speed" },
-  { id:"sniper",      emoji:"🎯", name:"Sniper",          desc:"100% accuracy required — any mistake resets",      cat:"accuracy" },
-  { id:"mirror",      emoji:"🪞", name:"Mirror",           desc:"Words appear backwards — type them forwards",     cat:"accuracy" },
-  { id:"flash",       emoji:"⚡", name:"Flash",            desc:"Memorize the word before it disappears",          cat:"memory" },
-  { id:"echo",        emoji:"🔁", name:"Echo",             desc:"Repeat growing sequences from memory",            cat:"memory" },
-  { id:"ghost",       emoji:"👻", name:"Ghost Words",      desc:"Type the word before it fades away",             cat:"accuracy" },
-  { id:"coderain",    emoji:"💻", name:"Code Rain",        desc:"Matrix-style falling words in columns",           cat:"arcade" },
-  { id:"boss",        emoji:"👾", name:"Boss Battle",      desc:"Deal damage by typing — dodge boss attacks",      cat:"arcade" },
-  { id:"story",       emoji:"🎭", name:"Typewriter Story", desc:"Type classic literature passages",                cat:"chill" },
-  { id:"journal",     emoji:"📝", name:"Typing Journal",   desc:"Free type and save your entries locally",         cat:"chill" },
-  { id:"poetry",      emoji:"📜", name:"Poetry Mode",      desc:"Type poems with ambient tones",                  cat:"chill" },
-  { id:"hundred",     emoji:"💯", name:"100 Words",         desc:"Type exactly 100 words as fast as possible",      cat:"challenge" },
-  { id:"endurance",   emoji:"🏃", name:"Endurance",         desc:"Never stop typing or it's game over",             cat:"challenge" },
-  { id:"roulette",    emoji:"🎰", name:"Roulette",          desc:"Spin for a random game mode",                     cat:"random" },
-  { id:"wordchain",   emoji:"🔗", name:"Word Chain",        desc:"Each word must start with the last letter",       cat:"puzzle" },
-  { id:"blitz",       emoji:"⚡", name:"Category Blitz",    desc:"Type as many words in a category as possible",    cat:"challenge" },
-  { id:"vocab",       emoji:"📚", name:"Vocab Builder",     desc:"Read the definition — type the word",             cat:"educational" },
-  { id:"spellingbee", emoji:"🐝", name:"Spelling Bee",      desc:"Memorize and spell words correctly",              cat:"educational" },
-  { id:"invaders",    emoji:"👾", name:"Typing Invaders",   desc:"Shoot invaders by typing their words",            cat:"arcade" },
-  { id:"asteroid",    emoji:"☄️", name:"Asteroid Belt",     desc:"Destroy asteroids before they hit your ship",     cat:"arcade" },
-  { id:"tower",       emoji:"🏰", name:"Tower Defense",     desc:"Stop enemies from reaching your base",            cat:"arcade" },
-  { id:"mystery",     emoji:"🔮", name:"Mystery Words",     desc:"Symbols slowly reveal as letters — guess the word", cat:"puzzle" },
-  { id:"rhyme",       emoji:"🎵", name:"Rhyme Time",        desc:"Type a word that rhymes with the one shown",      cat:"educational" },
-  { id:"madlibs",     emoji:"😂", name:"Mad Libs",          desc:"Fill in the blanks to make a funny story",        cat:"creative" },
-  { id:"speedtest",   emoji:"⏱️", name:"Speed Test",        desc:"Classic 1, 2, or 5 minute WPM benchmark",         cat:"speed" },
-  { id:"missing",     emoji:"🔡", name:"Missing Letters",   desc:"Fill in the blanks — w_rd sh_wn l_ke th_s",       cat:"puzzle" },
-  { id:"anagram",     emoji:"🔀", name:"Anagram",           desc:"Unscramble the letters to form a real word",       cat:"puzzle" },
-  { id:"bricks",      emoji:"🧱", name:"Brick Breaker",     desc:"Type words to smash bricks in waves",              cat:"arcade" },
-  { id:"quotes",      emoji:"💬", name:"Quotes",            desc:"Type famous quotes from history",                  cat:"chill" },
-  { id:"haiku",       emoji:"🌸", name:"Haiku",             desc:"Type classic haiku poems line by line",            cat:"chill" },
-  { id:"synonyms",    emoji:"📖", name:"Synonyms",          desc:"Type any word that means the same thing",          cat:"educational" },
-  { id:"antonyms",    emoji:"↔️", name:"Antonyms",          desc:"Type the opposite — any antonym accepted",         cat:"educational" },
-];
-
-const CATEGORIES = [
-  { id:"all",         label:"All" },
-  { id:"speed",       label:"⚡ Speed" },
-  { id:"accuracy",    label:"🎯 Accuracy" },
-  { id:"memory",      label:"🧠 Memory" },
-  { id:"arcade",      label:"🕹️ Arcade" },
-  { id:"chill",       label:"🧘 Chill" },
-  { id:"puzzle",      label:"🔀 Puzzle" },
-  { id:"challenge",   label:"🏆 Challenge" },
-  { id:"educational", label:"📚 Educational" },
-  { id:"creative",    label:"🎨 Creative" },
-  { id:"random",      label:"🎲 Random" },
+  { id:"rain",        emoji:"🌧️", name:"Word Rain",     desc:"Type falling words before they hit the bottom" },
+  { id:"survival",    emoji:"💀", name:"Survival",       desc:"Endless typing — mistakes cost you time" },
+  { id:"burst",       emoji:"⚡", name:"Speed Burst",    desc:"Sprint for WPM — how fast are you?" },
+  { id:"scramble",    emoji:"🔀", name:"Word Scramble",  desc:"Unscramble jumbled words against the clock" },
+  { id:"suddendeath", emoji:"☠️", name:"Sudden Death",   desc:"One wrong key and it's all over", tag:"💥 NEW" },
+  { id:"zen",         emoji:"🧘", name:"Zen Mode",       desc:"No timer, no pressure — just type", tag:"✨ NEW" },
+  { id:"ladder",      emoji:"🪜", name:"Speed Ladder",   desc:"Each rung must be faster than the last", tag:"🔥 NEW" },
+  { id:"sniper",      emoji:"🎯", name:"Sniper",         desc:"100% accuracy required — any mistake resets the word", tag:"🆕" },
+  { id:"mirror",      emoji:"🪞", name:"Mirror",          desc:"Words appear backwards — type them forwards", tag:"🆕" },
+  { id:"flash",       emoji:"⚡", name:"Flash",           desc:"Memorize the word before it disappears", tag:"🆕" },
+  { id:"echo",        emoji:"🔁", name:"Echo",            desc:"Repeat growing sequences of words from memory", tag:"🆕" },
+  { id:"ghost",       emoji:"👻", name:"Ghost Words",     desc:"Type the word before it fades away", tag:"🆕" },
+  { id:"coderain",    emoji:"💻", name:"Code Rain",       desc:"Matrix-style falling words in columns", tag:"🆕" },
+  { id:"boss",        emoji:"👾", name:"Boss Battle",     desc:"Deal damage by typing — dodge the boss attacks", tag:"🆕" },
+  { id:"story",       emoji:"🎭", name:"Typewriter Story",desc:"Type classic literature passages", tag:"🆕" },
+  { id:"duel",        emoji:"⚔️", name:"Word Duel",       desc:"Two players race on the same device", tag:"🆕" },
+  { id:"journal",     emoji:"📝", name:"Typing Journal",  desc:"Free type and save your entries locally", tag:"🆕" },
+  { id:"poetry",      emoji:"📜", name:"Poetry Mode",     desc:"Type poems with ambient synthesized tones", tag:"🆕" },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // WORD RAIN
 // ═══════════════════════════════════════════════════════════════════════════════
-function WordRain({ T, onBack, settings = {} }) {
-  const sv = gLoad("rain");
+function WordRain({ T, onBack }) {
   const [status, setStatus]   = useState("idle");
-  const [difficulty, setDiff] = useState(()=> settings.difficulty || sv?.difficulty || "easy");
-  const [maxLives, setMaxLives] = useState(()=> settings.lives || sv?.maxLives || 5);
+  const [difficulty, setDiff] = useState("easy");
+  const [maxLives, setMaxLives] = useState(5);
   const [muted, setMuted]     = useState(() => localStorage.getItem("ak_sfx_muted") === "1");
   const [drops, setDrops]     = useState([]);
   const [typed, setTyped]     = useState("");
   const [score, setScore]     = useState(0);
   const [missed, setMissed]   = useState(0);
-  const [best, setBest]       = useState(()=> sv?.best || 0);
+  const [best, setBest]       = useState(0);
   const [speedMult, setSpeedMult] = useState(1);
   const inputRef  = useRef(null);
   const frameRef  = useRef(null);
@@ -176,7 +142,7 @@ function WordRain({ T, onBack, settings = {} }) {
     scoreRef.current = 0;
     missedRef.current = 0;
     idRef.current = 0;
-    wordQRef.current = pickWords(100, difficulty==='hard'?TYPING_HARD:difficulty==='med'?POOL_SURVIVAL:POOL_WORD_RAIN);
+    wordQRef.current = pickWords(100, difficulty);
     lastSpawn.current = 0;
     speedMultRef.current = 1;
     setDrops([]); setScore(0); setMissed(0); setTyped(""); setSpeedMult(1);
@@ -185,7 +151,7 @@ function WordRain({ T, onBack, settings = {} }) {
   };
 
   const spawnWord = useCallback((now) => {
-    if (!wordQRef.current.length) wordQRef.current = pickWords(100, difficulty==='hard'?TYPING_HARD:difficulty==='med'?POOL_SURVIVAL:POOL_WORD_RAIN);
+    if (!wordQRef.current.length) wordQRef.current = pickWords(100, difficulty);
     const word = wordQRef.current.shift();
     const x = 4 + Math.random() * 72;
     dropsRef.current = [...dropsRef.current, { id: idRef.current++, word, x, y: 0 }];
@@ -213,9 +179,7 @@ function WordRain({ T, onBack, settings = {} }) {
           setDrops([]);
           sfx("gameover");
           setStatus("dead");
-          const newBest = Math.max(Number(localStorage.getItem("ak_gs_rain_best")||0), scoreRef.current);
-          localStorage.setItem("ak_gs_rain_best", newBest);
-          setBest(newBest);
+          setBest(b => Math.max(b, scoreRef.current));
           cancelAnimationFrame(frameRef.current);
           return;
         }
@@ -322,9 +286,7 @@ function WordRain({ T, onBack, settings = {} }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // SURVIVAL
 // ═══════════════════════════════════════════════════════════════════════════════
-function Survival({ T, onBack, settings = {} }) {
-  const sv = gLoad("survival");
-  const SURV_POOL = POOL_SURVIVAL;
+function Survival({ T, onBack }) {
   const [status, setStatus]     = useState("idle");
   const [startTime, setStartTime] = useState(30);
   const [muted, setMuted]       = useState(() => localStorage.getItem("ak_sfx_muted") === "1");
@@ -333,7 +295,7 @@ function Survival({ T, onBack, settings = {} }) {
   const [typed, setTyped]       = useState("");
   const [timeLeft, setTimeLeft]  = useState(30);
   const [score, setScore]        = useState(0);
-  const [best, setBest] = useState(()=> sv?.best || 0);
+  const [best, setBest]          = useState(0);
   const [flash, setFlash]        = useState(null);
   const inputRef = useRef(null);
   const timerRef = useRef(null);
@@ -484,17 +446,16 @@ function Survival({ T, onBack, settings = {} }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // SPEED BURST
 // ═══════════════════════════════════════════════════════════════════════════════
-function SpeedBurst({ T, onBack, settings = {} }) {
-  const sv = gLoad("burst");
-  const [duration, setDuration] = useState(()=> settings.duration || 30);
+function SpeedBurst({ T, onBack }) {
+  const [duration, setDuration] = useState(15);
   const [status, setStatus]     = useState("idle");
   const [muted, setMuted]       = useState(() => localStorage.getItem("ak_sfx_muted") === "1");
   const [words, setWords]        = useState([]);
   const [typed, setTyped]        = useState("");
-  const [timeLeft, setTimeLeft]  = useState(()=> settings.duration || 30);
+  const [timeLeft, setTimeLeft]  = useState(15);
   const [correct, setCorrect]    = useState(0);
   const [chars, setChars]        = useState(0);
-  const [best, setBest]          = useState(()=> sv?.best || { wpm:0, acc:0 });
+  const [best, setBest]          = useState({ wpm:0, acc:0 });
   const inputRef  = useRef(null);
   const timerRef  = useRef(null);
   const timeRef   = useRef(15);
@@ -640,8 +601,7 @@ function SpeedBurst({ T, onBack, settings = {} }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // WORD SCRAMBLE
 // ═══════════════════════════════════════════════════════════════════════════════
-function WordScramble({ T, onBack, settings = {} }) {
-  const sv = gLoad("scramble");
+function WordScramble({ T, onBack }) {
   const POOL = [...MED_WORDS, ...HARD_WORDS];
 
   const scramble = (w) => {
@@ -815,425 +775,56 @@ function WordScramble({ T, onBack, settings = {} }) {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN GamesTab
-
-// ─── Game persistence helpers ─────────────────────────────────────────────────
-function gSave(id, data) { try { localStorage.setItem("ak_gs_"+id, JSON.stringify(data)); } catch{} }
-function gLoad(id) { try { return JSON.parse(localStorage.getItem("ak_gs_"+id)||"null"); } catch{return null;} }
-function gClear(id) { try { localStorage.removeItem("ak_gs_"+id); } catch{} }
-
-// ─── Per-game settings definitions ───────────────────────────────────────────
-const GAME_SETTINGS = {
-  rain:        [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"easy" }, { key:"lives", label:"Lives", opts:[3,5,7,10], default:5 }],
-  survival:    [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"med" }],
-  burst:       [{ key:"duration",   label:"Duration",   opts:[15,30,60], default:30, suffix:"s" }, { key:"difficulty", label:"Words", opts:["easy","med","hard"], default:"med" }],
-  scramble:    [{ key:"duration",   label:"Time",       opts:[30,60,90], default:60, suffix:"s" }, { key:"count", label:"Words", opts:[5,10,15,20], default:10 }],
-  suddendeath: [{ key:"difficulty", label:"Words",      opts:["easy","med","hard"], default:"med" }],
-  zen:         [{ key:"difficulty", label:"Words",      opts:["easy","med","hard"], default:"easy" }],
-  ladder:      [{ key:"rungs",      label:"Rungs",      opts:[5,8,10,15], default:10 }],
-  sniper:      [{ key:"count",      label:"Words",      opts:[10,25,50], default:25 }, { key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"med" }],
-  mirror:      [{ key:"count",      label:"Words",      opts:[10,20,30], default:20 }],
-  flash:       [{ key:"flashMs",    label:"Flash time", opts:[500,1000,1500,2000], default:1000, suffix:"ms" }, { key:"count", label:"Words", opts:[10,20,30], default:20 }],
-  echo:        [{ key:"lives",      label:"Lives",      opts:[1,2,3,5], default:3 }],
-  ghost:       [{ key:"visibleMs",  label:"Visible for", opts:[1500,2500,3500], default:2500, suffix:"ms" }, { key:"count", label:"Words", opts:[15,25,40], default:25 }],
-  coderain:    [{ key:"maxMissed",  label:"Max missed", opts:[3,5,8,12], default:8 }, { key:"speed", label:"Speed", opts:["slow","normal","fast"], default:"normal" }],
-  boss:        [{ key:"bossHp",     label:"Boss HP",    opts:[50,100,200], default:100 }, { key:"attackMs", label:"Attack every", opts:[2000,4000,6000], default:4000, suffix:"ms" }],
-  story:       [{ key:"passage",    label:"Passage",    opts:["random","raven","frost","dickens","austen","orwell"], default:"random" }],
-  journal:     [],
-  poetry:      [{ key:"poem",       label:"Poem",       opts:["random","byron","dickinson","frost","whitman","poe"], default:"random" }],
-  hundred:     [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"med" }],
-  endurance:   [{ key:"pauseMs",    label:"Pause limit", opts:[1,2,3,5], default:2, suffix:"s" }],
-  roulette:    [],
-  wordchain:   [{ key:"timePerWord", label:"Time per word", opts:[5,10,15,20], default:10, suffix:"s" }],
-  blitz:       [{ key:"duration",   label:"Duration",   opts:[15,30,60], default:30, suffix:"s" }, { key:"category", label:"Category", opts:["animals","countries","fruits","food","science","sports","tech","programming"], default:"animals" }],
-  vocab:       [{ key:"count",      label:"Words",      opts:[10,15,20,25], default:15 }],
-  spellingbee: [{ key:"difficulty", label:"Difficulty", opts:["super_easy","easy","normal","medium","hard","super_hard","impossible"], default:"normal" }],
-  invaders:    [{ key:"waves",      label:"Waves",      opts:[3,5,10], default:5 }],
-  asteroid:    [{ key:"lives",      label:"Lives",      opts:[2,3,5], default:3 }],
-  tower:       [],
-  mystery:     [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"med" }],
-  rhyme:       [],
-  madlibs:     [],
-  speedtest:   [{ key:"duration", label:"Duration", opts:[1,2,5], default:1, suffix:" min" }, { key:"difficulty", label:"Words", opts:["easy","med","hard"], default:"med" }],
-  missing:     [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"med" }, { key:"count", label:"Words", opts:[10,15,20,30], default:20 }, { key:"hideRate", label:"Hide amount", opts:["low","medium","high"], default:"medium" }],
-  anagram:     [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"med" }, { key:"count", label:"Words", opts:[10,15,20], default:20 }],
-  bricks:      [{ key:"rows", label:"Rows", opts:[3,4,5,6], default:4 }, { key:"cols", label:"Columns", opts:[4,5,6,8], default:6 }],
-  quotes:      [{ key:"author", label:"Author filter", opts:["all","einstein","shakespeare","wilde","twain","gandhi"], default:"all" }],
-  haiku:       [{ key:"poet", label:"Poet", opts:["all","basho","issa","buson","pound"], default:"all" }],
-  synonyms:    [{ key:"count", label:"Words", opts:[10,20,30,"all"], default:20 }],
-  antonyms:    [{ key:"count", label:"Words", opts:[10,20,30,"all"], default:20 }],
-};
-
-function loadSettings(id) {
-  try { return JSON.parse(localStorage.getItem(`ak_game_settings_${id}`) || "{}"); } catch { return {}; }
-}
-function saveSettings(id, s) {
-  try { localStorage.setItem(`ak_game_settings_${id}`, JSON.stringify(s)); } catch {}
-}
-function getSettings(id) {
-  const saved = loadSettings(id);
-  const defs = GAME_SETTINGS[id] || [];
-  const out = {};
-  defs.forEach(d => { out[d.key] = saved[d.key] !== undefined ? saved[d.key] : d.default; });
-  return out;
-}
-
-// ─── Settings Panel ────────────────────────────────────────────────────────────
-function SettingsPanel({ gameId, T, onStart }) {
-  const defs = GAME_SETTINGS[gameId] || [];
-  const [vals, setVals] = useState(() => getSettings(gameId));
-  if (defs.length === 0) { onStart(vals); return null; }
-  const set = (k, v) => {
-    const nv = {...vals, [k]: v};
-    setVals(nv);
-    saveSettings(gameId, nv);
-  };
-  return (
-    <div style={{background:"#13131f",border:"1px solid #1e1e30",borderRadius:12,padding:20,marginBottom:16}}>
-      <div style={{color:"#e0e0ff",fontWeight:700,fontSize:14,marginBottom:14}}>⚙️ Settings</div>
-      {defs.map(d => (
-        <div key={d.key} style={{marginBottom:12}}>
-          <div style={{color:"#888",fontSize:11,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>{d.label}</div>
-          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-            {d.opts.map(o => (
-              <button key={o} onClick={()=>set(d.key,o)}
-                style={{padding:"5px 12px",borderRadius:7,border:`1px solid ${vals[d.key]===o?"#7c6af7":"#2a2a4a"}`,background:vals[d.key]===o?"#7c6af722":"transparent",color:vals[d.key]===o?"#a78bfa":"#666",fontSize:12,fontWeight:vals[d.key]===o?700:400,cursor:"pointer",fontFamily:"inherit"}}>
-                {o}{d.suffix||""}
-              </button>
-            ))}
-          </div>
-        </div>
-      ))}
-      <button onClick={()=>{ saveSettings(gameId,vals); onStart(vals); }}
-        style={{width:"100%",marginTop:8,padding:"12px",borderRadius:9,border:"none",background:"#7c6af7",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-        ▶ Start Game
-      </button>
-    </div>
-  );
-}
-
 // ═══════════════════════════════════════════════════════════════════════════════
-function SuddenDeath({ T, onBack }) {
-  const WORD_POOL = pickWords(60, "medium");
-  const [words] = useState(WORD_POOL);
-  const [typed, setTyped] = useState("");
-  const [current, setCurrent] = useState(0);
-  const [dead, setDead] = useState(false);
-  const [done, setDone] = useState(false);
-  const [startTime, setStartTime] = useState(null);
-  const [wpm, setWpm] = useState(0);
-  const [muted, setMuted] = useState(false);
-  const ref = React.useRef(null);
-  const target = words[current] || "";
+export default function GamesTab({ T }) {
+  const [activeGame, setActiveGame] = useState(null);
 
-  const handleType = e => {
-    const v = e.target.value;
-    if (dead || done) return;
-    if (!startTime) setStartTime(Date.now());
-    // Check for wrong key — if any char is wrong, instant death
-    for (let i = 0; i < v.length; i++) {
-      if (v[i] !== target[i]) {
-        if (!muted) playTone(120, "sawtooth", 0.4, 0.3);
-        setDead(true);
-        const elapsed = (Date.now() - startTime) / 60000;
-        setWpm(elapsed > 0 ? Math.round((current * 1) / elapsed) : 0);
-        return;
-      }
-    }
-    setTyped(v);
-    if (v === target) {
-      if (!muted) playTone(880, "sine", 0.1, 0.2);
-      const next = current + 1;
-      if (next >= words.length) {
-        setDone(true);
-        const elapsed = (Date.now() - startTime) / 60000;
-        setWpm(Math.round(words.length / elapsed));
-      } else {
-        setCurrent(next);
-        setTyped("");
-      }
-    }
-  };
-
-  const reset = () => { setTyped(""); setCurrent(0); setDead(false); setDone(false); setStartTime(null); setWpm(0); setTimeout(()=>ref.current?.focus(),50); };
-
-  return (
-    <div style={{padding:"4px 0"}}>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
-        <button onClick={onBack} style={{background:"none",border:"none",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>← Back</button>
-        <span style={{color:T.text,fontWeight:800,fontSize:20}}>💀 Sudden Death</span>
-        <SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/>
-      </div>
-      {dead ? (
-        <div style={{textAlign:"center",padding:32,background:T.card,border:"1px solid #ef4444",borderRadius:12}}>
-          <div style={{fontSize:48,marginBottom:8}}>💀</div>
-          <div style={{color:"#ef4444",fontWeight:800,fontSize:22,marginBottom:4}}>You died!</div>
-          <div style={{color:T.muted,fontSize:14,marginBottom:16}}>Survived {current} word{current!==1?"s":""} · {wpm} WPM</div>
-          <button onClick={reset} style={{padding:"12px 32px",borderRadius:10,border:"none",background:"#ef4444",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>Try Again</button>
-        </div>
-      ) : done ? (
-        <div style={{textAlign:"center",padding:32,background:T.card,border:`1px solid ${T.purple}`,borderRadius:12}}>
-          <div style={{fontSize:48,marginBottom:8}}>🏆</div>
-          <div style={{color:T.purple,fontWeight:800,fontSize:22,marginBottom:4}}>Flawless!</div>
-          <div style={{color:T.text,fontSize:18,fontWeight:700,marginBottom:16}}>{wpm} WPM · {words.length} words</div>
-          <button onClick={reset} style={{padding:"12px 32px",borderRadius:10,border:"none",background:T.purple,color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>Play Again</button>
-        </div>
-      ) : (
-        <>
-          <div style={{background:"#ef444411",border:"1px solid #ef444433",borderRadius:8,padding:"6px 12px",marginBottom:10,fontSize:11,color:"#ef4444",textAlign:"center"}}>
-            ⚠️ One wrong key = game over
-          </div>
-          <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"16px 20px",marginBottom:10,fontFamily:"'JetBrains Mono',monospace",fontSize:20,letterSpacing:2,textAlign:"center",minHeight:60}}>
-            {target.split("").map((ch,i) => (
-              <span key={i} style={{color: i < typed.length ? "#34d399" : i === typed.length ? T.purple : T.faint, borderBottom: i===typed.length?"2px solid "+T.purple:"2px solid transparent"}}>{ch}</span>
-            ))}
-          </div>
-          <div style={{display:"flex",justifyContent:"space-between",color:T.muted,fontSize:12,marginBottom:10}}>
-            <span>Word {current+1} / {words.length}</span>
-            <span>{startTime ? Math.round((Date.now()-startTime)/1000)+"s" : "Start typing..."}</span>
-          </div>
-          <input ref={ref} autoFocus value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
-            style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}
-          />
-        </>
-      )}
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// ZEN MODE
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function ZenMode({ T, onBack }) {
-  const [words, setWords] = useState(() => pickWords(80, "easy"));
-  const [typed, setTyped] = useState("");
-  const [correct, setCorrect] = useState(0);
-  const [total, setTotal] = useState(0);
-  const [startTime, setStartTime] = useState(null);
-  const [wpm, setWpm] = useState(0);
-  const [muted, setMuted] = useState(false);
-  const ref = React.useRef(null);
-  const target = words.join(" ");
-
-  const handleType = e => {
-    const v = e.target.value;
-    if (!startTime && v.length > 0) setStartTime(Date.now());
-    setTyped(v);
-    const elapsed = startTime ? (Date.now() - startTime) / 60000 : 0.001;
-    if (elapsed > 0) setWpm(Math.round((v.length / 5) / elapsed));
-    setCorrect(v.split("").filter((c,i) => c === target[i]).length);
-    setTotal(v.length);
-    // Extend words when approaching end
-    if (v.length > target.length - 100) {
-      setWords(w => [...w, ...pickWords(40, "easy")]);
-    }
-  };
-
-  const acc = total > 0 ? Math.round((correct/total)*100) : 100;
-
-  return (
-    <div style={{padding:"4px 0"}}>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
-        <button onClick={onBack} style={{background:"none",border:"none",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>← Back</button>
-        <span style={{color:T.text,fontWeight:800,fontSize:20}}>🧘 Zen Mode</span>
-        <SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/>
-      </div>
-      <div style={{background:"#7c6af711",border:"1px solid #7c6af733",borderRadius:8,padding:"6px 12px",marginBottom:10,fontSize:11,color:T.purple,textAlign:"center"}}>
-        No timer · No pressure · Just type
-      </div>
-      <div onClick={()=>ref.current?.focus()} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"16px 20px",marginBottom:10,fontFamily:"'JetBrains Mono',monospace",fontSize:16,letterSpacing:1,lineHeight:1.8,cursor:"text",userSelect:"none",minHeight:80}}>
-        {target.slice(Math.max(0,typed.length-60), typed.length+120).split("").map((ch,i) => {
-          const absIdx = Math.max(0,typed.length-60)+i;
-          let color = T.faint;
-          if (absIdx < typed.length) color = typed[absIdx]===ch?"#34d399":"#ef4444";
-          else if (absIdx===typed.length) color=T.purple;
-          return <span key={absIdx} style={{color,borderBottom:absIdx===typed.length?"2px solid "+T.purple:"2px solid transparent"}}>{ch}</span>;
-        })}
-      </div>
-      <input ref={ref} autoFocus value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} style={{position:"absolute",opacity:0,pointerEvents:"none"}}/>
-      <div style={{display:"flex",gap:16,justifyContent:"center",color:T.muted,fontSize:13}}>
-        <span style={{color:T.purple,fontWeight:700}}>{startTime?wpm:0} WPM</span>
-        <span style={{color:"#34d399",fontWeight:700}}>{acc}%</span>
-        <span>{typed.length} chars</span>
-        {startTime && <button onClick={()=>{setTyped("");setStartTime(null);setWpm(0);}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.faint,fontSize:11,padding:"2px 8px",cursor:"pointer",fontFamily:"inherit"}}>↺ Reset</button>}
-      </div>
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// SPEED LADDER
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function SpeedLadder({ T, onBack }) {
-  const RUNGS = 10;
-  const [rung, setRung] = useState(0);
-  const [words] = useState(()=>Array.from({length:RUNGS},(_,i)=>pickWords(5+i*2,"easy")));
-  const [typed, setTyped] = useState("");
-  const [startTime, setStartTime] = useState(null);
-  const [rungStart, setRungStart] = useState(null);
-  const [rungWpms, setRungWpms] = useState([]);
-  const [failed, setFailed] = useState(false);
-  const [done, setDone] = useState(false);
-  const [muted, setMuted] = useState(false);
-  const ref = React.useRef(null);
-  const MIN_WPM = rung === 0 ? 0 : rungWpms[rung-1] || 0;
-  const target = (words[rung]||[]).join(" ");
-
-  const handleType = e => {
-    const v = e.target.value;
-    if (failed||done) return;
-    if (!startTime) { setStartTime(Date.now()); setRungStart(Date.now()); }
-    setTyped(v);
-    if (v === target) {
-      const elapsed = (Date.now()-rungStart)/60000;
-      const w = Math.round((target.length/5)/elapsed);
-      if (!muted) playTone(660+rung*55,"sine",0.12,0.2);
-      if (rung>0 && w <= MIN_WPM) { setFailed(true); setRungWpms(r=>[...r,w]); return; }
-      const newWpms = [...rungWpms, w];
-      setRungWpms(newWpms);
-      if (rung+1 >= RUNGS) { setDone(true); if(!muted) [0,0.2,0.4].forEach(t=>setTimeout(()=>playTone(880,"sine",0.15,0.25),t*1000)); }
-      else { setRung(r=>r+1); setTyped(""); setRungStart(Date.now()); }
-    }
-  };
-
-  const reset = () => { setRung(0);setTyped("");setStartTime(null);setRungStart(null);setRungWpms([]);setFailed(false);setDone(false);setTimeout(()=>ref.current?.focus(),50); };
-  const bestWpm = rungWpms.length ? Math.max(...rungWpms) : 0;
-
-  return (
-    <div style={{padding:"4px 0"}}>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
-        <button onClick={onBack} style={{background:"none",border:"none",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>← Back</button>
-        <span style={{color:T.text,fontWeight:800,fontSize:20}}>🪜 Speed Ladder</span>
-        <SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/>
-      </div>
-      {(failed||done) ? (
-        <div style={{textAlign:"center",padding:32,background:T.card,border:`1px solid ${failed?"#ef4444":T.purple}`,borderRadius:12}}>
-          <div style={{fontSize:48,marginBottom:8}}>{failed?"💥":"🏆"}</div>
-          <div style={{color:failed?"#ef4444":T.purple,fontWeight:800,fontSize:22,marginBottom:4}}>{failed?`Failed on Rung ${rung+1}`:"Ladder Complete!"}</div>
-          <div style={{color:T.muted,fontSize:13,marginBottom:16}}>Best: {bestWpm} WPM · {rungWpms.join(" → ")} WPM</div>
-          <button onClick={reset} style={{padding:"12px 32px",borderRadius:10,border:"none",background:failed?"#ef4444":T.purple,color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>Try Again</button>
-        </div>
-      ) : (
-        <>
-          <div style={{display:"flex",gap:4,marginBottom:12}}>
-            {Array.from({length:RUNGS}).map((_,i)=>(
-              <div key={i} style={{flex:1,height:6,borderRadius:3,background:i<rung?"#34d399":i===rung?T.purple:T.border,transition:"background 0.3s"}}/>
-            ))}
-          </div>
-          {rung > 0 && <div style={{textAlign:"center",color:T.faint,fontSize:11,marginBottom:8}}>Must beat {MIN_WPM} WPM (your last rung)</div>}
-          <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"14px 18px",marginBottom:10,fontFamily:"'JetBrains Mono',monospace",fontSize:17,letterSpacing:1,lineHeight:1.8}}>
-            {target.split("").map((ch,i)=>(
-              <span key={i} style={{color:i<typed.length?(typed[i]===ch?"#34d399":"#ef4444"):i===typed.length?T.purple:T.faint,borderBottom:i===typed.length?"2px solid "+T.purple:"2px solid transparent"}}>{ch}</span>
-            ))}
-          </div>
-          <div style={{display:"flex",justifyContent:"space-between",color:T.muted,fontSize:12,marginBottom:10}}>
-            <span>Rung {rung+1} / {RUNGS}</span>
-            <span>{rung>0?`Last: ${rungWpms[rung-1]} WPM`:"Go!"}</span>
-          </div>
-          <input ref={ref} autoFocus value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
-            style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}
-          />
-        </>
-      )}
-    </div>
-  );
-}
-
-const GAME_COMPONENTS = {
-    rain: WordRain, survival: Survival, burst: SpeedBurst, scramble: WordScramble,
-    suddendeath: SuddenDeath, zen: ZenMode, ladder: SpeedLadder,
-    sniper: Sniper, mirror: Mirror, flash: Flash, echo: Echo,
-    ghost: GhostWords, coderain: CodeRain, boss: BossBattle,
-    story: TypewriterStory, journal: TypingJournal, poetry: PoetryMode,
-    hundred: HundredWords, endurance: Endurance, roulette: Roulette,
-    wordchain: WordChain, blitz: CategoryBlitz, vocab: VocabBuilder,
-    spellingbee: SpellingBee, invaders: TypingInvaders, asteroid: AsteroidBelt,
-    tower: TowerDefense, mystery: MysteryWords, rhyme: RhymeTime, madlibs: MadLibs,
-    speedtest: SpeedTest, missing: MissingLetters, anagram: Anagram,
-    bricks: BrickBreaker, quotes: Quotes, haiku: HaikuMode,
-    synonyms: Synonyms, antonyms: Antonyms,
-  };
-
-  if (activeGame) {
-    const Comp = GAME_COMPONENTS[activeGame];
-    if (!Comp) { exitGame(); return null; }
-    return (
-      <div style={{ padding:"4px 0" }}>
-        {showSettings || !settings ? (
-          <>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
-              <button onClick={exitGame} style={{background:"none",border:"none",color:"#555",fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>← Games</button>
-              <span style={{color:"#e0e0ff",fontWeight:800,fontSize:18}}>{GAMES.find(g=>g.id===activeGame)?.emoji} {GAMES.find(g=>g.id===activeGame)?.name}</span>
-            </div>
-            <SettingsPanel gameId={activeGame} T={T} onStart={startGame}/>
-          </>
-        ) : (
-          <Comp T={T} settings={settings} onBack={exitGame} onSettings={()=>setShowSettings(true)}/>
-        )}
-      </div>
-    );
-  }
+  if (activeGame === "rain")     return <div style={{ padding:"4px 0" }}><WordRain T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "survival") return <div style={{ padding:"4px 0" }}><Survival T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "burst")    return <div style={{ padding:"4px 0" }}><SpeedBurst T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "scramble")    return <div style={{ padding:"4px 0" }}><WordScramble  T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "suddendeath") return <div style={{ padding:"4px 0" }}><SuddenDeath   T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "zen")         return <div style={{ padding:"4px 0" }}><ZenMode        T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "ladder")      return <div style={{ padding:"4px 0" }}><SpeedLadder    T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "sniper")      return <div style={{ padding:"4px 0" }}><Sniper          T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "mirror")      return <div style={{ padding:"4px 0" }}><Mirror          T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "flash")       return <div style={{ padding:"4px 0" }}><Flash           T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "echo")        return <div style={{ padding:"4px 0" }}><Echo            T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "ghost")       return <div style={{ padding:"4px 0" }}><GhostWords      T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "coderain")    return <div style={{ padding:"4px 0" }}><CodeRain        T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "boss")        return <div style={{ padding:"4px 0" }}><BossBattle      T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "story")       return <div style={{ padding:"4px 0" }}><TypewriterStory T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "duel")        return <div style={{ padding:"4px 0" }}><WordDuel        T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "journal")     return <div style={{ padding:"4px 0" }}><TypingJournal   T={T} onBack={() => setActiveGame(null)} /></div>;
+  if (activeGame === "poetry")      return <div style={{ padding:"4px 0" }}><PoetryMode      T={T} onBack={() => setActiveGame(null)} /></div>;
 
   return (
     <div style={{ padding:"8px 0" }}>
       <div style={{ color:T.text, fontWeight:800, fontSize:18, marginBottom:4, fontFamily:T.font }}>🎮 Games</div>
-      {/* Category filter */}
-      <div style={{ display:"flex", gap:6, marginBottom:14, flexWrap:"wrap" }}>
-        {CATEGORIES.map(c => (
-          <button key={c.id} onClick={()=>{setActiveCat(c.id);setPage(1);}}
-            style={{ padding:"5px 12px", borderRadius:20, border:`1px solid ${activeCat===c.id?T.purple:T.border}`, background:activeCat===c.id?T.purple+"22":"transparent", color:activeCat===c.id?T.purple:T.muted, fontSize:12, fontWeight:activeCat===c.id?700:400, cursor:"pointer", fontFamily:T.font }}>
-            {c.label}
-          </button>
-        ))}
-      </div>
-      {(() => {
-        const filtered = GAMES.filter(g => activeCat==="all" || g.cat===activeCat);
-        const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-        const paged = filtered.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE);
-        return (<>
+      <div style={{ color:T.muted, fontSize:12, marginBottom:16, fontFamily:T.font }}>Choose a mini-game</div>
       <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-        {paged.map(g => (
-          <div key={g.id} style={{ display:"flex", alignItems:"center", gap:14, padding:"14px 16px", borderRadius:12, border:`1px solid ${T.border}`, background:T.card, fontFamily:T.font }}>
-            <span style={{ fontSize:30, cursor:"pointer" }} onClick={()=>enterGame(g.id)}>{g.emoji}</span>
-            <div style={{flex:1,minWidth:0,cursor:"pointer"}} onClick={()=>enterGame(g.id)}>
+        {GAMES.map(g => (
+          <button key={g.id} onClick={() => setActiveGame(g.id)}
+            style={{ display:"flex", alignItems:"center", gap:14, padding:"14px 16px", borderRadius:12, border:`1px solid ${T.border}`, background:T.card, cursor:"pointer", textAlign:"left", fontFamily:T.font, transition:"border-color 0.15s" }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = T.purple}
+            onMouseLeave={e => e.currentTarget.style.borderColor = T.border}>
+            <span style={{ fontSize:30 }}>{g.emoji}</span>
+            <div>
               <div style={{ color:T.text, fontWeight:700, fontSize:15 }}>{g.name}</div>
               <div style={{ color:T.muted, fontSize:12, marginTop:2 }}>{g.desc}</div>
-              <div style={{ marginTop:4, fontSize:10, color:"#555" }}>{CATEGORIES.find(c=>c.id===g.cat)?.label}</div>
+              {g.tag && <div style={{ marginTop:4, fontSize:10, fontWeight:700, color:"#a78bfa" }}>{g.tag}</div>}
             </div>
-            <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
-              {(GAME_SETTINGS[g.id]||[]).length > 0 && (
-                <button onClick={(e)=>{e.stopPropagation();enterGame(g.id);}} title="Settings" style={{background:"none",border:"1px solid #2a2a4a",borderRadius:7,color:"#555",fontSize:13,padding:"4px 8px",cursor:"pointer"}}>⚙️</button>
-              )}
-              <span style={{color:"#555",fontSize:18}}>›</span>
-            </div>
-          </div>
+            <span style={{ marginLeft:"auto", color:T.faint, fontSize:18 }}>›</span>
+          </button>
         ))}
       </div>
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginTop:16}}>
-          <button onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page===1}
-            style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:page===1?T.faint:T.muted,cursor:page===1?"default":"pointer",fontSize:14,fontFamily:T.font}}>
-            ←
-          </button>
-          {Array.from({length:totalPages},(_,i)=>i+1).map(n=>(
-            <button key={n} onClick={()=>setPage(n)}
-              style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${page===n?T.purple:T.border}`,background:page===n?T.purple+"22":"transparent",color:page===n?T.purple:T.muted,cursor:"pointer",fontSize:13,fontWeight:page===n?700:400,fontFamily:T.font}}>
-              {n}
-            </button>
-          ))}
-          <button onClick={()=>setPage(p=>Math.min(totalPages,p+1))} disabled={page===totalPages}
-            style={{padding:"6px 12px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:page===totalPages?T.faint:T.muted,cursor:page===totalPages?"default":"pointer",fontSize:14,fontFamily:T.font}}>
-            →
-          </button>
-        </div>
-      )}
-        </>);
-      })()}
     </div>
   );
+}
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// SUDDEN DEATH
+// ═══════════════════════════════════════════════════════════════════════════════
 function SuddenDeath({ T, onBack }) {
   const WORD_POOL = pickWords(60, "medium");
   const [words] = useState(WORD_POOL);
@@ -1325,7 +916,6 @@ function SuddenDeath({ T, onBack }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // ZEN MODE
 // ═══════════════════════════════════════════════════════════════════════════════
-
 function ZenMode({ T, onBack }) {
   const [words, setWords] = useState(() => pickWords(80, "easy"));
   const [typed, setTyped] = useState("");
@@ -1386,7 +976,6 @@ function ZenMode({ T, onBack }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // SPEED LADDER
 // ═══════════════════════════════════════════════════════════════════════════════
-
 function SpeedLadder({ T, onBack }) {
   const RUNGS = 10;
   const [rung, setRung] = useState(0);
@@ -1461,51 +1050,3 @@ function SpeedLadder({ T, onBack }) {
     </div>
   );
 }
-
-export default function GamesTab({ T }) {
-  // Restore active game from URL on mount
-  const [activeCat, setActiveCat] = useState("all");
-  const [page, setPage] = useState(1);
-  const PAGE_SIZE = 6;
-  const [activeGame, setActiveGame] = useState(() => {
-    if (typeof window === "undefined") return null;
-    const path = window.location.pathname;
-    const match = path.match(/^\/games\/([a-z]+)/);
-    return match ? match[1] : null;
-  });
-  const [settings, setSettings] = useState(null); // null = show settings panel
-  const [showSettings, setShowSettings] = useState(false);
-
-  const enterGame = (id) => {
-    setActiveGame(id);
-    setSettings(null); // show settings first
-    setShowSettings(true);
-    if (typeof window !== "undefined") {
-      window.history.replaceState({}, "", `/games/${id}`);
-      localStorage.setItem("ak_active_game", id);
-    }
-  };
-
-  const exitGame = () => {
-    setActiveGame(null);
-    setSettings(null);
-    setShowSettings(false);
-    if (typeof window !== "undefined") {
-      window.history.replaceState({}, "", "/game");
-      localStorage.removeItem("ak_active_game");
-    }
-  };
-
-  // On refresh, restore settings too
-  useEffect(() => {
-    if (activeGame && !settings) {
-      const saved = getSettings(activeGame);
-      const defs = GAME_SETTINGS[activeGame] || [];
-      if (defs.length === 0) setSettings(saved);
-      else setShowSettings(true);
-    }
-  }, []);
-
-  const startGame = (s) => { setSettings(s); setShowSettings(false); };
-
-  }
