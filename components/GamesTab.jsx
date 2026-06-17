@@ -922,7 +922,7 @@ function SuddenDeath({ T, onBack }) {
   const [startTime, setStartTime] = useState(null);
   const [wpm, setWpm] = useState(0);
   const [muted, setMuted] = useState(false);
-  const ref = React.useRef(null);
+  const ref = useRef(null);
   const target = words[current] || "";
 
   const handleType = e => {
@@ -1008,7 +1008,7 @@ function ZenMode({ T, onBack }) {
   const [startTime, setStartTime] = useState(null);
   const [wpm, setWpm] = useState(0);
   const [muted, setMuted] = useState(false);
-  const ref = React.useRef(null);
+  const ref = useRef(null);
   const target = words.join(" ");
 
   const handleType = e => {
@@ -1068,7 +1068,7 @@ function SpeedLadder({ T, onBack }) {
   const [failed, setFailed] = useState(false);
   const [done, setDone] = useState(false);
   const [muted, setMuted] = useState(false);
-  const ref = React.useRef(null);
+  const ref = useRef(null);
   const MIN_WPM = rung === 0 ? 0 : rungWpms[rung-1] || 0;
   const target = (words[rung]||[]).join(" ");
 
