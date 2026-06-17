@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest, replyToFeedback, getFlaggedScores, getRestoreRequests, approveFlaggedScore, dismissFlaggedScore, resolveRestoreRequest } from "@/lib/firebase";
 const LEVELS = [
   { id:1,  name:"Home Row Hero",         emoji:"🏠", wpmTarget:12,  accuracy:75, color:"#10b981", words:["ffjj","fjfj","asdf","jkl;","add","ask","fall","glad","flask","lads","fads","salads"] },
@@ -288,6 +288,8 @@ const TABS = ["stats","users","bans","admins","keys","trials","warn","broadcast"
 export default function AdminPage() {
   const [user,setUser]=useState(null);
   const [adminOk,setAdminOk]=useState(null);
+  const [adminSignInLoading,setAdminSignInLoading]=useState(false);
+  const [adminSignInErr,setAdminSignInErr]=useState("");
   const [tab,setTab]=useState("stats");
   const [users,setUsers]=useState([]);
   const [bans,setBans]=useState([]);
@@ -355,6 +357,25 @@ export default function AdminPage() {
   const flash = m => { setMsg(m); setTimeout(()=>setMsg(""),3000); };
 
   useEffect(()=>{ return onAuthStateChanged(auth, async u => { setUser(u); if(!u){setAdminOk(false);return;} const ok=await isAdmin(u.uid); setAdminOk(ok); }); },[]);
+
+  // Sign in directly from the admin page. onAuthStateChanged above reacts
+  // automatically once sign-in succeeds — no manual redirect needed, the
+  // page just re-renders into the admin panel if the account is an admin.
+  const handleAdminSignIn = async () => {
+    setAdminSignInErr(""); setAdminSignInLoading(true);
+    try {
+      const result = await signInWithPopup(auth, new GoogleAuthProvider());
+      if (!result?.user) setAdminSignInErr("Sign in failed — try again.");
+    } catch (e) {
+      if (e?.code === "auth/popup-closed-by-user" || e?.code === "auth/cancelled-popup-request") {
+        setAdminSignInErr("Popup was closed. Tap the button to try again.");
+      } else {
+        setAdminSignInErr(e?.message || "Sign in failed.");
+      }
+    }
+    setAdminSignInLoading(false);
+  };
+
   useEffect(()=>{ if(adminOk) loadAll(); },[adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="log") getActivityLog(100).then(setLog).catch(()=>{}); },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="feedback") getAdminFeedback(50).then(setFeedbackList).catch(()=>{}); },[tab,adminOk]);
@@ -513,6 +534,16 @@ export default function AdminPage() {
   });
 
   if(adminOk===null) return <div style={{...st.page,display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{color:T.muted}}>Checking...</div></div>;
+  if(!adminOk && !user) return (
+    <div style={{...st.page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:14}}>
+      <div style={{fontSize:32}}>🔒</div>
+      <div style={{color:T.text,fontWeight:700}}>Sign in to access admin</div>
+      <button onClick={handleAdminSignIn} disabled={adminSignInLoading} style={{padding:"10px 24px",borderRadius:8,border:"none",background:T.purple,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit",opacity:adminSignInLoading?0.6:1}}>
+        {adminSignInLoading?"Signing in…":"Sign in with Google"}
+      </button>
+      {adminSignInErr && <div style={{color:T.danger,fontSize:11,maxWidth:280,textAlign:"center"}}>{adminSignInErr}</div>}
+    </div>
+  );
   if(!adminOk) return <div style={{...st.page,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12}}><div style={{fontSize:32}}>🔒</div><div style={{color:T.danger,fontWeight:700}}>Access denied</div><div style={{color:T.muted,fontSize:11}}>{user?`UID: ${user.uid}`:"Not logged in"}</div></div>;
 
   return (
