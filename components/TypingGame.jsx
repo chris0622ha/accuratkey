@@ -2671,7 +2671,7 @@ const Nav = () => (<>
                         <div style={{color:T.text,fontWeight:700,fontSize:12,lineHeight:1.3}}>{lv.name}</div>
                         {completed && (() => {
                           const lb = activeProfile?.levelBests?.[lv.id];
-                          const s = lb?.stars || 1;
+                          const s = Math.max(0, Math.min(3, lb?.stars || 1));
                           return <div style={{fontSize:10,marginTop:2,color:lv.color}}>{"⭐".repeat(s)}{"☆".repeat(3-s)}{lb?.wpm>0?` · ${lb.wpm} WPM`:""}</div>;
                         })()}
                       </div>
