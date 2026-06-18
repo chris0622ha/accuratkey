@@ -127,14 +127,15 @@ export const IconTarget = ({ size = 28, color = "#f97316" }) => (
   </Base>
 );
 
-// 9. The Zone — a focused lightning bolt inside concentric energy rings with corner sparks
+// 9. The Zone — a camera-aperture/iris motif suggesting tunnel-vision focus
 export const IconZone = ({ size = 28, color = "#a855f7" }) => (
   <Base size={size}>
-    <circle cx="24" cy="24" r="21" stroke={color} strokeWidth="1" opacity="0.2" fill="none" />
-    <circle cx="24" cy="24" r="15" stroke={color} strokeWidth="1.2" opacity="0.35" fill="none" strokeDasharray="3 3" />
-    <polygon points="27,6 13,26 22,26 18,42 35,20 24,20" fill={color} opacity="0.9" stroke={color} strokeWidth="1" strokeLinejoin="round" />
-    <circle cx="8" cy="10" r="1.3" fill="#fff" opacity="0.6" />
-    <circle cx="40" cy="36" r="1.3" fill="#fff" opacity="0.6" />
+    <circle cx="24" cy="24" r="19" stroke={color} strokeWidth="1" opacity="0.2" fill="none" />
+    <path d="M24 7 L34 13 V25 L24 31 L14 25 V13 Z" stroke={color} strokeWidth="1.6" opacity="0.5" fill="none" strokeLinejoin="round" />
+    <path d="M24 13 L30 16.5 V23.5 L24 27 L18 23.5 V16.5 Z" fill={color} opacity="0.35" />
+    <path d="M24 17 L27 18.7 V22.3 L24 24 L21 22.3 V18.7 Z" fill={color} opacity="0.95" />
+    <circle cx="9" cy="9" r="1.2" fill="#fff" opacity="0.5" />
+    <circle cx="39" cy="39" r="1.2" fill="#fff" opacity="0.5" />
   </Base>
 );
 
@@ -172,13 +173,14 @@ export const IconWizard = ({ size = 28, color = "#8b5cf6" }) => (
   </Base>
 );
 
-// 13. Lightning Fingers — a double lightning bolt with motion trail and bright core
+// 13. Lightning Fingers — a hand silhouette with energy crackling off the fingertips
 export const IconLightning = ({ size = 28, color = "#facc15" }) => (
   <Base size={size}>
-    <polygon points="29,2 14,24 22,24 19,46" fill={color} opacity="0.3" />
-    <polygon points="27,4 13,25 21,25 18,44 35,21 25,21" fill={color} />
-    <polygon points="27,4 19,17 25,17 22,28" fill="#fff" opacity="0.55" />
-    <path d="M4 14 L10 16 M4 20 L9 20" stroke={color} strokeWidth="1.4" opacity="0.5" strokeLinecap="round" />
+    <path d="M16 44 V26 C16 23 18 21 21 21 C22 21 23 21.5 23.5 22 V13 C23.5 11 25 10 26.5 10 C28 10 29.5 11 29.5 13 V22 C30 21.5 31 21 32 21 C34.5 21 36.5 23 36.5 26 V44 Z" fill={color} opacity="0.85" stroke={color} strokeWidth="1" strokeLinejoin="round" />
+    <path d="M21 21 V16 C21 14 22.3 13 23.5 13" stroke={color} opacity="0.6" strokeWidth="1.2" fill="none" />
+    <path d="M32 21 V17 C32 15 30.8 14 29.5 14" stroke={color} opacity="0.6" strokeWidth="1.2" fill="none" />
+    <polygon points="26,2 22,11 25.5,11 23,18 31,8 27,8" fill="#fff" opacity="0.95" />
+    <path d="M9 14 L14 16 M40 12 L36 16" stroke={color} strokeWidth="1.4" opacity="0.45" strokeLinecap="round" />
   </Base>
 );
 
@@ -232,13 +234,18 @@ export const IconSprint = ({ size = 28, color = "#22c55e" }) => (
   </Base>
 );
 
-// 17. Tech Talk — an open laptop with code brackets glowing on screen
+// 17. Tech Talk — a speech bubble with a circuit-chip pattern inside
 export const IconLaptop = ({ size = 28, color = "#34d399" }) => (
   <Base size={size}>
-    <rect x="8" y="9" width="32" height="21" rx="2" fill={color} opacity="0.14" stroke={color} strokeWidth="2" />
-    <path d="M14 38 L17 30 H31 L34 38 Z" fill={color} opacity="0.25" stroke={color} strokeWidth="1.6" strokeLinejoin="round" />
-    <line x1="10" y1="38" x2="38" y2="38" stroke={color} strokeWidth="2" strokeLinecap="round" />
-    <text x="24" y="23" textAnchor="middle" fill={color} fontSize="11" fontWeight="bold" fontFamily="monospace">{"</>"}</text>
+    <path d="M8 10 H40 C42 10 43 11 43 13 V28 C43 30 42 31 40 31 H22 L14 39 V31 H8 C6 31 5 30 5 28 V13 C5 11 6 10 8 10 Z" fill={color} opacity="0.14" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+    <rect x="18" y="16" width="12" height="9" rx="1.5" fill={color} opacity="0.5" />
+    <line x1="14" y1="18" x2="18" y2="18" stroke={color} strokeWidth="1.4" opacity="0.7" />
+    <line x1="14" y1="23" x2="18" y2="23" stroke={color} strokeWidth="1.4" opacity="0.7" />
+    <line x1="30" y1="18" x2="34" y2="18" stroke={color} strokeWidth="1.4" opacity="0.7" />
+    <line x1="30" y1="23" x2="34" y2="23" stroke={color} strokeWidth="1.4" opacity="0.7" />
+    <line x1="22" y1="12" x2="22" y2="16" stroke={color} strokeWidth="1.4" opacity="0.7" />
+    <line x1="26" y1="25" x2="26" y2="29" stroke={color} strokeWidth="1.4" opacity="0.7" />
+    <circle cx="24" cy="20.5" r="1.6" fill="#fff" opacity="0.85" />
   </Base>
 );
 
@@ -275,28 +282,31 @@ export const IconNumbers = ({ size = 28, color = "#fb923c" }) => (
   </Base>
 );
 
-// 21. Wild Words — a stylized fox face with alert ears and a pointed snout
+// 21. Wild Words — an animal paw print with claw marks
 export const IconFox = ({ size = 28, color = "#fbbf24" }) => (
   <Base size={size}>
-    <path d="M10 8 L19 19 L8 22 Z" fill={color} opacity="0.85" />
-    <path d="M38 8 L29 19 L40 22 Z" fill={color} opacity="0.85" />
-    <path d="M10 22 C10 14 16 10 24 10 C32 10 38 14 38 22 C38 32 32 38 24 40 C16 38 10 32 10 22 Z" fill={color} opacity="0.9" />
-    <path d="M19 28 L24 36 L29 28 Z" fill="#fff" opacity="0.8" />
-    <circle cx="18" cy="22" r="1.6" fill="#1e1e30" />
-    <circle cx="30" cy="22" r="1.6" fill="#1e1e30" />
-    <path d="M24 28 L24 31" stroke="#1e1e30" strokeWidth="1.4" opacity="0.6" />
+    <ellipse cx="24" cy="30" rx="13" ry="11" fill={color} opacity="0.85" />
+    <ellipse cx="24" cy="30" rx="13" ry="11" stroke={color} strokeWidth="1" opacity="0.4" fill="none" />
+    <ellipse cx="11" cy="16" rx="5" ry="6.5" fill={color} opacity="0.85" transform="rotate(-18 11 16)" />
+    <ellipse cx="22" cy="9" rx="5" ry="6.5" fill={color} opacity="0.9" transform="rotate(-6 22 9)" />
+    <ellipse cx="34" cy="10" rx="5" ry="6.5" fill={color} opacity="0.9" transform="rotate(8 34 10)" />
+    <ellipse cx="42" cy="18" rx="4.6" ry="6" fill={color} opacity="0.85" transform="rotate(20 42 18)" />
+    <circle cx="19" cy="27" r="1.4" fill="#1e1e30" opacity="0.4" />
+    <circle cx="29" cy="27" r="1.4" fill="#1e1e30" opacity="0.4" />
   </Base>
 );
 
-// 22. Around the World — a globe with longitude/latitude lines and a landmass
+// 22. Around the World — a compass rose inside a passport-stamp style ring
 export const IconGlobe = ({ size = 28, color = "#2dd4bf" }) => (
   <Base size={size}>
-    <circle cx="24" cy="24" r="18" fill={color} opacity="0.1" stroke={color} strokeWidth="2" />
-    <ellipse cx="24" cy="24" rx="8" ry="18" stroke={color} strokeWidth="1.2" opacity="0.5" fill="none" />
-    <line x1="6" y1="24" x2="42" y2="24" stroke={color} strokeWidth="1.2" opacity="0.5" />
-    <path d="M6 17 Q24 12 42 17" stroke={color} strokeWidth="1" opacity="0.35" fill="none" />
-    <path d="M6 31 Q24 36 42 31" stroke={color} strokeWidth="1" opacity="0.35" fill="none" />
-    <path d="M16 14 C20 16 18 20 14 20 C12 24 18 26 16 30 C22 32 26 26 28 30" fill={color} opacity="0.55" stroke="none" />
+    <circle cx="24" cy="24" r="19" stroke={color} strokeWidth="1.2" opacity="0.3" fill="none" strokeDasharray="1 3" />
+    <circle cx="24" cy="24" r="14" fill={color} opacity="0.1" stroke={color} strokeWidth="1.8" />
+    <polygon points="24,8 27,21 24,24 21,21" fill={color} opacity="0.95" />
+    <polygon points="24,40 27,27 24,24 21,27" fill={color} opacity="0.5" />
+    <polygon points="8,24 21,21 24,24 21,27" fill={color} opacity="0.7" />
+    <polygon points="40,24 27,21 24,24 27,27" fill={color} opacity="0.7" />
+    <circle cx="24" cy="24" r="2" fill="#fff" opacity="0.85" />
+    <text x="24" y="6" textAnchor="middle" fill={color} fontSize="6" opacity="0.7">N</text>
   </Base>
 );
 
@@ -373,15 +383,12 @@ export const IconBurst = ({ size = 28, color = "#f43f5e" }) => (
   </Base>
 );
 
-// 29. Code Words — a terminal window with a prompt and a cursor block
+// 29. Code Words — interlocking curly braces with a binary digit accent
 export const IconTerminal = ({ size = 28, color = "#06b6d4" }) => (
   <Base size={size}>
-    <rect x="6" y="10" width="36" height="28" rx="3" fill={color} opacity="0.12" stroke={color} strokeWidth="2" />
-    <line x1="6" y1="17" x2="42" y2="17" stroke={color} strokeWidth="1.6" opacity="0.6" />
-    <circle cx="11" cy="13.5" r="1.2" fill={color} opacity="0.7" />
-    <circle cx="15" cy="13.5" r="1.2" fill={color} opacity="0.5" />
-    <text x="11" y="29" fill={color} fontSize="13" fontFamily="monospace" opacity="0.9">{">"}</text>
-    <rect x="20" y="24" width="8" height="3" fill={color} opacity="0.8" />
+    <path d="M18 6 C13 6 12 9 12 13 V18 C12 21 11 22 7 22 C11 22 12 23 12 26 V31 C12 35 13 38 18 38" stroke={color} strokeWidth="3" fill="none" strokeLinecap="round" />
+    <path d="M30 6 C35 6 36 9 36 13 V18 C36 21 37 22 41 22 C37 22 36 23 36 26 V31 C36 35 35 38 30 38" stroke={color} strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.55" />
+    <text x="24" y="26" textAnchor="middle" fill={color} fontSize="10" fontWeight="bold" fontFamily="monospace" opacity="0.85">01</text>
   </Base>
 );
 
