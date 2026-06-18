@@ -927,6 +927,7 @@ export default function AccuratKey() {
   const [resultData, setResultData] = useState(null);
   const [keysEarned, setKeysEarned] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [sectionUnlockName, setSectionUnlockName] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
   const [hasKeyboard, setHasKeyboard] = useState(false);
   const [birthdayProfile, setBirthdayProfile] = useState(null);
@@ -1540,7 +1541,13 @@ export default function AccuratKey() {
           setScreen("fail");
         } else {
           if(canUse(activeProfile,"sounds"))playSound("complete", activeProfile?.activeSound||"default");
-          if(passed){ setShowConfetti(true); setTimeout(()=>setShowConfetti(false),3500); }
+          if(passed){
+            const SECTION_MAP={16:"Precision Flow",31:"Word Power",46:"Keyboard Mastery",61:"Speed Surge",66:"Free Run",100:"Century Club",116:"Endurance",131:"Literature",146:"Machine Mode",156:"Legend Tier"};
+            const nextSec=SECTION_MAP[playingLevel+1]||null;
+            setSectionUnlockName(nextSec);
+            setShowConfetti(true);
+            setTimeout(()=>{setShowConfetti(false);setSectionUnlockName(null);}, nextSec?6000:3500);
+          }
           setScreenWithUrl("result");
         }
       } else {
@@ -1845,25 +1852,40 @@ const ActivityCalendar = ({sessionDates, T}) => {
   );
 };
 
-const Confetti = () => {
-  const colors = ["#a78bfa","#34d399","#f59e0b","#f472b6","#60a5fa","#fb923c","#facc15"];
-  const pieces = Array.from({length:60},(_,i)=>({
-    id:i, x:Math.random()*100, delay:Math.random()*0.8,
-    color:colors[i%colors.length], size:Math.random()*8+4,
-    drift:(Math.random()-0.5)*200,
-  }));
+const Confetti = ({ sectionName }) => {
+  const colors = ["#a78bfa","#34d399","#f59e0b","#f472b6","#60a5fa","#fb923c","#facc15","#f43f5e","#06b6d4","#84cc16"];
+  const count = sectionName ? 120 : 60;
+  const pieces = React.useMemo(()=>Array.from({length:count},(_,i)=>({
+    id:i, x:Math.random()*100, delay:Math.random()*1.2,
+    color:colors[i%colors.length], size:Math.random()*10+4,
+    drift:(Math.random()-0.5)*280, dur:2.5+Math.random()*2,
+    tall: i%3===2, round: i%3===0,
+  })),[]);
   return (
     <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:9999,overflow:"hidden"}}>
+      {sectionName && (
+        <div style={{position:"absolute",top:"22%",left:"50%",transform:"translateX(-50%)",
+          background:"linear-gradient(135deg,#1a1a2e,#2a1a3e)",
+          border:"2px solid #a78bfa88",borderRadius:16,padding:"18px 32px",
+          textAlign:"center",zIndex:10000,boxShadow:"0 0 40px #a78bfa44",
+          animation:"sectionPop 0.4s cubic-bezier(0.175,0.885,0.32,1.275) both",
+          whiteSpace:"nowrap",
+        }}>
+          <div style={{color:"#a78bfa",fontSize:11,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>Section Unlocked</div>
+          <div style={{color:"#fff",fontSize:20,fontWeight:900,letterSpacing:0.5}}>{sectionName}</div>
+        </div>
+      )}
       {pieces.map(p=>(
         <div key={p.id} style={{
           position:"absolute", left:`${p.x}%`, top:"-20px",
-          width:p.size, height:p.size, borderRadius:Math.random()>0.5?"50%":"2px",
-          background:p.color, opacity:0.9,
-          animation:`confettiFall 3s ${p.delay}s ease-in forwards`,
-          transform:`translateX(${p.drift}px) rotate(${Math.random()*360}deg)`,
+          width:p.size, height:p.tall?p.size*0.4:p.size,
+          borderRadius:p.round?"50%":"2px",
+          background:p.color, opacity:0.92,
+          animation:`confettiFall ${p.dur}s ${p.delay}s ease-in forwards`,
+          transform:`translateX(${p.drift}px) rotate(${Math.floor(Math.random()*360)}deg)`,
         }}/>
       ))}
-      <style>{`@keyframes confettiFall{0%{top:-20px;opacity:1}100%{top:110vh;opacity:0}}`}</style>
+      <style>{`@keyframes confettiFall{0%{top:-20px;opacity:1}100%{top:110vh;opacity:0}} @keyframes sectionPop{0%{opacity:0;transform:translateX(-50%) scale(0.7)}100%{opacity:1;transform:translateX(-50%) scale(1)}}`}</style>
     </div>
   );
 };
@@ -2618,7 +2640,7 @@ const Nav = () => (<>
           <Nav />
           {/* Tabs */}
           <div style={{display:"flex",gap:6,marginBottom:16,background:T.card,borderRadius:10,padding:3,border:`1px solid ${T.border}`}}>
-            {([["games",isMobileOwner?"🎮":"🎮 Games",true],["map",isMobileOwner?"🗺️":"🗺️ Map",true],["daily",isMobileOwner?"📅":"📅 Daily",canUse(activeProfile,"daily")],["test",isMobileOwner?"⌨️":"⌨️ Test",canUse(activeProfile,"test")]]).filter(t=>t[2]).map(([k,l])=>(
+            {([["games","Games",true],["map","Map",true],["daily","Daily",canUse(activeProfile,"daily")],["test","Test",canUse(activeProfile,"test")]]).filter(t=>t[2]).map(([k,l])=>(
               <button key={k} onClick={()=>setActiveTabWithUrl(k)} style={{flex:1,padding:isMobileOwner?"6px 0":"8px 0",borderRadius:7,border:"none",background:activeTab===k?T.purple:"transparent",color:activeTab===k?"#fff":T.faint,fontWeight:700,fontSize:isMobileOwner?12:fs(12),cursor:"pointer",fontFamily:T.font}}>{l}</button>
             ))}
           </div>
@@ -2627,50 +2649,148 @@ const Nav = () => (<>
 
           {activeTab==="map" && <>
           {(() => {
-            const ROW_H = 96; // vertical spacing between level nodes
-            const NODE = (!isMobile) ? 60 : 52; // node diameter — bigger on desktop
-            // Zigzag x-position as a fraction of track width: alternates left → center-right → right → center-left → repeat
+            const ROW_H = 96;
+            const NODE = (!isMobile) ? 60 : 52;
+            const BANNER_H = 72; // height reserved for each section banner row
             const xFrac = (idx) => {
               const cycle = idx % 4;
               return cycle===0?0.22:cycle===1?0.5:cycle===2?0.78:0.5;
             };
-            const trackH = LEVELS.length * ROW_H + NODE;
-            // Build one smooth SVG path through every node center, in track-local coordinates (0–100 width units)
-            const pathD = LEVELS.map((lv,idx) => {
-              const x = xFrac(idx) * 100;
-              const y = idx * ROW_H + NODE/2;
-              return `${idx===0?"M":"L"} ${x} ${y}`;
+
+            // Section definitions — banners appear BEFORE the first level in each section
+            const SECTIONS = [
+              { firstId:1,   label:"Foundations",     subtitle:"Home row, core keys, first speed targets",  color:"#10b981", icon:"F" },
+              { firstId:16,  label:"Precision Flow",   subtitle:"Vocabulary, patterns, accuracy under pressure", color:"#818cf8", icon:"P" },
+              { firstId:31,  label:"Word Power",       subtitle:"Medical, sports, mythology, compound mastery",  color:"#f59e0b", icon:"W" },
+              { firstId:46,  label:"Keyboard Mastery", subtitle:"Spelling, rows, hand isolation, full sentences", color:"#06b6d4", icon:"K" },
+              { firstId:61,  label:"Speed Surge",      subtitle:"Push WPM — sprint drills, patterns, grand mastery", color:"#facc15", icon:"S" },
+              { firstId:66,  label:"Free Run",         subtitle:"No WPM targets — flow, fluency, exploration",      color:"#ec4899", icon:"R" },
+              { firstId:100, label:"Century Club",     subtitle:"Level 100 and beyond — prestige territory",         color:"#ef4444", icon:"C" },
+              { firstId:116, label:"Endurance",        subtitle:"Long-form sessions, rows, alternating, pinky work",  color:"#a855f7", icon:"E" },
+              { firstId:131, label:"Literature",       subtitle:"Philosophy, scripture, Shakespeare, US history",     color:"#fbbf24", icon:"L" },
+              { firstId:146, label:"Machine Mode",     subtitle:"Finger fury, code marathons, length-based gauntlets", color:"#f97316", icon:"M" },
+              { firstId:156, label:"Legend Tier",      subtitle:"Seven crowns — the ultimate proving ground",          color:"#dc2626", icon:"X" },
+            ];
+
+            const sectionStartIds = new Set(SECTIONS.map(s => s.firstId));
+
+            // Build layout: each level gets a y-position; banners insert extra height before their section's first level
+            let rowItems = []; // { type:'banner'|'level', data, y }
+            let y = 0;
+            LEVELS.forEach((lv, idx) => {
+              const sec = SECTIONS.find(s => s.firstId === lv.id);
+              if (sec) {
+                rowItems.push({ type:'banner', data:sec, y });
+                y += BANNER_H;
+              }
+              rowItems.push({ type:'level', data:lv, idx, y });
+              y += ROW_H;
+            });
+            const totalH = y + NODE;
+
+            // SVG path only through level nodes
+            const levelItems = rowItems.filter(r => r.type==='level');
+            const pathD = levelItems.map((r,i) => {
+              const x = xFrac(r.idx) * 100;
+              const yc = r.y + NODE/2;
+              return `${i===0?"M":"L"} ${x} ${yc}`;
             }).join(" ");
+            const progressD = levelItems.slice(0, Math.max(highestUnlocked,1)).map((r,i) => {
+              const x = xFrac(r.idx)*100, yc = r.y + NODE/2;
+              return `${i===0?"M":"L"} ${x} ${yc}`;
+            }).join(" ");
+
             return (
-              <div style={{position:"relative",width:"100%",height:trackH,padding:"20px 0 40px"}}>
-                <svg viewBox={`0 0 100 ${trackH}`} preserveAspectRatio="none" style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none"}}>
+              <div style={{position:"relative",width:"100%",height:totalH,padding:"20px 0 60px"}}>
+                <svg viewBox={`0 0 100 ${totalH}`} preserveAspectRatio="none" style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none"}}>
                   <path d={pathD} fill="none" stroke={T.border} strokeWidth="0.6" vectorEffect="non-scaling-stroke"/>
-                  <path d={LEVELS.slice(0, Math.max(highestUnlocked,1)).map((lv,idx)=>{
-                    const x=xFrac(idx)*100, y=idx*ROW_H+NODE/2;
-                    return `${idx===0?"M":"L"} ${x} ${y}`;
-                  }).join(" ")} fill="none" stroke={LEVELS.find(l=>l.id===currentLevel)?.color||T.purple} strokeWidth="0.8" strokeLinecap="round" vectorEffect="non-scaling-stroke" opacity={0.7}/>
+                  <path d={progressD} fill="none" stroke={LEVELS.find(l=>l.id===currentLevel)?.color||T.purple} strokeWidth="0.8" strokeLinecap="round" vectorEffect="non-scaling-stroke" opacity={0.7}/>
                 </svg>
-                {LEVELS.map((lv,idx)=>{
+
+                {rowItems.map((row, ri) => {
+                  if (row.type === 'banner') {
+                    const sec = row.data;
+                    const sectionUnlocked = highestUnlocked >= sec.firstId;
+                    const isCurrentSection = SECTIONS.find(s => s.firstId <= currentLevel) === sec ||
+                      (SECTIONS.filter(s => s.firstId <= currentLevel).slice(-1)[0] === sec);
+                    // scroll-to ref for skip button
+                    const targetLevelItem = levelItems.find(r => r.data.id === sec.firstId);
+                    return (
+                      <div key={`sec-${sec.firstId}`} style={{
+                        position:"absolute", top:row.y, left:0, right:0,
+                        height:BANNER_H, display:"flex", alignItems:"center",
+                        padding:"0 8px", zIndex:2,
+                      }}>
+                        {/* full-width banner bar */}
+                        <div style={{
+                          flex:1, height:48, borderRadius:12,
+                          background:`linear-gradient(90deg, ${sec.color}18 0%, ${sec.color}08 100%)`,
+                          border:`1.5px solid ${sec.color}${sectionUnlocked?"55":"22"}`,
+                          display:"flex", alignItems:"center", gap:12, padding:"0 16px",
+                          position:"relative", overflow:"hidden",
+                        }}>
+                          {/* left accent stripe */}
+                          <div style={{position:"absolute",left:0,top:0,bottom:0,width:4,borderRadius:"12px 0 0 12px",background:sec.color,opacity:sectionUnlocked?0.9:0.3}}/>
+                          {/* section badge */}
+                          <div style={{
+                            width:28,height:28,borderRadius:8,
+                            background:sectionUnlocked?sec.color:sec.color+"33",
+                            display:"flex",alignItems:"center",justifyContent:"center",
+                            flexShrink:0, marginLeft:6,
+                          }}>
+                            <span style={{color:sectionUnlocked?"#fff":sec.color,fontWeight:900,fontSize:12,fontFamily:"monospace"}}>{sec.icon}</span>
+                          </div>
+                          {/* labels */}
+                          <div style={{flex:1, minWidth:0}}>
+                            <div style={{color:sectionUnlocked?sec.color:sec.color+"88",fontWeight:800,fontSize:13,letterSpacing:0.3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{sec.label}</div>
+                            <div style={{color:T.faint,fontSize:10,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",opacity:0.8}}>{sec.subtitle}</div>
+                          </div>
+                          {/* skip-to button */}
+                          {sectionUnlocked && (
+                            <button onClick={()=>{
+                              const el = document.getElementById(`lvl-${sec.firstId}`);
+                              if(el) el.scrollIntoView({behavior:"smooth",block:"center"});
+                            }} style={{
+                              padding:"4px 10px",borderRadius:7,border:`1px solid ${sec.color}66`,
+                              background:"transparent",color:sec.color,fontSize:10,fontWeight:700,
+                              cursor:"pointer",fontFamily:"monospace",whiteSpace:"nowrap",flexShrink:0,
+                            }}>Jump here</button>
+                          )}
+                          {!sectionUnlocked && (
+                            <div style={{fontSize:10,color:T.faint,flexShrink:0,opacity:0.6}}>Locked</div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // ── Level node ──
+                  const lv = row.data;
+                  const idx = row.idx;
                   const unlocked=lv.id<=highestUnlocked,current=lv.id===currentLevel,completed=lv.id<highestUnlocked,locked=!unlocked,canSkipTo=lv.id===highestUnlocked+1;
                   const xPct = xFrac(idx)*100;
-                  const leftSide = xPct < 50;
-                  const topPx = idx*ROW_H;
+                  const topPx = row.y;
+                  const IconComp = FOUNDATIONS_ICONS[lv.id]||PRECISION_FLOW_ICONS[lv.id]||WORD_POWER_ICONS[lv.id]||KEYBOARD_MASTERY_ICONS[lv.id]||SPEED_SURGE_ICONS[lv.id]||null;
                   return (
-                    <div key={lv.id} ref={current?currentLevelNodeRef:null} style={{position:"absolute",top:topPx,left:`${xPct}%`,transform:"translateX(-50%)",display:"flex",flexDirection:"column",alignItems:"center",zIndex:1}}>
+                    <div key={lv.id} id={`lvl-${lv.id}`} ref={current?currentLevelNodeRef:null} style={{position:"absolute",top:topPx,left:`${xPct}%`,transform:"translateX(-50%)",display:"flex",flexDirection:"column",alignItems:"center",zIndex:1}}>
                       <div onClick={()=>{
                           if(current||(!locked&&unlocked))requestStartLevel(lv.id);
-                          else if(canSkipTo&&canUse(activeProfile,'skip')&&confirm(`Skip to Level ${lv.id}: ${lv.name}?\n\nCustom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.id);
+                          else if(canSkipTo&&canUse(activeProfile,"skip")&&confirm(`Skip to Level ${lv.id}: ${lv.name}?
+
+Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.id);
                         }} style={{width:NODE,height:NODE,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0,background:completed?lv.color+"22":current?lv.color+"33":locked?"#0a0a15":"#0d0d18",border:`3px solid ${completed?lv.color:current?lv.color:locked?"#1e1e30":"#2a2a3e"}`,boxShadow:current?`0 0 20px ${lv.color}77,0 0 40px ${lv.color}33`:"none",transition:"all 0.3s",position:"relative",cursor:locked&&!canSkipTo?"default":"pointer",opacity:locked&&!canSkipTo?0.45:1}}>
-                        {locked ? "🔒" : ((FOUNDATIONS_ICONS[lv.id]||PRECISION_FLOW_ICONS[lv.id]||WORD_POWER_ICONS[lv.id]||KEYBOARD_MASTERY_ICONS[lv.id]||SPEED_SURGE_ICONS[lv.id]) ? React.createElement(FOUNDATIONS_ICONS[lv.id]||PRECISION_FLOW_ICONS[lv.id]||WORD_POWER_ICONS[lv.id]||KEYBOARD_MASTERY_ICONS[lv.id]||SPEED_SURGE_ICONS[lv.id], {size:Math.round(NODE*0.46), color:lv.color}) : lv.emoji)}
-                        {completed && <div style={{position:"absolute",bottom:-3,right:-3,width:16,height:16,borderRadius:"50%",background:lv.color,display:"flex",alignItems:"center",justifyContent:"center",border:"2px solid #0d0d18"}}><span style={{color:"#fff",fontSize:10,fontWeight:900,lineHeight:1}}>✓</span></div>}
+                        {locked
+                          ? <svg width={Math.round(NODE*0.38)} height={Math.round(NODE*0.38)} viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="10" rx="2.5" fill="#2a2a3e"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11" stroke="#3a3a5e" strokeWidth="2" strokeLinecap="round"/></svg>
+                          : (IconComp ? React.createElement(IconComp, {size:Math.round(NODE*0.46), color:lv.color}) : lv.emoji)
+                        }
+                        {completed && <div style={{position:"absolute",bottom:-3,right:-3,width:16,height:16,borderRadius:"50%",background:lv.color,display:"flex",alignItems:"center",justifyContent:"center",border:"2px solid #0d0d18"}}><svg width="9" height="9" viewBox="0 0 10 10"><path d="M2 5.5L4.2 8 8 3" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/></svg></div>}
                         {current && <div style={{position:"absolute",inset:-6,borderRadius:"50%",border:`2px solid ${lv.color}44`}}/>}
                       </div>
-                      {/* Info chip — tucked to whichever side has room so it doesn't run off the edge */}
                       <div style={{marginTop:6,maxWidth:128,textAlign:"center",pointerEvents:"none",overflowWrap:"break-word"}}>
                         <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,marginBottom:1,flexWrap:"wrap"}}>
                           <span style={{color:T.faint,fontSize:fs(11),letterSpacing:0.5,fontWeight:600}}>Level {lv.id}</span>
                           {current&&<span style={{background:lv.color,color:"#fff",fontSize:fs(8),fontWeight:700,padding:"1px 5px",borderRadius:8}}>YOU</span>}
-                          {canSkipTo&&<span style={{background:"#f59e0b22",color:"#f59e0b",fontSize:8,fontWeight:700,padding:"1px 5px",borderRadius:8}}>SKIP?</span>}
+                          {canSkipTo&&<span style={{background:"#f59e0b22",color:"#f59e0b",fontSize:8,fontWeight:700,padding:"1px 5px",borderRadius:8}}>SKIP</span>}
                         </div>
                         <div style={{color:T.text,fontWeight:700,fontSize:12,lineHeight:1.3}}>{lv.name}</div>
                         {completed && (() => {
@@ -2693,7 +2813,6 @@ const Nav = () => (<>
 
           {activeTab==="daily" && <div style={{padding:"20px 0"}}>
             <div style={{textAlign:"center",marginBottom:20}}>
-              <div style={{fontSize:40,marginBottom:8}}>📅</div>
               <div style={{color:T.text,fontWeight:800,fontSize:18,marginBottom:4}}>Daily Challenge</div>
               <div style={{color:T.muted,fontSize:13}}>New words every day — compete with everyone</div>
             </div>
@@ -3485,7 +3604,7 @@ const Nav = () => (<>
 
     return (
       <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:20}}>
-        {showConfetti && passed && <Confetti />}
+        {showConfetti && passed && <Confetti sectionName={sectionUnlockName} />}
         <div style={{width:"100%",maxWidth:460,textAlign:"center"}}>
           <div style={{fontSize:64,marginBottom:10}}>{passed ? "🎉" : "💪"}</div>
           <h2 style={{color:T.text,fontSize:28,fontWeight:800,margin:0}}>
