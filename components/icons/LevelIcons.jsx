@@ -775,3 +775,164 @@ export const IconStar = ({ size = 14, color = "#facc15", filled = true }) => (
     />
   </svg>
 );
+
+// ─── Speed Surge section (levels 61-75) ─────────────────────────────────────
+
+// 61. Short Word Rush — three small lightning bolts clustered, conveying rapid-fire short bursts
+export const IconBoltCluster = ({ size = 28, color = "#facc15" }) => (
+  <Base size={size}>
+    <polygon points="18,6 12,22 18,19 14,34 26,16 20,19" fill={color} opacity="0.9" />
+    <polygon points="30,10 26,22 30,20 27,31 36,18 32,20" fill={color} opacity="0.55" />
+    <polygon points="10,12 7,22 10,20 8,29 16,19 12,21" fill={color} opacity="0.55" />
+  </Base>
+);
+
+// 62. Fast Patterns — repeating sine wave with dots, conveying rhythmic repetition
+export const IconSinePattern = ({ size = 28, color = "#fbbf24" }) => (
+  <Base size={size}>
+    <path d="M6 24 Q10 14 14 24 Q18 34 22 24 Q26 14 30 24 Q34 34 38 24"
+      stroke={color} strokeWidth="2.6" fill="none" strokeLinecap="round" opacity="0.9" />
+    <circle cx="6" cy="24" r="2" fill={color} />
+    <circle cx="14" cy="24" r="2" fill={color} />
+    <circle cx="22" cy="24" r="2" fill={color} />
+    <circle cx="30" cy="24" r="2" fill={color} />
+    <circle cx="38" cy="24" r="2" fill={color} />
+  </Base>
+);
+
+// 63. Dev Commands — terminal prompt with blinking cursor block
+export const IconTerminal = ({ size = 28, color = "#4ade80" }) => (
+  <Base size={size}>
+    <rect x="6" y="10" width="36" height="28" rx="3" fill="none" stroke={color} strokeWidth="2.2" opacity="0.8" />
+    <path d="M12 20 L18 24 L12 28" stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <rect x="20" y="28" width="10" height="3" rx="1" fill={color} opacity="0.85" />
+    <rect x="20" y="20" width="7" height="2.5" rx="1" fill={color} opacity="0.5" />
+  </Base>
+);
+
+// 64. Long Quotes — large open/close quotation marks, bold and clean
+export const IconQuoteMarks = ({ size = 28, color = "#f43f5e" }) => (
+  <Base size={size}>
+    <text x="4" y="34" fontSize="30" fill={color} opacity="0.9" fontFamily="Georgia, serif" fontWeight="bold">"</text>
+    <text x="26" y="34" fontSize="30" fill={color} opacity="0.9" fontFamily="Georgia, serif" fontWeight="bold">"</text>
+  </Base>
+);
+
+// 65. Grand Master — five-point crown with three jewel dots on top
+export const IconCrown = ({ size = 28, color = "#dc2626" }) => (
+  <Base size={size}>
+    <path d="M8 34 L8 20 L16 28 L24 12 L32 28 L40 20 L40 34 Z"
+      fill={color} opacity="0.85" strokeLinejoin="round" />
+    <circle cx="24" cy="16" r="2.5" fill="#fff" opacity="0.75" />
+    <circle cx="11" cy="22" r="2" fill="#fff" opacity="0.6" />
+    <circle cx="37" cy="22" r="2" fill="#fff" opacity="0.6" />
+    <rect x="8" y="33" width="32" height="4" rx="1.5" fill={color} opacity="0.7" />
+  </Base>
+);
+
+// 66. Word Flow — two smooth parallel flowing ribbons, suggesting smooth word output
+export const IconFlowRibbon = ({ size = 28, color = "#06b6d4" }) => (
+  <Base size={size}>
+    <path d="M6 18 Q14 12 24 18 Q34 24 42 18"
+      stroke={color} strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.9" />
+    <path d="M6 26 Q14 20 24 26 Q34 32 42 26"
+      stroke={color} strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.65" />
+    <path d="M6 30 Q14 24 24 30 Q34 36 42 30"
+      stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.35" />
+  </Base>
+);
+
+// 67. Smooth Operator — saxophone bell silhouette — curved body, keys suggested by dots
+export const IconSax = ({ size = 28, color = "#8b5cf6" }) => (
+  <Base size={size}>
+    <path d="M28 8 C28 8 30 10 30 16 L30 30 Q30 38 22 38 Q14 38 14 32 Q14 28 18 28"
+      stroke={color} strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.9" />
+    <circle cx="24" cy="18" r="2" fill={color} opacity="0.7" />
+    <circle cx="24" cy="24" r="2" fill={color} opacity="0.7" />
+    <circle cx="24" cy="30" r="2" fill={color} opacity="0.7" />
+    <path d="M26 8 L32 6" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+  </Base>
+);
+
+// 68. Key Climber — ascending staircase of three steps going up-right
+export const IconStaircase = ({ size = 28, color = "#10b981" }) => (
+  <Base size={size}>
+    <path d="M8 36 H18 V28 H26 V20 H34 V12"
+      stroke={color} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
+    <path d="M30 8 L34 12 L38 8"
+      stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
+  </Base>
+);
+
+// 69. Word Weaver — two threads crossing/weaving in an X-braid pattern
+export const IconWeave = ({ size = 28, color = "#f59e0b" }) => (
+  <Base size={size}>
+    <path d="M10 10 Q24 24 38 38" stroke={color} strokeWidth="3.5" fill="none" strokeLinecap="round" opacity="0.85" />
+    <path d="M38 10 Q30 18 26 22" stroke={color} strokeWidth="3.5" fill="none" strokeLinecap="round" opacity="0.85" />
+    <path d="M22 26 Q18 30 10 38" stroke={color} strokeWidth="3.5" fill="none" strokeLinecap="round" opacity="0.85" />
+    <circle cx="24" cy="24" r="3.5" fill={color} opacity="0.95" />
+  </Base>
+);
+
+// 70. Steady Stream — three evenly-spaced falling water drops
+export const IconDrops = ({ size = 28, color = "#3b82f6" }) => (
+  <Base size={size}>
+    <path d="M14 10 Q14 20 14 22 Q14 28 18 28 Q22 28 22 22 Q22 18 22 10 Q18 6 14 10 Z"
+      fill={color} opacity="0.5" />
+    <path d="M22 16 Q22 24 22 26 Q22 30 25 30 Q28 30 28 26 Q28 24 28 16 Q25 13 22 16 Z"
+      fill={color} opacity="0.75" />
+    <path d="M30 10 Q30 20 30 22 Q30 28 34 28 Q38 28 38 22 Q38 18 38 10 Q34 6 30 10 Z"
+      fill={color} opacity="0.5" />
+  </Base>
+);
+
+// 71. Rapid Rush — single bold lightning bolt, larger and sharper than level 61's cluster
+export const IconBigBolt = ({ size = 28, color = "#facc15" }) => (
+  <Base size={size}>
+    <polygon points="26,6 14,25 23,23 18,42 34,21 25,24" fill={color} opacity="0.9" />
+  </Base>
+);
+
+// 72. Precision Peak — classic bullseye: three concentric circles with a center dot
+export const IconBullseye = ({ size = 28, color = "#ef4444" }) => (
+  <Base size={size}>
+    <circle cx="24" cy="24" r="17" fill="none" stroke={color} strokeWidth="2" opacity="0.4" />
+    <circle cx="24" cy="24" r="11" fill="none" stroke={color} strokeWidth="2.2" opacity="0.65" />
+    <circle cx="24" cy="24" r="5.5" fill={color} opacity="0.9" />
+  </Base>
+);
+
+// 73. Focus Fire — stylized flame: outer teardrop with inner highlight tongue
+export const IconFlame = ({ size = 28, color = "#f97316" }) => (
+  <Base size={size}>
+    <path d="M24 6 C24 6 36 16 36 26 C36 34 30 40 24 40 C18 40 12 34 12 26 C12 16 24 6 24 6 Z"
+      fill={color} opacity="0.85" />
+    <path d="M24 16 C24 16 30 22 30 28 C30 32 27 35 24 35 C21 35 20 32 20 28 C20 22 24 16 24 16 Z"
+      fill="#fef08a" opacity="0.6" />
+  </Base>
+);
+
+// 74. Type Storm — counterclockwise spiral tornado shape
+export const IconTornado = ({ size = 28, color = "#a855f7" }) => (
+  <Base size={size}>
+    <path d="M10 12 Q24 8 36 12 Q34 18 24 18 Q14 18 12 22 Q10 28 20 28 Q28 28 28 32 Q28 36 24 38"
+      stroke={color} strokeWidth="2.8" fill="none" strokeLinecap="round" opacity="0.9" />
+    <path d="M14 14 Q24 11 33 14" stroke={color} strokeWidth="1.6" fill="none" strokeLinecap="round" opacity="0.45" />
+    <path d="M16 22 Q24 20 31 22" stroke={color} strokeWidth="1.4" fill="none" strokeLinecap="round" opacity="0.35" />
+  </Base>
+);
+
+// 75. Word Blitz — starburst explosion: 8 radiating spikes around a center circle
+export const IconStarburst = ({ size = 28, color = "#ec4899" }) => (
+  <Base size={size}>
+    <polygon points="24,7 26.5,18 37,16 28,22 37,30 26,27 24,38 22,27 11,30 20,22 11,16 21.5,18"
+      fill={color} opacity="0.85" />
+    <circle cx="24" cy="24" r="4" fill="#fff" opacity="0.45" />
+  </Base>
+);
+
+export const SPEED_SURGE_ICONS = {
+  61: IconBoltCluster, 62: IconSinePattern, 63: IconTerminal, 64: IconQuoteMarks, 65: IconCrown,
+  66: IconFlowRibbon, 67: IconSax, 68: IconStaircase, 69: IconWeave, 70: IconDrops,
+  71: IconBigBolt, 72: IconBullseye, 73: IconFlame, 74: IconTornado, 75: IconStarburst,
+};
