@@ -1,0 +1,36 @@
+name: Notify ChrisProjects
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 20
+      - name: Notify every 2 pushes
+        env:
+          PAT_TOKEN: ${{ secrets.STUDIO_PAT }}
+        run: |
+          LAST_TAG=$(git tag -l "studio-notified-*" | sort -V | tail -1)
+          if [ -z "$LAST_TAG" ]; then COUNT=2; else COUNT=$(git rev-list ${LAST_TAG}..HEAD --count 2>/dev/null || echo 2); fi
+          echo "Commits since last notify: $COUNT"
+          if [ "$COUNT" -ge 2 ]; then
+            MSG=$(git log -1 --pretty=format:"%s" | head -c 100 | tr '"' "'")
+            SHA=$(git rev-parse --short HEAD)
+            git config user.email "bot@accuratkey"
+            git config user.name "Notify Bot"
+            git tag "studio-notified-$(date +%s)"
+            git push origin --tags 2>/dev/null || true
+            curl -s -X POST \
+              -H "Authorization: token $PAT_TOKEN" \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/chris0622ha/chrisprojects/dispatches \
+              -d "{\"event_type\":\"accuratkey-push\",\"client_payload\":{\"app\":\"AccuratKey\",\"message\":\"$MSG\",\"sha\":\"$SHA\"}}"
+            echo "Notified ChrisProjects"
+          else
+            echo "Only $COUNT commit(s) — waiting for 2"
+          fi
