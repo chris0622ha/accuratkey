@@ -407,3 +407,176 @@ export const PRECISION_FLOW_ICONS = {
   21: IconFox, 22: IconGlobe, 23: IconFlask, 24: IconMusicNote, 25: IconPlate,
   26: IconHands, 27: IconRuler, 28: IconBurst, 29: IconTerminal, 30: IconQuill,
 };
+
+// ─── Word Power section (levels 31-45) ──────────────────────────────────────
+
+// 31. Medical Terms — a stethoscope with chest piece and a small heartbeat line
+export const IconStethoscope = ({ size = 28, color = "#34d399" }) => (
+  <Base size={size}>
+    <path d="M14 6 V18 C14 24 18 27 24 27 C30 27 34 24 34 18 V6" stroke={color} strokeWidth="2.4" fill="none" strokeLinecap="round" />
+    <circle cx="14" cy="5" r="2.4" fill={color} opacity="0.85" />
+    <circle cx="34" cy="5" r="2.4" fill={color} opacity="0.85" />
+    <path d="M24 27 V33" stroke={color} strokeWidth="2.4" strokeLinecap="round" />
+    <circle cx="24" cy="39" r="6" fill={color} opacity="0.2" stroke={color} strokeWidth="2" />
+    <path d="M19 39 L21 39 L23 35 L25 43 L27 39 L29 39" stroke={color} strokeWidth="1.4" fill="none" strokeLinecap="round" opacity="0.85" />
+  </Base>
+);
+
+// 32. Sports Words — a trophy cup with a ball motif engraved on the front
+export const IconSportsTrophy = ({ size = 28, color = "#facc15" }) => (
+  <Base size={size}>
+    <path d="M14 8 H34 V20 C34 27 30 32 24 32 C18 32 14 27 14 20 Z" fill={color} opacity="0.7" stroke={color} strokeWidth="1.4" />
+    <circle cx="24" cy="18" r="6" fill="none" stroke="#1e1e30" strokeWidth="1.2" opacity="0.5" />
+    <path d="M19 15 L29 15 M21 23 L27 23 M19 19 L29 19" stroke="#1e1e30" strokeWidth="0.8" opacity="0.4" />
+    <path d="M14 13 H7 C7 21 11 23 15 22" stroke={color} strokeWidth="1.8" fill="none" />
+    <path d="M34 13 H41 C41 21 37 23 33 22" stroke={color} strokeWidth="1.8" fill="none" />
+    <rect x="20" y="32" width="8" height="6" fill={color} opacity="0.5" />
+    <rect x="14" y="38" width="20" height="4" rx="1.5" fill={color} opacity="0.85" />
+  </Base>
+);
+
+// 33. Nature Words — a leaf with a detailed central vein and side ribs
+export const IconLeaf = ({ size = 28, color = "#86efac" }) => (
+  <Base size={size}>
+    <path d="M24 6 C36 10 40 24 32 36 C26 44 16 42 12 34 C6 22 12 10 24 6 Z" fill={color} opacity="0.85" stroke={color} strokeWidth="1.2" />
+    <path d="M24 9 V38" stroke="#1e1e30" strokeWidth="1.2" opacity="0.35" />
+    <path d="M24 16 L16 20 M24 22 L15 27 M24 28 L18 34" stroke="#1e1e30" strokeWidth="1" opacity="0.3" fill="none" />
+    <path d="M24 16 L31 19 M24 22 L32 26" stroke="#1e1e30" strokeWidth="1" opacity="0.3" fill="none" />
+    <circle cx="11" cy="33" r="1.4" fill="#fff" opacity="0.5" />
+  </Base>
+);
+
+// 34. Business Words — a briefcase with a handle, latch, and a subtle chart line on the side panel
+export const IconBriefcase = ({ size = 28, color = "#94a3b8" }) => (
+  <Base size={size}>
+    <path d="M19 12 V8 C19 6 20 5 22 5 H26 C28 5 29 6 29 8 V12" stroke={color} strokeWidth="2" fill="none" />
+    <rect x="6" y="12" width="36" height="26" rx="3" fill={color} opacity="0.16" stroke={color} strokeWidth="2" />
+    <rect x="20" y="20" width="8" height="6" rx="1.2" fill={color} opacity="0.7" />
+    <path d="M10 24 L16 19 L22 23 L30 16" stroke={color} strokeWidth="1.4" opacity="0.5" fill="none" strokeLinecap="round" />
+    <line x1="6" y1="24" x2="42" y2="24" stroke={color} strokeWidth="1.2" opacity="0.3" />
+  </Base>
+);
+
+// 35. Mythology — a Greek temple facade with fluted columns and a triangular pediment
+export const IconTemple = ({ size = 28, color = "#fbbf24" }) => (
+  <Base size={size}>
+    <polygon points="24,5 41,18 7,18" fill={color} opacity="0.85" />
+    <rect x="6" y="18" width="36" height="3" fill={color} opacity="0.6" />
+    <rect x="9" y="22" width="3.5" height="14" fill={color} opacity="0.75" />
+    <rect x="16" y="22" width="3.5" height="14" fill={color} opacity="0.75" />
+    <rect x="22.3" y="22" width="3.5" height="14" fill={color} opacity="0.75" />
+    <rect x="28.5" y="22" width="3.5" height="14" fill={color} opacity="0.75" />
+    <rect x="35" y="22" width="3.5" height="14" fill={color} opacity="0.75" />
+    <rect x="6" y="36" width="36" height="3.5" rx="1" fill={color} opacity="0.9" />
+  </Base>
+);
+
+// 36. Alliterations — three letter blocks sharing the same initial letter, slightly fanned
+export const IconAlliteration = ({ size = 28, color = "#f472b6" }) => (
+  <Base size={size}>
+    <rect x="6" y="16" width="14" height="16" rx="2.5" fill={color} opacity="0.5" transform="rotate(-8 13 24)" />
+    <rect x="17" y="14" width="14" height="16" rx="2.5" fill={color} opacity="0.75" />
+    <rect x="28" y="16" width="14" height="16" rx="2.5" fill={color} opacity="0.5" transform="rotate(8 35 24)" />
+    <text x="24" y="26" textAnchor="middle" fill="#15151f" fontSize="13" fontWeight="bold" fontFamily="Georgia,serif">P</text>
+  </Base>
+);
+
+// 37. Rhyming Words — a microphone with rising sound-rhyme rings
+export const IconMic = ({ size = 28, color = "#fb923c" }) => (
+  <Base size={size}>
+    <rect x="18" y="6" width="12" height="20" rx="6" fill={color} opacity="0.85" stroke={color} strokeWidth="1.2" />
+    <line x1="20" y1="12" x2="26" y2="12" stroke="#1e1e30" strokeWidth="1" opacity="0.3" />
+    <line x1="20" y1="17" x2="26" y2="17" stroke="#1e1e30" strokeWidth="1" opacity="0.3" />
+    <path d="M11 22 C11 30 16 35 24 35 C32 35 37 30 37 22" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" />
+    <line x1="24" y1="35" x2="24" y2="42" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <line x1="17" y1="42" x2="31" y2="42" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <path d="M32 10 Q38 14 32 18" stroke={color} strokeWidth="1.2" opacity="0.4" fill="none" />
+  </Base>
+);
+
+// 38. Power Phrases — a flexed bicep/arm silhouette with a small strength burst
+export const IconFlex = ({ size = 28, color = "#ef4444" }) => (
+  <Base size={size}>
+    <path d="M10 30 C8 22 12 14 19 12 C24 11 28 13 29 17 C32 16 36 18 36 23 C36 28 33 30 30 30 L30 38 C30 40 28 42 25 42 H17 C13 42 10 39 10 35 Z" fill={color} opacity="0.85" stroke={color} strokeWidth="1" />
+    <path d="M19 12 C23 18 22 26 17 30" stroke="#1e1e30" strokeWidth="1.2" opacity="0.3" fill="none" />
+    <circle cx="29" cy="19" r="1.2" fill="#fff" opacity="0.6" />
+  </Base>
+);
+
+// 39. World Capitals — a map pin dropped onto a folded paper map
+export const IconMapPin = ({ size = 28, color = "#38bdf8" }) => (
+  <Base size={size}>
+    <path d="M6 14 L18 9 L30 14 L42 9 V34 L30 39 L18 34 L6 39 Z" fill={color} opacity="0.12" stroke={color} strokeWidth="1.6" strokeLinejoin="round" />
+    <line x1="18" y1="9" x2="18" y2="34" stroke={color} strokeWidth="1" opacity="0.3" />
+    <line x1="30" y1="14" x2="30" y2="39" stroke={color} strokeWidth="1" opacity="0.3" />
+    <path d="M24 12 C18 12 14 16 14 21 C14 28 24 38 24 38 C24 38 34 28 34 21 C34 16 30 12 24 12 Z" fill={color} stroke="#15151f" strokeWidth="1" />
+    <circle cx="24" cy="21" r="3.2" fill="#15151f" opacity="0.7" />
+  </Base>
+);
+
+// 40. Tech Terms — a gear cog with circuit traces radiating from the center
+export const IconGear = ({ size = 28, color = "#818cf8" }) => (
+  <Base size={size}>
+    <path d="M24 6 L27 6 L28 11 L32 13 L37 10 L40 13 L37 18 L39 22 L44 23 L44 27 L39 28 L37 32 L40 37 L37 40 L32 37 L28 39 L27 44 L24 44 L23 39 L19 37 L14 40 L11 37 L14 32 L12 28 L7 27 L7 23 L12 22 L14 18 L11 13 L14 10 L19 13 L23 11 Z" fill={color} opacity="0.75" />
+    <circle cx="24" cy="25" r="8" fill="#15151f" opacity="0.6" />
+    <circle cx="24" cy="25" r="3" fill={color} />
+    <line x1="24" y1="17" x2="24" y2="21" stroke={color} strokeWidth="1.2" opacity="0.7" />
+    <line x1="24" y1="29" x2="24" y2="33" stroke={color} strokeWidth="1.2" opacity="0.7" />
+  </Base>
+);
+
+// 41. Homophones — an ear with sound ripple waves, suggesting words that sound alike
+export const IconEar = ({ size = 28, color = "#a3e635" }) => (
+  <Base size={size}>
+    <path d="M20 8 C12 8 8 16 9 24 C10 30 14 32 16 38 C17 41 20 42 22 40 C24 38 22 36 20 34 C17 31 16 27 18 23 C19 21 22 21 23 23 C24 25 23 27 21 27" fill={color} opacity="0.85" stroke={color} strokeWidth="1.2" strokeLinecap="round" />
+    <path d="M27 14 Q33 19 27 26" stroke={color} strokeWidth="1.4" opacity="0.5" fill="none" strokeLinecap="round" />
+    <path d="M32 10 Q41 19 32 30" stroke={color} strokeWidth="1.4" opacity="0.3" fill="none" strokeLinecap="round" />
+  </Base>
+);
+
+// 42. Compound Words — two interlocking puzzle pieces joining together
+export const IconPuzzle = ({ size = 28, color = "#e2e8f0" }) => (
+  <Base size={size}>
+    <path d="M6 12 H20 V18 C22 16 26 16 26 19 C26 22 22 22 20 20 V30 H6 V20 C4 22 0 22 0 19 C0 16 4 16 6 18 Z" fill={color} opacity="0.4" stroke={color} strokeWidth="1.4" transform="translate(2,2)" />
+    <path d="M22 12 H36 V18 C38 16 42 16 42 19 C42 22 38 22 36 20 V30 H22 V20 C20 22 16 22 16 19 C16 16 20 16 22 18 Z" fill={color} opacity="0.85" stroke={color} strokeWidth="1.4" transform="translate(2,8)" />
+  </Base>
+);
+
+// 43. Adverbs — a magic wand with a sparkle trail, suggesting a word that modifies/enhances
+export const IconWand = ({ size = 28, color = "#67e8f9" }) => (
+  <Base size={size}>
+    <line x1="14" y1="38" x2="34" y2="10" stroke={color} strokeWidth="2.6" strokeLinecap="round" />
+    <line x1="14" y1="38" x2="34" y2="10" stroke="#fff" strokeWidth="0.8" opacity="0.4" strokeLinecap="round" />
+    <polygon points="36,4 38,9 43,11 38,13 36,18 34,13 29,11 34,9" fill={color} opacity="0.95" />
+    <circle cx="22" cy="26" r="1.4" fill={color} opacity="0.7" />
+    <circle cx="17" cy="33" r="1" fill={color} opacity="0.5" />
+  </Base>
+);
+
+// 44. Prefixes — a stack of blocks with a small "+" tile attached to the front, suggesting an added prefix
+export const IconPrefixBlocks = ({ size = 28, color = "#c4b5fd" }) => (
+  <Base size={size}>
+    <rect x="14" y="26" width="28" height="11" rx="2" fill={color} opacity="0.4" />
+    <rect x="14" y="13" width="28" height="11" rx="2" fill={color} opacity="0.85" />
+    <rect x="4" y="13" width="9" height="11" rx="2" fill={color} stroke="#15151f" strokeWidth="1" />
+    <line x1="6.5" y1="18.5" x2="10.5" y2="18.5" stroke="#15151f" strokeWidth="1.4" />
+    <line x1="8.5" y1="16.5" x2="8.5" y2="20.5" stroke="#15151f" strokeWidth="1.4" />
+  </Base>
+);
+
+// 45. Descriptive Words — a paintbrush dragging a stroke of color with paint droplets
+export const IconPaintbrush = ({ size = 28, color = "#fde68a" }) => (
+  <Base size={size}>
+    <path d="M8 36 C14 30 20 24 26 18" stroke={color} strokeWidth="5" strokeLinecap="round" opacity="0.4" />
+    <path d="M26 18 L33 9 C35 7 38 7 39 9 C40 11 39 13 37 15 L29 23 Z" fill={color} opacity="0.9" stroke={color} strokeWidth="1" />
+    <circle cx="10" cy="34" r="2" fill={color} opacity="0.6" />
+    <circle cx="14" cy="39" r="1.3" fill={color} opacity="0.45" />
+  </Base>
+);
+
+// Maps level id -> icon component, for the Word Power section (31-45).
+export const WORD_POWER_ICONS = {
+  31: IconStethoscope, 32: IconSportsTrophy, 33: IconLeaf, 34: IconBriefcase, 35: IconTemple,
+  36: IconAlliteration, 37: IconMic, 38: IconFlex, 39: IconMapPin, 40: IconGear,
+  41: IconEar, 42: IconPuzzle, 43: IconWand, 44: IconPrefixBlocks, 45: IconPaintbrush,
+};
