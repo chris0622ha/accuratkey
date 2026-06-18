@@ -76,18 +76,16 @@ export const IconHammer = ({ size = 28, color = "#f59e0b" }) => (
   </Base>
 );
 
-// 5. Speed Seeker — a rocket launching with layered exhaust flame and stars
+// 5. Speed Seeker — a radar lock-on reticle sweeping with speed streaks
 export const IconRocket = ({ size = 28, color = "#ef4444" }) => (
   <Base size={size}>
-    <circle cx="24" cy="10" r="1" fill="#fff" opacity="0.6" />
-    <circle cx="38" cy="16" r="0.8" fill="#fff" opacity="0.5" />
-    <circle cx="10" cy="14" r="0.8" fill="#fff" opacity="0.5" />
-    <path d="M24 4 C29 9 31 18 29.5 28 L18.5 28 C17 18 19 9 24 4 Z" fill={color} opacity="0.85" stroke={color} strokeWidth="1.4" />
-    <path d="M21 14 Q24 11 27 14 Q24 17 21 14 Z" fill="#bae6fd" opacity="0.6" />
-    <path d="M17.5 26 L9 37 L17.5 33.5 Z" fill={color} opacity="0.6" />
-    <path d="M30.5 26 L39 37 L30.5 33.5 Z" fill={color} opacity="0.6" />
-    <path d="M19.5 28 L24 44 L28.5 28 Z" fill="#fbbf24" opacity="0.55" />
-    <path d="M21.3 28 L24 39 L26.7 28 Z" fill="#fde047" opacity="0.9" />
+    <circle cx="22" cy="22" r="15" stroke={color} strokeWidth="1.6" opacity="0.4" fill="none" />
+    <circle cx="22" cy="22" r="9" stroke={color} strokeWidth="1.6" opacity="0.6" fill="none" />
+    <path d="M22 7 A15 15 0 0 1 37 22 L22 22 Z" fill={color} opacity="0.25" />
+    <circle cx="22" cy="22" r="3" fill={color} />
+    <path d="M22 22 L31 13" stroke={color} strokeWidth="1.6" opacity="0.7" strokeLinecap="round" />
+    <path d="M35 9 L42 6 M38 13 L45 12" stroke={color} strokeWidth="1.8" strokeLinecap="round" opacity="0.85" />
+    <path d="M2 36 L14 36 M5 41 L20 41" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.5" />
   </Base>
 );
 
@@ -224,13 +222,13 @@ export const FOUNDATIONS_ICONS = {
 // 16. Word Sprint — a running figure mid-stride with motion trail lines
 export const IconSprint = ({ size = 28, color = "#22c55e" }) => (
   <Base size={size}>
-    <circle cx="27" cy="9" r="4" fill={color} opacity="0.9" />
-    <path d="M27 13 L23 24 L29 22 L33 32" stroke={color} strokeWidth="3" fill="none" strokeLinecap="round" />
-    <path d="M23 24 L13 28" stroke={color} strokeWidth="2.6" fill="none" strokeLinecap="round" />
-    <path d="M29 22 L37 18" stroke={color} strokeWidth="2.6" fill="none" strokeLinecap="round" />
-    <path d="M33 32 L29 44" stroke={color} strokeWidth="2.6" fill="none" strokeLinecap="round" />
-    <path d="M23 24 L18 40" stroke={color} strokeWidth="2.6" fill="none" strokeLinecap="round" />
-    <path d="M5 16 H14 M3 22 H12 M5 28 H14" stroke={color} strokeWidth="1.6" opacity="0.4" strokeLinecap="round" />
+    <rect x="20" y="3" width="8" height="4" rx="1.5" fill={color} opacity="0.8" />
+    <line x1="24" y1="9" x2="24" y2="6" stroke={color} strokeWidth="2" />
+    <circle cx="24" cy="26" r="16" fill={color} opacity="0.12" stroke={color} strokeWidth="2.2" />
+    <line x1="24" y1="26" x2="24" y2="15" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <line x1="24" y1="26" x2="32" y2="26" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.7" />
+    <circle cx="24" cy="26" r="2" fill={color} />
+    <path d="M3 18 H12 M2 24 H10 M3 30 H12" stroke={color} strokeWidth="1.8" opacity="0.45" strokeLinecap="round" />
   </Base>
 );
 
