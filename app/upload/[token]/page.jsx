@@ -50,7 +50,7 @@ export default function PhotoUploadPage({ params }) {
       <h1 style={{ color:"#e0e0ff",fontSize:22,fontWeight:700,marginBottom:8 }}>
         <span style={{ color:"#7c6af7" }}>Accurat</span>Key
       </h1>
-      <p style={{ color:"#555",fontSize:14,marginBottom:32 }}>Upload a profile photo from your phone</p>
+      <p style={{ color:"#555",fontSize:14,marginBottom:32 }}>Choose a photo from your phone</p>
 
       {status === "ready" && (
         <label style={{ display:"block",background:"#7c6af7",color:"#fff",padding:"14px 32px",borderRadius:12,fontSize:16,fontWeight:700,cursor:"pointer" }}>
