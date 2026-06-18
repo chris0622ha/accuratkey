@@ -2640,8 +2640,94 @@ const Nav = () => (<>
           <Nav />
           {/* Tabs */}
           <div style={{display:"flex",gap:6,marginBottom:16,background:T.card,borderRadius:10,padding:3,border:`1px solid ${T.border}`}}>
-            {([["games","Games",true],["map","Map",true],["daily","Daily",canUse(activeProfile,"daily")],["test","Test",canUse(activeProfile,"test")]]).filter(t=>t[2]).map(([k,l])=>(
-              <button key={k} onClick={()=>setActiveTabWithUrl(k)} style={{flex:1,padding:isMobileOwner?"6px 0":"8px 0",borderRadius:7,border:"none",background:activeTab===k?T.purple:"transparent",color:activeTab===k?"#fff":T.faint,fontWeight:700,fontSize:isMobileOwner?12:fs(12),cursor:"pointer",fontFamily:T.font}}>{l}</button>
+            {([
+              ["games", (active) => (
+                // Games — an arcade joystick: circular base with a shaft, round top, two action buttons beside it
+                <svg width={active?22:18} height={active?22:18} viewBox="0 0 40 40" fill="none">
+                  {/* base plate */}
+                  <ellipse cx="20" cy="32" rx="13" ry="5" fill={active?"#fff":"currentColor"} opacity={active?0.15:0.12}/>
+                  <ellipse cx="20" cy="32" rx="13" ry="5" fill="none" stroke={active?"#fff":"currentColor"} strokeWidth="1.6" opacity={active?0.6:0.4}/>
+                  {/* shaft */}
+                  <rect x="18" y="16" width="4" height="16" rx="2" fill={active?"#fff":"currentColor"} opacity={active?0.85:0.55}/>
+                  {/* joystick ball top */}
+                  <circle cx="20" cy="13" r="6" fill={active?"#fff":"currentColor"} opacity={active?0.9:0.6}/>
+                  <circle cx="18" cy="11" r="2" fill={active?"#fff":"currentColor"} opacity={active?0.35:0.2}/>
+                  {/* action button left */}
+                  <circle cx="7" cy="24" r="4" fill={active?"#fff":"currentColor"} opacity={active?0.75:0.4}/>
+                  <circle cx="7" cy="24" r="2" fill={active?"#fff":"currentColor"} opacity={active?0.3:0.15}/>
+                  {/* action button right */}
+                  <circle cx="33" cy="24" r="4" fill={active?"#fff":"currentColor"} opacity={active?0.75:0.4}/>
+                  <circle cx="33" cy="24" r="2" fill={active?"#fff":"currentColor"} opacity={active?0.3:0.15}/>
+                  {/* base grille lines */}
+                  <line x1="11" y1="32" x2="29" y2="32" stroke={active?"#fff":"currentColor"} strokeWidth="1" opacity={active?0.2:0.1}/>
+                </svg>
+              ), true],
+              ["map", (active) => (
+                // Map — a winding path between three level nodes, with a flag at the top node
+                <svg width={active?22:18} height={active?22:18} viewBox="0 0 40 40" fill="none">
+                  {/* path line */}
+                  <path d="M12 34 Q8 26 20 22 Q32 18 28 10" stroke={active?"#fff":"currentColor"} strokeWidth="2.2" strokeLinecap="round" fill="none" opacity={active?0.7:0.45}/>
+                  {/* bottom node */}
+                  <circle cx="12" cy="34" r="4" fill={active?"#fff":"currentColor"} opacity={active?0.85:0.55}/>
+                  {/* mid node */}
+                  <circle cx="20" cy="22" r="3.5" fill={active?"#fff":"currentColor"} opacity={active?0.7:0.4}/>
+                  <circle cx="20" cy="22" r="1.5" fill={active?"#fff":"currentColor"} opacity={active?0.25:0.15}/>
+                  {/* top node */}
+                  <circle cx="28" cy="10" r="4" fill={active?"#fff":"currentColor"} opacity={active?0.9:0.6}/>
+                  {/* flag pole */}
+                  <line x1="28" y1="6" x2="28" y2="2" stroke={active?"#fff":"currentColor"} strokeWidth="1.5" strokeLinecap="round" opacity={active?0.8:0.5}/>
+                  {/* flag */}
+                  <path d="M28 2 L35 4 L28 6 Z" fill={active?"#fff":"currentColor"} opacity={active?0.85:0.55}/>
+                  {/* completed checkmark on bottom node */}
+                  <path d="M9.5 34 L11.5 36 L15 32" stroke={active?"#0a0a0f":"currentColor"} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity={active?0.7:0}/>
+                </svg>
+              ), true],
+              ["daily", (active) => (
+                // Daily — a calendar page: outer frame, month-bar header, 3x3 dot grid for days, one highlighted cell
+                <svg width={active?22:18} height={active?22:18} viewBox="0 0 40 40" fill="none">
+                  {/* calendar body */}
+                  <rect x="5" y="8" width="30" height="28" rx="4" fill={active?"#fff":"currentColor"} fillOpacity={active?0.1:0.06} stroke={active?"#fff":"currentColor"} strokeWidth="1.8" opacity={active?0.7:0.45}/>
+                  {/* header bar */}
+                  <rect x="5" y="8" width="30" height="8" rx="4" fill={active?"#fff":"currentColor"} opacity={active?0.25:0.12}/>
+                  {/* ring pegs top */}
+                  <rect x="13" y="5" width="3" height="7" rx="1.5" fill={active?"#fff":"currentColor"} opacity={active?0.7:0.45}/>
+                  <rect x="24" y="5" width="3" height="7" rx="1.5" fill={active?"#fff":"currentColor"} opacity={active?0.7:0.45}/>
+                  {/* day dots — 3 rows × 4 cols */}
+                  {[0,1,2,3].map(c=>[0,1,2].map(r=>{
+                    const x=11+c*6, y=22+r*5;
+                    const isToday=c===1&&r===1;
+                    return <circle key={`${c}${r}`} cx={x} cy={y} r={isToday?2.5:1.5}
+                      fill={active?"#fff":"currentColor"}
+                      opacity={isToday?(active?0.95:0.6):(active?0.35:0.2)}/>;
+                  }))}
+                  {/* today highlight ring */}
+                  <circle cx="17" cy="27" r="5" fill="none" stroke={active?"#fff":"currentColor"} strokeWidth="1.4" opacity={active?0.6:0.3}/>
+                </svg>
+              ), canUse(activeProfile,"daily")],
+              ["test", (active) => (
+                // Test — a keyboard: outer shell, 3 key rows with varying widths, space bar at bottom
+                <svg width={active?22:18} height={active?22:18} viewBox="0 0 40 40" fill="none">
+                  {/* keyboard body */}
+                  <rect x="3" y="10" width="34" height="22" rx="4" fill={active?"#fff":"currentColor"} fillOpacity={active?0.1:0.06} stroke={active?"#fff":"currentColor"} strokeWidth="1.8" opacity={active?0.7:0.45}/>
+                  {/* top row keys — 5 small */}
+                  {[7,12,17,22,27].map(x=>(
+                    <rect key={x} x={x} y="14" width="4" height="4" rx="1.2" fill={active?"#fff":"currentColor"} opacity={active?0.55:0.3}/>
+                  ))}
+                  {/* middle row keys — 4, slightly offset */}
+                  {[9,14.5,20,25.5].map(x=>(
+                    <rect key={x} x={x} y="20" width="4" height="4" rx="1.2" fill={active?"#fff":"currentColor"} opacity={active?0.55:0.3}/>
+                  ))}
+                  {/* space bar */}
+                  <rect x="11" y="26" width="18" height="4" rx="2" fill={active?"#fff":"currentColor"} opacity={active?0.7:0.4}/>
+                </svg>
+              ), canUse(activeProfile,"test")],
+            ]).filter(t=>t[2]).map(([k,renderIcon])=>(
+              <button key={k} onClick={()=>setActiveTabWithUrl(k)} style={{
+                flex:1,padding:isMobileOwner?"7px 0":"9px 0",borderRadius:7,border:"none",
+                background:activeTab===k?T.purple:"transparent",
+                color:activeTab===k?"#fff":T.faint,
+                cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",
+              }}>{renderIcon(activeTab===k)}</button>
             ))}
           </div>
 
