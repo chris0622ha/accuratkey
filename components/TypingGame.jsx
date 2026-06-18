@@ -4,7 +4,7 @@ import { useRouter, usePathname } from "next/navigation";
 import TypingTest from "./TypingTest";
 import GamesTab from "./GamesTab";
 import { KKey } from "./icons/KKey";
-import { FOUNDATIONS_ICONS } from "./icons/LevelIcons";
+import { FOUNDATIONS_ICONS, PRECISION_FLOW_ICONS } from "./icons/LevelIcons";
 import { formatKeys } from "@/lib/format";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
 import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback } from "@/lib/firebase";
@@ -2666,7 +2666,7 @@ const Nav = () => (<>
                           if(current||(!locked&&unlocked))requestStartLevel(lv.id);
                           else if(canSkipTo&&canUse(activeProfile,'skip')&&confirm(`Skip to Level ${lv.id}: ${lv.name}?\n\nCustom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.id);
                         }} style={{width:NODE,height:NODE,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0,background:completed?lv.color+"22":current?lv.color+"33":locked?"#0a0a15":"#0d0d18",border:`3px solid ${completed?lv.color:current?lv.color:locked?"#1e1e30":"#2a2a3e"}`,boxShadow:current?`0 0 20px ${lv.color}77,0 0 40px ${lv.color}33`:"none",transition:"all 0.3s",position:"relative",cursor:locked&&!canSkipTo?"default":"pointer",opacity:locked&&!canSkipTo?0.45:1}}>
-                        {completed ? <span style={{color:lv.color,fontSize:16,fontWeight:900}}>✓</span> : locked ? "🔒" : (FOUNDATIONS_ICONS[lv.id] ? React.createElement(FOUNDATIONS_ICONS[lv.id], {size:22, color:lv.color}) : lv.emoji)}
+                        {completed ? <span style={{color:lv.color,fontSize:16,fontWeight:900}}>✓</span> : locked ? "🔒" : ((FOUNDATIONS_ICONS[lv.id]||PRECISION_FLOW_ICONS[lv.id]) ? React.createElement(FOUNDATIONS_ICONS[lv.id]||PRECISION_FLOW_ICONS[lv.id], {size:22, color:lv.color}) : lv.emoji)}
                         {current && <div style={{position:"absolute",inset:-6,borderRadius:"50%",border:`2px solid ${lv.color}44`}}/>}
                       </div>
                       {/* Info chip — tucked to whichever side has room so it doesn't run off the edge */}
