@@ -747,8 +747,10 @@ export default function AccuratKey() {
   };
 
   // Tab click also updates URL
+  const [testMountKey, setTestMountKey] = React.useState(0);
   const setActiveTabWithUrl = React.useCallback((tab) => {
     setActiveTab(tab);
+    if (tab === "test") setTestMountKey(k => k + 1);
     const tabUrls = { games: "/game", map: "/game/map", daily: "/game/daily", test: "/game/test" };
     const url = tabUrls[tab] || "/game";
     if (typeof window !== "undefined" && window.location.pathname !== url) {
@@ -2992,7 +2994,7 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
                   </div>
                 )}
               </div>
-              <TypingTest T={T} customWords={activeListIdx!==null&&customLists[activeListIdx]?customLists[activeListIdx].words:null} key={activeListIdx} />
+              <TypingTest T={T} customWords={activeListIdx!==null&&customLists[activeListIdx]?customLists[activeListIdx].words:null} key={`${testMountKey}-${activeListIdx}`} />
             </div>
           )}
 
