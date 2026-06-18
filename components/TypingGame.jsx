@@ -1176,14 +1176,20 @@ export default function AccuratKey() {
             const lastProf = lastProfileId ? profs.find(p => p.id === lastProfileId) : null;
             const returnProfileId = typeof window !== "undefined" ? localStorage.getItem("ak_returnProfileId") : null;
             const returnProf = returnProfileId ? profs.find(p => p.id === returnProfileId) : lastProf;
-            if (returnScreen && (returnProf || lastProf)) {
+            // Restore whenever we have a profile to restore to — not just when
+            // ak_returnScreen happens to be set (that was only ever written by
+            // the Shop button's "leave and come back" flow, so a hard reload
+            // anywhere else — e.g. a mini-game route — always missed it and
+            // bounced to the profile picker even though we knew who the
+            // last-active profile was via ak_lastProfile_<uid>).
+            if (returnProf || lastProf) {
               const prof = returnProf || lastProf;
               localStorage.removeItem("ak_returnScreen");
               localStorage.removeItem("ak_returnProfileId");
               setActiveProfile(prof);
               setLayoutKey(prof.favoriteLayout || "qwerty");
               if (prof.streak) setStreak(prof.streak);
-              setScreen(returnScreen === "profilePicker" ? "levelMap" : returnScreen);
+              setScreen(!returnScreen || returnScreen === "profilePicker" ? "levelMap" : returnScreen);
             } else {
               // Only show picker if no profile active — prevents flash on token refresh
               setScreenWithUrl("profilePicker");
