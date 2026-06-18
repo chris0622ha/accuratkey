@@ -801,7 +801,7 @@ export const IconSinePattern = ({ size = 28, color = "#fbbf24" }) => (
 );
 
 // 63. Dev Commands — terminal prompt with blinking cursor block
-export const IconTerminal = ({ size = 28, color = "#4ade80" }) => (
+export const IconTerminalPrompt = ({ size = 28, color = "#4ade80" }) => (
   <Base size={size}>
     <rect x="6" y="10" width="36" height="28" rx="3" fill="none" stroke={color} strokeWidth="2.2" opacity="0.8" />
     <path d="M12 20 L18 24 L12 28" stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
@@ -938,7 +938,7 @@ export const IconStarburst = ({ size = 28, color = "#ec4899" }) => (
 );
 
 export const SPEED_SURGE_ICONS = {
-  61: IconBoltCluster, 62: IconSinePattern, 63: IconTerminal, 64: IconQuoteMarks, 65: IconCrown,
+  61: IconBoltCluster, 62: IconSinePattern, 63: IconTerminalPrompt, 64: IconQuoteMarks, 65: IconCrown,
   66: IconFlowRibbon, 67: IconSax, 68: IconStaircase, 69: IconWeave, 70: IconDrops,
   71: IconBigBolt, 72: IconBullseye, 73: IconFlame, 74: IconTornado, 75: IconStarburst,
 };
