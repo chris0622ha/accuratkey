@@ -4,10 +4,10 @@ import { useRouter, usePathname } from "next/navigation";
 import TypingTest from "./TypingTest";
 import GamesTab from "./GamesTab";
 import { KKey } from "./icons/KKey";
-import { FOUNDATIONS_ICONS, PRECISION_FLOW_ICONS, WORD_POWER_ICONS, KEYBOARD_MASTERY_ICONS } from "./icons/LevelIcons";
+import { FOUNDATIONS_ICONS, PRECISION_FLOW_ICONS, WORD_POWER_ICONS, KEYBOARD_MASTERY_ICONS, IconStar } from "./icons/LevelIcons";
 import { formatKeys } from "@/lib/format";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback } from "@/lib/firebase";
+import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback } from "@/lib/firebase";
 
 export 
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
@@ -969,6 +969,8 @@ export default function AccuratKey() {
   const [friends, setFriends] = useState([]);
   const [friendReqs, setFriendReqs] = useState([]);
   const [friendSearch, setFriendSearch] = useState("");
+  const [friendIdInput, setFriendIdInput] = useState("");
+  const [copiedFriendId, setCopiedFriendId] = useState(false);
   const [friendMsg, setFriendMsg] = useState("");
   const [showShop, setShowShop] = useState(false);
   const [shopMsg, setShopMsg] = useState("");
@@ -1654,6 +1656,9 @@ export default function AccuratKey() {
           setProfilePhoto(null); // signal base64 already
           // store raw base64 directly
           setProfilePhotoB64(photoURL);
+        } else if (context === "feedback") {
+          setFeedbackScreenshot(photoURL);
+          setFeedbackScreenshotName("Photo from phone");
         } else {
           setEditPhotoPreview(photoURL);
           setEditPhotoB64(photoURL);
@@ -1726,16 +1731,7 @@ export default function AccuratKey() {
     </div>
   );
 
-  const UidTag = () => user ? (
-  <div style={{position:"fixed",bottom:8,left:10,fontSize:9,color:T.faint,fontFamily:T.font,zIndex:999,opacity:0.6,display:"flex",gap:4,alignItems:"center"}}>
-    <span style={{userSelect:"none"}}>UID:</span>
-    <span
-      title="Click to select"
-      style={{userSelect:"text",cursor:"text"}}
-      onClick={e => { e.stopPropagation(); const r=document.createRange(); r.selectNodeContents(e.currentTarget); const s=window.getSelection(); s.removeAllRanges(); s.addRange(r);}}
-    >{user.uid}</span>
-  </div>
-) : null;
+
 
 const PrivacyRow = ({privKey, label, desc, profile, T, onToggle}) => {
   const val = profile?.privacy?.[privKey] !== false;
@@ -1874,7 +1870,6 @@ const Confetti = () => {
 
 const isMobileOwner = isMobile && user?.uid === "qM3qeYBLwvRXy8D0gOKGCQbGuA12";
 const Nav = () => (<>
-    <UidTag />
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
       <div>
         <span style={{fontWeight:800,fontSize:fs(16),color:T.text,fontFamily:T.font}}><span style={{color:T.purple}}>Accurat</span>Key</span>
@@ -2619,7 +2614,7 @@ const Nav = () => (<>
           </Overlay>
         )}
 
-        <div style={{maxWidth:"min(860px, 100%)",margin:"0 auto",padding:"0 8px"}}>
+        <div style={{maxWidth:(activeTab==="map"&&!isMobile)?"min(1180px, 96%)":"min(860px, 100%)",margin:"0 auto",padding:"0 8px",transition:"max-width 0.2s"}}>
           <Nav />
           {/* Tabs */}
           <div style={{display:"flex",gap:6,marginBottom:16,background:T.card,borderRadius:10,padding:3,border:`1px solid ${T.border}`}}>
@@ -2632,8 +2627,8 @@ const Nav = () => (<>
 
           {activeTab==="map" && <>
           {(() => {
-            const ROW_H = 92; // vertical spacing between level nodes
-            const NODE = 52; // node diameter
+            const ROW_H = 96; // vertical spacing between level nodes
+            const NODE = (!isMobile) ? 60 : 52; // node diameter — bigger on desktop
             // Zigzag x-position as a fraction of track width: alternates left → center-right → right → center-left → repeat
             const xFrac = (idx) => {
               const cycle = idx % 4;
@@ -2666,14 +2661,14 @@ const Nav = () => (<>
                           if(current||(!locked&&unlocked))requestStartLevel(lv.id);
                           else if(canSkipTo&&canUse(activeProfile,'skip')&&confirm(`Skip to Level ${lv.id}: ${lv.name}?\n\nCustom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.id);
                         }} style={{width:NODE,height:NODE,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0,background:completed?lv.color+"22":current?lv.color+"33":locked?"#0a0a15":"#0d0d18",border:`3px solid ${completed?lv.color:current?lv.color:locked?"#1e1e30":"#2a2a3e"}`,boxShadow:current?`0 0 20px ${lv.color}77,0 0 40px ${lv.color}33`:"none",transition:"all 0.3s",position:"relative",cursor:locked&&!canSkipTo?"default":"pointer",opacity:locked&&!canSkipTo?0.45:1}}>
-                        {locked ? "🔒" : ((FOUNDATIONS_ICONS[lv.id]||PRECISION_FLOW_ICONS[lv.id]||WORD_POWER_ICONS[lv.id]||KEYBOARD_MASTERY_ICONS[lv.id]) ? React.createElement(FOUNDATIONS_ICONS[lv.id]||PRECISION_FLOW_ICONS[lv.id]||WORD_POWER_ICONS[lv.id]||KEYBOARD_MASTERY_ICONS[lv.id], {size:22, color:lv.color}) : lv.emoji)}
+                        {locked ? "🔒" : ((FOUNDATIONS_ICONS[lv.id]||PRECISION_FLOW_ICONS[lv.id]||WORD_POWER_ICONS[lv.id]||KEYBOARD_MASTERY_ICONS[lv.id]) ? React.createElement(FOUNDATIONS_ICONS[lv.id]||PRECISION_FLOW_ICONS[lv.id]||WORD_POWER_ICONS[lv.id]||KEYBOARD_MASTERY_ICONS[lv.id], {size:Math.round(NODE*0.46), color:lv.color}) : lv.emoji)}
                         {completed && <div style={{position:"absolute",bottom:-3,right:-3,width:16,height:16,borderRadius:"50%",background:lv.color,display:"flex",alignItems:"center",justifyContent:"center",border:"2px solid #0d0d18"}}><span style={{color:"#fff",fontSize:10,fontWeight:900,lineHeight:1}}>✓</span></div>}
                         {current && <div style={{position:"absolute",inset:-6,borderRadius:"50%",border:`2px solid ${lv.color}44`}}/>}
                       </div>
                       {/* Info chip — tucked to whichever side has room so it doesn't run off the edge */}
                       <div style={{marginTop:6,maxWidth:128,textAlign:"center",pointerEvents:"none",overflowWrap:"break-word"}}>
                         <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,marginBottom:1,flexWrap:"wrap"}}>
-                          <span style={{color:T.faint,fontSize:fs(9),letterSpacing:1}}>LV {lv.id}</span>
+                          <span style={{color:T.faint,fontSize:fs(11),letterSpacing:0.5,fontWeight:600}}>Level {lv.id}</span>
                           {current&&<span style={{background:lv.color,color:"#fff",fontSize:fs(8),fontWeight:700,padding:"1px 5px",borderRadius:8}}>YOU</span>}
                           {canSkipTo&&<span style={{background:"#f59e0b22",color:"#f59e0b",fontSize:8,fontWeight:700,padding:"1px 5px",borderRadius:8}}>SKIP?</span>}
                         </div>
@@ -2681,7 +2676,10 @@ const Nav = () => (<>
                         {completed && (() => {
                           const lb = activeProfile?.levelBests?.[lv.id];
                           const s = Math.max(0, Math.min(3, lb?.stars || 1));
-                          return <div style={{fontSize:10,marginTop:2,color:lv.color}}>{"⭐".repeat(s)}{"☆".repeat(3-s)}{lb?.wpm>0?` · ${lb.wpm} WPM`:""}</div>;
+                          return <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:1,marginTop:3,color:lv.color,fontSize:10}}>
+                            {[0,1,2].map(i => <IconStar key={i} size={11} color={lv.color} filled={i<s} />)}
+                            {lb?.wpm>0 && <span style={{marginLeft:3}}>· {lb.wpm} WPM</span>}
+                          </div>;
                         })()}
                       </div>
                     </div>
@@ -3011,13 +3009,28 @@ const Nav = () => (<>
                       <button onClick={()=>{setFeedbackScreenshot(null);setFeedbackScreenshotName("");}} style={{background:"none",border:"none",color:T.faint,fontSize:16,cursor:"pointer",padding:"0 4px"}} title="Remove screenshot">×</button>
                     </div>
                   ) : (
-                    <div style={{display:"flex",gap:8,marginTop:10}}>
-                      <button onClick={()=>feedbackFileRef.current?.click()} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,fontSize:12,padding:"7px 12px",cursor:"pointer",fontFamily:T.font,display:"flex",alignItems:"center",gap:6}}>
-                        📎 Attach screenshot
-                      </button>
-                      <button onClick={()=>feedbackCameraRef.current?.click()} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,fontSize:12,padding:"7px 12px",cursor:"pointer",fontFamily:T.font,display:"flex",alignItems:"center",gap:6}}>
-                        📷 Use phone camera
-                      </button>
+                    <div style={{display:"flex",flexDirection:"column",gap:8,marginTop:10}}>
+                      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                        <button onClick={()=>feedbackFileRef.current?.click()} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,fontSize:12,padding:"7px 12px",cursor:"pointer",fontFamily:T.font,display:"flex",alignItems:"center",gap:6}}>
+                          📎 Attach screenshot
+                        </button>
+                        {isMobile ? (
+                          <button onClick={()=>feedbackCameraRef.current?.click()} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,fontSize:12,padding:"7px 12px",cursor:"pointer",fontFamily:T.font,display:"flex",alignItems:"center",gap:6}}>
+                            📷 Use camera
+                          </button>
+                        ) : (
+                          <button onClick={()=>startQrUpload("feedback")} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,fontSize:12,padding:"7px 12px",cursor:"pointer",fontFamily:T.font,display:"flex",alignItems:"center",gap:6}}>
+                            📱 Use phone
+                          </button>
+                        )}
+                      </div>
+                      {qrListening && qrContext === "feedback" && (
+                        <div style={{textAlign:"center",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,padding:"12px"}}>
+                          <QRCanvas url={qrUrl} size={140} />
+                          <p style={{color:T.faint,fontSize:10,wordBreak:"break-all",margin:"8px 0"}}>Scan with your phone to choose a photo</p>
+                          <button onClick={cancelQr} style={{background:"transparent",border:`1px solid ${T.border}`,borderRadius:6,color:T.faint,fontSize:11,padding:"4px 10px",cursor:"pointer",fontFamily:T.font}}>Cancel</button>
+                        </div>
+                      )}
                     </div>
                   )}
                   <div style={{display:"flex",justifyContent:"flex-end",marginTop:10,gap:8}}>
@@ -3082,6 +3095,13 @@ const Nav = () => (<>
                 <span style={{color:T.text,fontWeight:800,fontSize:16}}>👥 Friends</span>
                 <button onClick={()=>{setShowFriends(false);setFriendMsg("");}} style={{background:"none",border:"none",color:T.faint,fontSize:20,cursor:"pointer"}}>×</button>
               </div>
+              <div style={{display:"flex",alignItems:"center",gap:8,background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,padding:"8px 10px",marginBottom:16}}>
+                <div style={{flex:1,overflow:"hidden"}}>
+                  <div style={{color:T.faint,fontSize:9,letterSpacing:1,textTransform:"uppercase",marginBottom:1}}>Your Friend ID</div>
+                  <div style={{color:T.text,fontSize:11,fontFamily:"monospace",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user?.uid}</div>
+                </div>
+                <button onClick={()=>{navigator.clipboard.writeText(user?.uid||"");setCopiedFriendId(true);setTimeout(()=>setCopiedFriendId(false),1500);}} title="Copy Friend ID" style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:copiedFriendId?T.accent2:T.muted,fontSize:12,padding:"6px 9px",cursor:"pointer",fontFamily:T.font,flexShrink:0}}>{copiedFriendId?"✓ Copied":"📋 Copy"}</button>
+              </div>
               {friendReqs.length>0&&<>
                 <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>Requests</div>
                 {friendReqs.map(r=>(
@@ -3096,9 +3116,18 @@ const Nav = () => (<>
                 <span style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase"}}>Add Friend</span>
                 <span style={{color:T.faint,fontSize:10}}>Requests: <button onClick={async()=>{const v=!activeProfile?.noFriendRequests;patchProfile({noFriendRequests:v});updateProfile(user.uid,activeProfile.id,{noFriendRequests:v});}} style={{background:"none",border:"none",color:activeProfile?.noFriendRequests?"#ef4444":T.accent2,fontSize:10,cursor:"pointer",fontFamily:T.font,padding:0,fontWeight:700}}>{activeProfile?.noFriendRequests?"OFF":"ON"}</button></span>
               </div>
-              <div style={{display:"flex",gap:8,marginBottom:14}}>
+              <div style={{display:"flex",gap:8,marginBottom:8}}>
                 <input value={friendSearch} onChange={e=>setFriendSearch(e.target.value)} onKeyDown={e=>e.key==="Enter"&&(async()=>{try{const res=await getUserByUsername(friendSearch.replace("@",""));if(!res)return setFriendMsg("User not found");await sendFriendRequest(user.uid,currentUsername,res.uid,friendSearch.replace("@","").toLowerCase());setFriendMsg("Request sent!");setFriendSearch("");}catch(e){setFriendMsg(e.message||"Error");}})()}  placeholder="@username" style={{flex:1,background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:13,padding:"9px 12px",outline:"none"}}/>
                 <button onClick={async()=>{try{const res=await getUserByUsername(friendSearch.replace("@",""));if(!res)return setFriendMsg("User not found");await sendFriendRequest(user.uid,currentUsername,res.uid,friendSearch.replace("@","").toLowerCase());setFriendMsg("Request sent!");setFriendSearch("");}catch(e){setFriendMsg(e.message||"Error");}}} style={{padding:"9px 14px",background:T.purple,border:"none",borderRadius:8,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer"}}>Add</button>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
+                <div style={{flex:1,height:1,background:T.border}}/>
+                <span style={{color:T.faint,fontSize:9,letterSpacing:1,textTransform:"uppercase"}}>or by Friend ID</span>
+                <div style={{flex:1,height:1,background:T.border}}/>
+              </div>
+              <div style={{display:"flex",gap:8,marginBottom:14}}>
+                <input value={friendIdInput} onChange={e=>setFriendIdInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&(async()=>{const id=friendIdInput.trim();if(!id)return;try{const res=await getUserByUid(id);if(!res)return setFriendMsg("Friend ID not found");if(res.uid===user.uid)return setFriendMsg("That is your own Friend ID");await sendFriendRequest(user.uid,currentUsername,res.uid,res.username||"user");setFriendMsg("Request sent!");setFriendIdInput("");}catch(e){setFriendMsg(e.message||"Error");}})()} placeholder="Paste Friend ID" style={{flex:1,background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:13,padding:"9px 12px",outline:"none"}}/>
+                <button onClick={async()=>{const id=friendIdInput.trim();if(!id)return;try{const res=await getUserByUid(id);if(!res)return setFriendMsg("Friend ID not found");if(res.uid===user.uid)return setFriendMsg("That is your own Friend ID");await sendFriendRequest(user.uid,currentUsername,res.uid,res.username||"user");setFriendMsg("Request sent!");setFriendIdInput("");}catch(e){setFriendMsg(e.message||"Error");}}} style={{padding:"9px 14px",background:T.purple,border:"none",borderRadius:8,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer"}}>Add</button>
               </div>
               {friendMsg&&<div style={{color:T.accent2,fontSize:12,marginBottom:10}}>{friendMsg}</div>}
               <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>Friends</div>
