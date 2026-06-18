@@ -2723,11 +2723,16 @@ const Nav = () => (<>
               ), canUse(activeProfile,"test")],
             ]).filter(t=>t[2]).map(([k,renderIcon])=>(
               <button key={k} onClick={()=>setActiveTabWithUrl(k)} style={{
-                flex:1,padding:isMobileOwner?"7px 0":"9px 0",borderRadius:7,border:"none",
+                flex:1,padding:isMobileOwner?"5px 0":"7px 0",borderRadius:7,border:"none",
                 background:activeTab===k?T.purple:"transparent",
                 color:activeTab===k?"#fff":T.faint,
-                cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",
-              }}>{renderIcon(activeTab===k)}</button>
+                cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,
+              }}>
+                {renderIcon(activeTab===k)}
+                <span style={{fontSize:9,fontWeight:700,letterSpacing:0.5,textTransform:"uppercase",fontFamily:"monospace",opacity:activeTab===k?0.9:0.6}}>
+                  {k==="games"?"Games":k==="map"?"Map":k==="daily"?"Daily":"Test"}
+                </span>
+              </button>
             ))}
           </div>
 
