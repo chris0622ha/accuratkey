@@ -778,162 +778,365 @@ export const IconStar = ({ size = 14, color = "#facc15", filled = true }) => (
 
 // ─── Speed Surge section (levels 61-75) ─────────────────────────────────────
 
-// 61. Short Word Rush — three small lightning bolts clustered, conveying rapid-fire short bursts
+// 61. Short Word Rush — a runner mid-stride with motion lines streaking behind,
+//     feet leaving speed-blur dashes, arms pumping, conveying explosive short bursts
 export const IconBoltCluster = ({ size = 28, color = "#facc15" }) => (
   <Base size={size}>
-    <polygon points="18,6 12,22 18,19 14,34 26,16 20,19" fill={color} opacity="0.9" />
-    <polygon points="30,10 26,22 30,20 27,31 36,18 32,20" fill={color} opacity="0.55" />
-    <polygon points="10,12 7,22 10,20 8,29 16,19 12,21" fill={color} opacity="0.55" />
+    {/* motion streak lines */}
+    <path d="M4 20 H13" stroke={color} strokeWidth="1.8" strokeLinecap="round" opacity="0.3" />
+    <path d="M4 24 H11" stroke={color} strokeWidth="1.8" strokeLinecap="round" opacity="0.22" />
+    <path d="M4 28 H13" stroke={color} strokeWidth="1.8" strokeLinecap="round" opacity="0.3" />
+    {/* body */}
+    <circle cx="28" cy="11" r="4" fill={color} opacity="0.9" />
+    <path d="M28 15 L26 24 L21 32" stroke={color} strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
+    <path d="M26 24 L32 30" stroke={color} strokeWidth="2.4" fill="none" strokeLinecap="round" opacity="0.9" />
+    {/* arms */}
+    <path d="M27 18 L20 22" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.75" />
+    <path d="M27 18 L34 15" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.75" />
+    {/* speed dashes under feet */}
+    <path d="M18 34 L23 34" stroke={color} strokeWidth="1.6" strokeLinecap="round" opacity="0.5" />
+    <path d="M29 32 L34 32" stroke={color} strokeWidth="1.6" strokeLinecap="round" opacity="0.5" />
+    {/* forward bolt */}
+    <polygon points="38,19 34,27 37,26 34,35 42,25 39,26" fill={color} opacity="0.85" />
   </Base>
 );
 
-// 62. Fast Patterns — repeating sine wave with dots, conveying rhythmic repetition
+// 62. Fast Patterns — a DNA-like double helix of repeating letter shapes,
+//     suggesting rhythmic pattern memory burned into muscle
 export const IconSinePattern = ({ size = 28, color = "#fbbf24" }) => (
   <Base size={size}>
-    <path d="M6 24 Q10 14 14 24 Q18 34 22 24 Q26 14 30 24 Q34 34 38 24"
+    {/* back strand */}
+    <path d="M8 38 C12 32 20 28 24 24 C28 20 36 16 40 10"
+      stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.4" />
+    {/* front strand */}
+    <path d="M8 10 C12 16 20 20 24 24 C28 28 36 32 40 38"
       stroke={color} strokeWidth="2.6" fill="none" strokeLinecap="round" opacity="0.9" />
-    <circle cx="6" cy="24" r="2" fill={color} />
-    <circle cx="14" cy="24" r="2" fill={color} />
-    <circle cx="22" cy="24" r="2" fill={color} />
-    <circle cx="30" cy="24" r="2" fill={color} />
-    <circle cx="38" cy="24" r="2" fill={color} />
+    {/* rungs connecting the strands */}
+    <line x1="11" y1="13" x2="11" y2="35" stroke={color} strokeWidth="1.4" opacity="0.35" />
+    <line x1="17" y1="18" x2="17" y2="30" stroke={color} strokeWidth="1.4" opacity="0.35" />
+    <line x1="24" y1="20" x2="24" y2="28" stroke={color} strokeWidth="1.4" opacity="0.5" />
+    <line x1="31" y1="18" x2="31" y2="30" stroke={color} strokeWidth="1.4" opacity="0.35" />
+    <line x1="37" y1="13" x2="37" y2="35" stroke={color} strokeWidth="1.4" opacity="0.35" />
+    {/* node dots on front strand */}
+    <circle cx="11" cy="13" r="2.2" fill={color} opacity="0.85" />
+    <circle cx="17" cy="18" r="2.2" fill={color} opacity="0.85" />
+    <circle cx="24" cy="24" r="2.8" fill={color} opacity="1" />
+    <circle cx="31" cy="30" r="2.2" fill={color} opacity="0.85" />
+    <circle cx="37" cy="35" r="2.2" fill={color} opacity="0.85" />
   </Base>
 );
 
-// 63. Dev Commands — terminal prompt with blinking cursor block
+// 63. Dev Commands — a terminal window with scan-line texture, a blinking
+//     block cursor, and three lines of code at different widths
 export const IconTerminalPrompt = ({ size = 28, color = "#4ade80" }) => (
   <Base size={size}>
-    <rect x="6" y="10" width="36" height="28" rx="3" fill="none" stroke={color} strokeWidth="2.2" opacity="0.8" />
-    <path d="M12 20 L18 24 L12 28" stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-    <rect x="20" y="28" width="10" height="3" rx="1" fill={color} opacity="0.85" />
-    <rect x="20" y="20" width="7" height="2.5" rx="1" fill={color} opacity="0.5" />
+    {/* window body */}
+    <rect x="5" y="8" width="38" height="32" rx="4" fill={color} fillOpacity="0.08" stroke={color} strokeWidth="1.8" opacity="0.75" />
+    {/* title bar */}
+    <rect x="5" y="8" width="38" height="7" rx="4" fill={color} opacity="0.2" />
+    <circle cx="11" cy="11.5" r="1.5" fill={color} opacity="0.5" />
+    <circle cx="16" cy="11.5" r="1.5" fill={color} opacity="0.35" />
+    <circle cx="21" cy="11.5" r="1.5" fill={color} opacity="0.2" />
+    {/* prompt arrow */}
+    <path d="M10 21 L14 24 L10 27" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
+    {/* code lines */}
+    <rect x="17" y="22" width="14" height="2.2" rx="1" fill={color} opacity="0.75" />
+    <rect x="10" y="29" width="20" height="2.2" rx="1" fill={color} opacity="0.45" />
+    <rect x="10" y="34" width="11" height="2.2" rx="1" fill={color} opacity="0.3" />
+    {/* blinking cursor block */}
+    <rect x="32" y="29" width="4" height="2.2" rx="0.5" fill={color} opacity="0.9" />
   </Base>
 );
 
-// 64. Long Quotes — two bold quote marks rendered as circle-dot-tail pairs (no SVG text)
+// 64. Long Quotes — an open book with a large speech bubble rising from it,
+//     containing an ellipsis — quotes coming alive off the page
 export const IconQuoteMarks = ({ size = 28, color = "#f43f5e" }) => (
   <Base size={size}>
-    <circle cx="13" cy="16" r="4" fill={color} opacity="0.9" />
-    <circle cx="20" cy="16" r="4" fill={color} opacity="0.9" />
-    <path d="M13 20 L11 30" stroke={color} strokeWidth="3" strokeLinecap="round" opacity="0.9" />
-    <path d="M20 20 L18 30" stroke={color} strokeWidth="3" strokeLinecap="round" opacity="0.9" />
-    <circle cx="28" cy="16" r="4" fill={color} opacity="0.6" />
-    <circle cx="35" cy="16" r="4" fill={color} opacity="0.6" />
-    <path d="M28 20 L26 30" stroke={color} strokeWidth="3" strokeLinecap="round" opacity="0.6" />
-    <path d="M35 20 L33 30" stroke={color} strokeWidth="3" strokeLinecap="round" opacity="0.6" />
+    {/* book base */}
+    <path d="M6 34 L6 16 Q6 14 8 14 L22 14 L22 36 L8 36 Q6 36 6 34 Z" fill={color} opacity="0.25" stroke={color} strokeWidth="1.6" />
+    <path d="M22 14 L38 14 Q40 14 40 16 L40 34 Q40 36 38 36 L22 36 Z" fill={color} opacity="0.15" stroke={color} strokeWidth="1.6" />
+    {/* spine line */}
+    <line x1="22" y1="14" x2="22" y2="36" stroke={color} strokeWidth="2" opacity="0.6" />
+    {/* page lines */}
+    <line x1="10" y1="20" x2="19" y2="20" stroke={color} strokeWidth="1.4" opacity="0.5" />
+    <line x1="10" y1="24" x2="19" y2="24" stroke={color} strokeWidth="1.4" opacity="0.5" />
+    <line x1="10" y1="28" x2="15" y2="28" stroke={color} strokeWidth="1.4" opacity="0.35" />
+    {/* speech bubble */}
+    <path d="M26 6 Q26 3 29 3 L38 3 Q41 3 41 6 L41 12 Q41 15 38 15 L32 15 L30 18 L29 15 L29 15 Q26 15 26 12 Z"
+      fill={color} opacity="0.9" />
+    {/* ellipsis in bubble */}
+    <circle cx="30" cy="9" r="1.5" fill="#15151f" opacity="0.85" />
+    <circle cx="33.5" cy="9" r="1.5" fill="#15151f" opacity="0.85" />
+    <circle cx="37" cy="9" r="1.5" fill="#15151f" opacity="0.85" />
   </Base>
 );
 
-// 65. Grand Master — five-point crown with three jewel dots on top
+// 65. Grand Master — a tiered crown with five pointed peaks, gem inlays on each
+//     peak, a jeweled band, and a subtle glow ring beneath — regal and earned
 export const IconCrown = ({ size = 28, color = "#dc2626" }) => (
   <Base size={size}>
-    <path d="M8 34 L8 20 L16 28 L24 12 L32 28 L40 20 L40 34 Z"
+    {/* glow base ring */}
+    <ellipse cx="24" cy="36" rx="14" ry="3" fill={color} opacity="0.18" />
+    {/* crown body */}
+    <path d="M9 35 L9 22 L15 30 L24 10 L33 30 L39 22 L39 35 Z"
       fill={color} opacity="0.85" strokeLinejoin="round" />
-    <circle cx="24" cy="16" r="2.5" fill="#fff" opacity="0.75" />
-    <circle cx="11" cy="22" r="2" fill="#fff" opacity="0.6" />
-    <circle cx="37" cy="22" r="2" fill="#fff" opacity="0.6" />
-    <rect x="8" y="33" width="32" height="4" rx="1.5" fill={color} opacity="0.7" />
+    {/* inner shadow on crown body */}
+    <path d="M12 35 L12 26 L17 31 L24 16 L31 31 L36 26 L36 35 Z"
+      fill={color} opacity="0.25" />
+    {/* band across bottom */}
+    <rect x="9" y="32" width="30" height="5" rx="2" fill={color} opacity="0.7" />
+    {/* band highlight line */}
+    <rect x="9" y="32" width="30" height="1.5" rx="1" fill="#fff" opacity="0.15" />
+    {/* peak gems */}
+    <circle cx="24" cy="13" r="3" fill="#fff" opacity="0.8" />
+    <circle cx="24" cy="13" r="1.5" fill={color} opacity="0.6" />
+    <circle cx="12" cy="24" r="2.2" fill="#fff" opacity="0.65" />
+    <circle cx="36" cy="24" r="2.2" fill="#fff" opacity="0.65" />
+    {/* band studs */}
+    <circle cx="16" cy="34.5" r="1.2" fill="#fff" opacity="0.5" />
+    <circle cx="24" cy="34.5" r="1.2" fill="#fff" opacity="0.5" />
+    <circle cx="32" cy="34.5" r="1.2" fill="#fff" opacity="0.5" />
   </Base>
 );
 
-// 66. Word Flow — two smooth parallel flowing ribbons, suggesting smooth word output
+// 66. Word Flow — water flowing through a channel with ripple rings expanding
+//     outward, suggesting words moving effortlessly in a current
 export const IconFlowRibbon = ({ size = 28, color = "#06b6d4" }) => (
   <Base size={size}>
-    <path d="M6 18 Q14 12 24 18 Q34 24 42 18"
-      stroke={color} strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.9" />
-    <path d="M6 26 Q14 20 24 26 Q34 32 42 26"
-      stroke={color} strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.65" />
-    <path d="M6 30 Q14 24 24 30 Q34 36 42 30"
-      stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.35" />
+    {/* channel walls */}
+    <path d="M5 16 Q12 10 24 14 Q36 18 43 14" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.4" />
+    <path d="M5 32 Q12 38 24 34 Q36 30 43 34" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.4" />
+    {/* main flow stream */}
+    <path d="M5 24 Q12 18 24 22 Q36 26 43 20"
+      stroke={color} strokeWidth="3.5" fill="none" strokeLinecap="round" opacity="0.9" />
+    {/* ripple rings at center */}
+    <ellipse cx="24" cy="22" rx="5" ry="2.5" fill="none" stroke={color} strokeWidth="1.4" opacity="0.55" />
+    <ellipse cx="24" cy="22" rx="9" ry="4" fill="none" stroke={color} strokeWidth="1" opacity="0.3" />
+    <ellipse cx="24" cy="22" rx="13" ry="5.5" fill="none" stroke={color} strokeWidth="0.8" opacity="0.15" />
+    {/* flow arrows */}
+    <path d="M30 20 L35 22 L30 24" stroke={color} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
+    <path d="M14 22 L19 24 L14 26" stroke={color} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.45" />
   </Base>
 );
 
-// 67. Smooth Operator — saxophone bell silhouette — curved body, keys suggested by dots
+// 67. Smooth Operator — a vinyl record with a stylus arm resting on it and
+//     concentric groove rings, music notes floating off — smooth and cool
 export const IconSax = ({ size = 28, color = "#8b5cf6" }) => (
   <Base size={size}>
-    <path d="M28 8 C28 8 30 10 30 16 L30 30 Q30 38 22 38 Q14 38 14 32 Q14 28 18 28"
-      stroke={color} strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.9" />
-    <circle cx="24" cy="18" r="2" fill={color} opacity="0.7" />
-    <circle cx="24" cy="24" r="2" fill={color} opacity="0.7" />
-    <circle cx="24" cy="30" r="2" fill={color} opacity="0.7" />
-    <path d="M26 8 L32 6" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+    {/* record body */}
+    <circle cx="22" cy="26" r="16" fill={color} fillOpacity="0.2" stroke={color} strokeWidth="1.8" opacity="0.7" />
+    {/* groove rings */}
+    <circle cx="22" cy="26" r="12" fill="none" stroke={color} strokeWidth="1" opacity="0.3" />
+    <circle cx="22" cy="26" r="8" fill="none" stroke={color} strokeWidth="1" opacity="0.3" />
+    {/* label in center */}
+    <circle cx="22" cy="26" r="4.5" fill={color} opacity="0.7" />
+    <circle cx="22" cy="26" r="1.5" fill="#15151f" opacity="0.8" />
+    {/* tonearm */}
+    <path d="M36 8 L30 16 L26 22" stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round" opacity="0.9" />
+    <circle cx="36" cy="8" r="3" fill="none" stroke={color} strokeWidth="1.8" opacity="0.7" />
+    {/* stylus tip */}
+    <circle cx="26" cy="22" r="1.8" fill={color} opacity="0.9" />
+    {/* music notes */}
+    <path d="M37 18 L40 15 L40 20" stroke={color} strokeWidth="1.6" fill="none" strokeLinecap="round" opacity="0.6" />
+    <circle cx="37" cy="20" r="1.5" fill={color} opacity="0.6" />
+    <path d="M40 13 L43 10 L43 15" stroke={color} strokeWidth="1.4" fill="none" strokeLinecap="round" opacity="0.4" />
+    <circle cx="40" cy="15" r="1.2" fill={color} opacity="0.4" />
   </Base>
 );
 
-// 68. Key Climber — ascending staircase of three steps going up-right
+// 68. Key Climber — a mountaineer's pick axe driven into a cliff face with
+//     height markers on the rock wall and a flag planted at the summit
 export const IconStaircase = ({ size = 28, color = "#10b981" }) => (
   <Base size={size}>
-    <path d="M8 36 H18 V28 H26 V20 H34 V12"
-      stroke={color} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
-    <path d="M30 8 L34 12 L38 8"
-      stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
+    {/* cliff face */}
+    <path d="M12 40 L12 10 Q12 8 14 8 L30 8" stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" />
+    {/* height tick marks on cliff */}
+    <line x1="12" y1="15" x2="16" y2="15" stroke={color} strokeWidth="1.4" opacity="0.4" />
+    <line x1="12" y1="22" x2="16" y2="22" stroke={color} strokeWidth="1.4" opacity="0.4" />
+    <line x1="12" y1="29" x2="16" y2="29" stroke={color} strokeWidth="1.4" opacity="0.4" />
+    <line x1="12" y1="36" x2="16" y2="36" stroke={color} strokeWidth="1.4" opacity="0.4" />
+    {/* pick axe handle */}
+    <path d="M30 32 L18 16" stroke={color} strokeWidth="2.4" strokeLinecap="round" opacity="0.85" />
+    {/* pick axe head */}
+    <path d="M14 12 L22 18 L18 22 Z" fill={color} opacity="0.9" />
+    <path d="M14 12 L10 16" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+    {/* summit flag */}
+    <line x1="30" y1="8" x2="30" y2="20" stroke={color} strokeWidth="1.8" strokeLinecap="round" opacity="0.8" />
+    <path d="M30 8 L39 11 L30 14 Z" fill={color} opacity="0.85" />
+    {/* climber figure at pick end */}
+    <circle cx="32" cy="30" r="3" fill={color} opacity="0.7" />
+    <path d="M32 33 L32 40" stroke={color} strokeWidth="1.8" strokeLinecap="round" opacity="0.6" />
   </Base>
 );
 
-// 69. Word Weaver — two threads crossing/weaving in an X-braid pattern
+// 69. Word Weaver — a loom with warp threads running vertically and two weft
+//     threads crossing through them in alternating over-under weave rows
 export const IconWeave = ({ size = 28, color = "#f59e0b" }) => (
   <Base size={size}>
-    <path d="M10 10 Q24 24 38 38" stroke={color} strokeWidth="3.5" fill="none" strokeLinecap="round" opacity="0.85" />
-    <path d="M38 10 Q30 18 26 22" stroke={color} strokeWidth="3.5" fill="none" strokeLinecap="round" opacity="0.85" />
-    <path d="M22 26 Q18 30 10 38" stroke={color} strokeWidth="3.5" fill="none" strokeLinecap="round" opacity="0.85" />
-    <circle cx="24" cy="24" r="3.5" fill={color} opacity="0.95" />
+    {/* loom frame top and bottom bars */}
+    <rect x="7" y="8" width="34" height="4" rx="2" fill={color} opacity="0.6" />
+    <rect x="7" y="36" width="34" height="4" rx="2" fill={color} opacity="0.6" />
+    {/* vertical warp threads */}
+    <line x1="13" y1="12" x2="13" y2="36" stroke={color} strokeWidth="1.4" opacity="0.3" />
+    <line x1="19" y1="12" x2="19" y2="36" stroke={color} strokeWidth="1.4" opacity="0.3" />
+    <line x1="25" y1="12" x2="25" y2="36" stroke={color} strokeWidth="1.4" opacity="0.3" />
+    <line x1="31" y1="12" x2="31" y2="36" stroke={color} strokeWidth="1.4" opacity="0.3" />
+    <line x1="37" y1="12" x2="37" y2="36" stroke={color} strokeWidth="1.4" opacity="0.3" />
+    {/* weft thread row 1 — weaves over/under alternate warps */}
+    <path d="M7 19 Q10 16 13 19 Q16 22 19 19 Q22 16 25 19 Q28 22 31 19 Q34 16 37 19 Q40 22 43 19"
+      stroke={color} strokeWidth="2.4" fill="none" strokeLinecap="round" opacity="0.9" />
+    {/* weft thread row 2 — opposite phase */}
+    <path d="M7 27 Q10 30 13 27 Q16 24 19 27 Q22 30 25 27 Q28 24 31 27 Q34 30 37 27 Q40 24 43 27"
+      stroke={color} strokeWidth="2.4" fill="none" strokeLinecap="round" opacity="0.65" />
   </Base>
 );
 
-// 70. Steady Stream — three evenly-spaced falling water drops
+// 70. Steady Stream — a faucet tap viewed from the side with a thick consistent
+//     water stream falling from it and small splash rings at the bottom
 export const IconDrops = ({ size = 28, color = "#3b82f6" }) => (
   <Base size={size}>
-    <path d="M14 10 Q14 20 14 22 Q14 28 18 28 Q22 28 22 22 Q22 18 22 10 Q18 6 14 10 Z"
-      fill={color} opacity="0.5" />
-    <path d="M22 16 Q22 24 22 26 Q22 30 25 30 Q28 30 28 26 Q28 24 28 16 Q25 13 22 16 Z"
-      fill={color} opacity="0.75" />
-    <path d="M30 10 Q30 20 30 22 Q30 28 34 28 Q38 28 38 22 Q38 18 38 10 Q34 6 30 10 Z"
-      fill={color} opacity="0.5" />
+    {/* pipe body */}
+    <rect x="8" y="10" width="18" height="7" rx="3.5" fill={color} opacity="0.7" />
+    {/* pipe vertical drop neck */}
+    <rect x="22" y="10" width="5" height="12" rx="2" fill={color} opacity="0.5" />
+    {/* faucet spout tip */}
+    <path d="M20 17 L28 17 L28 22 Q28 25 24 25 Q20 25 20 22 Z" fill={color} opacity="0.8" />
+    {/* water stream */}
+    <path d="M24 25 Q23 31 23 36" stroke={color} strokeWidth="3.5" fill="none" strokeLinecap="round" opacity="0.85" />
+    <path d="M24 25 Q25 31 25 36" stroke={color} strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.4" />
+    {/* splash rings at bottom */}
+    <ellipse cx="24" cy="38" rx="5" ry="2" fill="none" stroke={color} strokeWidth="1.5" opacity="0.6" />
+    <ellipse cx="24" cy="38" rx="9" ry="3" fill="none" stroke={color} strokeWidth="1" opacity="0.3" />
+    {/* handle on top of pipe */}
+    <rect x="18" y="7" width="5" height="5" rx="1" fill={color} opacity="0.5" />
+    <rect x="20" y="4" width="2" height="5" rx="1" fill={color} opacity="0.7" />
   </Base>
 );
 
-// 71. Rapid Rush — single bold lightning bolt, larger and sharper than level 61's cluster
+// 71. Rapid Rush — a racing car viewed from above at speed, with aerodynamic
+//     body lines, spinning wheel blurs, and long speed-trail streaks behind it
 export const IconBigBolt = ({ size = 28, color = "#facc15" }) => (
   <Base size={size}>
-    <polygon points="26,6 14,25 23,23 18,42 34,21 25,24" fill={color} opacity="0.9" />
+    {/* speed trail lines */}
+    <path d="M3 18 H14" stroke={color} strokeWidth="1.6" strokeLinecap="round" opacity="0.25" />
+    <path d="M3 24 H12" stroke={color} strokeWidth="2.2" strokeLinecap="round" opacity="0.35" />
+    <path d="M3 30 H14" stroke={color} strokeWidth="1.6" strokeLinecap="round" opacity="0.25" />
+    {/* car body */}
+    <path d="M14 18 Q16 14 24 13 Q36 13 40 18 L40 30 Q36 35 24 35 Q16 34 14 30 Z"
+      fill={color} opacity="0.85" />
+    {/* cockpit canopy */}
+    <path d="M20 18 Q24 15 30 18 L30 24 Q24 26 20 24 Z" fill={color} opacity="0.35" />
+    {/* front wing */}
+    <path d="M38 17 L44 15 L44 20 L38 20 Z" fill={color} opacity="0.7" />
+    <path d="M38 28 L44 28 L44 33 L38 31 Z" fill={color} opacity="0.7" />
+    {/* wheels (blurred circles) */}
+    <ellipse cx="18" cy="14" rx="3.5" ry="2" fill={color} opacity="0.5" />
+    <ellipse cx="18" cy="34" rx="3.5" ry="2" fill={color} opacity="0.5" />
+    <ellipse cx="35" cy="14" rx="3.5" ry="2" fill={color} opacity="0.5" />
+    <ellipse cx="35" cy="34" rx="3.5" ry="2" fill={color} opacity="0.5" />
   </Base>
 );
 
-// 72. Precision Peak — classic bullseye: three concentric circles with a center dot
+// 72. Precision Peak — a sniper scope reticle: crosshairs spanning the full
+//     icon, mil-dot marks on each arm, concentric ring sight, center dot
 export const IconBullseye = ({ size = 28, color = "#ef4444" }) => (
   <Base size={size}>
-    <circle cx="24" cy="24" r="17" fill="none" stroke={color} strokeWidth="2" opacity="0.4" />
-    <circle cx="24" cy="24" r="11" fill="none" stroke={color} strokeWidth="2.2" opacity="0.65" />
-    <circle cx="24" cy="24" r="5.5" fill={color} opacity="0.9" />
+    {/* scope outer ring */}
+    <circle cx="24" cy="24" r="17" fill="none" stroke={color} strokeWidth="1.8" opacity="0.5" />
+    {/* inner sight ring */}
+    <circle cx="24" cy="24" r="10" fill="none" stroke={color} strokeWidth="1.6" opacity="0.75" />
+    {/* crosshair lines — gap in center */}
+    <line x1="7" y1="24" x2="14" y2="24" stroke={color} strokeWidth="2" opacity="0.9" />
+    <line x1="34" y1="24" x2="41" y2="24" stroke={color} strokeWidth="2" opacity="0.9" />
+    <line x1="24" y1="7" x2="24" y2="14" stroke={color} strokeWidth="2" opacity="0.9" />
+    <line x1="24" y1="34" x2="24" y2="41" stroke={color} strokeWidth="2" opacity="0.9" />
+    {/* mil-dot marks on crosshairs */}
+    <circle cx="10" cy="24" r="1.2" fill={color} opacity="0.7" />
+    <circle cx="38" cy="24" r="1.2" fill={color} opacity="0.7" />
+    <circle cx="24" cy="10" r="1.2" fill={color} opacity="0.7" />
+    <circle cx="24" cy="38" r="1.2" fill={color} opacity="0.7" />
+    {/* center dot */}
+    <circle cx="24" cy="24" r="3" fill={color} opacity="0.95" />
+    <circle cx="24" cy="24" r="1.2" fill="#fff" opacity="0.6" />
   </Base>
 );
 
-// 73. Focus Fire — stylized flame: outer teardrop with inner highlight tongue
+// 73. Focus Fire — a campfire with three logs arranged in a tripod base,
+//     rising flame layers in yellow-orange, and rising ember sparks
 export const IconFlame = ({ size = 28, color = "#f97316" }) => (
   <Base size={size}>
-    <path d="M24 6 C24 6 36 16 36 26 C36 34 30 40 24 40 C18 40 12 34 12 26 C12 16 24 6 24 6 Z"
-      fill={color} opacity="0.85" />
-    <path d="M24 16 C24 16 30 22 30 28 C30 32 27 35 24 35 C21 35 20 32 20 28 C20 22 24 16 24 16 Z"
-      fill="#fef08a" opacity="0.6" />
+    {/* log base left */}
+    <path d="M10 38 L20 30" stroke={color} strokeWidth="3.5" strokeLinecap="round" opacity="0.6" />
+    {/* log base right */}
+    <path d="M38 38 L28 30" stroke={color} strokeWidth="3.5" strokeLinecap="round" opacity="0.6" />
+    {/* log base center */}
+    <path d="M16 38 L32 38" stroke={color} strokeWidth="3.5" strokeLinecap="round" opacity="0.4" />
+    {/* outer flame */}
+    <path d="M24 10 C18 14 12 20 14 28 C16 34 20 36 24 36 C28 36 32 34 34 28 C36 20 30 14 24 10 Z"
+      fill={color} opacity="0.8" />
+    {/* mid flame */}
+    <path d="M24 16 C20 20 18 24 20 29 C21 32 22 33 24 33 C26 33 27 32 28 29 C30 24 28 20 24 16 Z"
+      fill="#fde68a" opacity="0.75" />
+    {/* inner core */}
+    <path d="M24 22 C22 25 22 27 24 30 C26 27 26 25 24 22 Z"
+      fill="#fff" opacity="0.55" />
+    {/* ember sparks */}
+    <circle cx="18" cy="14" r="1.2" fill={color} opacity="0.6" />
+    <circle cx="30" cy="11" r="1" fill={color} opacity="0.5" />
+    <circle cx="33" cy="17" r="0.9" fill="#fde68a" opacity="0.5" />
+    <circle cx="15" cy="20" r="0.9" fill="#fde68a" opacity="0.4" />
   </Base>
 );
 
-// 74. Type Storm — counterclockwise spiral tornado shape
+// 74. Type Storm — a hurricane viewed from above: a tight eye at center,
+//     spiral cloud bands curling outward, and rain-streak lines radiating out
 export const IconTornado = ({ size = 28, color = "#a855f7" }) => (
   <Base size={size}>
-    <path d="M10 12 Q24 8 36 12 Q34 18 24 18 Q14 18 12 22 Q10 28 20 28 Q28 28 28 32 Q28 36 24 38"
-      stroke={color} strokeWidth="2.8" fill="none" strokeLinecap="round" opacity="0.9" />
-    <path d="M14 14 Q24 11 33 14" stroke={color} strokeWidth="1.6" fill="none" strokeLinecap="round" opacity="0.45" />
-    <path d="M16 22 Q24 20 31 22" stroke={color} strokeWidth="1.4" fill="none" strokeLinecap="round" opacity="0.35" />
+    {/* outer band */}
+    <path d="M24 6 C34 6 42 14 42 24 C42 34 34 42 24 42 C14 42 6 34 6 24 C6 14 14 6 24 6 Z"
+      fill="none" stroke={color} strokeWidth="1.4" opacity="0.2" />
+    {/* spiral band 1 */}
+    <path d="M24 9 C38 10 41 22 34 32 C28 40 14 40 9 30"
+      fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" opacity="0.55" />
+    {/* spiral band 2 */}
+    <path d="M24 13 C34 14 37 24 30 31 C24 37 14 35 11 27"
+      fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round" opacity="0.75" />
+    {/* spiral band 3 — innermost */}
+    <path d="M24 17 C30 17 33 22 30 27 C27 32 20 31 18 26"
+      fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.9" />
+    {/* eye ring */}
+    <circle cx="24" cy="24" r="5" fill="none" stroke={color} strokeWidth="2" opacity="0.85" />
+    {/* eye center calm dot */}
+    <circle cx="24" cy="24" r="2" fill={color} opacity="0.6" />
+    {/* rain streaks */}
+    <line x1="10" y1="12" x2="8" y2="17" stroke={color} strokeWidth="1.2" strokeLinecap="round" opacity="0.3" />
+    <line x1="38" y1="10" x2="40" y2="15" stroke={color} strokeWidth="1.2" strokeLinecap="round" opacity="0.3" />
+    <line x1="6" y1="28" x2="4" y2="33" stroke={color} strokeWidth="1.2" strokeLinecap="round" opacity="0.3" />
+    <line x1="42" y1="30" x2="44" y2="35" stroke={color} strokeWidth="1.2" strokeLinecap="round" opacity="0.3" />
   </Base>
 );
 
-// 75. Word Blitz — starburst explosion: 8 radiating spikes around a center circle
+// 75. Word Blitz — a bomb with a lit fuse and a stylized explosion ring around
+//     it: the fuse sparks upward, the blast ring has radiating spike shards
 export const IconStarburst = ({ size = 28, color = "#ec4899" }) => (
   <Base size={size}>
-    <polygon points="24,7 26.5,18 37,16 28,22 37,30 26,27 24,38 22,27 11,30 20,22 11,16 21.5,18"
-      fill={color} opacity="0.85" />
-    <circle cx="24" cy="24" r="4" fill="#fff" opacity="0.45" />
+    {/* explosion ring shards */}
+    <polygon points="24,4 25.5,10 30,6 27,12 34,10 28,15 36,16 28,18 35,22 27,21 32,28 24,23 24,31 20,23 16,28 21,21 13,22 20,18 12,16 20,15 14,10 21,12 18,6 23,10" fill={color} opacity="0.3" />
+    {/* bomb body */}
+    <circle cx="24" cy="26" r="11" fill={color} opacity="0.85" />
+    {/* bomb shine */}
+    <circle cx="20" cy="21" r="3.5" fill="#fff" opacity="0.15" />
+    {/* bomb top nub */}
+    <rect x="21.5" y="14" width="5" height="4" rx="2" fill={color} opacity="0.8" />
+    {/* fuse cord */}
+    <path d="M24 14 Q28 10 26 6 Q30 3 34 5"
+      stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.85" />
+    {/* fuse spark */}
+    <circle cx="34" cy="5" r="2.5" fill="#fde68a" opacity="0.95" />
+    <circle cx="34" cy="5" r="1.2" fill="#fff" opacity="0.8" />
+    <path d="M35 3 L37 1" stroke="#fde68a" strokeWidth="1.5" strokeLinecap="round" opacity="0.7" />
+    <path d="M36 5 L39 4" stroke="#fde68a" strokeWidth="1.5" strokeLinecap="round" opacity="0.7" />
+    <path d="M35 7 L38 8" stroke="#fde68a" strokeWidth="1.2" strokeLinecap="round" opacity="0.5" />
   </Base>
 );
 
