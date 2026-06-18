@@ -810,11 +810,17 @@ export const IconTerminal = ({ size = 28, color = "#4ade80" }) => (
   </Base>
 );
 
-// 64. Long Quotes — large open/close quotation marks, bold and clean
+// 64. Long Quotes — two bold quote marks rendered as circle-dot-tail pairs (no SVG text)
 export const IconQuoteMarks = ({ size = 28, color = "#f43f5e" }) => (
   <Base size={size}>
-    <text x="4" y="34" fontSize="30" fill={color} opacity="0.9" fontFamily="Georgia, serif" fontWeight="bold">"</text>
-    <text x="26" y="34" fontSize="30" fill={color} opacity="0.9" fontFamily="Georgia, serif" fontWeight="bold">"</text>
+    <circle cx="13" cy="16" r="4" fill={color} opacity="0.9" />
+    <circle cx="20" cy="16" r="4" fill={color} opacity="0.9" />
+    <path d="M13 20 L11 30" stroke={color} strokeWidth="3" strokeLinecap="round" opacity="0.9" />
+    <path d="M20 20 L18 30" stroke={color} strokeWidth="3" strokeLinecap="round" opacity="0.9" />
+    <circle cx="28" cy="16" r="4" fill={color} opacity="0.6" />
+    <circle cx="35" cy="16" r="4" fill={color} opacity="0.6" />
+    <path d="M28 20 L26 30" stroke={color} strokeWidth="3" strokeLinecap="round" opacity="0.6" />
+    <path d="M35 20 L33 30" stroke={color} strokeWidth="3" strokeLinecap="round" opacity="0.6" />
   </Base>
 );
 
