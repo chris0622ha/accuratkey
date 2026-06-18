@@ -580,3 +580,173 @@ export const WORD_POWER_ICONS = {
   36: IconAlliteration, 37: IconMic, 38: IconFlex, 39: IconMapPin, 40: IconGear,
   41: IconEar, 42: IconPuzzle, 43: IconWand, 44: IconPrefixBlocks, 45: IconPaintbrush,
 };
+
+// ─── Keyboard Mastery section (levels 46-60) ────────────────────────────────
+
+// 46. Hard Spellings — a bee with striped body and folded wings, spelling-bee themed
+export const IconBee = ({ size = 28, color = "#fcd34d" }) => (
+  <Base size={size}>
+    <ellipse cx="24" cy="26" rx="9" ry="11" fill={color} opacity="0.9" />
+    <path d="M17 19 H31 M16 25 H32 M17 31 H31" stroke="#1e1e30" strokeWidth="2.4" opacity="0.6" />
+    <ellipse cx="16" cy="18" rx="6" ry="8" fill="#fff" opacity="0.3" transform="rotate(-25 16 18)" />
+    <ellipse cx="32" cy="18" rx="6" ry="8" fill="#fff" opacity="0.3" transform="rotate(25 32 18)" />
+    <circle cx="24" cy="13" r="4" fill={color} />
+    <path d="M21 10 L19 5 M27 10 L29 5" stroke={color} strokeWidth="1.4" strokeLinecap="round" />
+  </Base>
+);
+
+// 47. Famous Names — a laurel wreath encircling a small carved bust silhouette
+export const IconLaurel = ({ size = 28, color = "#d97706" }) => (
+  <Base size={size}>
+    <path d="M10 36 C6 28 6 16 14 8" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" />
+    <path d="M10 32 L5 30 M9 26 L4 25 M10 20 L6 18 M12 14 L8 11" stroke={color} strokeWidth="1.6" strokeLinecap="round" opacity="0.85" />
+    <path d="M38 36 C42 28 42 16 34 8" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" />
+    <path d="M38 32 L43 30 M39 26 L44 25 M38 20 L42 18 M36 14 L40 11" stroke={color} strokeWidth="1.6" strokeLinecap="round" opacity="0.85" />
+    <path d="M19 18 C19 14 28 14 28 18 C28 22 26 24 24 26 C22 24 19 22 19 18 Z" fill={color} opacity="0.85" />
+    <rect x="20" y="26" width="8" height="12" rx="2" fill={color} opacity="0.6" />
+  </Base>
+);
+
+// 48. Tricky Words — a tangled thread knot, with one strand pulled taut
+export const IconKnot = ({ size = 28, color = "#4ade80" }) => (
+  <Base size={size}>
+    <path d="M8 18 C8 12 16 12 18 18 C20 24 28 24 30 18 C32 12 40 12 40 18 C40 26 30 26 26 30 C22 34 12 32 14 26 C15 22 19 22 18 26" stroke={color} strokeWidth="2.6" fill="none" strokeLinecap="round" />
+    <circle cx="8" cy="18" r="2" fill={color} />
+    <circle cx="18" cy="26" r="2" fill={color} opacity="0.7" />
+  </Base>
+);
+
+// 49. Keyboard Rows — a single highlighted keyboard row strip with raised keys
+export const IconKeyRow = ({ size = 28, color = "#818cf8" }) => (
+  <Base size={size}>
+    <rect x="4" y="20" width="40" height="10" rx="2.5" fill={color} opacity="0.14" stroke={color} strokeWidth="1.8" />
+    <rect x="7" y="22" width="5" height="6" rx="1.2" fill={color} opacity="0.85" />
+    <rect x="14" y="22" width="5" height="6" rx="1.2" fill={color} opacity="0.7" />
+    <rect x="21" y="22" width="5" height="6" rx="1.2" fill={color} opacity="0.85" />
+    <rect x="28" y="22" width="5" height="6" rx="1.2" fill={color} opacity="0.7" />
+    <rect x="35" y="22" width="5" height="6" rx="1.2" fill={color} opacity="0.85" />
+    <path d="M10 12 H38" stroke={color} strokeWidth="1.2" opacity="0.25" strokeDasharray="2 3" />
+    <path d="M10 38 H38" stroke={color} strokeWidth="1.2" opacity="0.25" strokeDasharray="2 3" />
+  </Base>
+);
+
+// 50. Left Side — a left hand silhouette with fingers spread over home keys
+export const IconLeftHand = ({ size = 28, color = "#f87171" }) => (
+  <Base size={size}>
+    <path d="M30 42 H14 C11 42 9 40 9 37 V24 C9 22 11 21 12 22 V16 C12 14 14 13 15 14 V10 C15 8 17 7 18 8 V6 C18 4 20 3 21 5 V14 C23 13 25 14 25 16 V20 C28 19 31 21 31 25 V37 C31 40 32 42 30 42 Z" fill={color} opacity="0.85" stroke={color} strokeWidth="1" strokeLinejoin="round" />
+    <line x1="12" y1="22" x2="12" y2="28" stroke="#1e1e30" strokeWidth="1" opacity="0.3" />
+    <line x1="15" y1="14" x2="15" y2="22" stroke="#1e1e30" strokeWidth="1" opacity="0.3" />
+  </Base>
+);
+
+// 51. Right Side — a right hand silhouette, mirrored from Left Side
+export const IconRightHand = ({ size = 28, color = "#fb923c" }) => (
+  <Base size={size}>
+    <path d="M18 42 H34 C37 42 39 40 39 37 V24 C39 22 37 21 36 22 V16 C36 14 34 13 33 14 V10 C33 8 31 7 30 8 V6 C30 4 28 3 27 5 V14 C25 13 23 14 23 16 V20 C20 19 17 21 17 25 V37 C17 40 16 42 18 42 Z" fill={color} opacity="0.85" stroke={color} strokeWidth="1" strokeLinejoin="round" />
+    <line x1="36" y1="22" x2="36" y2="28" stroke="#1e1e30" strokeWidth="1" opacity="0.3" />
+    <line x1="33" y1="14" x2="33" y2="22" stroke="#1e1e30" strokeWidth="1" opacity="0.3" />
+  </Base>
+);
+
+// 52. Full Sentences — a checkered finish-line flag on a pole
+export const IconFinishFlag = ({ size = 28, color = "#ef4444" }) => (
+  <Base size={size}>
+    <line x1="10" y1="6" x2="10" y2="42" stroke={color} strokeWidth="2.4" strokeLinecap="round" />
+    <path d="M10 8 H34 V24 H10 Z" fill="#fff" opacity="0.9" />
+    <rect x="10" y="8" width="6" height="4" fill={color} /><rect x="22" y="8" width="6" height="4" fill={color} />
+    <rect x="16" y="12" width="6" height="4" fill={color} /><rect x="28" y="12" width="6" height="4" fill={color} />
+    <rect x="10" y="16" width="6" height="4" fill={color} /><rect x="22" y="16" width="6" height="4" fill={color} />
+    <rect x="16" y="20" width="6" height="4" fill={color} /><rect x="28" y="20" width="6" height="4" fill={color} />
+  </Base>
+);
+
+// 53. Philosophy — a head profile in thought, with a lightbulb-idea above
+export const IconThinker = ({ size = 28, color = "#a78bfa" }) => (
+  <Base size={size}>
+    <path d="M16 26 C13 22 13 14 19 10 C25 6 33 9 34 16 C35 20 33 22 33 26 V32 C33 35 31 37 28 37 H20 C18 37 17 35 17 33 V28 Z" fill={color} opacity="0.85" stroke={color} strokeWidth="1" strokeLinejoin="round" />
+    <path d="M19 10 C16 12 14 16 16 20" stroke="#1e1e30" strokeWidth="1.2" opacity="0.3" fill="none" />
+    <circle cx="29" cy="6" r="4" fill="#fde047" opacity="0.85" />
+    <line x1="29" y1="1" x2="29" y2="-1" stroke="#fde047" strokeWidth="1.2" opacity="0.6" />
+    <line x1="34" y1="6" x2="36" y2="6" stroke="#fde047" strokeWidth="1.2" opacity="0.6" />
+  </Base>
+);
+
+// 54. Shortcut Words — two overlapping keys suggesting a key combination shortcut
+export const IconCmdKey = ({ size = 28, color = "#38bdf8" }) => (
+  <Base size={size}>
+    <rect x="6" y="14" width="20" height="20" rx="4" fill={color} opacity="0.45" stroke={color} strokeWidth="1.6" />
+    <rect x="22" y="10" width="20" height="20" rx="4" fill={color} opacity="0.9" stroke={color} strokeWidth="1.6" />
+    <line x1="27" y1="16" x2="33" y2="16" stroke="#15151f" strokeWidth="1.4" opacity="0.35" />
+    <text x="32" y="25" textAnchor="middle" fill="#15151f" fontSize="10" fontWeight="bold" opacity="0.6">+</text>
+  </Base>
+);
+
+// 55. World Languages — three speech bubbles of varying shapes overlapping, suggesting many tongues
+export const IconLangBubbles = ({ size = 28, color = "#e879f9" }) => (
+  <Base size={size}>
+    <ellipse cx="16" cy="18" rx="11" ry="8" fill={color} opacity="0.4" />
+    <path d="M11 24 L9 30 L16 25" fill={color} opacity="0.4" />
+    <rect x="22" y="14" width="20" height="14" rx="3" fill={color} opacity="0.85" />
+    <path d="M28 28 L26 34 L34 28" fill={color} opacity="0.85" />
+    <circle cx="28" cy="21" r="1.4" fill="#15151f" opacity="0.5" />
+    <circle cx="33" cy="21" r="1.4" fill="#15151f" opacity="0.5" />
+    <circle cx="38" cy="21" r="1.4" fill="#15151f" opacity="0.5" />
+  </Base>
+);
+
+// 56. Long Phrases — a horizontally stretched arrow with extension tick marks
+export const IconStretchArrow = ({ size = 28, color = "#f43f5e" }) => (
+  <Base size={size}>
+    <line x1="4" y1="24" x2="38" y2="24" stroke={color} strokeWidth="2.4" strokeLinecap="round" />
+    <path d="M32 17 L40 24 L32 31" stroke={color} strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <line x1="8" y1="18" x2="8" y2="30" stroke={color} strokeWidth="1.4" opacity="0.5" />
+    <line x1="16" y1="20" x2="16" y2="28" stroke={color} strokeWidth="1.2" opacity="0.4" />
+    <line x1="24" y1="20" x2="24" y2="28" stroke={color} strokeWidth="1.2" opacity="0.4" />
+  </Base>
+);
+
+// 57. Hard Clusters — three interlocked rings, suggesting tangled consonant clusters
+export const IconLinkedRings = ({ size = 28, color = "#94a3b8" }) => (
+  <Base size={size}>
+    <circle cx="17" cy="20" r="8" stroke={color} strokeWidth="2.6" fill="none" opacity="0.85" />
+    <circle cx="31" cy="20" r="8" stroke={color} strokeWidth="2.6" fill="none" opacity="0.65" />
+    <circle cx="24" cy="31" r="8" stroke={color} strokeWidth="2.6" fill="none" opacity="0.45" />
+  </Base>
+);
+
+// 58. Common Words — a small stack of everyday index/flash cards, slightly fanned
+export const IconCards = ({ size = 28, color = "#22c55e" }) => (
+  <Base size={size}>
+    <rect x="9" y="14" width="26" height="18" rx="2.5" fill={color} opacity="0.3" transform="rotate(-6 22 23)" />
+    <rect x="11" y="12" width="26" height="18" rx="2.5" fill={color} opacity="0.55" transform="rotate(3 24 21)" />
+    <rect x="10" y="13" width="28" height="20" rx="2.5" fill={color} opacity="0.9" stroke={color} strokeWidth="1" />
+    <line x1="15" y1="20" x2="33" y2="20" stroke="#15151f" strokeWidth="1.4" opacity="0.4" />
+    <line x1="15" y1="25" x2="27" y2="25" stroke="#15151f" strokeWidth="1.4" opacity="0.3" />
+  </Base>
+);
+
+// 59. Emotion Words — a heart with a heartbeat/pulse line crossing through it
+export const IconHeartPulse = ({ size = 28, color = "#fb7185" }) => (
+  <Base size={size}>
+    <path d="M24 38 C12 30 6 22 6 15 C6 9 11 5 16 5 C20 5 23 8 24 11 C25 8 28 5 32 5 C37 5 42 9 42 15 C42 22 36 30 24 38 Z" fill={color} opacity="0.85" stroke={color} strokeWidth="1" />
+    <path d="M9 19 H17 L20 13 L25 25 L28 19 H39" stroke="#fff" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.8" />
+  </Base>
+);
+
+// 60. Very Long Words — an expanding accordion bracket with stretch arrows on both ends
+export const IconExpand = ({ size = 28, color = "#c084fc" }) => (
+  <Base size={size}>
+    <path d="M10 14 V34" stroke={color} strokeWidth="2.4" strokeLinecap="round" />
+    <path d="M38 14 V34" stroke={color} strokeWidth="2.4" strokeLinecap="round" />
+    <path d="M14 24 H34" stroke={color} strokeWidth="2" strokeDasharray="3 3" opacity="0.7" />
+    <path d="M16 18 L10 24 L16 30" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M32 18 L38 24 L32 30" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+  </Base>
+);
+
+// Maps level id -> icon component, for the Keyboard Mastery section (46-60).
+export const KEYBOARD_MASTERY_ICONS = {
+  46: IconBee, 47: IconLaurel, 48: IconKnot, 49: IconKeyRow, 50: IconLeftHand,
+  51: IconRightHand, 52: IconFinishFlag, 53: IconThinker, 54: IconCmdKey, 55: IconLangBubbles,
+  56: IconStretchArrow, 57: IconLinkedRings, 58: IconCards, 59: IconHeartPulse, 60: IconExpand,
+};
