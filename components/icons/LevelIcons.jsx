@@ -1145,3 +1145,960 @@ export const SPEED_SURGE_ICONS = {
   66: IconFlowRibbon, 67: IconSax, 68: IconStaircase, 69: IconWeave, 70: IconDrops,
   71: IconBigBolt, 72: IconBullseye, 73: IconFlame, 74: IconTornado, 75: IconStarburst,
 };
+
+// ─── Free Run section (levels 76-99) ────────────────────────────────────────
+
+// 76. Long Haul — a semi-truck side view with motion streaks
+export const IconTruck = ({ size = 28, color = "#34d399" }) => (
+  <Base size={size}>
+    <rect x="4" y="20" width="30" height="14" rx="2" fill={color} opacity="0.18" stroke={color} strokeWidth="2" />
+    <rect x="32" y="24" width="12" height="10" rx="2" fill={color} opacity="0.3" stroke={color} strokeWidth="1.6" />
+    <circle cx="11" cy="36" r="4" fill={color} opacity="0.85" stroke="#15151f" strokeWidth="1.2" />
+    <circle cx="35" cy="36" r="4" fill={color} opacity="0.85" stroke="#15151f" strokeWidth="1.2" />
+    <path d="M2 26 L0 26 M2 22 L0 22" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.5" />
+    <rect x="33" y="25" width="10" height="6" rx="1" fill={color} opacity="0.2" />
+  </Base>
+);
+
+// 77. Big Words — a large capital letter A with size indicators
+export const IconBigA = ({ size = 28, color = "#60a5fa" }) => (
+  <Base size={size}>
+    <path d="M24 6 L38 42 M24 6 L10 42" stroke={color} strokeWidth="4" strokeLinecap="round" opacity="0.85" />
+    <path d="M16 28 H32" stroke={color} strokeWidth="3" strokeLinecap="round" />
+    <path d="M4 10 L8 6 M44 10 L40 6" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.5" />
+    <path d="M4 38 L8 42 M44 38 L40 42" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.5" />
+  </Base>
+);
+
+// 78. Mega Vocab — a bulging dictionary with words exploding out
+export const IconMegaBook = ({ size = 28, color = "#f472b6" }) => (
+  <Base size={size}>
+    <path d="M10 8 Q8 24 10 40 H38 Q40 24 38 8 Z" fill={color} opacity="0.16" stroke={color} strokeWidth="2" />
+    <path d="M10 8 H38" stroke={color} strokeWidth="1.4" opacity="0.5" />
+    <path d="M14 16 H34 M14 22 H34 M14 28 H28" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+    <path d="M30 24 L36 18 M33 20 L39 14" stroke={color} strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
+    <circle cx="40" cy="12" r="3" fill={color} opacity="0.7" />
+  </Base>
+);
+
+// 79. Word Mountain — a steep mountain peak with word-trail switchbacks
+export const IconWordMtn = ({ size = 28, color = "#fbbf24" }) => (
+  <Base size={size}>
+    <path d="M4 42 L24 8 L44 42 Z" fill={color} opacity="0.15" stroke={color} strokeWidth="2.2" strokeLinejoin="round" />
+    <path d="M10 42 L16 30 L22 36 L24 28" stroke={color} strokeWidth="1.4" strokeDasharray="2 2.5" fill="none" strokeLinecap="round" opacity="0.7" />
+    <circle cx="24" cy="8" r="3" fill={color} opacity="0.9" />
+    <path d="M20 16 H28 M18 22 H30" stroke={color} strokeWidth="1" opacity="0.4" />
+  </Base>
+);
+
+// 80. Vocab Vault — a bank vault door with a spinning dial
+export const IconVault = ({ size = 28, color = "#818cf8" }) => (
+  <Base size={size}>
+    <circle cx="24" cy="24" r="18" fill={color} opacity="0.14" stroke={color} strokeWidth="2.2" />
+    <circle cx="24" cy="24" r="11" fill="none" stroke={color} strokeWidth="1.6" opacity="0.6" />
+    <circle cx="24" cy="24" r="5" fill={color} opacity="0.4" />
+    <path d="M24 13 V16 M24 32 V35 M13 24 H16 M32 24 H35" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <path d="M24 24 L30 18" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.85" />
+    <circle cx="24" cy="24" r="2" fill={color} />
+  </Base>
+);
+
+// 81. Lab Notes — a clipboard with checkboxes and a pencil
+export const IconClipboard = ({ size = 28, color = "#38bdf8" }) => (
+  <Base size={size}>
+    <rect x="10" y="10" width="28" height="34" rx="3" fill={color} opacity="0.14" stroke={color} strokeWidth="2" />
+    <rect x="18" y="6" width="12" height="8" rx="2" fill={color} opacity="0.4" stroke={color} strokeWidth="1.4" />
+    <rect x="14" y="20" width="4" height="4" rx="1" fill="none" stroke={color} strokeWidth="1.4" opacity="0.8" />
+    <path d="M20 22 H32" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+    <rect x="14" y="28" width="4" height="4" rx="1" fill={color} opacity="0.7" stroke={color} strokeWidth="1.2" />
+    <path d="M20 30 H32" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+    <path d="M20 38 H28" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.5" />
+  </Base>
+);
+
+// 82. Tech Talk II — circuit board traces with a chip node
+export const IconCircuit = ({ size = 28, color = "#4ade80" }) => (
+  <Base size={size}>
+    <rect x="16" y="16" width="16" height="16" rx="2" fill={color} opacity="0.2" stroke={color} strokeWidth="2" />
+    <circle cx="20" cy="20" r="1.5" fill={color} opacity="0.9" />
+    <circle cx="28" cy="20" r="1.5" fill={color} opacity="0.9" />
+    <circle cx="20" cy="28" r="1.5" fill={color} opacity="0.9" />
+    <circle cx="28" cy="28" r="1.5" fill={color} opacity="0.9" />
+    <path d="M20 16 V10 M28 16 V10 M16 20 H8 M16 28 H8 M32 20 H40 M32 28 H40 M20 32 V40 M28 32 V40" stroke={color} strokeWidth="1.6" strokeLinecap="round" opacity="0.7" />
+  </Base>
+);
+
+// 83. Science Sprint — an atom with orbiting electrons
+export const IconAtom = ({ size = 28, color = "#fb923c" }) => (
+  <Base size={size}>
+    <ellipse cx="24" cy="24" rx="18" ry="7" fill="none" stroke={color} strokeWidth="1.8" opacity="0.85" />
+    <ellipse cx="24" cy="24" rx="18" ry="7" fill="none" stroke={color} strokeWidth="1.8" opacity="0.85" transform="rotate(60 24 24)" />
+    <ellipse cx="24" cy="24" rx="18" ry="7" fill="none" stroke={color} strokeWidth="1.8" opacity="0.85" transform="rotate(-60 24 24)" />
+    <circle cx="24" cy="24" r="4" fill={color} opacity="0.85" />
+    <circle cx="24" cy="17" r="2.5" fill={color} opacity="0.9" />
+    <circle cx="36" cy="29" r="2" fill={color} opacity="0.7" />
+    <circle cx="13" cy="29" r="2" fill={color} opacity="0.7" />
+  </Base>
+);
+
+// 84. Data Drive — a hard drive disk with spinning platters visible
+export const IconDrive = ({ size = 28, color = "#c084fc" }) => (
+  <Base size={size}>
+    <rect x="6" y="14" width="36" height="22" rx="4" fill={color} opacity="0.14" stroke={color} strokeWidth="2" />
+    <circle cx="24" cy="25" r="8" fill="none" stroke={color} strokeWidth="1.6" opacity="0.7" />
+    <circle cx="24" cy="25" r="3" fill={color} opacity="0.5" />
+    <circle cx="36" cy="18" r="2.5" fill={color} opacity="0.8" />
+    <path d="M36 18 L24 25" stroke={color} strokeWidth="1" opacity="0.5" />
+  </Base>
+);
+
+// 85. Code Breaker — a padlock cracked open with binary sparks
+export const IconCrackLock = ({ size = 28, color = "#2dd4bf" }) => (
+  <Base size={size}>
+    <rect x="10" y="22" width="22" height="18" rx="3" fill={color} opacity="0.18" stroke={color} strokeWidth="2" />
+    <path d="M16 22 V15 C16 9 32 9 32 15 V22" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" opacity="0.5" />
+    <path d="M32 15 L36 10" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+    <circle cx="24" cy="31" r="3" fill={color} opacity="0.8" />
+    <path d="M38 8 L40 6 M40 10 L42 8" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.6" />
+    <path d="M22 28 L26 34" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.5" />
+  </Base>
+);
+
+// 86. Phrase Runner — a speech bubble with legs running
+export const IconPhraseBubble = ({ size = 28, color = "#f43f5e" }) => (
+  <Base size={size}>
+    <path d="M8 8 H36 Q40 8 40 14 V24 Q40 30 34 30 H28 L22 38 L22 30 H14 Q8 30 8 24 V14 Q8 8 14 8 Z" fill={color} opacity="0.16" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+    <path d="M14 17 H34 M14 23 H28" stroke={color} strokeWidth="1.8" strokeLinecap="round" opacity="0.8" />
+  </Base>
+);
+
+// 87. Quote Dash — a racing checkered flag with quote marks
+export const IconQuoteDash = ({ size = 28, color = "#a78bfa" }) => (
+  <Base size={size}>
+    <path d="M10 6 V38" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <path d="M10 6 H34 L28 16 H34 L10 26" fill={color} opacity="0.4" stroke={color} strokeWidth="1.4" strokeLinejoin="round" />
+    <path d="M22 34 Q20 30 24 28 M30 34 Q28 30 32 28" stroke={color} strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.85" />
+  </Base>
+);
+
+// 88. Sentence Sprint — a long dash/em-dash with trailing words
+export const IconSentenceRun = ({ size = 28, color = "#fb923c" }) => (
+  <Base size={size}>
+    <path d="M6 24 H42" stroke={color} strokeWidth="3" strokeLinecap="round" />
+    <path d="M6 18 H20 M6 30 H16" stroke={color} strokeWidth="1.6" strokeLinecap="round" opacity="0.5" />
+    <path d="M36 18 L44 24 L36 30" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    <circle cx="6" cy="24" r="3" fill={color} opacity="0.8" />
+  </Base>
+);
+
+// 89. Flow State II — a continuous sine wave with a glowing crest
+export const IconSineWave = ({ size = 28, color = "#06b6d4" }) => (
+  <Base size={size}>
+    <path d="M4 24 C8 12 16 12 20 24 C24 36 32 36 36 24 C40 12 44 12 44 24" stroke={color} strokeWidth="2.4" fill="none" strokeLinecap="round" />
+    <circle cx="20" cy="24" r="3" fill={color} opacity="0.9" />
+    <path d="M4 24 C8 14 14 14 18 24" stroke={color} strokeWidth="1" opacity="0.35" fill="none" />
+    <circle cx="36" cy="24" r="2" fill={color} opacity="0.5" />
+  </Base>
+);
+
+// 90. Mind Meld — two overlapping brain hemispheres with a spark at the join
+export const IconBrain = ({ size = 28, color = "#8b5cf6" }) => (
+  <Base size={size}>
+    <path d="M24 12 C14 10 8 16 8 24 C8 34 14 38 24 38" stroke={color} strokeWidth="2" fill="none" opacity="0.85" />
+    <path d="M12 18 C10 22 10 28 14 32" stroke={color} strokeWidth="1.2" opacity="0.5" strokeLinecap="round" />
+    <path d="M24 12 C34 10 40 16 40 24 C40 34 34 38 24 38" stroke={color} strokeWidth="2" fill="none" opacity="0.85" />
+    <path d="M36 18 C38 22 38 28 34 32" stroke={color} strokeWidth="1.2" opacity="0.5" strokeLinecap="round" />
+    <path d="M24 10 V38" stroke={color} strokeWidth="1.4" strokeDasharray="2 2" opacity="0.4" />
+    <circle cx="24" cy="24" r="4" fill={color} opacity="0.3" />
+    <path d="M21 22 L27 26 M27 22 L21 26" stroke={color} strokeWidth="1.6" strokeLinecap="round" opacity="0.8" />
+  </Base>
+);
+
+// 91-99. Greek letters — stylized Greek letter for each
+export const IconAlpha = ({ size = 28, color = "#facc15" }) => (
+  <Base size={size}>
+    <path d="M6 36 C10 20 18 12 24 12 C30 12 34 18 34 26 C34 32 30 38 24 38" stroke={color} strokeWidth="2.4" fill="none" strokeLinecap="round" />
+    <path d="M24 38 L42 38" stroke={color} strokeWidth="2.4" strokeLinecap="round" opacity="0.8" />
+    <path d="M30 30 L42 20" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+  </Base>
+);
+
+export const IconBeta = ({ size = 28, color = "#ef4444" }) => (
+  <Base size={size}>
+    <path d="M12 8 V40" stroke={color} strokeWidth="2.4" strokeLinecap="round" />
+    <path d="M12 8 H26 C34 8 34 18 24 20 C34 22 36 32 26 34 H12" stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="36" cy="10" r="2.5" fill={color} opacity="0.5" />
+  </Base>
+);
+
+export const IconGamma = ({ size = 28, color = "#10b981" }) => (
+  <Base size={size}>
+    <path d="M6 10 H24 L24 40" stroke={color} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    <path d="M24 10 L42 10" stroke={color} strokeWidth="2.6" strokeLinecap="round" />
+    <path d="M18 10 L24 20" stroke={color} strokeWidth="1.4" opacity="0.5" strokeLinecap="round" />
+  </Base>
+);
+
+export const IconDelta = ({ size = 28, color = "#3b82f6" }) => (
+  <Base size={size}>
+    <path d="M24 8 L42 40 H6 Z" fill={color} opacity="0.16" stroke={color} strokeWidth="2.2" strokeLinejoin="round" />
+    <path d="M16 28 H32" stroke={color} strokeWidth="1.4" opacity="0.5" strokeLinecap="round" />
+    <circle cx="24" cy="8" r="2.5" fill={color} opacity="0.85" />
+  </Base>
+);
+
+export const IconEpsilon = ({ size = 28, color = "#f59e0b" }) => (
+  <Base size={size}>
+    <path d="M36 12 H14 Q8 12 8 20 Q8 24 16 24 M36 24 H16 Q8 24 8 32 Q8 40 14 40 H36" stroke={color} strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M12 24 H30" stroke={color} strokeWidth="2" strokeLinecap="round" />
+  </Base>
+);
+
+export const IconZeta = ({ size = 28, color = "#c084fc" }) => (
+  <Base size={size}>
+    <path d="M10 10 H38 L10 38 H38" stroke={color} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    <circle cx="10" cy="10" r="2.5" fill={color} opacity="0.7" />
+    <circle cx="38" cy="38" r="2.5" fill={color} opacity="0.7" />
+  </Base>
+);
+
+export const IconTheta = ({ size = 28, color = "#34d399" }) => (
+  <Base size={size}>
+    <ellipse cx="24" cy="24" rx="16" ry="18" fill={color} opacity="0.12" stroke={color} strokeWidth="2.2" />
+    <path d="M8 24 H40" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.85" />
+  </Base>
+);
+
+export const IconIota = ({ size = 28, color = "#f472b6" }) => (
+  <Base size={size}>
+    <path d="M24 8 V40" stroke={color} strokeWidth="2.8" strokeLinecap="round" />
+    <path d="M14 8 H34 M14 40 H34" stroke={color} strokeWidth="2.2" strokeLinecap="round" opacity="0.7" />
+    <circle cx="24" cy="24" r="3" fill={color} opacity="0.5" />
+  </Base>
+);
+
+export const IconKappa = ({ size = 28, color = "#fbbf24" }) => (
+  <Base size={size}>
+    <path d="M12 8 V40" stroke={color} strokeWidth="2.4" strokeLinecap="round" />
+    <path d="M12 24 L38 8 M12 24 L38 40" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
+    <circle cx="12" cy="24" r="3" fill={color} opacity="0.6" />
+  </Base>
+);
+
+export const FREE_RUN_ICONS = {
+  76: IconTruck, 77: IconBigA, 78: IconMegaBook, 79: IconWordMtn, 80: IconVault,
+  81: IconClipboard, 82: IconCircuit, 83: IconAtom, 84: IconDrive, 85: IconCrackLock,
+  86: IconPhraseBubble, 87: IconQuoteDash, 88: IconSentenceRun, 89: IconSineWave, 90: IconBrain,
+  91: IconAlpha, 92: IconBeta, 93: IconGamma, 94: IconDelta, 95: IconEpsilon,
+  96: IconZeta, 97: IconTheta, 98: IconIota, 99: IconKappa,
+};
+
+// ─── Century Club section (levels 100-115) ──────────────────────────────────
+
+// 100. Century Mark — a bold "100" with a medal ribbon
+export const IconHundred = ({ size = 28, color = "#ef4444" }) => (
+  <Base size={size}>
+    <path d="M6 10 V34 M6 10 H12" stroke={color} strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.85" />
+    <circle cx="22" cy="22" r="10" fill={color} opacity="0.14" stroke={color} strokeWidth="2.2" />
+    <circle cx="36" cy="22" r="10" fill={color} opacity="0.14" stroke={color} strokeWidth="2.2" />
+    <path d="M18 38 L22 44 L24 40 L26 44 L30 38" stroke={color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
+  </Base>
+);
+
+// 101-110. Language greetings — speech bubble with stylized script
+export const IconFrench = ({ size = 28, color = "#3b82f6" }) => (
+  <Base size={size}>
+    <path d="M6 8 H38 Q42 8 42 14 V24 Q42 30 36 30 H22 L14 38 V30 H12 Q6 30 6 24 V14 Q6 8 12 8 Z" fill={color} opacity="0.14" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+    <path d="M14 18 H22 M14 24 H18" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+    <path d="M26 14 L30 22 M34 14 L30 22" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.7" />
+  </Base>
+);
+
+export const IconSpanish = ({ size = 28, color = "#ef4444" }) => (
+  <Base size={size}>
+    <path d="M8 8 H36 Q40 8 40 14 V26 Q40 32 34 32 H20 L12 40 V32 H10 Q8 32 8 26 V14 Q8 8 14 8 Z" fill={color} opacity="0.14" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+    <path d="M24 12 C22 14 22 18 24 20 C26 18 26 14 24 12 Z" fill={color} opacity="0.8" />
+    <path d="M14 24 H34" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.7" />
+  </Base>
+);
+
+export const IconItalian = ({ size = 28, color = "#10b981" }) => (
+  <Base size={size}>
+    <path d="M8 8 H36 Q40 8 40 14 V26 Q40 32 34 32 H20 L12 40 V32 H10 Q8 32 8 26 V14 Q8 8 14 8 Z" fill={color} opacity="0.14" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+    <path d="M24 12 V28" stroke={color} strokeWidth="2.4" strokeLinecap="round" opacity="0.85" />
+    <circle cx="24" cy="10" r="2.5" fill={color} opacity="0.8" />
+  </Base>
+);
+
+export const IconGerman = ({ size = 28, color = "#f59e0b" }) => (
+  <Base size={size}>
+    <path d="M8 8 H36 Q40 8 40 14 V26 Q40 32 34 32 H20 L12 40 V32 H10 Q8 32 8 26 V14 Q8 8 14 8 Z" fill={color} opacity="0.14" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+    <path d="M14 12 H22 V22 H30 V12 H38" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.8" />
+  </Base>
+);
+
+export const IconJapanese = ({ size = 28, color = "#ec4899" }) => (
+  <Base size={size}>
+    <path d="M8 8 H36 Q40 8 40 14 V26 Q40 32 34 32 H20 L12 40 V32 H10 Q8 32 8 26 V14 Q8 8 14 8 Z" fill={color} opacity="0.14" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+    <circle cx="24" cy="20" r="8" fill={color} opacity="0.6" />
+  </Base>
+);
+
+export const IconKorean = ({ size = 28, color = "#8b5cf6" }) => (
+  <Base size={size}>
+    <path d="M8 8 H36 Q40 8 40 14 V26 Q40 32 34 32 H20 L12 40 V32 H10 Q8 32 8 26 V14 Q8 8 14 8 Z" fill={color} opacity="0.14" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+    <circle cx="24" cy="20" r="7" fill="none" stroke={color} strokeWidth="2" opacity="0.7" />
+    <path d="M18 17 H30 M18 23 H30" stroke={color} strokeWidth="1.8" strokeLinecap="round" opacity="0.8" />
+    <path d="M21 17 V23 M27 17 V23" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.6" />
+  </Base>
+);
+
+export const IconChinese = ({ size = 28, color = "#f97316" }) => (
+  <Base size={size}>
+    <path d="M8 8 H36 Q40 8 40 14 V26 Q40 32 34 32 H20 L12 40 V32 H10 Q8 32 8 26 V14 Q8 8 14 8 Z" fill={color} opacity="0.14" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+    <path d="M24 12 V28 M16 18 H32 M19 12 L14 28 M29 12 L34 28" stroke={color} strokeWidth="1.8" strokeLinecap="round" opacity="0.8" />
+  </Base>
+);
+
+export const IconArabic = ({ size = 28, color = "#2dd4bf" }) => (
+  <Base size={size}>
+    <path d="M8 8 H36 Q40 8 40 14 V26 Q40 32 34 32 H20 L12 40 V32 H10 Q8 32 8 26 V14 Q8 8 14 8 Z" fill={color} opacity="0.14" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+    <path d="M34 14 C28 14 20 18 16 22 C22 22 30 18 34 14 Z" fill={color} opacity="0.7" />
+    <path d="M18 26 C22 22 30 22 34 26" stroke={color} strokeWidth="1.8" fill="none" strokeLinecap="round" opacity="0.8" />
+    <circle cx="16" cy="22" r="1.8" fill={color} opacity="0.9" />
+    <circle cx="18" cy="26" r="1.5" fill={color} opacity="0.7" />
+  </Base>
+);
+
+export const IconHindi = ({ size = 28, color = "#fbbf24" }) => (
+  <Base size={size}>
+    <path d="M8 8 H36 Q40 8 40 14 V26 Q40 32 34 32 H20 L12 40 V32 H10 Q8 32 8 26 V14 Q8 8 14 8 Z" fill={color} opacity="0.14" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+    <path d="M16 12 H32 M24 12 V28" stroke={color} strokeWidth="2.2" strokeLinecap="round" opacity="0.85" />
+    <path d="M18 20 C18 26 30 26 30 20" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.7" />
+  </Base>
+);
+
+export const IconAussie = ({ size = 28, color = "#84cc16" }) => (
+  <Base size={size}>
+    <path d="M8 8 H36 Q40 8 40 14 V26 Q40 32 34 32 H20 L12 40 V32 H10 Q8 32 8 26 V14 Q8 8 14 8 Z" fill={color} opacity="0.14" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+    <path d="M16 14 H32 M16 20 H26 M16 26 H22" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+    <path d="M30 20 L36 14 M30 20 L36 26" stroke={color} strokeWidth="1.8" strokeLinecap="round" opacity="0.6" />
+  </Base>
+);
+
+// 111. History Makers — a scroll with a quill and historical seal
+export const IconScroll = ({ size = 28, color = "#94a3b8" }) => (
+  <Base size={size}>
+    <path d="M12 8 H36 V38 H12 C8 38 8 34 12 34 C8 34 8 30 12 30 C8 30 8 8 12 8 Z" fill={color} opacity="0.14" stroke={color} strokeWidth="2" />
+    <path d="M36 8 C40 8 40 12 36 12 C40 12 40 38 36 38" stroke={color} strokeWidth="1.4" opacity="0.6" />
+    <path d="M16 16 H32 M16 22 H32 M16 28 H24" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+    <path d="M28 32 L34 26 L36 28 L30 34 Z" fill={color} opacity="0.6" />
+  </Base>
+);
+
+// 112. Scientists — a microscope with lens detail
+export const IconMicroscope = ({ size = 28, color = "#38bdf8" }) => (
+  <Base size={size}>
+    <rect x="16" y="28" width="16" height="4" rx="1.5" fill={color} opacity="0.7" />
+    <rect x="20" y="32" width="8" height="8" rx="1" fill={color} opacity="0.5" />
+    <path d="M24 8 V28" stroke={color} strokeWidth="3" strokeLinecap="round" />
+    <path d="M18 14 H30" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
+    <ellipse cx="24" cy="10" rx="6" ry="4" fill={color} opacity="0.4" stroke={color} strokeWidth="1.4" />
+    <path d="M10 40 H38" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+    <path d="M10 40 L20 32" stroke={color} strokeWidth="1.6" strokeLinecap="round" opacity="0.5" />
+  </Base>
+);
+
+// 113. Artists — a painter's palette with paint dabs and a brush
+export const IconPalette = ({ size = 28, color = "#f472b6" }) => (
+  <Base size={size}>
+    <path d="M24 6 C14 6 6 14 6 22 C6 30 12 36 20 36 C22 36 24 34 24 32 C24 30 26 28 28 28 C34 28 42 24 42 18 C42 12 34 6 24 6 Z" fill={color} opacity="0.16" stroke={color} strokeWidth="2" />
+    <circle cx="16" cy="16" r="3" fill={color} opacity="0.85" />
+    <circle cx="24" cy="12" r="3" fill="#f59e0b" opacity="0.85" />
+    <circle cx="32" cy="16" r="3" fill="#ef4444" opacity="0.85" />
+    <circle cx="34" cy="24" r="3" fill="#10b981" opacity="0.85" />
+    <circle cx="22" cy="28" r="4" fill={color} opacity="0.3" />
+    <path d="M36 8 L44 4" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+  </Base>
+);
+
+// 114. Writers — a quill pen writing on a page with ink splash
+export const IconQuillPen = ({ size = 28, color = "#c084fc" }) => (
+  <Base size={size}>
+    <path d="M8 40 L20 28 L36 8 C40 4 44 6 42 12 L24 32 L14 44 Z" fill={color} opacity="0.2" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+    <path d="M20 28 L16 36" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.7" />
+    <path d="M36 8 L28 20" stroke={color} strokeWidth="1.4" opacity="0.5" strokeLinecap="round" />
+    <ellipse cx="12" cy="40" rx="4" ry="2" fill={color} opacity="0.4" />
+  </Base>
+);
+
+// 115. Musicians — a treble clef with musical notes
+export const IconTreble = ({ size = 28, color = "#fbbf24" }) => (
+  <Base size={size}>
+    <path d="M24 6 C28 10 32 16 28 22 C26 26 22 28 22 32 C22 38 28 42 28 42" stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round" />
+    <path d="M18 34 H30" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <circle cx="24" cy="42" r="4" fill={color} opacity="0.4" stroke={color} strokeWidth="1.4" />
+    <path d="M34 16 L40 14 M34 22 L40 20" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+    <circle cx="40" cy="14" r="2.5" fill={color} opacity="0.7" />
+    <circle cx="40" cy="20" r="2.5" fill={color} opacity="0.7" />
+  </Base>
+);
+
+export const CENTURY_CLUB_ICONS = {
+  100: IconHundred,
+  101: IconFrench, 102: IconSpanish, 103: IconItalian, 104: IconGerman, 105: IconJapanese,
+  106: IconKorean, 107: IconChinese, 108: IconArabic, 109: IconHindi, 110: IconAussie,
+  111: IconScroll, 112: IconMicroscope, 113: IconPalette, 114: IconQuillPen, 115: IconTreble,
+};
+
+// ─── Endurance section (levels 116-130) ─────────────────────────────────────
+
+// 116. Home Row Hero II — home row keys highlighted on a keyboard
+export const IconHomeRow2 = ({ size = 28, color = "#10b981" }) => (
+  <Base size={size}>
+    <rect x="4" y="28" width="40" height="14" rx="3" fill={color} opacity="0.14" stroke={color} strokeWidth="2" />
+    <rect x="4" y="16" width="40" height="10" rx="2" fill="none" stroke={color} strokeWidth="1.4" opacity="0.4" />
+    <rect x="4" y="8" width="40" height="6" rx="2" fill="none" stroke={color} strokeWidth="1" opacity="0.25" />
+    {[8,15,22,29,36].map((x,i) => <rect key={i} x={x} y="31" width="5" height="5" rx="1.2" fill={color} opacity="0.8" />)}
+    <path d="M8 36 H36" stroke={color} strokeWidth="1" opacity="0.3" strokeLinecap="round" />
+  </Base>
+);
+
+// 117. Number Words II — numeral digits cascading
+export const IconNums2 = ({ size = 28, color = "#f59e0b" }) => (
+  <Base size={size}>
+    <text x="6" y="22" fontSize="14" fontWeight="bold" fill={color} opacity="0.9" fontFamily="monospace">123</text>
+    <text x="10" y="38" fontSize="14" fontWeight="bold" fill={color} opacity="0.6" fontFamily="monospace">456</text>
+    <path d="M6 26 H42" stroke={color} strokeWidth="1" opacity="0.3" />
+  </Base>
+);
+
+// 118. Keyboard Row Mix — three staggered rows of keys
+export const IconRowMix = ({ size = 28, color = "#8b5cf6" }) => (
+  <Base size={size}>
+    <rect x="6" y="8" width="36" height="8" rx="2" fill={color} opacity="0.14" stroke={color} strokeWidth="1.6" />
+    <rect x="10" y="20" width="36" height="8" rx="2" fill={color} opacity="0.14" stroke={color} strokeWidth="1.6" />
+    <rect x="14" y="32" width="28" height="8" rx="2" fill={color} opacity="0.14" stroke={color} strokeWidth="1.6" />
+    {[10,18,26,34].map((x,i)=><rect key={i} x={x} y="10" width="5" height="4" rx="1" fill={color} opacity="0.6"/>)}
+    {[14,22,30,38].map((x,i)=><rect key={i} x={x} y="22" width="5" height="4" rx="1" fill={color} opacity="0.6"/>)}
+  </Base>
+);
+
+// 119. Alternating Hands — two hands alternating left-right pattern
+export const IconAltHands = ({ size = 28, color = "#06b6d4" }) => (
+  <Base size={size}>
+    <path d="M8 28 C8 22 12 18 16 18 L16 8 C16 6 18 6 18 8 V18 L20 18 V10 C20 8 22 8 22 10 V18 L24 18 V12 C24 10 26 10 26 12 V20 C26 20 28 14 30 16 C32 18 28 28 26 32 H10 Z" fill={color} opacity="0.2" stroke={color} strokeWidth="1.4" strokeLinejoin="round" />
+    <path d="M40 28 C40 22 36 18 32 18 L32 10 C32 8 30 8 30 10 V18" stroke={color} strokeWidth="1.4" fill="none" opacity="0.5" strokeLinecap="round" />
+    <path d="M6 36 H42" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.4" />
+  </Base>
+);
+
+// 120. Pinky Power — a hand with pinky finger extended and glowing
+export const IconPinky = ({ size = 28, color = "#ef4444" }) => (
+  <Base size={size}>
+    <path d="M14 36 C14 28 18 22 20 18 L20 10 C20 8 22 8 22 10 V18 L24 18 V12 C24 10 26 10 26 12 V20 L28 20 V14 C28 12 30 12 30 14 V22 L32 22 V18 C32 16 34 16 34 18 V30 C34 34 30 38 26 38 H18 Z" fill={color} opacity="0.18" stroke={color} strokeWidth="1.6" strokeLinejoin="round" />
+    <path d="M14 26 C12 22 10 16 12 12 C14 10 16 12 16 16" stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round" />
+    <circle cx="12" cy="10" r="3" fill={color} opacity="0.85" />
+    <path d="M8 8 L6 4 M10 6 L10 2 M14 6 L14 2" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.6" />
+  </Base>
+);
+
+// 121. Monster Words — a monster mouth open wide with teeth
+export const IconMonster = ({ size = 28, color = "#a855f7" }) => (
+  <Base size={size}>
+    <path d="M4 24 C4 14 12 6 24 6 C36 6 44 14 44 24 C44 34 36 42 24 42 C12 42 4 34 4 24 Z" fill={color} opacity="0.14" stroke={color} strokeWidth="2" />
+    <path d="M10 28 H38" stroke={color} strokeWidth="1.4" opacity="0.4" />
+    <path d="M10 28 C12 36 20 40 24 40 C28 40 36 36 38 28" fill={color} opacity="0.3" />
+    {[14,19,24,29,34].map((x,i)=><path key={i} d={`M${x} 28 L${x+2} 34 L${x+4} 28`} fill="none" stroke={color} strokeWidth="1.2" strokeLinejoin="round" opacity="0.7"/>)}
+    <circle cx="17" cy="18" r="4" fill={color} opacity="0.4" />
+    <circle cx="31" cy="18" r="4" fill={color} opacity="0.4" />
+    <circle cx="17" cy="18" r="2" fill={color} opacity="0.9" />
+    <circle cx="31" cy="18" r="2" fill={color} opacity="0.9" />
+  </Base>
+);
+
+// 122. Mega Phrases — a giant speech bubble with ellipsis
+export const IconMegaBubble = ({ size = 28, color = "#f43f5e" }) => (
+  <Base size={size}>
+    <path d="M4 6 H40 Q44 6 44 12 V28 Q44 34 38 34 H28 L18 44 V34 H10 Q4 34 4 28 V12 Q4 6 10 6 Z" fill={color} opacity="0.14" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+    <circle cx="16" cy="20" r="3.5" fill={color} opacity="0.75" />
+    <circle cx="24" cy="20" r="3.5" fill={color} opacity="0.75" />
+    <circle cx="32" cy="20" r="3.5" fill={color} opacity="0.75" />
+  </Base>
+);
+
+// 123. Speed Sentence — a race car on a track with sentence lines
+export const IconRaceLine = ({ size = 28, color = "#facc15" }) => (
+  <Base size={size}>
+    <rect x="4" y="16" width="40" height="18" rx="9" fill={color} opacity="0.12" stroke={color} strokeWidth="2" />
+    <rect x="10" y="19" width="18" height="12" rx="3" fill={color} opacity="0.4" stroke={color} strokeWidth="1.4" />
+    <circle cx="14" cy="33" r="4" fill={color} opacity="0.85" />
+    <circle cx="24" cy="33" r="4" fill={color} opacity="0.85" />
+    <path d="M32 22 H40 M32 28 H38" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.6" />
+  </Base>
+);
+
+// 124. Long Quote — an extended scroll unrolling
+export const IconLongScroll = ({ size = 28, color = "#818cf8" }) => (
+  <Base size={size}>
+    <path d="M10 10 H40 V38 H10 C6 38 6 34 10 34 C6 34 6 10 10 10 Z" fill={color} opacity="0.14" stroke={color} strokeWidth="2" />
+    <path d="M40 10 C44 10 44 38 40 38" stroke={color} strokeWidth="1.4" opacity="0.5" />
+    <path d="M16 18 H36 M16 24 H36 M16 30 H28" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+    <path d="M28 30 L36 22" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.5" />
+  </Base>
+);
+
+// 125. Tongue Tornado — a swirling vortex
+export const IconVortex = ({ size = 28, color = "#fb923c" }) => (
+  <Base size={size}>
+    <path d="M24 24 C24 24 34 20 36 14 C38 8 32 4 26 8 C20 12 14 20 18 28 C22 36 32 38 38 32 C44 26 40 16 32 16" stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round" />
+    <circle cx="24" cy="24" r="4" fill={color} opacity="0.4" />
+    <circle cx="24" cy="24" r="2" fill={color} opacity="0.9" />
+  </Base>
+);
+
+// 126-130. Letter-count levels — die/block with pips showing count
+export const IconDie2 = ({ size = 28, color = "#34d399" }) => (
+  <Base size={size}>
+    <rect x="8" y="8" width="32" height="32" rx="5" fill={color} opacity="0.14" stroke={color} strokeWidth="2" />
+    <circle cx="16" cy="16" r="3.5" fill={color} opacity="0.85" />
+    <circle cx="32" cy="32" r="3.5" fill={color} opacity="0.85" />
+  </Base>
+);
+
+export const IconDie4 = ({ size = 28, color = "#60a5fa" }) => (
+  <Base size={size}>
+    <rect x="8" y="8" width="32" height="32" rx="5" fill={color} opacity="0.14" stroke={color} strokeWidth="2" />
+    <circle cx="16" cy="16" r="3" fill={color} opacity="0.85" />
+    <circle cx="32" cy="16" r="3" fill={color} opacity="0.85" />
+    <circle cx="16" cy="32" r="3" fill={color} opacity="0.85" />
+    <circle cx="32" cy="32" r="3" fill={color} opacity="0.85" />
+  </Base>
+);
+
+export const IconDie5 = ({ size = 28, color = "#f97316" }) => (
+  <Base size={size}>
+    <rect x="8" y="8" width="32" height="32" rx="5" fill={color} opacity="0.14" stroke={color} strokeWidth="2" />
+    <circle cx="16" cy="16" r="3" fill={color} opacity="0.85" />
+    <circle cx="32" cy="16" r="3" fill={color} opacity="0.85" />
+    <circle cx="24" cy="24" r="3" fill={color} opacity="0.85" />
+    <circle cx="16" cy="32" r="3" fill={color} opacity="0.85" />
+    <circle cx="32" cy="32" r="3" fill={color} opacity="0.85" />
+  </Base>
+);
+
+export const IconDie6 = ({ size = 28, color = "#818cf8" }) => (
+  <Base size={size}>
+    <rect x="8" y="8" width="32" height="32" rx="5" fill={color} opacity="0.14" stroke={color} strokeWidth="2" />
+    <circle cx="16" cy="14" r="3" fill={color} opacity="0.85" />
+    <circle cx="32" cy="14" r="3" fill={color} opacity="0.85" />
+    <circle cx="16" cy="24" r="3" fill={color} opacity="0.85" />
+    <circle cx="32" cy="24" r="3" fill={color} opacity="0.85" />
+    <circle cx="16" cy="34" r="3" fill={color} opacity="0.85" />
+    <circle cx="32" cy="34" r="3" fill={color} opacity="0.85" />
+  </Base>
+);
+
+export const IconDie7 = ({ size = 28, color = "#fbbf24" }) => (
+  <Base size={size}>
+    <rect x="8" y="8" width="32" height="32" rx="5" fill={color} opacity="0.14" stroke={color} strokeWidth="2" />
+    <circle cx="15" cy="13" r="2.5" fill={color} opacity="0.85" />
+    <circle cx="33" cy="13" r="2.5" fill={color} opacity="0.85" />
+    <circle cx="15" cy="24" r="2.5" fill={color} opacity="0.85" />
+    <circle cx="24" cy="24" r="2.5" fill={color} opacity="0.85" />
+    <circle cx="33" cy="24" r="2.5" fill={color} opacity="0.85" />
+    <circle cx="15" cy="35" r="2.5" fill={color} opacity="0.85" />
+    <circle cx="33" cy="35" r="2.5" fill={color} opacity="0.85" />
+  </Base>
+);
+
+export const ENDURANCE_ICONS = {
+  116: IconHomeRow2, 117: IconNums2, 118: IconRowMix, 119: IconAltHands, 120: IconPinky,
+  121: IconMonster, 122: IconMegaBubble, 123: IconRaceLine, 124: IconLongScroll, 125: IconVortex,
+  126: IconDie2, 127: IconDie4, 128: IconDie5, 129: IconDie6, 130: IconDie7,
+};
+
+// ─── Literature section (levels 131-145) ────────────────────────────────────
+
+// 131. Epic Sentences — an unrolling epic scroll
+export const IconEpicScroll = ({ size = 28, color = "#a855f7" }) => (
+  <Base size={size}>
+    <path d="M8 6 H40 V40 H8 C4 40 4 36 8 36 C4 36 4 6 8 6 Z" fill={color} opacity="0.14" stroke={color} strokeWidth="2" />
+    <path d="M14 14 H36 M14 20 H36 M14 26 H36 M14 32 H28" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+    <path d="M40 6 C44 6 44 40 40 40" stroke={color} strokeWidth="1.4" opacity="0.5" />
+    <circle cx="8" cy="6" r="3" fill={color} opacity="0.6" />
+    <circle cx="8" cy="40" r="3" fill={color} opacity="0.6" />
+  </Base>
+);
+
+// 132. Philosophy — a thinking head profile
+export const IconPhiloHead = ({ size = 28, color = "#38bdf8" }) => (
+  <Base size={size}>
+    <path d="M16 10 C10 10 6 16 6 22 C6 30 12 36 20 38 V44 H30 V38 C38 36 42 30 42 22 C42 14 36 8 28 8 C24 8 20 10 18 12 Z" fill={color} opacity="0.14" stroke={color} strokeWidth="2" />
+    <path d="M22 20 C22 16 30 16 30 20 C30 24 26 24 26 28" stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round" />
+    <circle cx="26" cy="32" r="2.5" fill={color} opacity="0.8" />
+  </Base>
+);
+
+// 133. Scripture — an open bible/book with a cross bookmark
+export const IconBible = ({ size = 28, color = "#fbbf24" }) => (
+  <Base size={size}>
+    <path d="M4 8 H22 V40 H4 Z" fill={color} opacity="0.18" stroke={color} strokeWidth="1.8" />
+    <path d="M22 8 H44 V40 H22 Z" fill={color} opacity="0.14" stroke={color} strokeWidth="1.8" />
+    <path d="M22 8 V40" stroke={color} strokeWidth="2.4" />
+    <path d="M8 16 H18 M8 22 H18 M8 28 H14" stroke={color} strokeWidth="1.2" strokeLinecap="round" opacity="0.6" />
+    <path d="M31 14 V32 M26 20 H36" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+  </Base>
+);
+
+// 134. Shakespeare — a quill and a theatrical mask
+export const IconShakeMask = ({ size = 28, color = "#ec4899" }) => (
+  <Base size={size}>
+    <path d="M6 16 C6 10 10 6 16 6 H32 C38 6 42 10 42 16 C42 24 36 30 24 32 C12 30 6 24 6 16 Z" fill={color} opacity="0.14" stroke={color} strokeWidth="2" />
+    <circle cx="16" cy="16" r="4" fill="none" stroke={color} strokeWidth="1.8" />
+    <circle cx="32" cy="16" r="4" fill="none" stroke={color} strokeWidth="1.8" />
+    <path d="M16 24 C18 28 22 30 24 30 C26 30 30 28 32 24" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" />
+    <path d="M36 4 L44 2 L42 10" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
+  </Base>
+);
+
+// 135. US History — a liberty bell with a crack
+export const IconBell = ({ size = 28, color = "#3b82f6" }) => (
+  <Base size={size}>
+    <path d="M12 14 C12 6 36 6 36 14 L40 34 H8 Z" fill={color} opacity="0.16" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+    <path d="M8 34 H40" stroke={color} strokeWidth="2.4" strokeLinecap="round" />
+    <path d="M20 34 V40 H28 V34" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
+    <circle cx="24" cy="40" r="3" fill={color} opacity="0.6" />
+    <path d="M26 10 L28 20 L26 28" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.6" />
+    <path d="M22 6 V10" stroke={color} strokeWidth="1.8" strokeLinecap="round" opacity="0.7" />
+  </Base>
+);
+
+// 136. Finger Fury — a hand with speed lines radiating from all fingertips
+export const IconFingerFury = ({ size = 28, color = "#ef4444" }) => (
+  <Base size={size}>
+    <path d="M14 36 C14 28 18 20 20 16 L20 8 C20 6 22 6 22 8 V16 L24 16 V10 C24 8 26 8 26 10 V18 L28 18 V12 C28 10 30 10 30 12 V20 L32 20 V16 C32 14 34 14 34 16 V30 C34 34 30 38 26 38 H18 Z" fill={color} opacity="0.2" stroke={color} strokeWidth="1.6" strokeLinejoin="round" />
+    <path d="M20 8 L16 4 M22 8 L20 3 M26 10 L26 4 M30 12 L32 6 M34 16 L38 12" stroke={color} strokeWidth="1.8" strokeLinecap="round" opacity="0.7" />
+  </Base>
+);
+
+// 137. Code Marathon — a long code block with runner
+export const IconCodeRun = ({ size = 28, color = "#4ade80" }) => (
+  <Base size={size}>
+    <rect x="4" y="8" width="36" height="28" rx="4" fill={color} opacity="0.12" stroke={color} strokeWidth="2" />
+    <path d="M12 18 L18 24 L12 30" stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M22 30 H36" stroke={color} strokeWidth="1.8" strokeLinecap="round" opacity="0.7" />
+    <path d="M22 24 H32 M22 18 H36" stroke={color} strokeWidth="1.2" strokeLinecap="round" opacity="0.5" />
+    <circle cx="40" cy="8" r="4" fill={color} opacity="0.7" />
+    <path d="M38 10 L40 8 L42 10" stroke="#15151f" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+  </Base>
+);
+
+// 138. Emoji Words — a face emoji with code brackets
+export const IconEmojiCode = ({ size = 28, color = "#f472b6" }) => (
+  <Base size={size}>
+    <circle cx="24" cy="24" r="16" fill={color} opacity="0.16" stroke={color} strokeWidth="2" />
+    <circle cx="18" cy="20" r="2.5" fill={color} opacity="0.85" />
+    <circle cx="30" cy="20" r="2.5" fill={color} opacity="0.85" />
+    <path d="M16 28 C18 33 30 33 32 28" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" />
+    <path d="M4 16 L8 24 L4 32 M44 16 L40 24 L44 32" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.6" />
+  </Base>
+);
+
+// 139. Hard Clusters — interlocked sharp spiky shapes
+export const IconSpikes = ({ size = 28, color = "#818cf8" }) => (
+  <Base size={size}>
+    <path d="M24 4 L28 16 L40 12 L32 22 L44 26 L32 30 L36 42 L24 34 L12 42 L16 30 L4 26 L16 22 L8 12 L20 16 Z" fill={color} opacity="0.18" stroke={color} strokeWidth="1.8" strokeLinejoin="round" />
+    <circle cx="24" cy="24" r="6" fill={color} opacity="0.25" />
+    <circle cx="24" cy="24" r="2.5" fill={color} opacity="0.8" />
+  </Base>
+);
+
+// 140. Suffix Surge — a word root with branches growing off the end
+export const IconSuffix = ({ size = 28, color = "#06b6d4" }) => (
+  <Base size={size}>
+    <path d="M4 24 H30" stroke={color} strokeWidth="3" strokeLinecap="round" />
+    <circle cx="4" cy="24" r="3" fill={color} opacity="0.7" />
+    <path d="M30 24 L38 16 M30 24 L38 24 M30 24 L38 32" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
+    <circle cx="39" cy="16" r="3" fill={color} opacity="0.7" />
+    <circle cx="39" cy="24" r="3" fill={color} opacity="0.7" />
+    <circle cx="39" cy="32" r="3" fill={color} opacity="0.7" />
+  </Base>
+);
+
+// 141-145. Elite progression — rising tiers
+export const IconElite = ({ size = 28, color = "#fbbf24" }) => (
+  <Base size={size}>
+    <rect x="4" y="32" width="10" height="10" rx="2" fill={color} opacity="0.5" stroke={color} strokeWidth="1.6" />
+    <rect x="16" y="24" width="10" height="18" rx="2" fill={color} opacity="0.65" stroke={color} strokeWidth="1.6" />
+    <rect x="28" y="14" width="10" height="28" rx="2" fill={color} opacity="0.85" stroke={color} strokeWidth="1.8" />
+    <path d="M38 10 L38 6 M36 8 H40" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.7" />
+  </Base>
+);
+
+export const IconMaster = ({ size = 28, color = "#a855f7" }) => (
+  <Base size={size}>
+    <path d="M24 4 L30 16 L44 18 L34 28 L36 42 L24 36 L12 42 L14 28 L4 18 L18 16 Z" fill={color} opacity="0.16" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+    <path d="M24 4 L30 16 L44 18 L34 28 L36 42 L24 36 L12 42 L14 28 L4 18 L18 16 Z" fill={color} opacity="0.0" />
+    <circle cx="24" cy="24" r="8" fill={color} opacity="0.3" />
+    <circle cx="24" cy="24" r="4" fill={color} opacity="0.7" />
+  </Base>
+);
+
+export const IconWordGod = ({ size = 28, color = "#f43f5e" }) => (
+  <Base size={size}>
+    <circle cx="24" cy="24" r="18" fill={color} opacity="0.12" stroke={color} strokeWidth="2" />
+    <path d="M24 6 V14 M24 34 V42 M6 24 H14 M34 24 H42" stroke={color} strokeWidth="2.2" strokeLinecap="round" opacity="0.7" />
+    <path d="M11 11 L17 17 M31 31 L37 37 M37 11 L31 17 M17 31 L11 37" stroke={color} strokeWidth="1.8" strokeLinecap="round" opacity="0.5" />
+    <circle cx="24" cy="24" r="7" fill={color} opacity="0.25" stroke={color} strokeWidth="1.4" />
+    <circle cx="24" cy="24" r="3" fill={color} opacity="0.9" />
+  </Base>
+);
+
+export const IconTranscend = ({ size = 28, color = "#c084fc" }) => (
+  <Base size={size}>
+    <path d="M24 4 L24 44 M4 24 L44 24" stroke={color} strokeWidth="1.4" opacity="0.3" strokeLinecap="round" />
+    <path d="M24 4 L20 10 H28 Z" fill={color} opacity="0.8" />
+    <circle cx="24" cy="24" r="12" fill={color} opacity="0.12" stroke={color} strokeWidth="2" />
+    <circle cx="24" cy="24" r="6" fill={color} opacity="0.2" stroke={color} strokeWidth="1.4" />
+    <circle cx="24" cy="24" r="2.5" fill={color} opacity="0.9" />
+  </Base>
+);
+
+export const IconSummit = ({ size = 28, color = "#38bdf8" }) => (
+  <Base size={size}>
+    <path d="M4 44 L24 6 L44 44 Z" fill={color} opacity="0.14" stroke={color} strokeWidth="2.2" strokeLinejoin="round" />
+    <path d="M14 32 L22 18 L30 32" stroke={color} strokeWidth="1.4" fill="none" opacity="0.5" strokeLinejoin="round" />
+    <circle cx="24" cy="6" r="4" fill={color} opacity="0.9" />
+    <path d="M24 2 L22 6 M24 2 L26 6" stroke={color} strokeWidth="1.6" strokeLinecap="round" opacity="0.7" />
+    <path d="M20 38 H28" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.5" />
+  </Base>
+);
+
+export const LITERATURE_ICONS = {
+  131: IconEpicScroll, 132: IconPhiloHead, 133: IconBible, 134: IconShakeMask, 135: IconBell,
+  136: IconFingerFury, 137: IconCodeRun, 138: IconEmojiCode, 139: IconSpikes, 140: IconSuffix,
+  141: IconElite, 142: IconMaster, 143: IconWordGod, 144: IconTranscend, 145: IconSummit,
+};
+
+// ─── Machine Mode section (levels 146-155) ──────────────────────────────────
+
+// 146-150. Speed God tiers — lightning bolt variants
+export const IconSpeedGod1 = ({ size = 28, color = "#facc15" }) => (
+  <Base size={size}>
+    <path d="M28 4 L14 26 H22 L16 44 L34 20 H26 Z" fill={color} opacity="0.85" stroke={color} strokeWidth="1.4" strokeLinejoin="round" />
+    <circle cx="28" cy="4" r="3" fill="#fff" opacity="0.6" />
+  </Base>
+);
+
+export const IconSpeedGod2 = ({ size = 28, color = "#ef4444" }) => (
+  <Base size={size}>
+    <path d="M28 4 L14 26 H22 L16 44 L34 20 H26 Z" fill={color} opacity="0.85" stroke={color} strokeWidth="1.4" strokeLinejoin="round" />
+    <path d="M34 6 L38 2" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+    <circle cx="28" cy="4" r="2.5" fill="#fff" opacity="0.5" />
+  </Base>
+);
+
+export const IconSpeedGod3 = ({ size = 28, color = "#f97316" }) => (
+  <Base size={size}>
+    <path d="M28 4 L14 26 H22 L16 44 L34 20 H26 Z" fill={color} opacity="0.85" stroke={color} strokeWidth="1.6" strokeLinejoin="round" />
+    <path d="M34 6 L40 2 M36 10 L42 8" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+    <circle cx="28" cy="4" r="3" fill="#fff" opacity="0.6" />
+  </Base>
+);
+
+export const IconSpeedGod4 = ({ size = 28, color = "#a855f7" }) => (
+  <Base size={size}>
+    <path d="M26 2 L10 24 H20 L14 46 L38 22 H28 Z" fill={color} opacity="0.85" stroke={color} strokeWidth="1.8" strokeLinejoin="round" />
+    <path d="M38 4 L44 0 M40 8 L46 6" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.65" />
+    <circle cx="26" cy="2" r="3.5" fill="#fff" opacity="0.6" />
+  </Base>
+);
+
+export const IconSpeedGod5 = ({ size = 28, color = "#ec4899" }) => (
+  <Base size={size}>
+    <path d="M26 2 L8 26 H20 L12 46 L40 22 H28 Z" fill={color} opacity="0.9" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+    <path d="M40 4 L46 0 M42 8 L48 5 M38 12 L44 10" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+    <circle cx="26" cy="2" r="4" fill="#fff" opacity="0.7" />
+  </Base>
+);
+
+// 151. The Grind — a gear grinding with sparks
+export const IconGrind = ({ size = 28, color = "#94a3b8" }) => (
+  <Base size={size}>
+    <path d="M20 6 L22 4 H26 L28 6 L32 4 L34 8 L38 8 L38 12 L42 14 L40 18 L42 22 L38 24 L38 28 L34 28 L32 32 L28 30 L26 32 H22 L20 30 L16 32 L14 28 L10 28 L10 24 L6 22 L8 18 L6 14 L10 12 L10 8 L14 8 L16 4 Z" fill={color} opacity="0.16" stroke={color} strokeWidth="1.8" />
+    <circle cx="24" cy="18" r="8" fill="none" stroke={color} strokeWidth="2" />
+    <circle cx="24" cy="18" r="3" fill={color} opacity="0.6" />
+    <path d="M36 8 L40 6 M38 10 L42 10" stroke="#fbbf24" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+  </Base>
+);
+
+// 152. Iron Fingers — a metallic mechanical finger
+export const IconIronFist = ({ size = 28, color = "#6366f1" }) => (
+  <Base size={size}>
+    <path d="M18 44 H30 L30 28 L34 28 L34 20 L30 20 L30 14 L26 14 L26 20 L22 20 L22 14 L18 14 L18 20 L14 20 L14 28 L18 28 Z" fill={color} opacity="0.2" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+    <path d="M18 28 H30 M18 20 H30" stroke={color} strokeWidth="1.2" opacity="0.5" />
+    <rect x="22" y="8" width="4" height="8" rx="1" fill={color} opacity="0.6" />
+    <path d="M18 8 L14 4 M30 8 L34 4" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.5" />
+    <path d="M20 44 H28" stroke={color} strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+  </Base>
+);
+
+// 153. The Crucible — a molten metal crucible pouring
+export const IconCrucible = ({ size = 28, color = "#ef4444" }) => (
+  <Base size={size}>
+    <path d="M10 12 H38 L34 36 H14 Z" fill={color} opacity="0.18" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+    <path d="M6 12 H42" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
+    <path d="M34 28 L40 36 L44 32" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
+    <path d="M38 36 L42 40" stroke={color} strokeWidth="2.4" strokeLinecap="round" />
+    <path d="M40 40 L38 46 M44 40 L46 46" stroke="#fbbf24" strokeWidth="1.4" strokeLinecap="round" opacity="0.6" />
+  </Base>
+);
+
+// 154. Apex Predator — a falcon diving with sharp wings
+export const IconFalcon = ({ size = 28, color = "#f59e0b" }) => (
+  <Base size={size}>
+    <path d="M24 6 C24 6 40 14 42 22 L32 20 L26 44 L24 38 L22 44 L16 20 L6 22 C8 14 24 6 24 6 Z" fill={color} opacity="0.2" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+    <circle cx="24" cy="10" r="4" fill={color} opacity="0.85" />
+    <path d="M22 8 L20 4 M26 8 L28 4" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.6" />
+  </Base>
+);
+
+// 155. Finger Lightning — fingers firing bolts
+export const IconFingerBolts = ({ size = 28, color = "#fbbf24" }) => (
+  <Base size={size}>
+    <path d="M14 36 C14 28 18 22 20 18 L20 12 C20 10 22 10 22 12 V18 L24 18 V12 C24 10 26 10 26 12 V20 L28 20 V14 C28 12 30 12 30 14 V22 L32 22 V18 C32 16 34 16 34 18 V30 C34 34 30 38 26 38 H18 Z" fill={color} opacity="0.2" stroke={color} strokeWidth="1.6" strokeLinejoin="round" />
+    <path d="M20 12 L17 6 L20 8 L18 2 M24 12 L24 4 M28 14 L31 6 L28 9 L30 2 M32 18 L36 10 L34 14 L38 8" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.8" />
+  </Base>
+);
+
+export const MACHINE_MODE_ICONS = {
+  146: IconSpeedGod1, 147: IconSpeedGod2, 148: IconSpeedGod3, 149: IconSpeedGod4, 150: IconSpeedGod5,
+  151: IconGrind, 152: IconIronFist, 153: IconCrucible, 154: IconFalcon, 155: IconFingerBolts,
+};
+
+// ─── Legend Tier section (levels 156-165) ───────────────────────────────────
+
+// 156-164. Legend crowns — increasingly ornate crowns
+export const IconLegend1 = ({ size = 28, color = "#fbbf24" }) => (
+  <Base size={size}>
+    <path d="M6 34 L6 18 L14 26 L24 8 L34 26 L42 18 L42 34 Z" fill={color} opacity="0.25" stroke={color} strokeWidth="2.2" strokeLinejoin="round" />
+    <rect x="6" y="34" width="36" height="6" rx="2" fill={color} opacity="0.6" stroke={color} strokeWidth="1.4" />
+    <circle cx="24" cy="8" r="3.5" fill={color} opacity="0.9" />
+  </Base>
+);
+
+export const IconLegend2 = ({ size = 28, color = "#f43f5e" }) => (
+  <Base size={size}>
+    <path d="M6 34 L6 18 L14 26 L24 8 L34 26 L42 18 L42 34 Z" fill={color} opacity="0.25" stroke={color} strokeWidth="2.2" strokeLinejoin="round" />
+    <rect x="6" y="34" width="36" height="6" rx="2" fill={color} opacity="0.6" stroke={color} strokeWidth="1.4" />
+    <circle cx="24" cy="8" r="3.5" fill={color} opacity="0.9" />
+    <circle cx="6" cy="18" r="2.5" fill={color} opacity="0.7" />
+    <circle cx="42" cy="18" r="2.5" fill={color} opacity="0.7" />
+  </Base>
+);
+
+export const IconLegend3 = ({ size = 28, color = "#a855f7" }) => (
+  <Base size={size}>
+    <path d="M4 36 L4 16 L13 26 L24 6 L35 26 L44 16 L44 36 Z" fill={color} opacity="0.22" stroke={color} strokeWidth="2.2" strokeLinejoin="round" />
+    <rect x="4" y="36" width="40" height="6" rx="2" fill={color} opacity="0.6" stroke={color} strokeWidth="1.4" />
+    <circle cx="24" cy="6" r="4" fill={color} opacity="0.9" />
+    <circle cx="4" cy="16" r="3" fill={color} opacity="0.8" />
+    <circle cx="44" cy="16" r="3" fill={color} opacity="0.8" />
+    <rect x="20" y="38" width="8" height="2" rx="1" fill="#fff" opacity="0.4" />
+  </Base>
+);
+
+export const IconLegend4 = ({ size = 28, color = "#06b6d4" }) => (
+  <Base size={size}>
+    <path d="M4 36 L4 14 L13 24 L24 4 L35 24 L44 14 L44 36 Z" fill={color} opacity="0.22" stroke={color} strokeWidth="2.4" strokeLinejoin="round" />
+    <rect x="4" y="36" width="40" height="7" rx="2" fill={color} opacity="0.6" stroke={color} strokeWidth="1.6" />
+    <circle cx="24" cy="4" r="4.5" fill={color} opacity="0.9" />
+    <circle cx="4" cy="14" r="3" fill={color} opacity="0.8" />
+    <circle cx="44" cy="14" r="3" fill={color} opacity="0.8" />
+    <circle cx="14" cy="36" r="2" fill={color} opacity="0.7" />
+    <circle cx="34" cy="36" r="2" fill={color} opacity="0.7" />
+  </Base>
+);
+
+export const IconLegend5 = ({ size = 28, color = "#10b981" }) => (
+  <Base size={size}>
+    <path d="M4 36 L4 12 L13 22 L24 2 L35 22 L44 12 L44 36 Z" fill={color} opacity="0.22" stroke={color} strokeWidth="2.4" strokeLinejoin="round" />
+    <rect x="4" y="36" width="40" height="7" rx="2" fill={color} opacity="0.65" stroke={color} strokeWidth="1.8" />
+    <circle cx="24" cy="2" r="5" fill={color} opacity="0.95" />
+    <circle cx="4" cy="12" r="3.5" fill={color} opacity="0.85" />
+    <circle cx="44" cy="12" r="3.5" fill={color} opacity="0.85" />
+    {[10,20,28,38].map((x,i)=><circle key={i} cx={x} cy="36" r="1.8" fill={color} opacity="0.6"/>)}
+  </Base>
+);
+
+export const IconLegend6 = ({ size = 28, color = "#ef4444" }) => (
+  <Base size={size}>
+    <path d="M2 38 L2 12 L12 24 L24 2 L36 24 L46 12 L46 38 Z" fill={color} opacity="0.2" stroke={color} strokeWidth="2.4" strokeLinejoin="round" />
+    <rect x="2" y="38" width="44" height="8" rx="3" fill={color} opacity="0.65" stroke={color} strokeWidth="1.8" />
+    <circle cx="24" cy="2" r="5" fill={color} opacity="0.95" />
+    <circle cx="2" cy="12" r="3.5" fill={color} opacity="0.85" />
+    <circle cx="46" cy="12" r="3.5" fill={color} opacity="0.85" />
+    <path d="M24 2 L24 0 M21 3 L19 1 M27 3 L29 1" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+  </Base>
+);
+
+export const IconLegend7 = ({ size = 28, color = "#8b5cf6" }) => (
+  <Base size={size}>
+    <path d="M2 38 L2 10 L12 22 L24 2 L36 22 L46 10 L46 38 Z" fill={color} opacity="0.22" stroke={color} strokeWidth="2.6" strokeLinejoin="round" />
+    <rect x="2" y="38" width="44" height="8" rx="3" fill={color} opacity="0.7" stroke={color} strokeWidth="2" />
+    <circle cx="24" cy="2" r="5.5" fill={color} opacity="0.95" />
+    <circle cx="2" cy="10" r="4" fill={color} opacity="0.9" />
+    <circle cx="46" cy="10" r="4" fill={color} opacity="0.9" />
+    <circle cx="12" cy="38" r="2.5" fill="#fff" opacity="0.4" />
+    <circle cx="24" cy="38" r="2.5" fill="#fff" opacity="0.4" />
+    <circle cx="36" cy="38" r="2.5" fill="#fff" opacity="0.4" />
+    <circle cx="24" cy="2" r="2.5" fill="#fff" opacity="0.6" />
+  </Base>
+);
+
+export const IconLegend8 = ({ size = 28, color = "#f59e0b" }) => (
+  <Base size={size}>
+    <path d="M2 38 L2 10 L12 22 L24 2 L36 22 L46 10 L46 38 Z" fill={color} opacity="0.22" stroke={color} strokeWidth="2.6" strokeLinejoin="round" />
+    <rect x="2" y="38" width="44" height="8" rx="3" fill={color} opacity="0.7" stroke={color} strokeWidth="2" />
+    <circle cx="24" cy="2" r="5.5" fill={color} opacity="0.95" />
+    <circle cx="2" cy="10" r="4" fill={color} opacity="0.9" />
+    <circle cx="46" cy="10" r="4" fill={color} opacity="0.9" />
+    <path d="M6 38 H42" stroke="#fff" strokeWidth="1.4" opacity="0.3" />
+    <path d="M20 36 L24 40 L28 36" stroke={color} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.6" />
+    <circle cx="24" cy="2" r="2.5" fill="#fff" opacity="0.7" />
+  </Base>
+);
+
+export const IconLegend9 = ({ size = 28, color = "#c084fc" }) => (
+  <Base size={size}>
+    <path d="M2 38 L2 8 L12 20 L24 0 L36 20 L46 8 L46 38 Z" fill={color} opacity="0.22" stroke={color} strokeWidth="2.8" strokeLinejoin="round" />
+    <rect x="2" y="38" width="44" height="8" rx="3" fill={color} opacity="0.75" stroke={color} strokeWidth="2.2" />
+    <circle cx="24" cy="0" r="6" fill={color} opacity="0.95" />
+    <circle cx="2" cy="8" r="4.5" fill={color} opacity="0.9" />
+    <circle cx="46" cy="8" r="4.5" fill={color} opacity="0.9" />
+    <path d="M8 38 H40" stroke="#fff" strokeWidth="1.6" opacity="0.35" />
+    <circle cx="14" cy="40" r="2" fill="#fff" opacity="0.5" />
+    <circle cx="24" cy="40" r="2" fill="#fff" opacity="0.5" />
+    <circle cx="34" cy="40" r="2" fill="#fff" opacity="0.5" />
+  </Base>
+);
+
+// 165. True Final Boss — a dragon head breathing fire on a keyboard
+export const IconFinalBoss = ({ size = 28, color = "#dc2626" }) => (
+  <Base size={size}>
+    <path d="M4 32 C4 20 10 10 20 8 C26 6 32 10 34 16 C36 10 42 8 44 14 C46 20 42 28 36 30 L30 32 L28 40 L24 34 L20 40 L18 32 Z" fill={color} opacity="0.2" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+    <circle cx="14" cy="18" r="3" fill={color} opacity="0.4" />
+    <circle cx="14" cy="18" r="1.5" fill={color} opacity="0.95" />
+    <circle cx="30" cy="14" r="2.5" fill={color} opacity="0.4" />
+    <circle cx="30" cy="14" r="1.2" fill={color} opacity="0.95" />
+    <path d="M18 32 L10 38 L14 44 M24 34 L22 46 M28 32 L32 44" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+    <path d="M36 24 L44 20 L42 28 L46 24" stroke="#fbbf24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.7" />
+    <path d="M20 22 L26 18 M22 26 L30 22" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.5" />
+  </Base>
+);
+
+export const LEGEND_TIER_ICONS = {
+  156: IconLegend1, 157: IconLegend2, 158: IconLegend3, 159: IconLegend4, 160: IconLegend5,
+  161: IconLegend6, 162: IconLegend7, 163: IconLegend8, 164: IconLegend9, 165: IconFinalBoss,
+};

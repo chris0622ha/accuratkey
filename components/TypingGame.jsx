@@ -4,7 +4,7 @@ import { useRouter, usePathname } from "next/navigation";
 import TypingTest from "./TypingTest";
 import GamesTab from "./GamesTab";
 import { KKey } from "./icons/KKey";
-import { FOUNDATIONS_ICONS, PRECISION_FLOW_ICONS, WORD_POWER_ICONS, KEYBOARD_MASTERY_ICONS, SPEED_SURGE_ICONS, IconStar } from "./icons/LevelIcons";
+import { FOUNDATIONS_ICONS, PRECISION_FLOW_ICONS, WORD_POWER_ICONS, KEYBOARD_MASTERY_ICONS, SPEED_SURGE_ICONS, FREE_RUN_ICONS, CENTURY_CLUB_ICONS, ENDURANCE_ICONS, LITERATURE_ICONS, MACHINE_MODE_ICONS, LEGEND_TIER_ICONS, IconStar } from "./icons/LevelIcons";
 import { formatKeys } from "@/lib/format";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
 import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback } from "@/lib/firebase";
@@ -2863,7 +2863,7 @@ const Nav = () => (<>
                   const unlocked=lv.id<=highestUnlocked,current=lv.id===currentLevel,completed=lv.id<highestUnlocked,locked=!unlocked,canSkipTo=lv.id===highestUnlocked+1;
                   const xPct = xFrac(idx)*100;
                   const topPx = row.y;
-                  const IconComp = FOUNDATIONS_ICONS[lv.id]||PRECISION_FLOW_ICONS[lv.id]||WORD_POWER_ICONS[lv.id]||KEYBOARD_MASTERY_ICONS[lv.id]||SPEED_SURGE_ICONS[lv.id]||null;
+                  const IconComp = FOUNDATIONS_ICONS[lv.id]||PRECISION_FLOW_ICONS[lv.id]||WORD_POWER_ICONS[lv.id]||KEYBOARD_MASTERY_ICONS[lv.id]||SPEED_SURGE_ICONS[lv.id]||FREE_RUN_ICONS[lv.id]||CENTURY_CLUB_ICONS[lv.id]||ENDURANCE_ICONS[lv.id]||LITERATURE_ICONS[lv.id]||MACHINE_MODE_ICONS[lv.id]||LEGEND_TIER_ICONS[lv.id]||null;
                   return (
                     <div key={lv.id} id={`lvl-${lv.id}`} ref={current?currentLevelNodeRef:null} style={{position:"absolute",top:topPx,left:`${xPct}%`,transform:"translateX(-50%)",display:"flex",flexDirection:"column",alignItems:"center",zIndex:1}}>
                       <div onClick={()=>{
