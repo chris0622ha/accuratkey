@@ -630,21 +630,31 @@ export const IconKeyRow = ({ size = 28, color = "#818cf8" }) => (
   </Base>
 );
 
-// 50. Left Side — a left hand silhouette with fingers spread over home keys
+// 50. Left Side — a half-keyboard panel with three key columns, anchored left, with a leftward arrow
 export const IconLeftHand = ({ size = 28, color = "#f87171" }) => (
   <Base size={size}>
-    <path d="M30 42 H14 C11 42 9 40 9 37 V24 C9 22 11 21 12 22 V16 C12 14 14 13 15 14 V10 C15 8 17 7 18 8 V6 C18 4 20 3 21 5 V14 C23 13 25 14 25 16 V20 C28 19 31 21 31 25 V37 C31 40 32 42 30 42 Z" fill={color} opacity="0.85" stroke={color} strokeWidth="1" strokeLinejoin="round" />
-    <line x1="12" y1="22" x2="12" y2="28" stroke="#1e1e30" strokeWidth="1" opacity="0.3" />
-    <line x1="15" y1="14" x2="15" y2="22" stroke="#1e1e30" strokeWidth="1" opacity="0.3" />
+    <rect x="6" y="14" width="24" height="22" rx="3" fill={color} opacity="0.14" stroke={color} strokeWidth="2" />
+    <rect x="9" y="18" width="5" height="5" rx="1" fill={color} opacity="0.85" />
+    <rect x="16" y="18" width="5" height="5" rx="1" fill={color} opacity="0.65" />
+    <rect x="23" y="18" width="5" height="5" rx="1" fill={color} opacity="0.85" />
+    <rect x="9" y="25" width="5" height="5" rx="1" fill={color} opacity="0.65" />
+    <rect x="16" y="25" width="5" height="5" rx="1" fill={color} opacity="0.85" />
+    <rect x="23" y="25" width="5" height="5" rx="1" fill={color} opacity="0.65" />
+    <path d="M40 25 H32 M36 21 L32 25 L36 29" stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
   </Base>
 );
 
-// 51. Right Side — a right hand silhouette, mirrored from Left Side
+// 51. Right Side — a half-keyboard panel anchored right, with a rightward arrow, distinct dot-grid fill
 export const IconRightHand = ({ size = 28, color = "#fb923c" }) => (
   <Base size={size}>
-    <path d="M18 42 H34 C37 42 39 40 39 37 V24 C39 22 37 21 36 22 V16 C36 14 34 13 33 14 V10 C33 8 31 7 30 8 V6 C30 4 28 3 27 5 V14 C25 13 23 14 23 16 V20 C20 19 17 21 17 25 V37 C17 40 16 42 18 42 Z" fill={color} opacity="0.85" stroke={color} strokeWidth="1" strokeLinejoin="round" />
-    <line x1="36" y1="22" x2="36" y2="28" stroke="#1e1e30" strokeWidth="1" opacity="0.3" />
-    <line x1="33" y1="14" x2="33" y2="22" stroke="#1e1e30" strokeWidth="1" opacity="0.3" />
+    <rect x="18" y="14" width="24" height="22" rx="3" fill={color} opacity="0.14" stroke={color} strokeWidth="2" />
+    <circle cx="23" cy="20.5" r="2.2" fill={color} opacity="0.85" />
+    <circle cx="30" cy="20.5" r="2.2" fill={color} opacity="0.65" />
+    <circle cx="37" cy="20.5" r="2.2" fill={color} opacity="0.85" />
+    <circle cx="23" cy="27.5" r="2.2" fill={color} opacity="0.65" />
+    <circle cx="30" cy="27.5" r="2.2" fill={color} opacity="0.85" />
+    <circle cx="37" cy="27.5" r="2.2" fill={color} opacity="0.65" />
+    <path d="M8 25 H16 M12 21 L16 25 L12 29" stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
   </Base>
 );
 
@@ -750,3 +760,18 @@ export const KEYBOARD_MASTERY_ICONS = {
   51: IconRightHand, 52: IconFinishFlag, 53: IconThinker, 54: IconCmdKey, 55: IconLangBubbles,
   56: IconStretchArrow, 57: IconLinkedRings, 58: IconCards, 59: IconHeartPulse, 60: IconExpand,
 };
+
+// A custom-drawn 5-point star used for level star ratings, replacing the emoji star.
+// `filled` controls solid vs. hollow outline rendering.
+export const IconStar = ({ size = 14, color = "#facc15", filled = true }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ display: "inline-block", verticalAlign: "middle" }}>
+    <path
+      d="M12 2.5 L14.9 9.1 L22.1 9.8 L16.7 14.6 L18.3 21.7 L12 17.9 L5.7 21.7 L7.3 14.6 L1.9 9.8 L9.1 9.1 Z"
+      fill={filled ? color : "none"}
+      stroke={color}
+      strokeWidth={filled ? 0 : 1.6}
+      strokeLinejoin="round"
+      opacity={filled ? 0.95 : 0.5}
+    />
+  </svg>
+);
