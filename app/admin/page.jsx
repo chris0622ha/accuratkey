@@ -646,6 +646,10 @@ export default function AdminPage() {
           <>
             <div style={{color:T.danger,fontSize:12,textAlign:"center",maxWidth:280}}>None of your profiles have admin access.</div>
             <div style={{color:T.faint,fontSize:11}}>UID: {user.uid}</div>
+            <div style={{color:T.faint,fontSize:11}}>Signed in as: {user.email || "unknown"}</div>
+            <button onClick={()=>signOut(adminAuth)} style={{marginTop:8,padding:"9px 20px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.text,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>
+              Sign out
+            </button>
           </>
         ) : (
           <div style={{display:"flex",flexDirection:"column",gap:8,width:"100%",maxWidth:300}}>
@@ -655,6 +659,9 @@ export default function AdminPage() {
                 {p.name} {p.isProfileAdmin?"":"(not admin)"}
               </button>
             ))}
+            <button onClick={()=>signOut(adminAuth)} style={{marginTop:4,padding:"8px 16px",borderRadius:8,border:"none",background:"transparent",color:T.faint,fontWeight:600,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+              Sign out / switch account
+            </button>
           </div>
         )}
       </div>
