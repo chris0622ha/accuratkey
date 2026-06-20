@@ -780,7 +780,13 @@ export default function AccuratKey() {
   const saveCustomLists = (lists) => {
     setCustomLists(lists);
     patchProfile({ customLists: lists });
-    if (user && activeProfile) updateProfile(user.uid, activeProfile.id, { customLists: lists }).catch(() => {});
+    if (user && activeProfile) {
+      if (isProfileRestricted(activeProfile)) {
+        updateProfileLocal(activeProfile.id, activeProfile, { customLists: lists });
+      } else {
+        updateProfile(user.uid, activeProfile.id, { customLists: lists }).catch(() => {});
+      }
+    }
   };
   const _age = activeProfile?.isProfileAdmin ? 20 : (activeProfile?.age ?? (activeProfile?.birthday ? calcAge(activeProfile.birthday) : 20));
   const _baseT = getTheme(_age);
@@ -3177,6 +3183,11 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
                 <button onClick={()=>setShowChallenges(false)} style={{background:"none",border:"none",color:T.faint,fontSize:20,cursor:"pointer"}}>×</button>
               </div>
 
+              {isProfileRestricted(activeProfile) ? (
+                <div style={{color:T.muted,fontSize:13,textAlign:"center",padding:"20px 10px",lineHeight:1.6}}>
+                  Challenges aren't available for this profile.
+                </div>
+              ) : (<>
               {/* Send new challenge */}
               {canUse(activeProfile,"challenges") && friends.length > 0 && (
                 <div style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:10,padding:12,marginBottom:14}}>
@@ -3252,6 +3263,7 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
                 </div>
               )}
               {challenges.length===0&&<div style={{color:T.muted,fontSize:12,textAlign:"center",padding:"20px 0"}}>No challenges yet</div>}
+              </>)}
             </div>
           </div>
         )}
@@ -3457,14 +3469,14 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
                 {SHOP_THEMES.map(th=>{
                   const owned=(activeProfile?.ownedThemes||[]).includes(th.id)||th.cost===0;
                   const active=activeProfile?.activeTheme===th.id||(th.id==="dark"&&!activeProfile?.activeTheme);const canCustomTheme=canUse(activeProfile,"customTheme");
-                  const doBuyTheme=async()=>{const newKeys=(activeProfile.keys||0)-th.cost;if(newKeys<0){setShopMsg("Not enough Keys");return;}patchProfile({keys:newKeys,ownedThemes:[...(activeProfile.ownedThemes||[]),th.id],activeTheme:th.id});setShopMsg(`${th.label} purchased!`);try{await purchaseTheme(user.uid,activeProfile.id,th.id,th.cost);await setActiveTheme(user.uid,activeProfile.id,th.id);}catch(e){setShopMsg(e.message||"Error");}};
+                  const doBuyTheme=async()=>{const newKeys=(activeProfile.keys||0)-th.cost;if(newKeys<0){setShopMsg("Not enough Keys");return;}patchProfile({keys:newKeys,ownedThemes:[...(activeProfile.ownedThemes||[]),th.id],activeTheme:th.id});setShopMsg(`${th.label} purchased!`);try{if(isProfileRestricted(activeProfile)){updateProfileLocal(activeProfile.id,activeProfile,{keys:newKeys,ownedThemes:[...(activeProfile.ownedThemes||[]),th.id],activeTheme:th.id});}else{await purchaseTheme(user.uid,activeProfile.id,th.id,th.cost);await setActiveTheme(user.uid,activeProfile.id,th.id);}}catch(e){setShopMsg(e.message||"Error");}};
                   return (
                     <div key={th.id} style={{background:T.bg,border:`1px solid ${active?T.purple:T.border}`,borderRadius:10,padding:"12px",textAlign:"center"}}>
                       <div style={{fontWeight:700,fontSize:13,color:T.text,marginBottom:4}}>{th.label}</div>
                       <div style={{color:T.faint,fontSize:11,marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>{th.cost===0?"Free":<>{th.cost} <KKey size={10}/></>}</div>
                       {active?<div style={{color:T.purple,fontSize:11,fontWeight:700}}>Active</div>
                         :!canCustomTheme&&th.id!=="dark"?<div style={{color:T.faint,fontSize:11}}>🔒 Locked</div>
-                        :owned?<button onClick={async()=>{patchProfile({activeTheme:th.id});setShopMsg(`${th.label} activated!`);setActiveTheme(user.uid,activeProfile.id,th.id);}} style={{width:"100%",padding:"6px",background:"transparent",border:`1px solid ${T.purple}`,borderRadius:6,color:T.purple,fontSize:11,fontWeight:700,cursor:"pointer"}}>Equip</button>
+                        :owned?<button onClick={()=>{patchProfile({activeTheme:th.id});setShopMsg(`${th.label} activated!`);if(isProfileRestricted(activeProfile)){updateProfileLocal(activeProfile.id,activeProfile,{activeTheme:th.id});}else{setActiveTheme(user.uid,activeProfile.id,th.id);}}} style={{width:"100%",padding:"6px",background:"transparent",border:`1px solid ${T.purple}`,borderRadius:6,color:T.purple,fontSize:11,fontWeight:700,cursor:"pointer"}}>Equip</button>
                         :<button onClick={()=>setConfirmBuy({th,doBuy:doBuyTheme})} style={{width:"100%",padding:"6px",background:T.purple,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>Buy</button>
                       }
                     </div>
