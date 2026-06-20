@@ -1078,9 +1078,14 @@ export default function AccuratKey() {
     try {
       const keys = activeProfile?.keys || 0;
       await changeUsername(user.uid, currentUsername, val, keys);
-      await updateProfile(user.uid, activeProfile.id, { keys: keys - 5 });
-      const updated = await getProfile(user.uid, activeProfile.id);
-      setActiveProfile(updated);
+      if (isProfileRestricted(activeProfile)) {
+        const updated = updateProfileLocal(activeProfile.id, activeProfile, { keys: keys - 5 });
+        setActiveProfile(updated);
+      } else {
+        await updateProfile(user.uid, activeProfile.id, { keys: keys - 5 });
+        const updated = await getProfile(user.uid, activeProfile.id);
+        setActiveProfile(updated);
+      }
       setCurrentUsername(val.toLowerCase());
       setShowChangeUsername(false);
       setNewUsernameInput("");
@@ -1675,10 +1680,6 @@ export default function AccuratKey() {
     if (!user || !activeProfile) return;
     setSaving(true); setSaveMsg("");
     try {
-      let photoURL = activeProfile?.photoURL || null;
-      if (editPhotoB64 === "remove") photoURL = null;
-      else if (editPhotoB64) photoURL = editPhotoB64;
-      else if (editPhoto) photoURL = await resizeToBase64(editPhoto, 200);
       // Validate birthday: only reject genuinely future dates
       const rawBday = editBirthday || "";
       let validBday = "";
@@ -1688,6 +1689,15 @@ export default function AccuratKey() {
         if (bd <= now && bd.getFullYear() >= now.getFullYear() - 120) validBday = rawBday;
       }
       const age = validBday ? calcAge(validBday) : 20;
+      // Defensive check (mirrors the UI gate in the Edit Profile modal): never
+      // persist a photo for a profile whose (possibly just-updated) birthday
+      // computes as under 13 — covers both "this profile was always
+      // restricted" and "this edit is what makes it restricted."
+      let photoURL = activeProfile?.photoURL || null;
+      if (editPhotoB64 === "remove") photoURL = null;
+      else if (age < 13) photoURL = null;
+      else if (editPhotoB64) photoURL = editPhotoB64;
+      else if (editPhoto) photoURL = await resizeToBase64(editPhoto, 200);
       const patch = {
         name: editName.trim() || activeProfile.name,
         avatar: editAvatar,
@@ -2672,7 +2682,12 @@ const Nav = () => (<>
             {/* Privacy Settings */}
             <div style={{marginTop:16,borderTop:`1px solid ${T.border}`,paddingTop:14}}>
               <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>🔒 Privacy</div>
-              {[
+              {isProfileRestricted(activeProfile) ? (
+                <div style={{color:T.muted,fontSize:12,lineHeight:1.6}}>
+                  This profile never appears on a public page or leaderboard, so there's nothing to configure here.
+                </div>
+              ) : (
+              [
                 ["publicProfile","Public profile page","Your /u/username page is visible to anyone"],
                 ["showStreak","Show streak publicly","Display 🔥 streak on your public profile"],
                 ["showSessions","Show session history","Show recent sessions on your public profile"],
@@ -2684,7 +2699,8 @@ const Nav = () => (<>
                   patchProfile({privacy:np});
                   updateProfile(user.uid,activeProfile.id,{privacy:np});
                 }} />
-              ))}
+              ))
+              )}
             </div>
 
             {/* Delete Profile */}
@@ -3365,7 +3381,20 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
                       if(!feedbackText.trim())return;
                       setFeedbackSending(true);
                       try{
-                        await submitFeedback(user?.uid||null, activeProfile?.id||null, feedbackText.trim(), currentUsername, activeProfile?.name||null, feedbackScreenshot||null);
+                        const restricted = isProfileRestricted(activeProfile);
+                        // COPPA: don't attach a child's real name or account
+                        // username to a feedback record an admin can read.
+                        // The report itself still goes through — uid/profileId
+                        // are still useful for an admin to act on a bug report
+                        // without exposing the profile's display name.
+                        await submitFeedback(
+                          user?.uid||null,
+                          activeProfile?.id||null,
+                          feedbackText.trim(),
+                          restricted ? null : currentUsername,
+                          restricted ? null : (activeProfile?.name||null),
+                          feedbackScreenshot||null
+                        );
                         setFeedbackSent(true);
                         setFeedbackScreenshot(null);
                         setFeedbackScreenshotName("");
