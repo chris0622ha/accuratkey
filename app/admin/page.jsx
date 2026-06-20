@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { onAuthStateChanged, signInWithPopup, signOut, signInWithEmailAndPassword, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth";
-import { getAdminAuth, getAdminDb, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, adminSetProfileAdmin, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest, replyToFeedback, getFlaggedScores, getRestoreRequests, approveFlaggedScore, dismissFlaggedScore, resolveRestoreRequest } from "@/lib/firebase";
+import { getAdminAuth, getAdminDb, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, adminSetProfileAdmin, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest, replyToFeedback, getFlaggedScores, getRestoreRequests, approveFlaggedScore, dismissFlaggedScore, resolveRestoreRequest, getCoppaAuditSummary } from "@/lib/firebase";
 const LEVELS = [
   { id:1,  name:"Home Row Hero",         emoji:"🏠", wpmTarget:12,  accuracy:75, color:"#10b981", words:["ffjj","fjfj","asdf","jkl;","add","ask","fall","glad","flask","lads","fads","salads"] },
   { id:2,  name:"Top Row Climber",       emoji:"🧗", wpmTarget:16,  accuracy:75, color:"#3b82f6", words:["quit","wrap","type","your","power","tower","write","pretty","quite","report"] },
@@ -312,6 +312,18 @@ export default function AdminPage() {
   const [replyText,setReplyText]=useState("");
   const [replySending,setReplySending]=useState(false);
   const [bdayReqList,setBdayReqList]=useState([]);
+  const [coppaAudit,setCoppaAudit]=useState(null);
+  const [coppaAuditLoading,setCoppaAuditLoading]=useState(false);
+  async function runCoppaAudit() {
+    setCoppaAuditLoading(true);
+    try {
+      const result = await getCoppaAuditSummary(adminDb);
+      setCoppaAudit(result);
+    } catch (e) {
+      flash(e.message || "Audit failed");
+    }
+    setCoppaAuditLoading(false);
+  }
   const [flaggedScores,setFlaggedScores]=useState([]);
   const [restoreRequests,setRestoreRequests]=useState([]);
   const [anticheatSubtab,setAnticheatSubtab]=useState("flagged"); // "flagged" | "requests"
@@ -786,6 +798,39 @@ export default function AdminPage() {
                 ))}
               </div>
             ) : <div style={{color:T.muted,fontSize:12,padding:24,textAlign:"center"}}>Loading stats...</div>}
+
+            <div style={{...st.card,marginTop:8}}>
+              <div style={{color:T.text,fontWeight:700,fontSize:13,marginBottom:6}}>🧒 COPPA pre-existing data audit</div>
+              <div style={{color:T.muted,fontSize:11,marginBottom:10,lineHeight:1.5}}>
+                Scans every account's profiles and reports counts only — no names, emails, or UIDs are ever returned. Tells you how many existing profiles are already restricted (under 13) and whether any of them still have a photo, a public username, or session history that predates the privacy fixes.
+              </div>
+              <button onClick={runCoppaAudit} disabled={coppaAuditLoading} style={{...st.btn(),opacity:coppaAuditLoading?0.6:1}}>
+                {coppaAuditLoading?"Scanning...":coppaAudit?"Re-scan":"Run audit"}
+              </button>
+              {coppaAudit && (
+                <div style={{marginTop:14,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8}}>
+                  {[
+                    ["Accounts scanned",coppaAudit.totalAccounts,T.muted],
+                    ["Profiles scanned",coppaAudit.totalProfiles,T.muted],
+                    ["Restricted (under 13)",coppaAudit.restrictedProfiles,coppaAudit.restrictedProfiles>0?T.danger:T.accent],
+                    ["...with a photo",coppaAudit.restrictedWithPhoto,coppaAudit.restrictedWithPhoto>0?T.danger:T.accent],
+                    ["...with public username",coppaAudit.restrictedWithPublicUsername,coppaAudit.restrictedWithPublicUsername>0?T.danger:T.accent],
+                    ["...with session history",coppaAudit.restrictedWithSessions,coppaAudit.restrictedWithSessions>0?T.danger:T.accent],
+                  ].map(([label,val,color])=>(
+                    <div key={label} style={{background:T.bg,borderRadius:8,padding:"8px 10px",border:`1px solid ${T.border}`}}>
+                      <div style={{color:T.faint,fontSize:9,marginBottom:2}}>{label}</div>
+                      <div style={{color,fontSize:20,fontWeight:800}}>{val}</div>
+                    </div>
+                  ))}
+                  <div style={{gridColumn:"1/-1",color:T.faint,fontSize:10,marginTop:4}}>Scanned {new Date(coppaAudit.scannedAt).toLocaleString()}</div>
+                </div>
+              )}
+              {coppaAudit && coppaAudit.restrictedProfiles > 0 && (
+                <div style={{marginTop:10,color:T.danger,fontSize:11,lineHeight:1.5,background:T.danger+"11",border:`1px solid ${T.danger}33`,borderRadius:8,padding:"8px 10px"}}>
+                  {coppaAudit.restrictedProfiles} existing profile(s) are already restricted. The privacy fixes already in place stop any NEW data collection for them, but the photo/username/session counts above show what still needs manual cleanup if non-zero — go to the Users tab, search for the specific account, and use Edit Profile to remove a photo, or contact the account's owner about the username/history.
+                </div>
+              )}
+            </div>
           </div>
         )}
 
