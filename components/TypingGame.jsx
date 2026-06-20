@@ -1983,7 +1983,6 @@ const Confetti = ({ sectionName }) => {
   );
 };
 
-const isMobileOwner = isMobile && user?.uid === "qM3qeYBLwvRXy8D0gOKGCQbGuA12";
 const Nav = () => (<>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
       <div>
@@ -1991,9 +1990,9 @@ const Nav = () => (<>
         {currentUsername && <div style={{fontSize:9,color:T.muted,marginTop:1}}>@{currentUsername}</div>}
       </div>
       {activeProfile && (
-        <div style={{display:"flex",alignItems:"center",gap:isMobileOwner?6:10,flexWrap:"nowrap",overflowX:"auto",maxWidth:isMobileOwner?"60vw":"none"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"nowrap",overflowX:"auto",maxWidth:"none"}}>
           {streak>0&&<span style={{color:"#f97316",fontWeight:700,fontSize:12}}>🔥{streak}</span>}
-          {!isMobileOwner&&<button onClick={e=>{e.stopPropagation();setShowFeedback(true);setFeedbackSent(false);setFeedbackText("");}} title="Send feedback" style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:12,padding:"3px 7px",cursor:"pointer",fontFamily:T.font,lineHeight:1}}>💬</button>}
+          <button onClick={e=>{e.stopPropagation();setShowFeedback(true);setFeedbackSent(false);setFeedbackText("");}} title="Send feedback" style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:12,padding:"3px 7px",cursor:"pointer",fontFamily:T.font,lineHeight:1}}>💬</button>
           {canUse(activeProfile,"keys")&&<span style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:"4px 10px",fontSize:fs(13),color:T.accent,fontWeight:700,display:"flex",alignItems:"center",gap:4}}><KKey size={14}/>{formatKeys(activeProfile.keys)}</span>}
                     {canUse(activeProfile,"friends")&&<button onClick={()=>{getFriends(user?.uid).then(setFriends);getIncomingRequests(user?.uid).then(setFriendReqs);setShowFriends(true);}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:fs(13),padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Friends">👥</button>}
           {canUse(activeProfile,"challenges")&&<button onClick={()=>{getPendingChallenges(user.uid).then(setChallenges);setShowChallenges(true);setChallengeMsg("");}} style={{background:challenges.some(c=>c.toUid===user?.uid&&c.status==="pending")?"#ef444422":"none",border:`1px solid ${challenges.some(c=>c.toUid===user?.uid&&c.status==="pending")?"#ef4444":T.border}`,borderRadius:6,color:challenges.some(c=>c.toUid===user?.uid&&c.status==="pending")?"#ef4444":T.muted,fontSize:fs(13),padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Challenges">⚔️</button>}
@@ -2004,9 +2003,9 @@ const Nav = () => (<>
   }} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:13,padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Shop">🛍️</button>}
           <button onClick={openProfileModal} style={{background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",alignItems:"center",gap:7}} title="Profile">
             <AvatarImg profile={activeProfile} size={30} />
-            {!isMobileOwner&&<span style={{fontSize:12,color:T.muted,maxWidth:90,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{activeProfile.name}</span>}
+            <span style={{fontSize:12,color:T.muted,maxWidth:90,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{activeProfile.name}</span>
           </button>
-          {!isMobileOwner&&<button onClick={() => requirePin("switch", () => setScreenWithUrl("profilePicker"))} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.faint,fontSize:fs(11),padding:"4px 8px",cursor:"pointer",fontFamily:T.font}}>Switch</button>}
+          <button onClick={() => requirePin("switch", () => setScreenWithUrl("profilePicker"))} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.faint,fontSize:fs(11),padding:"4px 8px",cursor:"pointer",fontFamily:T.font}}>Switch</button>
         </div>
       )}
       {!activeProfile && (
@@ -2492,7 +2491,7 @@ const Nav = () => (<>
     const currentLevel = activeProfile?.currentLevel || 1;
 
     return (
-      <div style={{minHeight:"100vh",background:T.bg,fontFamily:T.font,padding:isMobileOwner?"10px 8px":"20px 16px",boxSizing:"border-box",overflowX:"hidden",width:"100%",maxWidth:"100vw"}}>
+      <div style={{minHeight:"100vh",background:T.bg,fontFamily:T.font,padding:isMobile?"10px 8px":"20px 16px",boxSizing:"border-box",overflowX:"hidden",width:"100%",maxWidth:"100vw"}}>
         {activeProfile && <style>{`* { font-family: ${T.font} !important; } body { background: ${T.bg}; }`}</style>}
         {showProfileModal && (
           <Overlay onClose={() => setShowProfileModal(false)}>
@@ -2836,7 +2835,7 @@ const Nav = () => (<>
               ), canUse(activeProfile,"test")],
             ]).filter(t=>t[2]).map(([k,renderIcon])=>(
               <button key={k} onClick={()=>setActiveTabWithUrl(k)} style={{
-                flex:1,padding:isMobileOwner?"5px 0":"7px 0",borderRadius:7,border:"none",
+                flex:1,padding:isMobile?"5px 0":"7px 0",borderRadius:7,border:"none",
                 background:activeTab===k?T.purple:"transparent",
                 color:activeTab===k?"#fff":T.faint,
                 cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,
