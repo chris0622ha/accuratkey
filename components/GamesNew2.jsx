@@ -1,71 +1,9 @@
 "use client";
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, WORD_CATEGORIES, CATEGORY_NAMES, ALL_WORDS, SPELLING_BEE_WORDS, POOL_100_WORDS, POOL_ENDURANCE, POOL_WORD_CHAIN, POOL_VOCAB, POOL_MYSTERY, POOL_INVADERS, POOL_ASTEROID, POOL_TOWER, pickWords, pickByDiff, RHYMES } from "./WordDB";
+import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, WORD_CATEGORIES, CATEGORY_NAMES, ALL_WORDS, POOL_100_WORDS, POOL_ENDURANCE, POOL_WORD_CHAIN, POOL_VOCAB, POOL_MYSTERY, POOL_INVADERS, POOL_ASTEROID, POOL_TOWER, pickWords, pickByDiff, RHYMES } from "./WordDB";
 const WORDS_EASY=TYPING_BASIC, WORDS_MED=TYPING_MEDIUM, WORDS_HARD=TYPING_HARD, WORDS_ANIMALS=WORD_CATEGORIES.animals, WORDS_COUNTRIES=WORD_CATEGORIES.countries;
 
 function gSave(id, data) { try { localStorage.setItem("ak_gs_"+id, JSON.stringify(data)); } catch{} }
-// Cache the voice list once it's loaded - getVoices() can return an empty
-// array on first call in some browsers until the voiceschanged event fires.
-let _cachedVoices = null;
-if (typeof window !== "undefined" && window.speechSynthesis) {
-  const loadVoices = () => { _cachedVoices = window.speechSynthesis.getVoices(); };
-  loadVoices();
-  window.speechSynthesis.onvoiceschanged = loadVoices;
-}
-
-// Picks the best available voice instead of just using whatever the OS
-// happens to default to (which is often a low-quality robotic voice on
-// many devices). Prefers explicitly "enhanced"/"natural"/Google-branded
-// voices when available, falls back to any US English voice, then to
-// the system default if nothing better exists.
-function pickBestVoice() {
-  if (!_cachedVoices || !_cachedVoices.length) return null;
-  const enUS = _cachedVoices.filter(v => v.lang === "en-US");
-  const pool = enUS.length ? enUS : _cachedVoices.filter(v => v.lang?.startsWith("en"));
-  if (!pool.length) return null;
-  const preferred = pool.find(v => /natural|enhanced|premium|neural/i.test(v.name))
-    || pool.find(v => /google/i.test(v.name))
-    || pool.find(v => v.name === "Samantha") // a commonly-decent default on Apple devices
-    || pool[0];
-  return preferred;
-}
-
-// Tracks whether we've already nudged the user about volume this session,
-// so the prompt doesn't show every single time a word is spoken.
-let _volumeWarningShown = false;
-
-function speakWord(word, rate=0.8, onVolumeWarning) {
-  if (typeof window === "undefined" || !window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(word);
-  u.rate = rate; u.pitch = 1; u.lang = "en-US";
-  const voice = pickBestVoice();
-  if (voice) u.voice = voice;
-
-  // Best-effort detection of "device volume is probably too low/muted":
-  // SpeechSynthesis doesn't expose actual audio levels directly, so this
-  // checks the few signals that are available - whether the page itself
-  // has been muted via the Page Visibility/Media Session APIs where
-  // supported, and whether speech synthesis reports starting but the
-  // utterance ends suspiciously fast (a common symptom of no audio output
-  // device or system mute on some browsers). This can't be 100% certain,
-  // it's a heuristic nudge, not a guarantee.
-  if (!_volumeWarningShown && onVolumeWarning) {
-    let started = false;
-    const startTime = Date.now();
-    u.onstart = () => { started = true; };
-    u.onend = () => {
-      const elapsed = Date.now() - startTime;
-      const expectedMin = Math.max(300, word.length * 60 * (1/rate));
-      if (started && elapsed < expectedMin * 0.3) {
-        _volumeWarningShown = true;
-        onVolumeWarning();
-      }
-    };
-  }
-
-  window.speechSynthesis.speak(u);
-}
 function gLoad(id) { try { return JSON.parse(localStorage.getItem("ak_gs_"+id)||"null"); } catch{return null;} }
 function gClear(id) { try { localStorage.removeItem("ak_gs_"+id); } catch{} }
 function getSfxCtx() { if(typeof window==="undefined") return null; if(!window._akCtx||window._akCtx.state==="closed") window._akCtx=new(window.AudioContext||window.webkitAudioContext)(); return window._akCtx; }
@@ -187,8 +125,8 @@ export function Endurance({ T, onBack, onSettings, settings={} }) {
 
 // ─── ROULETTE ─────────────────────────────────────────────────────────────────
 export function Roulette({ T, onBack, onSettings, settings={} }) {
-  const ALL_GAME_IDS = ["rain","survival","burst","scramble","suddendeath","zen","ladder","sniper","mirror","flash","echo","ghost","coderain","boss","story","journal","poetry","hundred","endurance","wordchain","categoryblitz","vocabbuilder","spellingbee"];
-  const GAME_NAMES = {rain:"🌧️ Word Rain",survival:"💀 Survival",burst:"⚡ Speed Burst",scramble:"🔀 Word Scramble",suddendeath:"☠️ Sudden Death",zen:"🧘 Zen Mode",ladder:"🪜 Speed Ladder",sniper:"🎯 Sniper",mirror:"🪞 Mirror",flash:"⚡ Flash",echo:"🔁 Echo",ghost:"👻 Ghost Words",coderain:"💻 Code Rain",boss:"👾 Boss Battle",story:"🎭 Typewriter Story",journal:"📝 Journal",poetry:"📜 Poetry",hundred:"💯 100 Words",endurance:"🏃 Endurance",wordchain:"🔗 Word Chain",categoryblitz:"⚡ Category Blitz",vocabbuilder:"📚 Vocab Builder",spellingbee:"🐝 Spelling Bee"};
+  const ALL_GAME_IDS = ["rain","survival","burst","scramble","suddendeath","zen","ladder","sniper","mirror","flash","echo","ghost","coderain","boss","story","journal","poetry","hundred","endurance","wordchain","categoryblitz","vocabbuilder"];
+  const GAME_NAMES = {rain:"🌧️ Word Rain",survival:"💀 Survival",burst:"⚡ Speed Burst",scramble:"🔀 Word Scramble",suddendeath:"☠️ Sudden Death",zen:"🧘 Zen Mode",ladder:"🪜 Speed Ladder",sniper:"🎯 Sniper",mirror:"🪞 Mirror",flash:"⚡ Flash",echo:"🔁 Echo",ghost:"👻 Ghost Words",coderain:"💻 Code Rain",boss:"👾 Boss Battle",story:"🎭 Typewriter Story",journal:"📝 Journal",poetry:"📜 Poetry",hundred:"💯 100 Words",endurance:"🏃 Endurance",wordchain:"🔗 Word Chain",categoryblitz:"⚡ Category Blitz",vocabbuilder:"📚 Vocab Builder"};
   const [spinning, setSpinning] = useState(false);
   const [picked, setPicked] = useState(null);
   const [spinItems, setSpinItems] = useState([]);
@@ -423,105 +361,6 @@ export function VocabBuilder({ T, onBack, onSettings, settings={} }) {
     </div>
     <input ref={ref} autoFocus value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type the word..."
       style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}/>
-  </div>);
-}
-
-// ─── SPELLING BEE ─────────────────────────────────────────────────────────────
-const BEE_DIFFS = ["super_easy","easy","normal","medium","hard","super_hard","impossible"];
-const BEE_LABELS = {super_easy:"⭐ Super Easy",easy:"⭐⭐ Easy",normal:"⭐⭐⭐ Normal",medium:"🔥 Medium",hard:"💀 Hard",super_hard:"☠️ Super Hard",impossible:"👾 Impossible"};
-
-export function SpellingBee({ T, onBack, onSettings, settings = {} }) {
-  const diff = settings.difficulty || "normal";
-  const wordBank = SPELLING_BEE_WORDS[diff] || SPELLING_BEE_WORDS.normal;
-  const sv = gLoad("spellingbee");
-  const [words] = useState(()=> sv?.words || [...wordBank].sort(()=>Math.random()-.5));
-  const [idx, setIdx] = useState(()=> sv?.idx || 0);
-  const [typed, setTyped] = useState("");
-  const [correct, setCorrect] = useState(()=> sv?.correct || 0);
-  const [wrong, setWrong] = useState(false);
-  const [wrongFlash, setWrongFlash] = useState("");
-  const [done, setDone] = useState(false);
-  const [muted, setMuted] = useState(false);
-  const [revealed, setRevealed] = useState(false);
-  const [volumeWarning, setVolumeWarning] = useState(false);
-  const ref = useRef(null);
-  const item = words[idx] || words[0];
-  const target = item?.word || "";
-  useEffect(()=>{ if(!done) gSave("spellingbee",{words,idx,correct}); },[idx,correct,done]);
-  useEffect(()=>{
-    setRevealed(false); setTyped("");
-    if(!muted) setTimeout(()=>speakWord(target, 0.7, ()=>setVolumeWarning(true)), 300);
-    setTimeout(()=>ref.current?.focus(),50);
-  },[idx]);
-
-  const handleType = e => {
-    const v = e.target.value;
-    setTyped(v);
-    if (v.toLowerCase() === target) {
-      if (!muted) playTone(880,"sine",.1,.2);
-      setCorrect(c=>c+1);
-      const ni = idx+1;
-      if (ni >= words.length) setDone(true);
-      else setIdx(ni);
-    } else if (v.length > target.length) {
-      if (!muted) playTone(220,"sawtooth",.15,.2);
-      setWrong(true); setWrongFlash(v.trim()); setTyped("");
-      setTimeout(()=>{ setWrong(false); setWrongFlash(""); }, 600);
-    }
-  };
-
-  const skip = () => {
-    setRevealed(true);
-    setTimeout(()=>{ const ni=idx+1; if(ni>=words.length)setDone(true); else setIdx(ni); }, 1500);
-  };
-
-  if (done) return <ResultScreen emoji="🐝" title="Spelling Bee Done!" color="#facc15"
-    stats={[["Difficulty",BEE_LABELS[diff]],["Correct",`${correct}/${words.length}`],["Score",Math.round(correct/words.length*100)+"%"]]}
-    onRetry={()=>{gClear("spellingbee");setIdx(0);setTyped("");setCorrect(0);setDone(false);setRevealed(false);}} T={T}/>;
-
-  return (<div>
-    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
-      <BackBtn onBack={onBack} onSettings={onSettings} T={T}/>
-      <span style={{color:T.text,fontWeight:800,fontSize:20}}>🐝 Spelling Bee</span>
-      <SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/>
-    </div>
-    <div style={{display:"flex",justifyContent:"space-between",marginBottom:10,fontSize:12}}>
-      <span style={{color:"#facc15",fontWeight:700}}>{BEE_LABELS[diff]}</span>
-      <span style={{color:T.muted}}>{idx+1} / {words.length} · {correct} correct</span>
-    </div>
-    {/* Definition card */}
-    <div style={{background:"#0d1a0d",border:"1px solid #facc1533",borderRadius:12,padding:"20px 24px",marginBottom:12,textAlign:"center",minHeight:80,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-      <div style={{color:"#facc15",fontSize:11,letterSpacing:2,marginBottom:8}}>DEFINITION</div>
-      <div style={{color:"#e0e0ff",fontSize:16,lineHeight:1.6,fontStyle:"italic"}}>"{item?.def}"</div>
-      {revealed && <div style={{color:"#facc15",fontFamily:"'JetBrains Mono',monospace",fontSize:22,fontWeight:800,marginTop:12,letterSpacing:3}}>{target}</div>}
-    </div>
-    {volumeWarning && (
-      <div style={{background:"#1a1500",border:"1px solid #facc1555",borderRadius:8,padding:"10px 12px",marginBottom:10,fontSize:12,color:"#facc15",display:"flex",alignItems:"center",gap:8}}>
-        <span style={{fontSize:16}}>🔈</span>
-        <span style={{flex:1}}>Didn't hear that? Try turning up your device's volume.</span>
-        <button onClick={()=>setVolumeWarning(false)} style={{background:"none",border:"none",color:"#facc15",cursor:"pointer",fontSize:14,padding:0}}>×</button>
-      </div>
-    )}
-    <button onClick={()=>speakWord(target, 0.7, ()=>setVolumeWarning(true))} style={{width:"100%",marginBottom:10,padding:"8px",borderRadius:8,border:"1px solid #facc1533",background:"#1a1500",color:"#facc15",fontSize:13,cursor:"pointer",fontFamily:T.font}}>
-      🔊 Hear the word again
-    </button>
-    {/* Typed display */}
-    <div style={{background:T.card,border:`1px solid ${wrong?"#ef4444":T.border}`,borderRadius:12,padding:"16px",marginBottom:10,fontFamily:"'JetBrains Mono',monospace",fontSize:22,textAlign:"center",letterSpacing:3,minHeight:60,transition:"border-color .15s"}}>
-      {wrong ? (
-        <span style={{color:"#ef4444"}}>{wrongFlash}</span>
-      ) : (
-        target.split("").map((ch,i)=>(
-          <span key={i} style={{color:i<typed.length?(typed[i]===ch?"#34d399":"#ef4444"):i===typed.length?"#facc15":T.faint,borderBottom:i===typed.length?"2px solid #facc15":"2px solid transparent"}}>{i<typed.length?typed[i]:"_"}</span>
-        ))
-      )}
-    </div>
-    <input ref={ref} value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Spell the word..."
-      style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box",marginBottom:8}}/>
-    {!revealed && (
-      <button onClick={skip} style={{width:"100%",padding:"8px",borderRadius:7,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:12,cursor:"pointer",fontFamily:T.font}}>
-        Give up — show answer
-      </button>
-    )}
   </div>);
 }
 
@@ -953,4 +792,4 @@ export function MadLibs({ T, onBack, onSettings, settings={} }) {
   </div>);
 }
 
-export default { HundredWords, Endurance, Roulette, WordChain, CategoryBlitz, VocabBuilder, SpellingBee, TypingInvaders, AsteroidBelt, TowerDefense, MysteryWords, RhymeTime, MadLibs };
+export default { HundredWords, Endurance, Roulette, WordChain, CategoryBlitz, VocabBuilder, TypingInvaders, AsteroidBelt, TowerDefense, MysteryWords, RhymeTime, MadLibs };

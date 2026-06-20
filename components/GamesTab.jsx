@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, ALL_WORDS, WORD_CATEGORIES, CATEGORY_NAMES, SPELLING_BEE_WORDS, POOL_WORD_RAIN, POOL_SURVIVAL, POOL_SPEED_BURST, POOL_SCRAMBLE, POOL_SUDDEN_DEATH, POOL_ZEN, POOL_LADDER_EASY, POOL_LADDER_MED, POOL_LADDER_HARD, POOL_LADDER_VHARD, POOL_ECHO, POOL_INVADERS, POOL_ASTEROID, POOL_TOWER, POOL_WORD_CHAIN, pickWords, pickByDiff } from "./WordDB";
+import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, ALL_WORDS, WORD_CATEGORIES, CATEGORY_NAMES, POOL_WORD_RAIN, POOL_SURVIVAL, POOL_SPEED_BURST, POOL_SCRAMBLE, POOL_SUDDEN_DEATH, POOL_ZEN, POOL_LADDER_EASY, POOL_LADDER_MED, POOL_LADDER_HARD, POOL_LADDER_VHARD, POOL_ECHO, POOL_INVADERS, POOL_ASTEROID, POOL_TOWER, POOL_WORD_CHAIN, pickWords, pickByDiff } from "./WordDB";
 import { Sniper, Mirror, Flash, Echo, GhostWords, CodeRain, BossBattle, TypewriterStory, TypingJournal, PoetryMode } from "./GamesExtra";
-import { HundredWords, Endurance, Roulette, WordChain, CategoryBlitz, VocabBuilder, SpellingBee, TypingInvaders, AsteroidBelt, TowerDefense, MysteryWords, RhymeTime, MadLibs } from "./GamesNew2";
+import { HundredWords, Endurance, Roulette, WordChain, CategoryBlitz, VocabBuilder, TypingInvaders, AsteroidBelt, TowerDefense, MysteryWords, RhymeTime, MadLibs } from "./GamesNew2";
 import { SpeedTest, MissingLetters, Anagram, BrickBreaker, Quotes, HaikuMode, Synonyms, Antonyms } from "./GamesNew3";
 // Word pools
 const EASY_WORDS = TYPING_BASIC;
@@ -103,7 +103,6 @@ const GAMES = [
   { id:"wordchain",   emoji:"🔗", name:"Word Chain",        desc:"Each word must start with the last letter",       cat:"puzzle" },
   { id:"blitz",       emoji:"⚡", name:"Category Blitz",    desc:"Type as many words in a category as possible",    cat:"challenge" },
   { id:"vocab",       emoji:"📚", name:"Vocab Builder",     desc:"Read the definition — type the word",             cat:"educational" },
-  { id:"spellingbee", emoji:"🐝", name:"Spelling Bee",      desc:"Memorize and spell words correctly",              cat:"educational" },
   { id:"invaders",    emoji:"👾", name:"Typing Invaders",   desc:"Shoot invaders by typing their words",            cat:"arcade" },
   { id:"asteroid",    emoji:"☄️", name:"Asteroid Belt",     desc:"Destroy asteroids before they hit your ship",     cat:"arcade" },
   { id:"tower",       emoji:"🏰", name:"Tower Defense",     desc:"Stop enemies from reaching your base",            cat:"arcade" },
@@ -852,7 +851,6 @@ const GAME_SETTINGS = {
   wordchain:   [{ key:"timePerWord", label:"Time per word", opts:[5,10,15,20], default:10, suffix:"s" }],
   blitz:       [{ key:"duration",   label:"Duration",   opts:[15,30,60], default:30, suffix:"s" }, { key:"category", label:"Category", opts:["animals","countries","fruits","food","science","sports","tech","programming"], default:"animals" }],
   vocab:       [{ key:"count",      label:"Words",      opts:[10,15,20,25], default:15 }],
-  spellingbee: [{ key:"difficulty", label:"Difficulty", opts:["super_easy","easy","normal","medium","hard","super_hard","impossible"], default:"normal" }],
   invaders:    [{ key:"waves",      label:"Waves",      opts:[3,5,10], default:5 }],
   asteroid:    [{ key:"lives",      label:"Lives",      opts:[2,3,5], default:3 }],
   tower:       [],
@@ -1192,7 +1190,7 @@ export default function GamesTab({ T }) {
     story: TypewriterStory, journal: TypingJournal, poetry: PoetryMode,
     hundred: HundredWords, endurance: Endurance, roulette: Roulette,
     wordchain: WordChain, blitz: CategoryBlitz, vocab: VocabBuilder,
-    spellingbee: SpellingBee, invaders: TypingInvaders, asteroid: AsteroidBelt,
+    invaders: TypingInvaders, asteroid: AsteroidBelt,
     tower: TowerDefense, mystery: MysteryWords, rhyme: RhymeTime, madlibs: MadLibs,
     speedtest: SpeedTest, missing: MissingLetters, anagram: Anagram,
     bricks: BrickBreaker, quotes: Quotes, haiku: HaikuMode,
