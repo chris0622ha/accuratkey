@@ -16,7 +16,7 @@ function ResultScreen({emoji,title,color,stats,onRetry,T}){return(<div style={{t
 // ─── 100 WORDS ────────────────────────────────────────────────────────────────
 export function HundredWords({ T, onBack, onSettings, settings={} }) {
   const sv = gLoad("hundred");
-  const diff = settings.difficulty || "med";
+  const diff = settings.difficulty || "medium";
   const pool = diff==="easy"?TYPING_BASIC:diff==="hard"?TYPING_HARD:POOL_100_WORDS;
   const [words] = useState(()=> sv?.words || pickWords(100, pool));
   const [typed, setTyped] = useState(()=> sv?.typed || "");
@@ -641,7 +641,7 @@ export function TowerDefense({ T, onBack, onSettings, settings={} }) {
 export function MysteryWords({ T, onBack, onSettings, settings={} }) {
   const SYMBOLS = "★◆■●▲▼♦♠♣♥◉⬟⬡◈";
   const sv = gLoad("mystery");
-  const diff = settings.difficulty||"med";
+  const diff = settings.difficulty||"medium";
   const pool = diff==="easy"?TYPING_BASIC:diff==="hard"?TYPING_HARD:POOL_MYSTERY;
   const [words] = useState(()=> sv?.words || pickWords(20,pool));
   const [idx, setIdx] = useState(()=> sv?.idx||0);

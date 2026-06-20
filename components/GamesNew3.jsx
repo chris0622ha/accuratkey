@@ -16,7 +16,7 @@ function ResultScreen({emoji,title,color,stats,onRetry,T}){return(<div style={{t
 // ─── SPEED TEST ───────────────────────────────────────────────────────────────
 export function SpeedTest({ T, onBack, onSettings, settings={} }) {
   const DURATION = (settings.duration || 1) * 60;
-  const diff2 = settings.difficulty||"med";
+  const diff2 = settings.difficulty||"medium";
   const [words] = useState(()=>pickWords(300, diff2==="easy"?TYPING_BASIC:diff2==="hard"?TYPING_HARD:TYPING_MEDIUM));
   const [typed, setTyped] = useState("");
   const [timeLeft, setTimeLeft] = useState(DURATION);
@@ -82,7 +82,7 @@ export function SpeedTest({ T, onBack, onSettings, settings={} }) {
 
 // ─── MISSING LETTERS ──────────────────────────────────────────────────────────
 export function MissingLetters({ T, onBack, onSettings, settings={} }) {
-  const diff = settings.difficulty||"med";
+  const diff = settings.difficulty||"medium";
   const pool = diff==="easy"?TYPING_BASIC:diff==="hard"?TYPING_HARD:TYPING_MEDIUM;
   const sv = gLoad("missing");
   const [words] = useState(()=>sv?.words||pickWords(count,pool));
@@ -153,7 +153,7 @@ function scramble(word){
 }
 
 export function Anagram({ T, onBack, onSettings, settings={} }) {
-  const diff = settings.difficulty||"med";
+  const diff = settings.difficulty||"medium";
   const pool = diff==="easy"?TYPING_BASIC.filter(w=>w.length>=4&&w.length<=6):diff==="hard"?TYPING_HARD.filter(w=>w.length>=5&&w.length<=9):TYPING_MEDIUM.filter(w=>w.length>=4&&w.length<=8);
   const sv = gLoad("anagram");
   const [words] = useState(()=>sv?.words||pickWords(count,pool));

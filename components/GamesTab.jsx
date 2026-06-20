@@ -265,7 +265,7 @@ function WordRain({ T, onBack, settings = {} }) {
           </div>
           <div style={{ color:T.muted, fontSize:13, marginBottom:20 }}>Type falling words before they hit the bottom!</div>
           <OptionRow label="Difficulty" T={T} value={difficulty} onChange={setDiff}
-            options={[{label:"Easy",value:"easy"},{label:"Medium",value:"med"},{label:"Hard",value:"hard"}]} />
+            options={[{label:"Easy",value:"easy"},{label:"Medium",value:"medium"},{label:"Hard",value:"hard"}]} />
           <OptionRow label="Lives" T={T} value={maxLives} onChange={setMaxLives}
             options={[{label:"3 ❤️",value:3},{label:"5 ❤️",value:5},{label:"7 ❤️",value:7}]} />
           {best > 0 && <div style={{ color:T.muted, fontSize:12, marginBottom:14 }}>🏆 Best: {best} words</div>}
@@ -510,7 +510,7 @@ function SpeedBurst({ T, onBack, settings = {} }) {
 
   const start = () => {
     clearInterval(timerRef.current);
-    const wl = pickWords(200, "med");
+    const wl = pickByDiff(200, "medium");
     setWords(wl); wordIdxRef.current = 0;
     charsRef.current = 0; correctRef.current = 0; totalRef.current = 0;
     timeRef.current = durationRef.current;
@@ -833,10 +833,10 @@ const GAME_SETTINGS = {
   survival:    [],
   burst:       [],
   scramble:    [],
-  suddendeath: [{ key:"difficulty", label:"Words",      opts:["easy","med","hard"], default:"med" }],
-  zen:         [{ key:"difficulty", label:"Words",      opts:["easy","med","hard"], default:"easy" }],
+  suddendeath: [{ key:"difficulty", label:"Words",      opts:["easy","medium","hard"], default:"medium" }],
+  zen:         [{ key:"difficulty", label:"Words",      opts:["easy","medium","hard"], default:"easy" }],
   ladder:      [{ key:"rungs",      label:"Rungs",      opts:[5,8,10,15], default:10 }],
-  sniper:      [{ key:"count",      label:"Words",      opts:[10,25,50], default:25 }, { key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"med" }],
+  sniper:      [{ key:"count",      label:"Words",      opts:[10,25,50], default:25 }, { key:"difficulty", label:"Difficulty", opts:["easy","medium","hard"], default:"medium" }],
   mirror:      [{ key:"count",      label:"Words",      opts:[10,20,30], default:20 }],
   flash:       [{ key:"flashMs",    label:"Flash time", opts:[500,1000,1500,2000], default:1000, suffix:"ms" }, { key:"count", label:"Words", opts:[10,20,30], default:20 }],
   echo:        [{ key:"lives",      label:"Lives",      opts:[1,2,3,5], default:3 }],
@@ -846,7 +846,7 @@ const GAME_SETTINGS = {
   story:       [{ key:"passage",    label:"Passage",    opts:["random","raven","frost","dickens","austen","orwell"], default:"random" }],
   journal:     [],
   poetry:      [{ key:"poem",       label:"Poem",       opts:["random","byron","dickinson","frost","whitman","poe"], default:"random" }],
-  hundred:     [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"med" }],
+  hundred:     [{ key:"difficulty", label:"Difficulty", opts:["easy","medium","hard"], default:"medium" }],
   endurance:   [{ key:"pauseMs",    label:"Pause limit", opts:[1,2,3,5], default:2, suffix:"s" }],
   roulette:    [],
   wordchain:   [{ key:"timePerWord", label:"Time per word", opts:[5,10,15,20], default:10, suffix:"s" }],
@@ -855,12 +855,12 @@ const GAME_SETTINGS = {
   invaders:    [{ key:"waves",      label:"Waves",      opts:[3,5,10], default:5 }],
   asteroid:    [{ key:"lives",      label:"Lives",      opts:[2,3,5], default:3 }],
   tower:       [],
-  mystery:     [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"med" }],
+  mystery:     [{ key:"difficulty", label:"Difficulty", opts:["easy","medium","hard"], default:"medium" }],
   rhyme:       [],
   madlibs:     [],
-  speedtest:   [{ key:"duration", label:"Duration", opts:[1,2,5], default:1, suffix:" min" }, { key:"difficulty", label:"Words", opts:["easy","med","hard"], default:"med" }],
-  missing:     [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"med" }, { key:"count", label:"Words", opts:[10,15,20,30], default:20 }, { key:"hideRate", label:"Hide amount", opts:["low","medium","high"], default:"medium" }],
-  anagram:     [{ key:"difficulty", label:"Difficulty", opts:["easy","med","hard"], default:"med" }, { key:"count", label:"Words", opts:[10,15,20], default:20 }],
+  speedtest:   [{ key:"duration", label:"Duration", opts:[1,2,5], default:1, suffix:" min" }, { key:"difficulty", label:"Words", opts:["easy","medium","hard"], default:"medium" }],
+  missing:     [{ key:"difficulty", label:"Difficulty", opts:["easy","medium","hard"], default:"medium" }, { key:"count", label:"Words", opts:[10,15,20,30], default:20 }, { key:"hideRate", label:"Hide amount", opts:["low","medium","high"], default:"medium" }],
+  anagram:     [{ key:"difficulty", label:"Difficulty", opts:["easy","medium","hard"], default:"medium" }, { key:"count", label:"Words", opts:[10,15,20], default:20 }],
   bricks:      [{ key:"rows", label:"Rows", opts:[3,4,5,6], default:4 }, { key:"cols", label:"Columns", opts:[4,5,6,8], default:6 }],
   quotes:      [{ key:"author", label:"Author filter", opts:["all","einstein","shakespeare","wilde","twain","gandhi"], default:"all" }],
   haiku:       [{ key:"poet", label:"Poet", opts:["all","basho","issa","buson","pound"], default:"all" }],
@@ -902,7 +902,7 @@ function SettingsPanel({ gameId, T, onStart }) {
             {d.opts.map(o => (
               <button key={o} onClick={()=>set(d.key,o)}
                 style={{padding:"5px 12px",borderRadius:7,border:`1px solid ${vals[d.key]===o?"#7c6af7":"#2a2a4a"}`,background:vals[d.key]===o?"#7c6af722":"transparent",color:vals[d.key]===o?"#a78bfa":"#666",fontSize:12,fontWeight:vals[d.key]===o?700:400,cursor:"pointer",fontFamily:"inherit"}}>
-                {typeof o === "string" ? (o === "med" ? "Medium" : o.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase())) : o}{d.suffix||""}
+                {typeof o === "string" ? o.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()) : o}{d.suffix||""}
               </button>
             ))}
           </div>

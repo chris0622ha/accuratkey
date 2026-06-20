@@ -4,7 +4,7 @@
 
 function toArr(s) { return [...new Set(s.trim().split(/\s+/).filter(w=>w.length>=2&&/^[a-z\'-]+$/.test(w)))]; }
 export function pickWords(n, pool) { const out=[]; for(let i=0;i<n;i++) out.push(pool[Math.floor(Math.random()*pool.length)]); return out; }
-export function pickByDiff(n, diff="med") { return pickWords(n, diff==="easy"?TYPING_BASIC:diff==="hard"?TYPING_HARD:diff==="vhard"?VHARD_ARR:diff==="impossible"?IMPOSSIBLE_ARR:TYPING_MEDIUM); }
+export function pickByDiff(n, diff="medium") { return pickWords(n, diff==="easy"?TYPING_BASIC:diff==="hard"?TYPING_HARD:diff==="vhard"?VHARD_ARR:diff==="impossible"?IMPOSSIBLE_ARR:TYPING_MEDIUM); }
 
 // ── EASY: top 3,000 most common English words (3-6 letters) ──────────────────
 export const TYPING_BASIC = [
