@@ -103,6 +103,7 @@ const GAMES = [
   { id:"wordchain",   emoji:"🔗", name:"Word Chain",        desc:"Each word must start with the last letter",       cat:"puzzle" },
   { id:"blitz",       emoji:"⚡", name:"Category Blitz",    desc:"Type as many words in a category as possible",    cat:"challenge" },
   { id:"vocab",       emoji:"📚", name:"Vocab Builder",     desc:"Read the definition — type the word",             cat:"educational" },
+  { id:"spellingbee", emoji:"🐝", name:"Spelling Bee",      desc:"Not available right now",                          cat:"educational", unavailable:true },
   { id:"invaders",    emoji:"👾", name:"Typing Invaders",   desc:"Shoot invaders by typing their words",            cat:"arcade" },
   { id:"asteroid",    emoji:"☄️", name:"Asteroid Belt",     desc:"Destroy asteroids before they hit your ship",     cat:"arcade" },
   { id:"tower",       emoji:"🏰", name:"Tower Defense",     desc:"Stop enemies from reaching your base",            cat:"arcade" },
@@ -1145,12 +1146,28 @@ export default function GamesTab({ T }) {
     if (typeof window === "undefined") return null;
     const path = window.location.pathname;
     const match = path.match(/^\/games\/([a-z]+)/);
-    return match ? match[1] : null;
+    const id = match ? match[1] : null;
+    if (!id) return null;
+    // A direct URL visit, browser back/forward, or a bookmarked link all
+    // skip the menu entirely and land straight here - so the same
+    // availability check the menu uses has to be re-applied here too, or
+    // an unavailable/removed game stays fully playable via its URL even
+    // after being hidden from the menu. This is the actual fix for "make
+    // sure no one can bypass" - hiding a button alone never closes a
+    // direct-navigation path.
+    const game = GAMES.find(g => g.id === id);
+    if (!game || game.unavailable) {
+      if (typeof window !== "undefined") window.history.replaceState({}, "", "/games");
+      return null;
+    }
+    return id;
   });
   const [settings, setSettings] = useState(null); // null = show settings panel
   const [showSettings, setShowSettings] = useState(false);
 
   const enterGame = (id) => {
+    const game = GAMES.find(g => g.id === id);
+    if (!game || game.unavailable) return;
     setActiveGame(id);
     setSettings(null); // show settings first
     setShowSettings(true);
@@ -1236,18 +1253,18 @@ export default function GamesTab({ T }) {
         return (<>
       <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
         {paged.map(g => (
-          <div key={g.id} style={{ display:"flex", alignItems:"center", gap:14, padding:"14px 16px", borderRadius:12, border:`1px solid ${T.border}`, background:T.card, fontFamily:T.font }}>
-            <span style={{ fontSize:30, cursor:"pointer" }} onClick={()=>enterGame(g.id)}>{g.emoji}</span>
-            <div style={{flex:1,minWidth:0,cursor:"pointer"}} onClick={()=>enterGame(g.id)}>
+          <div key={g.id} style={{ display:"flex", alignItems:"center", gap:14, padding:"14px 16px", borderRadius:12, border:`1px solid ${T.border}`, background:T.card, fontFamily:T.font, opacity:g.unavailable?0.5:1 }}>
+            <span style={{ fontSize:30, cursor:g.unavailable?"default":"pointer" }} onClick={()=>!g.unavailable&&enterGame(g.id)}>{g.emoji}</span>
+            <div style={{flex:1,minWidth:0,cursor:g.unavailable?"default":"pointer"}} onClick={()=>!g.unavailable&&enterGame(g.id)}>
               <div style={{ color:T.text, fontWeight:700, fontSize:15 }}>{g.name}</div>
-              <div style={{ color:T.muted, fontSize:12, marginTop:2 }}>{g.desc}</div>
+              <div style={{ color:g.unavailable?"#ef4444":T.muted, fontSize:12, marginTop:2 }}>{g.desc}</div>
               <div style={{ marginTop:4, fontSize:10, color:"#555" }}>{CATEGORIES.find(c=>c.id===g.cat)?.label}</div>
             </div>
             <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
-              {(GAME_SETTINGS[g.id]||[]).length > 0 && (
+              {!g.unavailable && (GAME_SETTINGS[g.id]||[]).length > 0 && (
                 <button onClick={(e)=>{e.stopPropagation();enterGame(g.id);}} title="Settings" style={{background:"none",border:"1px solid #2a2a4a",borderRadius:7,color:"#555",fontSize:13,padding:"4px 8px",cursor:"pointer"}}>⚙️</button>
               )}
-              <span style={{color:"#555",fontSize:18}}>›</span>
+              {!g.unavailable && <span style={{color:"#555",fontSize:18}}>›</span>}
             </div>
           </div>
         ))}

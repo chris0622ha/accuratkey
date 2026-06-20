@@ -702,10 +702,11 @@ const playSound = (type, soundTheme = "default") => {
   } catch(e) {}
 };
 
-function SendChallengeForm({ T, friends, LEVELS, onSend }) {
+function SendChallengeForm({ T, friends, LEVELS, onSend, highestUnlocked }) {
   const [toFriend, setToFriend] = React.useState(null);
   const [levelId, setLevelId] = React.useState(1);
   const [sending, setSending] = React.useState(false);
+  const maxLevel = Math.min(60, highestUnlocked || 1);
   return (
     <div style={{display:"flex",flexDirection:"column",gap:8}}>
       <select value={toFriend?.uid||""} onChange={e=>{const f=friends.find(fr=>fr.uid===e.target.value);setToFriend(f||null);}} style={{background:"#1a1030",border:"1px solid #2a2050",borderRadius:7,color:"#e0e0ff",fontSize:12,padding:"6px 10px",fontFamily:"inherit",outline:"none"}}>
@@ -713,7 +714,7 @@ function SendChallengeForm({ T, friends, LEVELS, onSend }) {
         {friends.map(f=><option key={f.uid} value={f.uid}>@{f.username}</option>)}
       </select>
       <select value={levelId} onChange={e=>setLevelId(Number(e.target.value))} style={{background:"#1a1030",border:"1px solid #2a2050",borderRadius:7,color:"#e0e0ff",fontSize:12,padding:"6px 10px",fontFamily:"inherit",outline:"none"}}>
-        {LEVELS.filter(l=>l.id>0&&l.id<=60).map(l=><option key={l.id} value={l.id}>{l.emoji} Level {l.id}: {l.name}</option>)}
+        {LEVELS.filter(l=>l.id>0&&l.id<=maxLevel).map(l=><option key={l.id} value={l.id}>{l.emoji} Level {l.id}: {l.name}</option>)}
       </select>
       <button disabled={!toFriend||sending} onClick={async()=>{setSending(true);try{await onSend(toFriend,levelId);}finally{setSending(false);setToFriend(null);}}} style={{padding:"7px",borderRadius:7,border:"none",background:toFriend?"#ef4444":"#333",color:"#fff",fontSize:12,fontWeight:700,cursor:toFriend?"pointer":"default",fontFamily:"inherit",opacity:sending?0.6:1}}>
         {sending?"Sending…":"⚔️ Send Challenge"}
@@ -1453,6 +1454,21 @@ export default function AccuratKey() {
 
   // Show tips before starting a level
   const requestStartLevel = (levelId, isSkip = false, skipTarget = null) => {
+    // Enforced HERE, not just at each button's onClick, so every path that
+    // can ever call this - including challenge-accept buttons whose levelId
+    // comes from a Firestore document, not from the level map UI itself -
+    // is covered by the same check. A button being disabled or hidden in
+    // the UI never actually stops a locked level from starting if the
+    // function underneath it doesn't also refuse; this is the actual fix
+    // rather than relying on each call site remembering to check first.
+    // -1 is the daily challenge, always allowed; the skip-challenge flow
+    // (isSkip) targets the next level specifically and is itself already
+    // gated by being offered only one level ahead, so it's allowed through.
+    const highestUnlocked = activeProfile?.highestUnlocked || 1;
+    const isValidSkip = isSkip && levelId === highestUnlocked + 1;
+    if (levelId !== -1 && !isValidSkip && levelId > highestUnlocked) {
+      return;
+    }
     setPendingLevelId(levelId);
     setPendingIsSkip(isSkip);
     setPendingSkipTarget(skipTarget);
@@ -3241,7 +3257,7 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
                 <div style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:10,padding:12,marginBottom:14}}>
                   <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>Challenge a Friend</div>
                   <SendChallengeForm
-                    T={T} friends={friends} LEVELS={LEVELS}
+                    T={T} friends={friends} LEVELS={LEVELS} highestUnlocked={activeProfile?.highestUnlocked||1}
                     onSend={async(toFriend, levelId)=>{
                       const lv = LEVELS.find(l=>l.id===levelId);
                       await sendChallengeEx(user.uid, currentUsername, activeProfile.avatar||"key", toFriend.uid, toFriend.username, levelId, lv?.name||"");
@@ -3260,19 +3276,28 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
               {challenges.filter(c=>c.toUid===user?.uid&&c.status==="pending").length > 0 && (
                 <div style={{marginBottom:12}}>
                   <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>Incoming</div>
-                  {challenges.filter(c=>c.toUid===user?.uid&&c.status==="pending").map(c=>(
+                  {challenges.filter(c=>c.toUid===user?.uid&&c.status==="pending").map(c=>{
+                    const reachable = c.levelId <= (activeProfile?.highestUnlocked||1);
+                    return (
                     <div key={c.id} style={{background:T.bg,border:"1px solid #ef444433",borderRadius:9,padding:"10px 12px",marginBottom:6}}>
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
                         <span style={{color:T.text,fontSize:13,fontWeight:700}}>@{c.fromUsername} challenged you!</span>
                         <span style={{color:T.faint,fontSize:10}}>{c.fromAvatar?AVATARS.find(a=>a.id===c.fromAvatar)?.e||"⌨️":"⌨️"}</span>
                       </div>
                       <div style={{color:T.muted,fontSize:12,marginBottom:8}}>Level {c.levelId}: {c.levelName}</div>
+                      {!reachable && (
+                        <div style={{color:"#f59e0b",fontSize:11,marginBottom:8}}>You haven't unlocked this level yet — keep playing to reach it.</div>
+                      )}
                       <div style={{display:"flex",gap:6}}>
-                        <button onClick={()=>{setActiveChallengeId(c.id);setShowChallenges(false);requestStartLevel(c.levelId);}} style={{flex:1,padding:"7px",borderRadius:7,border:"none",background:"#ef4444",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>⚔️ Accept & Play</button>
+                        {reachable ? (
+                          <button onClick={()=>{setActiveChallengeId(c.id);setShowChallenges(false);requestStartLevel(c.levelId);}} style={{flex:1,padding:"7px",borderRadius:7,border:"none",background:"#ef4444",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>⚔️ Accept & Play</button>
+                        ) : (
+                          <button disabled style={{flex:1,padding:"7px",borderRadius:7,border:"none",background:"#333",color:"#777",fontSize:12,fontWeight:700,cursor:"default",fontFamily:T.font}}>🔒 Locked</button>
+                        )}
                         <button onClick={async()=>{await declineChallenge(c.id);getPendingChallenges(user.uid).then(setChallenges);}} style={{padding:"7px 12px",borderRadius:7,border:`1px solid ${T.border}`,background:"transparent",color:T.muted,fontSize:12,cursor:"pointer",fontFamily:T.font}}>Decline</button>
                       </div>
                     </div>
-                  ))}
+                  );})}
                 </div>
               )}
 
