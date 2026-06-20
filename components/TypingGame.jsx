@@ -775,6 +775,11 @@ export default function AccuratKey() {
       window.history.replaceState({}, "", url);
     }
   }, [router]);
+  // Embed mode: tqak's showcase site previews AccuratKey in an iframe with
+  // ?embed=1. Without this, a preview visitor could sign in and play with a
+  // fully real, persisted account from inside what's meant to be a
+  // sandboxed preview - same fix already applied to TrivQuic.
+  const isEmbed = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("embed") === "1";
   const [user, setUser] = useState(null);
   const [profiles, setProfiles] = useState([]);
   const [activeProfile, setActiveProfile] = useState(null);
@@ -2205,6 +2210,16 @@ const Nav = () => (<>
       <style>{`@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}`}</style>
     {NotificationPopup}
     {BroadcastBanner}
+    </div>
+  );
+
+  if (screen === "auth" && isEmbed) return (
+    <div style={{minHeight:"100vh",background:"#0a0a0f",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'JetBrains Mono',monospace",padding:20,textAlign:"center"}}>
+      <div>
+        <div style={{fontSize:48,marginBottom:12}}>⌨️</div>
+        <h1 style={{color:"#e0e0ff",fontSize:22,fontWeight:700,marginBottom:10}}><span style={{color:"#7c6af7"}}>Accurat</span>Key</h1>
+        <p style={{color:"#555",fontSize:13,maxWidth:280}}>This is a preview. Visit accuratkey.vercel.app to sign in and play.</p>
+      </div>
     </div>
   );
 
