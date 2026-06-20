@@ -7,7 +7,7 @@ import { KKey } from "./icons/KKey";
 import { FOUNDATIONS_ICONS, PRECISION_FLOW_ICONS, WORD_POWER_ICONS, KEYBOARD_MASTERY_ICONS, SPEED_SURGE_ICONS, FREE_RUN_ICONS, CENTURY_CLUB_ICONS, ENDURANCE_ICONS, LITERATURE_ICONS, MACHINE_MODE_ICONS, LEGEND_TIER_ICONS, IconStar } from "./icons/LevelIcons";
 import { formatKeys } from "@/lib/format";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback } from "@/lib/firebase";
+import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback } from "@/lib/firebase";
 
 export 
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
@@ -1117,7 +1117,7 @@ export default function AccuratKey() {
       getDailyChallenge().then(d=>setDailyWords(d.words||["typefast","accuracy","keyboard","practice","daily"])).catch(()=>{});
       getDailyLeaderboard().then(setDailyBoard).catch(()=>{});
     }
-    if(activeTab==="daily"&&user&&activeProfile){
+    if(activeTab==="daily"&&user&&activeProfile&&!isProfileRestricted(activeProfile)){
       getSessionDates(user.uid, activeProfile.id, 90).then(setSessionDates).catch(()=>{});
     }
   }, [activeTab]);
@@ -1775,7 +1775,7 @@ export default function AccuratKey() {
     if (user && activeProfile) {
       setTimeout(() => {
         setCustomLists(activeProfile.customLists || []);
-        if (!activeProfile?.isGuest) {
+        if (!activeProfile?.isGuest && !isProfileRestricted(activeProfile)) {
           getRecentSessions(user.uid, activeProfile.id, 10).then(setSessions).catch(() => {});
           getPendingNotifications(user.uid).then(notifs=>{ if(notifs.length>0){setPendingNotifications(notifs);setActiveNotification(notifs[0]);} }).catch(()=>{});
           if (canUse(activeProfile, 'challenges')) {
@@ -1790,6 +1790,10 @@ export default function AccuratKey() {
               }).catch(() => {});
             }
           }
+        } else if (isProfileRestricted(activeProfile)) {
+          // Restricted profile: show whatever's in local storage instead of
+          // querying Firestore — same UI, zero server reads for this profile.
+          setSessions(getRecentSessionsLocal(activeProfile.id, activeProfile, 10));
         }
       }, 50);
     }
@@ -2550,12 +2554,16 @@ const Nav = () => (<>
                 ? <img src={editPhotoPreview||activeProfile.photoURL} style={{width:56,height:56,borderRadius:"50%",objectFit:"cover"}} />
                 : <span style={{width:56,height:56,borderRadius:"50%",background:T.bg,border:`2px solid ${T.border}`,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:26}}>{AV[editAvatar]||"⌨️"}</span>
               }
+              {isProfileRestricted(activeProfile) ? (
+                <div style={{color:T.faint,fontSize:11,maxWidth:200,lineHeight:1.5}}>Photo uploads aren't available for this profile. Pick an avatar below instead.</div>
+              ) : (
               <div>
                 <button onClick={()=>editPhotoRef.current?.click()} style={{display:"block",background:"transparent",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:12,padding:"6px 12px",cursor:"pointer",marginBottom:5,fontFamily:T.font}}>Upload photo</button>
                 {!isMobile&&<button onClick={(e)=>{e.stopPropagation();startQrUpload("edit");}} style={{display:"block",background:"transparent",border:`1px solid ${T.purple}66`,borderRadius:6,color:T.purple,fontSize:12,padding:"6px 12px",cursor:"pointer",marginBottom:5,fontFamily:T.font}}>📱 Use phone</button>}
                 {(editPhotoPreview||activeProfile?.photoURL) && <button onClick={()=>{setEditPhoto(null);setEditPhotoPreview(null);setEditPhotoB64("remove");}} style={{background:"transparent",border:"none",color:T.faint,fontSize:11,cursor:"pointer",fontFamily:T.font}}>Remove photo</button>}
                 <input ref={editPhotoRef} type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){setEditPhoto(f);setEditPhotoPreview(URL.createObjectURL(f));setEditPhotoB64(null);}}} />
               </div>
+              )}
             </div>
             {qrListening && qrContext === "edit" && (
               <div style={{background:T.bg,border:`1px solid ${T.purple}44`,borderRadius:10,padding:14,marginBottom:14,textAlign:"center"}}>
@@ -3384,6 +3392,11 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
                 <span style={{color:T.text,fontWeight:800,fontSize:16}}>👥 Friends</span>
                 <button onClick={()=>{setShowFriends(false);setFriendMsg("");}} style={{background:"none",border:"none",color:T.faint,fontSize:20,cursor:"pointer"}}>×</button>
               </div>
+              {isProfileRestricted(activeProfile) ? (
+                <div style={{color:T.muted,fontSize:13,textAlign:"center",padding:"20px 10px",lineHeight:1.6}}>
+                  Friends aren't available for this profile.
+                </div>
+              ) : (<>
               <div style={{display:"flex",alignItems:"center",gap:8,background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,padding:"8px 10px",marginBottom:16}}>
                 <div style={{flex:1,overflow:"hidden"}}>
                   <div style={{color:T.faint,fontSize:9,letterSpacing:1,textTransform:"uppercase",marginBottom:1}}>Your Friend ID</div>
@@ -3426,6 +3439,7 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
                   <span style={{color:T.text,fontSize:13,flex:1}}>@{f.username}</span>
                 </div>
               ))}
+              </>)}
             </div>
           </div>
         )}
