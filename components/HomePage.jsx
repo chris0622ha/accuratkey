@@ -124,7 +124,7 @@ export default function HomePage() {
         <div className={`fi ${visible ? 'v' : ''}`}>
           <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:C.card, border:`1px solid ${C.border}`, borderRadius:100, padding:'6px 16px', fontSize:13, color:'#a89bff', marginBottom:28 }}>
             <span style={{ width:7, height:7, borderRadius:'50%', background:C.purple, display:'inline-block' }} />
-            15 levels · 10 layouts · age-adaptive
+            165 levels · 10 layouts · age-adaptive
           </div>
           <h1 style={{ fontSize:'clamp(40px,7vw,78px)', fontWeight:800, lineHeight:1.05, letterSpacing:'-.04em', marginBottom:22 }}>
             Learn to type<br /><span style={{ color:C.purple }}>the right way.</span>
@@ -200,7 +200,7 @@ export default function HomePage() {
       {/* ── Levels preview ──────────────────────────────────────────────────── */}
       <section style={{ maxWidth:1100, margin:'0 auto', padding:'0 5% 80px' }}>
         <div className={`fi ${visible ? 'v' : ''}`} style={{ transitionDelay:'280ms' }}>
-          <h2 style={{ fontSize:32, fontWeight:800, letterSpacing:'-.03em', marginBottom:8 }}>15 levels to conquer</h2>
+          <h2 style={{ fontSize:32, fontWeight:800, letterSpacing:'-.03em', marginBottom:8 }}>165 levels to conquer</h2>
           <p style={{ color:C.muted, fontSize:15, marginBottom:28, fontFamily:"'Space Grotesk',sans-serif" }}>Start at Home Row Hero and work your way up to Legend.</p>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:10 }}>
             {LEVELS_PREVIEW.map(lv => (

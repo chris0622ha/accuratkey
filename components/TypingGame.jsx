@@ -774,6 +774,7 @@ export default function AccuratKey() {
   const [user, setUser] = useState(null);
   const [profiles, setProfiles] = useState([]);
   const [activeProfile, setActiveProfile] = useState(null);
+
   // Optimistic profile patch — updates UI instantly without waiting for Firestore
   const patchProfile = (patch) => setActiveProfile(p => p ? {...p, ...patch} : p);
   const saveCustomLists = (lists) => {
@@ -962,6 +963,42 @@ export default function AccuratKey() {
   const [broadcast, setBroadcast] = useState(null);
   const [levelOverrides, setLevelOverrides] = useState({});
   const [activeTab, setActiveTab] = useState("map");
+
+  const pathname = usePathname();
+  // Reverse mapping: URL → screen, built once from SCREEN_URLS so the two
+  // directions can never drift out of sync with each other.
+  const URL_TO_SCREEN = React.useMemo(() => {
+    const map = {};
+    for (const [screenName, url] of Object.entries(SCREEN_URLS)) {
+      if (!screenName.startsWith("tab-")) map[url] = screenName;
+    }
+    return map;
+  }, []);
+  const URL_TO_TAB = { "/game": "games", "/game/map": "map", "/game/daily": "daily", "/game/test": "test" };
+  const hasMountedRef = React.useRef(false);
+  useEffect(() => {
+    // Skip the very first run — the initial screen is decided by the
+    // auth-state effect elsewhere, which needs to know whether a user/profile
+    // already exists before picking a screen. This effect only handles
+    // navigations AFTER that initial decision: clicking a link to /signin
+    // while already on another screen, browser back/forward, or any other
+    // client-side route change that doesn't go through setScreenWithUrl.
+    if (!hasMountedRef.current) { hasMountedRef.current = true; return; }
+    if (STANDALONE_PAGES.includes(pathname)) return;
+
+    let targetScreen = URL_TO_SCREEN[pathname];
+    // /signin only makes sense for a signed-out visitor; if already signed
+    // in, send them to their level map instead of showing a login form.
+    if (targetScreen === "auth" && user) targetScreen = "levelMap";
+    // /profiles and /profiles/new only make sense once signed in.
+    if ((targetScreen === "profilePicker" || targetScreen === "createProfile") && !user) targetScreen = "auth";
+
+    if (targetScreen && targetScreen !== screen) setScreen(targetScreen);
+
+    const targetTab = URL_TO_TAB[pathname];
+    if (targetTab && targetScreen === "levelMap") setActiveTab(targetTab);
+  }, [pathname, user]);
+
   const [customLists, setCustomLists] = useState([]); // [{name, words:[]}]
   const [activeListIdx, setActiveListIdx] = useState(null); // which list is selected for typing
   const [showListEditor, setShowListEditor] = useState(false);
