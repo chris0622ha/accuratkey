@@ -1354,9 +1354,14 @@ export default function AccuratKey() {
     setCreatingProfile(true);
     const age = calcAge(newBirthday);
     const startLevel = suggestLevel(age, newSkill);
+    // Defensive check (mirrors the UI gate above): never persist a photo for
+    // a profile that computes as under 13, even if profilePhotoB64/profilePhoto
+    // somehow got set before the birthday field was filled in.
     let photoURL = null;
-    if (profilePhotoB64) photoURL = profilePhotoB64;
-    else if (profilePhoto) photoURL = await resizeToBase64(profilePhoto, 200);
+    if (age >= 13) {
+      if (profilePhotoB64) photoURL = profilePhotoB64;
+      else if (profilePhoto) photoURL = await resizeToBase64(profilePhoto, 200);
+    }
     const id = await createProfile(user.uid, {
       name: newName.trim(),
       birthday: newBirthday,
@@ -2325,11 +2330,26 @@ const Nav = () => (<>
           <p style={{color:T.muted,fontSize:14}}>Each profile tracks its own progress</p>
         </div>
         <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:16,padding:28}}>
-          <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:20}}>
+          <label style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:6}}>Name</label>
+          <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="Your name"
+            style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:15,padding:"11px 14px",marginBottom:14,outline:"none",boxSizing:"border-box"}} />
+          <label style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:6}}>Birthday</label>
+          <DatePicker value={newBirthday} onChange={setNewBirthday} T={T} />
+
+          <div style={{display:"flex",alignItems:"center",gap:14,marginTop:18,marginBottom:20}}>
             {profilePhotoPreview
               ? <img src={profilePhotoPreview} style={{width:60,height:60,borderRadius:"50%",objectFit:"cover",flexShrink:0}} />
               : <span style={{width:60,height:60,borderRadius:"50%",background:T.bg,border:`2px solid ${T.border}`,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:28,flexShrink:0}}>{AV[newAvatar]||"⌨️"}</span>
             }
+            {/* Photo upload only offered once a birthday has been entered AND
+                it indicates 13-plus — a profile we already know will be a
+                child's never gets the option in the first place, rather than
+                collecting a photo and removing it after the fact. */}
+            {newBirthday && calcAge(newBirthday) < 13 ? (
+              <div style={{color:T.faint,fontSize:11,maxWidth:220,lineHeight:1.5}}>Photo uploads aren't available for profiles under 13. Pick an avatar below instead.</div>
+            ) : !newBirthday ? (
+              <div style={{color:T.faint,fontSize:11,maxWidth:220,lineHeight:1.5}}>Enter a birthday above to enable photo upload.</div>
+            ) : (
             <div style={{display:"flex",flexDirection:"column",gap:6}}>
               <button onClick={()=>photoRef.current?.click()} style={{background:"transparent",border:`1px solid ${T.border}`,borderRadius:7,color:T.muted,fontSize:12,padding:"6px 12px",cursor:"pointer",fontFamily:T.font}}>
                 Upload photo
@@ -2338,6 +2358,7 @@ const Nav = () => (<>
                 📱 Use phone
               </button>
             </div>
+            )}
             <input ref={photoRef} type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f){setProfilePhoto(f);setProfilePhotoPreview(URL.createObjectURL(f));setProfilePhotoB64(null);}}} />
           </div>
           {qrListening && qrContext === "create" && (
@@ -2352,11 +2373,6 @@ const Nav = () => (<>
           <div style={{display:"grid",gridTemplateColumns:"repeat(8,1fr)",gap:6,marginBottom:18}}>
             {AVATARS.map(a=><div key={a.id} onClick={()=>setNewAvatar(a.id)} style={{aspectRatio:"1",borderRadius:8,border:`2px solid ${newAvatar===a.id?T.purple:T.border}`,background:newAvatar===a.id?T.purple+"22":T.bg,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:18}}>{a.e}</div>)}
           </div>
-          <label style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:6}}>Name</label>
-          <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="Your name"
-            style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:15,padding:"11px 14px",marginBottom:14,outline:"none",boxSizing:"border-box"}} />
-          <label style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:6}}>Birthday</label>
-          <DatePicker value={newBirthday} onChange={setNewBirthday} T={T} />
           <label style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:8}}>Starting skill</label>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:18}}>
             {[["beginner","🐣","Just starting"],["intermediate","🚀","Know basics"],["advanced","🔥","Type fast"]].map(([s,em,desc]) => (
