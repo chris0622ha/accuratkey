@@ -2537,12 +2537,12 @@ const Nav = () => (<>
               </div>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:12}}>
-              {[["Best WPM",activeProfile?.bestWpm||0,T.purple],["Sessions",activeProfile?.totalSessions||0,T.accent2],["Avg Acc",(activeProfile?.avgAccuracy||0)+"%",T.accent]].map(([l,v,c])=>(
+              {[["Best WPM",activeProfile?.bestWpm||0,T.purple],["Sessions",activeProfile?.totalSessions||0,T.accent2],["Avg Accuracy",(activeProfile?.avgAccuracy||0)+"%",T.accent]].map(([l,v,c])=>(
                 <div key={l} style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,padding:"12px 8px",textAlign:"center"}}><div style={{color:c,fontSize:22,fontWeight:700}}>{v}</div><div style={{color:T.faint,fontSize:10,marginTop:3}}>{l}</div></div>
               ))}
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
-              {[["Keys",activeProfile?.keys||0],["Fav Layout",activeProfile?.favoriteLayout||"—"]].map(([l,v])=>(
+              {[["Keys",activeProfile?.keys||0],["Favorite Layout",activeProfile?.favoriteLayout||"—"]].map(([l,v])=>(
                 <div key={l} style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,padding:"10px 12px"}}>
                   <div style={{color:T.faint,fontSize:10,marginBottom:3}}>{l}</div>
                   <div style={{fontWeight:700,fontSize:14,color:T.text}}>{v}</div>
