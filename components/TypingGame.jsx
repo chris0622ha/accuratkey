@@ -2250,7 +2250,12 @@ const Nav = () => (<>
             ))}
           </div>
           {/* Google */}
-          <button onClick={() => handleOAuth(new GoogleAuthProvider())} disabled={authLoading}
+          {/* TEMPORARY: forces the account picker to always show instead of
+              auto-selecting the browser's default Google account. Dave asked
+              for this to be reverted soon - to revert, just delete the
+              googleProvider variable below and pass `new GoogleAuthProvider()`
+              directly to handleOAuth again, like the GitHub button does. */}
+          <button onClick={() => { const googleProvider = new GoogleAuthProvider(); googleProvider.setCustomParameters({ prompt: "select_account" }); handleOAuth(googleProvider); }} disabled={authLoading}
             style={{width:"100%",background:"#0a0a0f",border:"1px solid #2a2a4a",borderRadius:8,color:"#e0e0ff",fontFamily:"'JetBrains Mono',monospace",fontSize:13,padding:"11px",cursor:"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:10}}
             onMouseEnter={e=>e.currentTarget.style.borderColor="#7c6af7"}
             onMouseLeave={e=>e.currentTarget.style.borderColor="#2a2a4a"}>
