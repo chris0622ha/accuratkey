@@ -1627,7 +1627,7 @@ export default function AccuratKey() {
           }
         }
         if (!passed && newAcc < accuracyTarget) {
-          setScreen("fail");
+          setScreenWithUrl("fail");
         } else {
           if(canUse(activeProfile,"sounds"))playSound("complete", activeProfile?.activeSound||"default");
           if(passed){
