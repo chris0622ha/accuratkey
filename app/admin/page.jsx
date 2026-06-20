@@ -327,7 +327,7 @@ export default function AdminPage() {
     setCoppaAuditLoading(false);
   }
   async function handleRunCoppaCleanup() {
-    if (!confirm(`This will permanently strip photos and delete all session history for every currently-restricted (under 13) profile across the whole app. This cannot be undone. Continue?`)) return;
+    if (!confirm(`This will permanently strip photos, delete all session history, and delete daily-leaderboard entries (for accounts where every profile is restricted) for every currently-restricted (under 13) profile across the whole app. This cannot be undone. Continue?`)) return;
     setCoppaCleanupLoading(true);
     try {
       const result = await runCoppaCleanup(adminDb);
@@ -843,7 +843,7 @@ export default function AdminPage() {
               )}
               {coppaAudit && coppaAudit.restrictedProfiles > 0 && (
                 <div style={{marginTop:10,color:T.danger,fontSize:11,lineHeight:1.5,background:T.danger+"11",border:`1px solid ${T.danger}33`,borderRadius:8,padding:"8px 10px"}}>
-                  {coppaAudit.restrictedProfiles} existing profile(s) are already restricted. The privacy fixes already in place stop any NEW data collection for them. Public username exposure is already handled automatically (restricted profiles never appear on the public page regardless). Photo and session history can be cleaned up automatically below.
+                  {coppaAudit.restrictedProfiles} existing profile(s) are already restricted. The privacy fixes already in place stop any NEW data collection for them. Public username exposure is already handled automatically (restricted profiles never appear on the public page regardless). Photo, session history, and daily-leaderboard entries can be cleaned up automatically below.
                 </div>
               )}
               {coppaAudit && (coppaAudit.restrictedWithPhoto > 0 || coppaAudit.restrictedWithSessions > 0) && (
@@ -852,13 +852,18 @@ export default function AdminPage() {
                     {coppaCleanupLoading?"Cleaning...":"Remove photos + delete session history for all restricted profiles"}
                   </button>
                   <div style={{color:T.faint,fontSize:10,marginTop:6,lineHeight:1.5}}>
-                    This permanently deletes data — it can't be undone. Doesn't touch dailyScores leaderboard entries (those are keyed by account, not profile, so there's no way to remove just one profile's entry without risking a different profile's legitimate score on a shared account).
+                    This permanently deletes data — it can't be undone. Daily-leaderboard entries are only removed for accounts where every single profile is restricted (no ambiguity about which profile a shared-account score belongs to); accounts with a mix of restricted and non-restricted profiles are skipped and reported separately.
                   </div>
                 </div>
               )}
               {coppaCleanupResult && (
                 <div style={{marginTop:10,color:T.accent,fontSize:11,background:T.accent+"11",border:`1px solid ${T.accent}33`,borderRadius:8,padding:"8px 10px",lineHeight:1.5}}>
-                  Cleaned {coppaCleanupResult.profilesCleaned} profile(s): removed {coppaCleanupResult.photosRemoved} photo(s), deleted {coppaCleanupResult.sessionsDeleted} session record(s). {new Date(coppaCleanupResult.cleanedAt).toLocaleString()}
+                  Cleaned {coppaCleanupResult.profilesCleaned} profile(s): removed {coppaCleanupResult.photosRemoved} photo(s), deleted {coppaCleanupResult.sessionsDeleted} session record(s), deleted {coppaCleanupResult.dailyScoresDeleted||0} daily leaderboard entry(ies). {new Date(coppaCleanupResult.cleanedAt).toLocaleString()}
+                  {coppaCleanupResult.mixedAccountsSkipped > 0 && (
+                    <div style={{marginTop:6,color:T.accent2}}>
+                      {coppaCleanupResult.mixedAccountsSkipped} account(s) have a mix of restricted and non-restricted profiles — their daily scores were left alone since it's not possible to tell which profile a score belongs to on a shared account. Search those accounts individually in the Users tab if you want to review them by hand.
+                    </div>
+                  )}
                 </div>
               )}
             </div>
