@@ -1546,8 +1546,11 @@ export default function AccuratKey() {
         }
         const rd = { wpm: fw, accuracy: newAcc, passed, level: playingLevel, chars: nt, isSkipChallenge, skipTargetLevel };
         setResultData(rd);
-        // If this was a challenge, auto-submit result
-        if (activeChallengeId && user) {
+        // If this was a challenge, auto-submit result. activeChallengeId
+        // should never be set for a restricted profile since the Challenges
+        // modal is already blocked for them, but checked here too for
+        // defense in depth.
+        if (activeChallengeId && user && !isProfileRestricted(activeProfile)) {
           submitChallengeResult(activeChallengeId, user.uid, fw, newAcc, passed).catch(() => {});
           setActiveChallengeId(null);
           getPendingChallenges(user.uid).then(setChallenges).catch(() => {});
