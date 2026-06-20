@@ -7,7 +7,7 @@ import { KKey } from "./icons/KKey";
 import { FOUNDATIONS_ICONS, PRECISION_FLOW_ICONS, WORD_POWER_ICONS, KEYBOARD_MASTERY_ICONS, SPEED_SURGE_ICONS, FREE_RUN_ICONS, CENTURY_CLUB_ICONS, ENDURANCE_ICONS, LITERATURE_ICONS, MACHINE_MODE_ICONS, LEGEND_TIER_ICONS, IconStar } from "./icons/LevelIcons";
 import { formatKeys } from "@/lib/format";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback } from "@/lib/firebase";
+import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback } from "@/lib/firebase";
 
 export 
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
@@ -1497,18 +1497,33 @@ export default function AccuratKey() {
         }
         setWpm(fw);
         if (user && activeProfile) {
-          saveSession(user.uid, activeProfile.id, { wpm: fw, accuracy: newAcc, layout: layoutKey, level: playingLevel, chars: nt, passed })
-            .then(async (earned) => {
-              // Combo multiplier: 10+ combo = 1.5x, 20+ combo = 2x
-              const multiplier = combo >= 20 ? 2 : combo >= 10 ? 1.5 : 1;
-              const boosted = Math.round((earned || 0) * multiplier);
-              const bonus = boosted - (earned || 0);
-              // Bonus keys still respect the daily earning cap (addBonusKeys re-checks server-side)
-              const bonusGranted = bonus > 0 && user && activeProfile ? await addBonusKeys(user.uid, activeProfile.id, bonus) : 0;
-              setKeysEarned((earned || 0) + bonusGranted);
-              const updated = await getProfile(user.uid, activeProfile.id);
-              setActiveProfile(updated);
-            }).catch(() => {});
+          const sessionData = { wpm: fw, accuracy: newAcc, layout: layoutKey, level: playingLevel, chars: nt, passed };
+          if (isProfileRestricted(activeProfile)) {
+            // COPPA: under-13 profile — keep progress entirely in this browser,
+            // never write to Firestore. Same math/rewards as the normal path.
+            const { actualEarned: earned, updatedProfile } = saveSessionLocal(activeProfile.id, activeProfile, sessionData);
+            const multiplier = combo >= 20 ? 2 : combo >= 10 ? 1.5 : 1;
+            const boosted = Math.round((earned || 0) * multiplier);
+            const bonus = boosted - (earned || 0);
+            const { actualEarned: bonusGranted, updatedProfile: finalProfile } = bonus > 0
+              ? addBonusKeysLocal(activeProfile.id, updatedProfile, bonus)
+              : { actualEarned: 0, updatedProfile };
+            setKeysEarned((earned || 0) + bonusGranted);
+            setActiveProfile(finalProfile);
+          } else {
+            saveSession(user.uid, activeProfile.id, sessionData)
+              .then(async (earned) => {
+                // Combo multiplier: 10+ combo = 1.5x, 20+ combo = 2x
+                const multiplier = combo >= 20 ? 2 : combo >= 10 ? 1.5 : 1;
+                const boosted = Math.round((earned || 0) * multiplier);
+                const bonus = boosted - (earned || 0);
+                // Bonus keys still respect the daily earning cap (addBonusKeys re-checks server-side)
+                const bonusGranted = bonus > 0 && user && activeProfile ? await addBonusKeys(user.uid, activeProfile.id, bonus) : 0;
+                setKeysEarned((earned || 0) + bonusGranted);
+                const updated = await getProfile(user.uid, activeProfile.id);
+                setActiveProfile(updated);
+              }).catch(() => {});
+          }
           if (passed) {
             clearInterval(ghostInterval.current);
             try {
@@ -1523,10 +1538,31 @@ export default function AccuratKey() {
               const stars = newAcc >= 95 ? 3 : (lv && fw >= lv.wpmTarget && lv.wpmTarget > 0) ? 2 : 1;
               const prevBest = activeProfile?.levelBests?.[playingLevel];
               const newBest = { wpm: Math.max(fw, prevBest?.wpm || 0), accuracy: Math.max(newAcc, prevBest?.accuracy || 0), stars: Math.max(stars, prevBest?.stars || 0) };
-              updateProfile(user.uid, activeProfile.id, { [`levelBests.${playingLevel}`]: newBest }).catch(() => {});
+              if (isProfileRestricted(activeProfile)) {
+                const updated = updateProfileLocal(activeProfile.id, activeProfile, { levelBests: { ...(activeProfile.levelBests||{}), [playingLevel]: newBest } });
+                setActiveProfile(updated);
+              } else {
+                updateProfile(user.uid, activeProfile.id, { [`levelBests.${playingLevel}`]: newBest }).catch(() => {});
+              }
             }
-            updateStreak(user.uid, activeProfile.id).then(s=>{ if(s) setStreak(s); }).catch(()=>{});
-            if (playingLevel === -1) {
+            if (isProfileRestricted(activeProfile)) {
+              // Streak tracking is also profile-state that shouldn't sync server-side
+              // for a restricted profile; kept entirely local instead.
+              try {
+                const today = new Date().toISOString().slice(0,10);
+                const local = getProfileLocal(activeProfile.id, activeProfile);
+                if (local.lastStreakDate !== today) {
+                  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+                  const newStreak = local.lastStreakDate === yesterday ? (local.streak || 0) + 1 : 1;
+                  const updated = updateProfileLocal(activeProfile.id, activeProfile, { streak: newStreak, lastStreakDate: today });
+                  setStreak(newStreak);
+                  setActiveProfile(updated);
+                }
+              } catch {}
+            } else {
+              updateStreak(user.uid, activeProfile.id).then(s=>{ if(s) setStreak(s); }).catch(()=>{});
+            }
+            if (playingLevel === -1 && !isProfileRestricted(activeProfile)) {
               submitDailyScore(user.uid, currentUsername, activeProfile.avatar, {wpm:fw, accuracy:newAcc})
                 .then(result => {
                   if (result?.suspicious) {
