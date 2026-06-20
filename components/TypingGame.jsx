@@ -3109,9 +3109,9 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
                   {customLists.map((lst,i)=>(
                     <div key={i} style={{display:"flex",alignItems:"center",gap:2}}>
                       <button onClick={()=>setActiveListIdx(i)} style={{padding:"5px 12px",borderRadius:20,border:`1px solid ${activeListIdx===i?T.purple:T.border}`,background:activeListIdx===i?T.purple+"22":"transparent",color:activeListIdx===i?T.purple:T.muted,fontSize:12,cursor:"pointer",fontFamily:T.font}}>
-                        {lst.name} <span style={{opacity:.5,fontSize:10}}>({lst.words.length}w)</span>
+                        {lst.name||"Untitled"} <span style={{opacity:.5,fontSize:10}}>({(lst.words||[]).length}w)</span>
                       </button>
-                      <button onClick={()=>{setListEditorIdx(i);setListEditorName(lst.name);setListEditorWords(lst.words.join("\n"));setShowListEditor(true);}} style={{background:"none",border:"none",color:T.faint,fontSize:11,cursor:"pointer",padding:"2px 4px"}}>✏️</button>
+                      <button onClick={()=>{setListEditorIdx(i);setListEditorName(lst.name||"");setListEditorWords((lst.words||[]).join("\n"));setShowListEditor(true);}} style={{background:"none",border:"none",color:T.faint,fontSize:11,cursor:"pointer",padding:"2px 4px"}}>✏️</button>
                     </div>
                   ))}
                 </div>

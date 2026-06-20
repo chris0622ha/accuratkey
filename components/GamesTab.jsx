@@ -902,7 +902,7 @@ function SettingsPanel({ gameId, T, onStart }) {
             {d.opts.map(o => (
               <button key={o} onClick={()=>set(d.key,o)}
                 style={{padding:"5px 12px",borderRadius:7,border:`1px solid ${vals[d.key]===o?"#7c6af7":"#2a2a4a"}`,background:vals[d.key]===o?"#7c6af722":"transparent",color:vals[d.key]===o?"#a78bfa":"#666",fontSize:12,fontWeight:vals[d.key]===o?700:400,cursor:"pointer",fontFamily:"inherit"}}>
-                {typeof o === "string" ? o.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase()) : o}{d.suffix||""}
+                {typeof o === "string" ? (o === "med" ? "Medium" : o.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase())) : o}{d.suffix||""}
               </button>
             ))}
           </div>
