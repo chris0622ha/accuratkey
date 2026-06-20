@@ -1268,7 +1268,16 @@ export default function AccuratKey() {
               setActiveProfile(prof);
               setLayoutKey(prof.favoriteLayout || "qwerty");
               if (prof.streak) setStreak(prof.streak);
-              setScreen(!returnScreen || returnScreen === "profilePicker" ? "levelMap" : returnScreen);
+              // Only a small allowlist of screens are safe to restore to
+              // directly without other state (like playingLevel) also being
+              // restored alongside them - "game"/"tips"/"result"/"fail" all
+              // depend on in-memory state that's never persisted, so jumping
+              // straight to them from a stored string (which is also
+              // user-writable via DevTools, not just app-controlled) would
+              // either crash or show a broken screen. Anything not on this
+              // list falls back to the level map, which is always safe.
+              const SAFE_RETURN_SCREENS = ["levelMap", "profilePicker"];
+              setScreen(SAFE_RETURN_SCREENS.includes(returnScreen) ? returnScreen : "levelMap");
             } else {
               // Only show picker if no profile active — prevents flash on token refresh
               setScreenWithUrl("profilePicker");
@@ -1337,10 +1346,12 @@ export default function AccuratKey() {
     } catch(e) { /* birthday check failed, proceed normally */ }
     // Restore screen if returning from shop or other external page
     const returnScreen = typeof window !== "undefined" ? localStorage.getItem("ak_returnScreen") : null;
-    if (returnScreen && returnScreen !== "profilePicker") {
+    const SAFE_RETURN_SCREENS = ["levelMap", "profilePicker"];
+    if (returnScreen && returnScreen !== "profilePicker" && SAFE_RETURN_SCREENS.includes(returnScreen)) {
       localStorage.removeItem("ak_returnScreen");
       setScreen(returnScreen);
     } else {
+      localStorage.removeItem("ak_returnScreen");
       setScreenWithUrl("levelMap");
     }
   };
@@ -3555,7 +3566,31 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
                 {SHOP_THEMES.map(th=>{
                   const owned=(activeProfile?.ownedThemes||[]).includes(th.id)||th.cost===0;
                   const active=activeProfile?.activeTheme===th.id||(th.id==="dark"&&!activeProfile?.activeTheme);const canCustomTheme=canUse(activeProfile,"customTheme");
-                  const doBuyTheme=async()=>{const newKeys=(activeProfile.keys||0)-th.cost;if(newKeys<0){setShopMsg("Not enough Keys");return;}patchProfile({keys:newKeys,ownedThemes:[...(activeProfile.ownedThemes||[]),th.id],activeTheme:th.id});setShopMsg(`${th.label} purchased!`);try{if(isProfileRestricted(activeProfile)){updateProfileLocal(activeProfile.id,activeProfile,{keys:newKeys,ownedThemes:[...(activeProfile.ownedThemes||[]),th.id],activeTheme:th.id});}else{await purchaseTheme(user.uid,activeProfile.id,th.id,th.cost);await setActiveTheme(user.uid,activeProfile.id,th.id);}}catch(e){setShopMsg(e.message||"Error");}};
+                  const doBuyTheme=async()=>{
+                    const prevKeys = activeProfile.keys||0;
+                    const prevOwned = activeProfile.ownedThemes||[];
+                    const prevActive = activeProfile.activeTheme;
+                    const newKeys=prevKeys-th.cost;
+                    if(newKeys<0){setShopMsg("Not enough Keys");return;}
+                    patchProfile({keys:newKeys,ownedThemes:[...prevOwned,th.id],activeTheme:th.id});
+                    setShopMsg(`${th.label} purchased!`);
+                    try{
+                      if(isProfileRestricted(activeProfile)){
+                        updateProfileLocal(activeProfile.id,activeProfile,{keys:newKeys,ownedThemes:[...prevOwned,th.id],activeTheme:th.id});
+                      }else{
+                        await purchaseTheme(user.uid,activeProfile.id,th.id);
+                        await setActiveTheme(user.uid,activeProfile.id,th.id);
+                      }
+                    }catch(e){
+                      // Server-side rejected it (real price differs from what
+                      // the UI assumed, insufficient keys due to a race, or
+                      // tampering) - revert the optimistic update instead of
+                      // leaving the UI showing a purchase that didn't
+                      // actually happen.
+                      patchProfile({keys:prevKeys,ownedThemes:prevOwned,activeTheme:prevActive});
+                      setShopMsg(e.message||"Purchase failed");
+                    }
+                  };
                   return (
                     <div key={th.id} style={{background:T.bg,border:`1px solid ${active?T.purple:T.border}`,borderRadius:10,padding:"12px",textAlign:"center"}}>
                       <div style={{fontWeight:700,fontSize:13,color:T.text,marginBottom:4}}>{th.label}</div>
