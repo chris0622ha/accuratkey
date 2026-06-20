@@ -1980,6 +1980,49 @@ export const MACHINE_MODE_ICONS = {
 // ─── Legend Tier section (levels 156-165) ───────────────────────────────────
 
 // 156-164. Legend crowns — increasingly ornate crowns
+// 156. Tongue Twisters — a speech bubble with looping tangled lines
+export const IconTongueTwist = ({ size = 28, color = "#fbbf24" }) => (
+  <Base size={size}>
+    <path d="M6 10 H38 a4 4 0 0 1 4 4 V26 a4 4 0 0 1 -4 4 H18 L10 38 V30 H6 a4 4 0 0 1 -4 -4 V14 a4 4 0 0 1 4 -4 Z" fill={color} opacity="0.16" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+    <path d="M10 19 C14 14, 18 24, 22 19 S30 14, 34 19" stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.85" />
+  </Base>
+);
+
+// 157. Word Pairs — two linked rounded rectangles
+export const IconWordPairs = ({ size = 28, color = "#f43f5e" }) => (
+  <Base size={size}>
+    <rect x="4" y="16" width="18" height="16" rx="5" fill={color} opacity="0.22" stroke={color} strokeWidth="2" />
+    <rect x="26" y="16" width="18" height="16" rx="5" fill={color} opacity="0.4" stroke={color} strokeWidth="2" />
+    <path d="M22 24 H26" stroke={color} strokeWidth="2.4" strokeLinecap="round" />
+  </Base>
+);
+
+// 158. Quote Practice — opening quotation marks
+export const IconQuotePractice = ({ size = 28, color = "#a855f7" }) => (
+  <Base size={size}>
+    <path d="M10 14 C5 16, 4 22, 6 28 C8 26, 11 25, 11 21 C11 18, 9 16, 6 17" fill={color} opacity="0.7" stroke={color} strokeWidth="1.4" strokeLinejoin="round" />
+    <path d="M28 14 C23 16, 22 22, 24 28 C26 26, 29 25, 29 21 C29 18, 27 16, 24 17" fill={color} opacity="0.45" stroke={color} strokeWidth="1.4" strokeLinejoin="round" />
+  </Base>
+);
+
+// 159. Build Speed — upward step bars
+export const IconBuildSpeed = ({ size = 28, color = "#06b6d4" }) => (
+  <Base size={size}>
+    <rect x="6" y="30" width="8" height="10" rx="1.5" fill={color} opacity="0.35" stroke={color} strokeWidth="1.6" />
+    <rect x="18" y="22" width="8" height="18" rx="1.5" fill={color} opacity="0.55" stroke={color} strokeWidth="1.6" />
+    <rect x="30" y="12" width="8" height="28" rx="1.5" fill={color} opacity="0.8" stroke={color} strokeWidth="1.6" />
+    <path d="M8 28 L18 18 L26 22 L36 8" stroke={color} strokeWidth="1.6" fill="none" strokeLinecap="round" opacity="0.6" />
+  </Base>
+);
+
+// 160. Final Stretch — a finish-line flag, calm rather than dramatic
+export const IconFinalStretch = ({ size = 28, color = "#10b981" }) => (
+  <Base size={size}>
+    <line x1="12" y1="6" x2="12" y2="42" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
+    <path d="M12 8 L34 8 L28 14 L34 20 L12 20 Z" fill={color} opacity="0.7" stroke={color} strokeWidth="1.6" strokeLinejoin="round" />
+  </Base>
+);
+
 export const IconLegend1 = ({ size = 28, color = "#fbbf24" }) => (
   <Base size={size}>
     <path d="M6 34 L6 18 L14 26 L24 8 L34 26 L42 18 L42 34 Z" fill={color} opacity="0.25" stroke={color} strokeWidth="2.2" strokeLinejoin="round" />
@@ -2099,6 +2142,7 @@ export const IconFinalBoss = ({ size = 28, color = "#dc2626" }) => (
 );
 
 export const LEGEND_TIER_ICONS = {
-  156: IconLegend1, 157: IconLegend2, 158: IconLegend3, 159: IconLegend4, 160: IconLegend5,
-  161: IconLegend6, 162: IconLegend7, 163: IconLegend8, 164: IconLegend9, 165: IconFinalBoss,
+  156: IconTongueTwist, 157: IconWordPairs, 158: IconQuotePractice, 159: IconBuildSpeed, 160: IconFinalStretch,
+  161: IconLegend1, 162: IconLegend2, 163: IconLegend3, 164: IconLegend4, 165: IconLegend5,
+  166: IconLegend6, 167: IconLegend7, 168: IconLegend8, 169: IconLegend9, 170: IconFinalBoss,
 };
