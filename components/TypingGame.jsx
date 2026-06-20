@@ -1848,7 +1848,7 @@ export default function AccuratKey() {
 
   const Overlay = ({ onClose, children, wide }) => (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:3000,backdropFilter:"blur(8px)"}} onClick={onClose}>
-      <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:28,width:wide?520:420,maxWidth:"94vw",maxHeight:"90vh",overflowY:"auto",fontFamily:T.font}} onClick={e=>e.stopPropagation()}>
+      <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:28,width: isMobile ? (wide?520:420) : (wide?760:620),maxWidth:"94vw",maxHeight:"90vh",overflowY:"auto",fontFamily:T.font}} onClick={e=>e.stopPropagation()}>
         {children}
       </div>
     </div>
@@ -2352,7 +2352,7 @@ const Nav = () => (<>
 
   if (screen === "createProfile") return (
     <div style={{minHeight:"100vh",background:T.bg,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:24}}>
-      <div style={{width:"100%",maxWidth:460}}>
+      <div style={{width:"100%",maxWidth:isMobile?460:760}}>
         <div style={{textAlign:"center",marginBottom:28}}>
           <div style={{fontSize:42,marginBottom:8}}>👤</div>
           <h2 style={{color:T.text,fontSize:24,fontWeight:700,marginBottom:6}}>Create a profile</h2>
@@ -2459,7 +2459,7 @@ const Nav = () => (<>
 
     return (
       <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:24}}>
-        <div style={{width:"100%",maxWidth:460,textAlign:"center"}}>
+        <div style={{width:"100%",maxWidth:isMobile?460:760,textAlign:"center"}}>
           <div style={{fontSize:56,marginBottom:12}}>{lv.emoji}</div>
           <h2 style={{color:T.text,fontSize:fs(24),fontWeight:800,marginBottom:4}}>Level {lv.id}: {lv.name}</h2>
           <p style={{color:T.muted,fontSize:13,marginBottom:28}}>Target: {lv.accuracy}% accuracy</p>
@@ -3645,7 +3645,7 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
       const maxErr = Math.max(1, ...Object.values(keyMistakes));
       const hasAnyMistakes = Object.keys(keyMistakes).length > 0;
       return (
-        <div style={{width:"100%",maxWidth:660,background:"#0d0d1a",border:"1px solid #1e1e30",borderRadius:14,padding:14,marginTop:12}}>
+        <div style={{width:"100%",maxWidth:isMobile?660:980,background:"#0d0d1a",border:"1px solid #1e1e30",borderRadius:14,padding:14,marginTop:12}}>
           <div style={{display:"flex",justifyContent:"flex-end",alignItems:"center",marginBottom:8,gap:6}}>
             {showHeatmap && hasAnyMistakes && (
               <div style={{display:"flex",alignItems:"center",gap:4,fontSize:9,color:"#666"}}>
@@ -3695,8 +3695,8 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
 
     return (
       <div onClick={() => inputRef.current?.focus()} style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",padding:"20px 12px",fontFamily:T.font,userSelect:"none"}}>
-        <div style={{width:"100%",maxWidth:660,marginBottom:8}}><Nav /></div>
-        <div style={{width:"100%",maxWidth:660,display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+        <div style={{width:"100%",maxWidth:isMobile?660:980,marginBottom:8}}><Nav /></div>
+        <div style={{width:"100%",maxWidth:isMobile?660:980,display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <span style={{fontSize:20}}>{lv.emoji}</span>
             <div>
@@ -3712,10 +3712,10 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
             <span style={{color:T.faint,fontSize:12}}>{lineIdx}/{TOTAL_LINES}</span>
           </div>
         </div>
-        {canUse(activeProfile,"progressBar") && <div style={{width:"100%",maxWidth:660,height:4,background:"#1a1a2e",borderRadius:2,marginBottom:14}}>
+        {canUse(activeProfile,"progressBar") && <div style={{width:"100%",maxWidth:isMobile?660:980,height:4,background:"#1a1a2e",borderRadius:2,marginBottom:14}}>
           <div style={{height:"100%",background:lv.color,borderRadius:2,width:progress+"%",transition:"width 0.3s"}} />
         </div>}
-        <div style={{width:"100%",maxWidth:660,background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"20px 24px",marginBottom:12}}>
+        <div style={{width:"100%",maxWidth:isMobile?660:980,background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"20px 24px",marginBottom:12}}>
           {lines[lineIdx+1] && <div style={{fontSize:14,letterSpacing:1,marginBottom:10,color:"#2a2a3a",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis",fontFamily:T.font}}>{lines[lineIdx+1]}</div>}
           <div style={{fontSize:20,letterSpacing:2,display:"flex",flexWrap:"wrap",lineHeight:1.8,fontFamily:T.font}}>
             {current.split("").map((ch,ci) => {
@@ -3865,7 +3865,7 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
     return (
       <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:20}}>
         {showConfetti && passed && <Confetti sectionName={sectionUnlockName} />}
-        <div style={{width:"100%",maxWidth:460,textAlign:"center"}}>
+        <div style={{width:"100%",maxWidth:isMobile?460:760,textAlign:"center"}}>
           <div style={{fontSize:64,marginBottom:10}}>{passed ? "🎉" : "💪"}</div>
           <h2 style={{color:T.text,fontSize:28,fontWeight:800,margin:0}}>
             {passed ? (rSkip ? "Level Skipped!" : "Level Complete!") : "Not quite!"}
