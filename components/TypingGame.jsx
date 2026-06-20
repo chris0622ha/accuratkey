@@ -754,9 +754,13 @@ export default function AccuratKey() {
     const tabUrls = { games: "/game", map: "/game/map", daily: "/game/daily", test: "/game/test" };
     const url = tabUrls[tab] || "/game";
     if (typeof window !== "undefined" && window.location.pathname !== url) {
-      router.replace(url);
+      // Use history.replaceState directly, same as setScreenWithUrl below —
+      // router.replace can silently fail or lag on same-origin navigation in
+      // the App Router, which was contributing to the reactive pathname
+      // effect firing with a stale/inconsistent URL.
+      window.history.replaceState({}, "", url);
     }
-  }, [router]);
+  }, []);
 
   // Sync screen to URL (replace so back button works naturally)
   const STANDALONE_PAGES = ["/about", "/help", "/faq", "/how-to-play"];
@@ -975,8 +979,20 @@ export default function AccuratKey() {
   // directions can never drift out of sync with each other.
   const URL_TO_SCREEN = React.useMemo(() => {
     const map = {};
+    // "loading" and "levelMap" both map to "/game" in SCREEN_URLS (loading
+    // is just the initial-mount placeholder before a real screen is picked).
+    // Object.entries iteration order meant whichever was declared LAST in
+    // SCREEN_URLS silently won the reverse-lookup slot for "/game" — and
+    // since "loading" comes after "levelMap" there, every tab click that
+    // set the URL to "/game" (the Games tab) was incorrectly resolving back
+    // to the loading screen instead of the level map, which is what was
+    // causing the "click a button → flash to loading → back to map" bug.
+    // "loading" is never a real navigation target, so it's excluded here
+    // entirely rather than relying on declaration order.
     for (const [screenName, url] of Object.entries(SCREEN_URLS)) {
-      if (!screenName.startsWith("tab-")) map[url] = screenName;
+      if (screenName.startsWith("tab-") || screenName === "loading") continue;
+      if (map[url] !== undefined) continue; // first one wins, don't let a later duplicate clobber it
+      map[url] = screenName;
     }
     return map;
   }, []);
