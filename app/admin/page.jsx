@@ -303,6 +303,7 @@ export default function AdminPage() {
   const [chosenAdminProfile,setChosenAdminProfile]=useState(null); // the profile picked to act as
   const [tab,setTab]=useState("stats");
   const [users,setUsers]=useState([]);
+  const [usersLoaded,setUsersLoaded]=useState(false);
   const [bans,setBans]=useState([]);
   const [admins,setAdmins]=useState([]);
   const [log,setLog]=useState([]);
@@ -443,7 +444,7 @@ export default function AdminPage() {
     setSwitchLoading(false);
   };
 
-  useEffect(()=>{ if(adminOk) loadAll(); },[adminOk]);
+  useEffect(()=>{ if(adminOk) loadBansAndAdmins(); },[adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="log") getActivityLog(100,adminDb).then(setLog).catch(()=>{}); },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="feedback") getAdminFeedback(50,adminDb).then(setFeedbackList).catch(()=>{}); },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="anticheat"){ getFlaggedScores(adminDb).then(setFlaggedScores).catch(()=>{}); getRestoreRequests(adminDb).then(setRestoreRequests).catch(()=>{}); } },[tab,adminOk]);
@@ -454,10 +455,27 @@ export default function AdminPage() {
   useEffect(()=>{ if(adminOk&&tab==="levels") getLevelOverrides().then(setLevelOverrides).catch(()=>{}); },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="stats") getAppStats(adminDb).then(setStats).catch(()=>{}); },[tab,adminOk]);
 
-  async function loadAll() {
+  // COPPA: getAllUsers() returns every account AND every profile under every
+  // account, including child profiles' real names and birthdays. This used
+  // to load unconditionally the instant the admin panel opened, with no
+  // search term or reason required, and rendered every email/username/child
+  // name in plain text by default. There is no COPPA exception that covers
+  // standing visibility into a full directory like that - the internal
+  // operations/security exceptions only cover a bare persistent identifier,
+  // not a full profile, and explicitly cannot be used to amass a profile on
+  // a specific individual. bans/admins still load automatically since those
+  // are already moderation-scoped lists (only people already banned or made
+  // admin appear there), which is the narrow, purpose-tied access that's fine.
+  async function loadBansAndAdmins() {
     setLoading(true);
-    const [u,b,a] = await Promise.all([getAllUsers(adminDb),getAllBans(adminDb),getAllAdmins(adminDb)]);
-    setUsers(u); setBans(b); setAdmins(a); setLoading(false);
+    const [b,a] = await Promise.all([getAllBans(adminDb),getAllAdmins(adminDb)]);
+    setBans(b); setAdmins(a); setLoading(false);
+  }
+
+  async function loadAllUsersIfNeeded() {
+    if (usersLoaded) return;
+    const u = await getAllUsers(adminDb);
+    setUsers(u); setUsersLoaded(true);
   }
 
   const resolve = async (input) => {
@@ -476,27 +494,27 @@ export default function AdminPage() {
     else { await banUser(banTarget.uid, data, adminDb); }
     await logActivity("ban", { adminUid:user.uid, targetUid:banTarget.uid, targetUsername:banTarget.username, detail:banReason+(banExpiry?` (expires ${banExpiry})` :"") }, adminDb);
     flash(`Banned ${banTarget.username||banTarget.email}`);
-    setBanTarget(null); setBanReason(""); setBanExpiry(""); loadAll();
+    setBanTarget(null); setBanReason(""); setBanExpiry(""); loadBansAndAdmins();
   }
 
   async function handleUnban(uid,username) {
     await unbanUser(uid,adminDb);
     await logActivity("unban",{adminUid:user.uid,targetUid:uid,targetUsername:username},adminDb);
-    flash("Unbanned"); loadAll();
+    flash("Unbanned"); loadBansAndAdmins();
   }
 
   async function handleGrant() {
     const found = await resolve(grantInput); if(!found) return;
     await grantAdmin(found.uid, user.uid, adminDb);
     await logActivity("grant_admin",{adminUid:user.uid,targetUid:found.uid,targetUsername:found.username},adminDb);
-    flash(`Admin granted`); setGrantInput(""); loadAll();
+    flash(`Admin granted`); setGrantInput(""); loadBansAndAdmins();
   }
 
   async function handleRevoke(uid,username) {
     if(uid===user.uid){flash("Can't revoke yourself");return;}
     await revokeAdmin(uid,adminDb);
     await logActivity("revoke_admin",{adminUid:user.uid,targetUid:uid,targetUsername:username},adminDb);
-    flash("Revoked"); loadAll();
+    flash("Revoked"); loadBansAndAdmins();
   }
 
   async function handleProfileAdminLookup() {
@@ -610,8 +628,7 @@ export default function AdminPage() {
 
   const bannedUids = new Set(bans.map(b=>b.uid));
   const adminUids = new Set(admins.map(a=>a.uid));
-  const filtered = users.filter(u => {
-    if(!filter) return true;
+  const filtered = !filter.trim() ? [] : users.filter(u => {
     const s=filter.toLowerCase();
     return u.email?.toLowerCase().includes(s)||u.username?.toLowerCase().includes(s)||u.uid.includes(s);
   });
@@ -769,22 +786,19 @@ export default function AdminPage() {
                 ))}
               </div>
             ) : <div style={{color:T.muted,fontSize:12,padding:24,textAlign:"center"}}>Loading stats...</div>}
-            <div style={{color:T.muted,fontSize:11,marginBottom:8}}>Most active users</div>
-            {users.slice(0,5).map(u=>(
-              <div key={u.uid} style={{...st.card,padding:"10px 14px"}}>
-                <div style={{color:T.text,fontSize:12}}>{u.username?`@${u.username} · `:""}{u.email}</div>
-                <div style={{color:T.faint,fontSize:10}}>{u.profiles?.length||0} profiles</div>
-              </div>
-            ))}
           </div>
         )}
 
         {/* USERS */}
         {!loading&&tab==="users"&&(
           <div>
-            <input value={filter} onChange={e=>setFilter(e.target.value)} placeholder="Filter..." style={{...st.input,marginBottom:10}} />
+            <input value={filter} onChange={e=>{ setFilter(e.target.value); if(e.target.value.trim()) loadAllUsersIfNeeded(); }} placeholder="Filter — type a username, email, or UID to load matching accounts..." style={{...st.input,marginBottom:10}} />
             {filtered.length===0&&<div style={{color:T.muted,textAlign:"center",padding:24,fontSize:12}}>No users</div>}
-            {filtered.map(u=><UserRow key={u.uid} u={u} bannedUids={bannedUids} adminUids={adminUids} currentUid={user.uid} onBan={setBanTarget} onUnban={handleUnban} onSkip={setSkipTarget} onNote={openNote} onWarn={setWarnTarget} onSessions={openSessions} />)}
+            {!filter.trim() ? (
+              <div style={{color:T.muted,fontSize:12,padding:24,textAlign:"center",lineHeight:1.6}}>Type a username, email, or UID above to look up an account. There's no default list of every user here on purpose.</div>
+            ) : filtered.length === 0 ? (
+              <div style={{color:T.muted,fontSize:12,padding:24,textAlign:"center"}}>No matching accounts.</div>
+            ) : filtered.map(u=><UserRow key={u.uid} u={u} bannedUids={bannedUids} adminUids={adminUids} currentUid={user.uid} onBan={setBanTarget} onUnban={handleUnban} onSkip={setSkipTarget} onNote={openNote} onWarn={setWarnTarget} onSessions={openSessions} />)}
           </div>
         )}
 
@@ -1002,11 +1016,6 @@ export default function AdminPage() {
                   <div style={{color:T.text,fontSize:13}}>Total users: <strong>{users.length}</strong></div>
                   <div style={{color:T.text,fontSize:13,marginTop:4}}>Total fails tracked: <strong>{Object.values(failStats).reduce((a,b)=>a+b,0)}</strong></div>
                 </div>
-                <button onClick={()=>{
-                  const allRows=[["uid","email","username","profiles","createdAt"],...users.map(u=>[u.uid,u.email||"",u.username||"",u.profiles?.length||0,u.createdAt?.seconds?new Date(u.createdAt.seconds*1000).toISOString():""])];
-                  const csv=allRows.map(r=>r.map(v=>`"${v}"`).join(",")).join("\n");
-                  const a=document.createElement("a");a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);a.download="accuratkey_users.csv";a.click();
-                }} style={{...st.btn(),marginTop:12,width:"100%",padding:"10px"}}>Export Users CSV</button>
               </div>
             )}
           </div>
