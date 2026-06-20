@@ -931,9 +931,8 @@ export default function AccuratKey() {
   const [wpm, setWpm] = useState(0);
   const [accuracy, setAccuracy] = useState(100);
   const [activeKey, setActiveKey] = useState(null);
-  const [ghostPos, setGhostPos] = useState(-1);
-  const ghostTimings = useRef([]); // [{t: timestamp, pos: charIndex}]
-  const ghostInterval = useRef(null);
+  // (ghost mode removed - was confusing/unreliable, replay cursor during
+  // typing showing your previous best run)
   const [combo, setCombo] = useState(0);
   const [keyMistakes, setKeyMistakes] = useState({});
   const [showHeatmap, setShowHeatmap] = useState(false);
@@ -1434,27 +1433,6 @@ export default function AccuratKey() {
       initGame(levelId);
     }
     setSkipTargetLevel(skipTarget);
-    setGhostPos(-1);
-    ghostTimings.current = [];
-    clearInterval(ghostInterval.current);
-    // Load ghost for this level (only if ghost feature is enabled)
-    try {
-      if (canUse(activeProfile, "ghost")) {
-        const g = JSON.parse(localStorage.getItem(`ak_ghost_${levelId}`) || "null");
-        if (g?.timings?.length) {
-          const t0 = Date.now();
-          ghostInterval.current = setInterval(() => {
-            const elapsed = Date.now() - t0;
-            const frame = g.timings.findLast(x => x.t <= elapsed);
-            setGhostPos(frame ? frame.pos : -1);
-          }, 50);
-        }
-      } else {
-        // Ghost toggle is OFF — ensure interval is dead and pos is reset
-        ghostInterval.current = null;
-        setGhostPos(-1);
-      }
-    } catch(e) {}
     setScreenWithUrl("game");
     setTimeout(() => inputRef.current?.focus(), 100);
   };
@@ -1527,7 +1505,6 @@ export default function AccuratKey() {
     }
 
     setTyped(newTyped);
-    ghostTimings.current.push({ t: startTimeRef.current ? Date.now() - startTimeRef.current : 0, pos: totalChars + newTyped.length });
 
     // Update live accuracy
     const correct = newTyped.split("").filter((c, i) => c === current[i]).length;
@@ -1601,13 +1578,6 @@ export default function AccuratKey() {
               }).catch(() => {});
           }
           if (passed) {
-            clearInterval(ghostInterval.current);
-            try {
-              const prev = JSON.parse(localStorage.getItem(`ak_ghost_${playingLevel}`) || "null");
-              if (!prev || fw > prev.wpm) {
-                localStorage.setItem(`ak_ghost_${playingLevel}`, JSON.stringify({ wpm: fw, timings: ghostTimings.current }));
-              }
-            } catch(e) {}
             // Save per-level best WPM + stars
             if (playingLevel > 0) {
               const lv = LEVELS.find(l => l.id === playingLevel);
@@ -2117,7 +2087,6 @@ const Nav = () => (<>
       {group:"⌨️ Gameplay", items:[
         ["sounds","🔊 Sound effects","Play sounds on correct/wrong keypress"],
         ["skip","⏭ Level skip","Allow skipping ahead to the next level"],
-        ["ghost","👻 Ghost mode","Show a ghost cursor from your best run"],
         ["keyboard","⌨️ On-screen keyboard","Show keyboard diagram while typing"],
         ["combo","🔥 Combo counter","Show combo streak during a game"],
         ["wpmLive","📊 Live WPM","Show words-per-minute counter while typing"],
@@ -3708,7 +3677,6 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
             {canUse(activeProfile,"wpmLive") && <span style={{color:T.purple,fontWeight:700,fontSize:14,display:"flex",alignItems:"center",gap:6}}>{wpm} WPM</span>}
             {canUse(activeProfile,"accuracyLive") && <span style={{color:T.accent2,fontWeight:700,fontSize:14}}>{accuracy}%</span>}
             {canUse(activeProfile,"combo") && combo > 1 && <span style={{color:T.accent,fontWeight:700,fontSize:13}}>×{combo}{combo>=20?" 🔥🔥":combo>=10?" 🔥":""}</span>}
-            {canUse(activeProfile,"ghost") && ghostPos >= 0 && <span style={{color:"#f59e0b",fontSize:11}}>👻</span>}
             <span style={{color:T.faint,fontSize:12}}>{lineIdx}/{TOTAL_LINES}</span>
           </div>
         </div>
@@ -3722,14 +3690,13 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
               let color=T.faint, underline="2px solid transparent";
               if (ci < typed.length) color = typed[ci]===ch ? T.accent2 : "#ef4444";
               else if (ci === typed.length) { color=T.purple; underline=`2px solid ${T.purple}`; }
-              const isGhost = canUse(activeProfile,"ghost") && ghostPos >= 0 && (ghostPos % current.length) === ci && ci >= typed.length;
-              return <span key={ci} style={{color, borderBottom: isGhost ? "2px solid #f59e0b88" : underline, background: isGhost ? "#f59e0b11" : "transparent"}}>{ch}</span>;
+              return <span key={ci} style={{color, borderBottom: underline, background: "transparent"}}>{ch}</span>;
             })}
           </div>
         </div>
         <input ref={inputRef} value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Backspace") e.preventDefault();}} style={{position:"absolute",opacity:0,pointerEvents:"none"}} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
         {canUse(activeProfile,"keyboard") && <Keyboard />}
-        <button onClick={() => { clearInterval(ghostInterval.current); setScreenWithUrl("levelMap"); }} style={{marginTop:20,background:"none",border:"none",color:T.faint,fontSize:12,cursor:"pointer",fontFamily:T.font}}>
+        <button onClick={() => setScreenWithUrl("levelMap")} style={{marginTop:20,background:"none",border:"none",color:T.faint,fontSize:12,cursor:"pointer",fontFamily:T.font}}>
           ← Back to map
         </button>
       </div>
