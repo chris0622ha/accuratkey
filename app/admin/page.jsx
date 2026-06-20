@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { onAuthStateChanged, signInWithPopup, signOut, signInWithEmailAndPassword, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth";
-import { getAdminAuth, getAdminDb, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, adminSetProfileAdmin, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest, replyToFeedback, getFlaggedScores, getRestoreRequests, approveFlaggedScore, dismissFlaggedScore, resolveRestoreRequest, getCoppaAuditSummary } from "@/lib/firebase";
+import { getAdminAuth, getAdminDb, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, adminSetProfileAdmin, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest, replyToFeedback, getFlaggedScores, getRestoreRequests, approveFlaggedScore, dismissFlaggedScore, resolveRestoreRequest, getCoppaAuditSummary, runCoppaCleanup } from "@/lib/firebase";
 const LEVELS = [
   { id:1,  name:"Home Row Hero",         emoji:"🏠", wpmTarget:12,  accuracy:75, color:"#10b981", words:["ffjj","fjfj","asdf","jkl;","add","ask","fall","glad","flask","lads","fads","salads"] },
   { id:2,  name:"Top Row Climber",       emoji:"🧗", wpmTarget:16,  accuracy:75, color:"#3b82f6", words:["quit","wrap","type","your","power","tower","write","pretty","quite","report"] },
@@ -314,6 +314,8 @@ export default function AdminPage() {
   const [bdayReqList,setBdayReqList]=useState([]);
   const [coppaAudit,setCoppaAudit]=useState(null);
   const [coppaAuditLoading,setCoppaAuditLoading]=useState(false);
+  const [coppaCleanupResult,setCoppaCleanupResult]=useState(null);
+  const [coppaCleanupLoading,setCoppaCleanupLoading]=useState(false);
   async function runCoppaAudit() {
     setCoppaAuditLoading(true);
     try {
@@ -323,6 +325,20 @@ export default function AdminPage() {
       flash(e.message || "Audit failed");
     }
     setCoppaAuditLoading(false);
+  }
+  async function handleRunCoppaCleanup() {
+    if (!confirm(`This will permanently strip photos and delete all session history for every currently-restricted (under 13) profile across the whole app. This cannot be undone. Continue?`)) return;
+    setCoppaCleanupLoading(true);
+    try {
+      const result = await runCoppaCleanup(adminDb);
+      setCoppaCleanupResult(result);
+      await logActivity("coppa_cleanup", { adminUid: user.uid, detail: `${result.profilesCleaned} profiles cleaned, ${result.photosRemoved} photos removed, ${result.sessionsDeleted} sessions deleted` }, adminDb);
+      flash(`Cleaned ${result.profilesCleaned} profile(s)`);
+      runCoppaAudit();
+    } catch (e) {
+      flash(e.message || "Cleanup failed");
+    }
+    setCoppaCleanupLoading(false);
   }
   const [flaggedScores,setFlaggedScores]=useState([]);
   const [restoreRequests,setRestoreRequests]=useState([]);
@@ -827,7 +843,22 @@ export default function AdminPage() {
               )}
               {coppaAudit && coppaAudit.restrictedProfiles > 0 && (
                 <div style={{marginTop:10,color:T.danger,fontSize:11,lineHeight:1.5,background:T.danger+"11",border:`1px solid ${T.danger}33`,borderRadius:8,padding:"8px 10px"}}>
-                  {coppaAudit.restrictedProfiles} existing profile(s) are already restricted. The privacy fixes already in place stop any NEW data collection for them, but the photo/username/session counts above show what still needs manual cleanup if non-zero — go to the Users tab, search for the specific account, and use Edit Profile to remove a photo, or contact the account's owner about the username/history.
+                  {coppaAudit.restrictedProfiles} existing profile(s) are already restricted. The privacy fixes already in place stop any NEW data collection for them. Public username exposure is already handled automatically (restricted profiles never appear on the public page regardless). Photo and session history can be cleaned up automatically below.
+                </div>
+              )}
+              {coppaAudit && (coppaAudit.restrictedWithPhoto > 0 || coppaAudit.restrictedWithSessions > 0) && (
+                <div style={{marginTop:10}}>
+                  <button onClick={handleRunCoppaCleanup} disabled={coppaCleanupLoading} style={{...st.btn(T.danger,T.danger+"22"),opacity:coppaCleanupLoading?0.6:1}}>
+                    {coppaCleanupLoading?"Cleaning...":"Remove photos + delete session history for all restricted profiles"}
+                  </button>
+                  <div style={{color:T.faint,fontSize:10,marginTop:6,lineHeight:1.5}}>
+                    This permanently deletes data — it can't be undone. Doesn't touch dailyScores leaderboard entries (those are keyed by account, not profile, so there's no way to remove just one profile's entry without risking a different profile's legitimate score on a shared account).
+                  </div>
+                </div>
+              )}
+              {coppaCleanupResult && (
+                <div style={{marginTop:10,color:T.accent,fontSize:11,background:T.accent+"11",border:`1px solid ${T.accent}33`,borderRadius:8,padding:"8px 10px",lineHeight:1.5}}>
+                  Cleaned {coppaCleanupResult.profilesCleaned} profile(s): removed {coppaCleanupResult.photosRemoved} photo(s), deleted {coppaCleanupResult.sessionsDeleted} session record(s). {new Date(coppaCleanupResult.cleanedAt).toLocaleString()}
                 </div>
               )}
             </div>
