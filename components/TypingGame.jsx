@@ -6,6 +6,7 @@ import GamesTab from "./GamesTab";
 import { KKey } from "./icons/KKey";
 import { FOUNDATIONS_ICONS, PRECISION_FLOW_ICONS, WORD_POWER_ICONS, KEYBOARD_MASTERY_ICONS, SPEED_SURGE_ICONS, FREE_RUN_ICONS, CENTURY_CLUB_ICONS, ENDURANCE_ICONS, LITERATURE_ICONS, MACHINE_MODE_ICONS, LEGEND_TIER_ICONS, IconStar } from "./icons/LevelIcons";
 import { formatKeys } from "@/lib/format";
+import { CertificateModal } from "./Certificates";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
 import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback } from "@/lib/firebase";
 
@@ -892,6 +893,7 @@ export default function AccuratKey() {
   const [accuracyTarget, setAccuracyTarget] = useState(75); // 75 | 85 | 95 | 100
   // Weekly summary
   const [showWeeklySummary, setShowWeeklySummary] = useState(false);
+  const [showCertificates, setShowCertificates] = useState(false);
   const [weeklySessions, setWeeklySessions] = useState([]);
   const [weeklyLoading, setWeeklyLoading] = useState(false); // playing a challenge // {status, birthday, reason}
   const [bdayReqReason, setBdayReqReason] = useState("");
@@ -2612,6 +2614,9 @@ const Nav = () => (<>
             }} style={{width:"100%",marginTop:12,padding:"10px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
               📈 This Week's Summary
             </button>
+            <button onClick={()=>{setShowProfileModal(false);setShowCertificates(true);}} style={{width:"100%",marginTop:8,padding:"10px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
+              🏆 Certificates
+            </button>
             <button onClick={()=>{setShowProfileModal(false);openSettings();}} style={{width:"100%",marginTop:8,padding:"10px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>
               Edit Profile
             </button>
@@ -3492,6 +3497,10 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
               )}
             </div>
           </div>
+        )}
+
+        {showCertificates && (
+          <CertificateModal profile={activeProfile} T={T} onClose={()=>setShowCertificates(false)} />
         )}
 
         {showFriends && (
