@@ -355,7 +355,7 @@ export default function AdminPage() {
   // Maintenance
   const [maintEnabled,setMaintEnabled]=useState(false);
   const [maintMsg,setMaintMsg]=useState("");
-  const [maintTriggers,setMaintTriggers]=useState({owner:true,admins:false,users:false});
+  const [maintTriggers,setMaintTriggers]=useState({admins:false,users:true});
 
   // Level editor
   const [levelOverrides,setLevelOverrides]=useState({});
@@ -396,6 +396,7 @@ export default function AdminPage() {
   const chooseAdminProfile = (p) => {
     setChosenAdminProfile(p);
     setAdminOk(accountIsAdmin || p?.isProfileAdmin === true);
+    flash(`Acting as ${p?.name || "this profile"}`);
   };
 
   // Sign in directly from the admin page. onAuthStateChanged above reacts
@@ -1065,7 +1066,7 @@ export default function AdminPage() {
                           await replyToFeedback(f.id, f.uid, replyText.trim(), "AccuratKey Admin", adminDb);
                           setFeedbackList(l=>l.map(x=>x.id===f.id?{...x,reply:replyText.trim(),replyBy:"AccuratKey Admin"}:x));
                           setReplyingTo(null);setReplyText("");
-                        } catch(e){ alert("Failed to send reply"); }
+                        } catch(e){ alert("Failed to send reply: " + (e?.message || "unknown error")); }
                         setReplySending(false);
                       }} style={{flex:1,padding:"7px",borderRadius:7,border:"none",background:"#7c6af7",color:"#fff",fontSize:12,fontWeight:700,cursor:!replyText.trim()?"default":"pointer",opacity:!replyText.trim()?0.5:1}}>
                         {replySending?"Sending...":"Send Reply"}
@@ -1073,10 +1074,12 @@ export default function AdminPage() {
                       <button onClick={()=>{setReplyingTo(null);setReplyText("");}} style={{padding:"7px 14px",borderRadius:7,border:"1px solid #333",background:"transparent",color:"#888",fontSize:12,cursor:"pointer"}}>Cancel</button>
                     </div>
                   </div>
-                ) : (
+                ) : f.uid ? (
                   <button onClick={()=>{setReplyingTo(f.id);setReplyText("");}} style={{marginTop:8,padding:"5px 12px",borderRadius:6,border:"1px solid #7c6af744",background:"transparent",color:"#7c6af7",fontSize:11,cursor:"pointer",fontWeight:600}}>
                     {f.reply ? "Edit Reply" : "↩ Reply"}
                   </button>
+                ) : (
+                  <div style={{marginTop:8,fontSize:10,color:T.faint,fontStyle:"italic"}}>Submitted anonymously — no account to reply to</div>
                 )}
               </div>
             ))}
@@ -1208,8 +1211,9 @@ export default function AdminPage() {
             <div style={st.label}>Message</div>
             <input value={maintMsg} onChange={e=>setMaintMsg(e.target.value)} placeholder="We'll be back soon..." style={{...st.input,marginBottom:16}} />
             <div style={st.label}>Who sees maintenance screen</div>
+            <div style={{color:T.faint,fontSize:10,marginBottom:8}}>The owner account never sees the maintenance screen, regardless of these settings.</div>
             <div style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,overflow:"hidden",marginBottom:12}}>
-              {[["owner","👑 Owner (you)","Only you see the maintenance screen"],["admins","🔑 Admins","Admins also see it"],["users","👥 All users","Everyone sees it"]].map(([key,label,desc],i,arr)=>(
+              {[["admins","🔑 Admins","Admins also see it"],["users","👥 All users","Everyone sees it"]].map(([key,label,desc],i,arr)=>(
                 <div key={key} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 14px",borderBottom:i<arr.length-1?`1px solid ${T.border}`:"none"}}>
                   <div>
                     <div style={{color:T.text,fontSize:12,fontWeight:600}}>{label}</div>
@@ -1222,6 +1226,7 @@ export default function AdminPage() {
             <button onClick={handleMaintenance} style={st.btn()}>Save</button>
           </div>
         )}
+
 
       </div>
 

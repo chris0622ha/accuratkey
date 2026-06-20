@@ -1180,10 +1180,14 @@ export default function AccuratKey() {
         const maint = await getMaintenanceMode();
         setMaintenance(maint);
         if (maint.enabled) {
-          const triggers = maint.triggers || {owner:true,admins:false,users:false};
+          const triggers = maint.triggers || {admins:false,users:true};
           const isOwner = u.uid === "qM3qeYBLwvRXy8D0gOKGCQbGuA12";
-          const isAdminUser = await isAdmin(u.uid).catch(()=>false);
-          const shouldBlock = triggers.users || (triggers.admins && isAdminUser) || (triggers.owner && isOwner);
+          const isAdminUser = !isOwner && await isAdmin(u.uid).catch(()=>false);
+          // The owner account is never blocked by maintenance mode, regardless
+          // of the saved trigger settings — there's no toggle for this because
+          // an owner who locks themselves out of their own app isn't a real
+          // use case, and would require a second account just to turn it off.
+          const shouldBlock = !isOwner && (triggers.users || (triggers.admins && isAdminUser));
           if (shouldBlock) { setScreen("maintenance"); return; }
         }
         // Check if banned
@@ -2024,11 +2028,11 @@ const Nav = () => (<>
     </div>
   );
 
-  if (maintenance?.enabled && !screen.includes("auth")) return (
+  if (screen === "maintenance") return (
     <div style={{minHeight:"100vh",background:"#0a0a0f",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'JetBrains Mono',monospace",padding:24,textAlign:"center"}}>
       <div style={{fontSize:48,marginBottom:16}}>🔧</div>
       <div style={{color:"#a78bfa",fontSize:20,fontWeight:700,marginBottom:8}}>Under Maintenance</div>
-      <div style={{color:"#6b7280",fontSize:13}}>{maintenance.message || "We'll be back soon."}</div>
+      <div style={{color:"#6b7280",fontSize:13}}>{maintenance?.message || "We'll be back soon."}</div>
     </div>
   );
 
