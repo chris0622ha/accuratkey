@@ -1366,6 +1366,15 @@ export default function AccuratKey() {
     catch (e) {
       if (e?.code === "auth/popup-closed-by-user" || e?.code === "auth/cancelled-popup-request") {
         setAuthErr("Popup was closed. Tap the button to try again.");
+      } else if (e?.code === "auth/web-storage-unsupported" || e?.code === "auth/operation-not-supported-in-this-environment" || /storage|cookie/i.test(e?.message || "")) {
+        // Known Firebase limitation: signInWithPopup needs third-party
+        // storage access between this app's domain and the Firebase auth
+        // relay domain. Private/incognito browsing blocks that by default
+        // in most modern browsers, so sign-in genuinely cannot complete
+        // there without a different setup (proxying auth through a custom
+        // domain). This is not a bug in the app - it's expected behavior
+        // for this Firebase configuration in a private browsing context.
+        setAuthErr("Sign in doesn't work in private/incognito browsing on this setup — please use a regular browser window.");
       } else {
         setAuthErr(cleanErr(e));
       }
