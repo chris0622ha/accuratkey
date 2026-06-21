@@ -75,9 +75,8 @@ jobs:
           if git diff --staged --quiet; then
             echo "No actual change in icons or level data for tqak"
           else
-            git commit -m "Sync level icons and metadata from accuratkey
-
-changelog: Asset gallery updated with the latest level names, icons, and colors"
+            printf 'Sync level icons and metadata from accuratkey\n\nchangelog: Asset gallery updated with the latest level names, icons, and colors\n' > /tmp/commit_msg.txt
+            git commit -F /tmp/commit_msg.txt
             git push
             echo "Synced to tqak"
           fi
