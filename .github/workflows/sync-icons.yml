@@ -12,6 +12,7 @@ on:
     paths:
       - 'components/icons/LevelIcons.jsx'
       - 'components/TypingGame.jsx'
+  workflow_dispatch:
 
 jobs:
   sync:
