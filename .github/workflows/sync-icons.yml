@@ -1,0 +1,85 @@
+name: Sync Icons to tqak
+
+# Watches components/icons/LevelIcons.jsx (icon shapes) and
+# components/TypingGame.jsx (level names/colors/targets, since that's where
+# the LEVELS array actually lives). Whenever either changes, regenerates the
+# level metadata tqak's owner page reads and pushes both files there -
+# previously LevelsData.js was a one-time manual export that went stale the
+# moment levels got renamed, which is exactly the gap that prompted this.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'components/icons/LevelIcons.jsx'
+      - 'components/TypingGame.jsx'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Count new icons since last sync
+        id: count
+        run: |
+          LAST_TAG=$(git tag -l "icons-synced-*" | sort -V | tail -1)
+          if [ -z "$LAST_TAG" ]; then
+            NEW_COUNT=$(git show HEAD:components/icons/LevelIcons.jsx | grep -c '^export const Icon')
+          else
+            OLD_COUNT=$(git show "$LAST_TAG":components/icons/LevelIcons.jsx 2>/dev/null | grep -c '^export const Icon' || echo 0)
+            NEW_COUNT_TOTAL=$(git show HEAD:components/icons/LevelIcons.jsx | grep -c '^export const Icon')
+            NEW_COUNT=$((NEW_COUNT_TOTAL - OLD_COUNT))
+          fi
+          echo "new_count=$NEW_COUNT" >> "$GITHUB_OUTPUT"
+          echo "New icons since last sync: $NEW_COUNT"
+
+      - name: Check if level data actually changed
+        id: leveldata
+        run: |
+          # Regenerate the level metadata file fresh every run (cheap, pure
+          # extraction) and diff it against what's already in the tqak repo
+          # later - this catches renames/reorders even when the icon count
+          # hasn't changed at all, which a pure icon-count check would miss
+          # entirely (exactly what happened with the Legend Tier rename).
+          python3 -c "
+          import re, json
+          with open('components/TypingGame.jsx') as f:
+              content = f.read()
+          start = content.find('const LEVELS = [')
+          end = content.find('];', start) + 2
+          block = content[start:end]
+          entries = re.findall(r'\{\s*id:(\d+),\s*name:\"([^\"]+)\",\s*emoji:\"([^\"]*)\",\s*wpmTarget:(\d+),\s*accuracy:(\d+),\s*color:\"([^\"]+)\"', block)
+          lines = ['export const ALL_LEVELS = [']
+          for id_, name, emoji, wpm, acc, color in entries:
+              lines.append('  {id:%s,name:%r,emoji:%r,wpmTarget:%s,accuracy:%s,color:%r},' % (id_, name, emoji, wpm, acc, color))
+          lines.append('];')
+          with open('/tmp/LevelsData.js', 'w') as f:
+              f.write('\n'.join(lines))
+          print(len(entries), 'levels extracted')
+          "
+
+      - name: Sync to tqak if icons changed enough or level data changed
+        env:
+          PAT_TOKEN: ${{ secrets.STUDIO_PAT }}
+        run: |
+          git clone https://x-access-token:${PAT_TOKEN}@github.com/chris0622ha/tqak.git /tmp/tqak
+          cp components/icons/LevelIcons.jsx /tmp/tqak/app/LevelIcons.jsx
+          cp /tmp/LevelsData.js /tmp/tqak/app/LevelsData.js
+          cd /tmp/tqak
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add app/LevelIcons.jsx app/LevelsData.js
+          if git diff --staged --quiet; then
+            echo "No actual change in icons or level data for tqak"
+          else
+            git commit -m "Sync level icons and metadata from accuratkey
+
+changelog: Asset gallery updated with the latest level names, icons, and colors"
+            git push
+            echo "Synced to tqak"
+          fi
+          cd "$GITHUB_WORKSPACE"
+          git tag "icons-synced-$(date +%s)"
+          git push origin --tags
