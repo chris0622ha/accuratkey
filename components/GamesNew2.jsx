@@ -35,7 +35,7 @@ export function HundredWords({ T, onBack, onSettings, settings={} }) {
     const v = e.target.value;
     if(!start&&v.length>0) setStart(Date.now());
     setTyped(v);
-    if(v.length>=target.length){setDone(true);gClear("hundred");if(!muted) [0,.2,.4].forEach(t=>setTimeout(()=>playTone(880,"sine",.15,.2),t*1000));}
+    if(v.length>=target.length && v===target.slice(0,v.length)){setDone(true);gClear("hundred");if(!muted) [0,.2,.4].forEach(t=>setTimeout(()=>playTone(880,"sine",.15,.2),t*1000));}
   };
 
   if(done) return <ResultScreen emoji="💯" title="100 Words Done!" color={T.purple} stats={[["WPM",wpm],["Accuracy",acc+"%"],["Time",elapsed.toFixed(1)+"m"]]} onRetry={()=>{gClear("hundred");setTyped("");setStart(null);setDone(false);setTimeout(()=>ref.current?.focus(),50);}} T={T}/>;

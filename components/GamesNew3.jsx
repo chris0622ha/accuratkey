@@ -329,7 +329,7 @@ export function Quotes({ T, onBack, onSettings, settings={} }) {
     const v=e.target.value;
     if(!start&&v.length>0)setStart(Date.now());
     setTyped(v);
-    if(v.length>=target.length){
+    if(v.length>=target.length && v===target.slice(0,v.length)){
       setDone(true);gClear("quotes");
       if(!muted)[0,.2,.4].forEach(t=>setTimeout(()=>playTone(880,"sine",.12,.2),t*1000));
     }

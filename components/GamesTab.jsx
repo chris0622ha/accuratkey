@@ -918,7 +918,7 @@ function SettingsPanel({ gameId, T, onStart }) {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 function SuddenDeath({ T, onBack }) {
-  const WORD_POOL = pickWords(60, "medium");
+  const WORD_POOL = pickByDiff(60, "medium");
   const [words] = useState(WORD_POOL);
   const [typed, setTyped] = useState("");
   const [current, setCurrent] = useState(0);
@@ -1006,7 +1006,7 @@ function SuddenDeath({ T, onBack }) {
 }
 
 function ZenMode({ T, onBack }) {
-  const [words, setWords] = useState(() => pickWords(80, "easy"));
+  const [words, setWords] = useState(() => pickByDiff(80, "easy"));
   const [typed, setTyped] = useState("");
   const [correct, setCorrect] = useState(0);
   const [total, setTotal] = useState(0);
@@ -1026,7 +1026,7 @@ function ZenMode({ T, onBack }) {
     setTotal(v.length);
     // Extend words when approaching end
     if (v.length > target.length - 100) {
-      setWords(w => [...w, ...pickWords(40, "easy")]);
+      setWords(w => [...w, ...pickByDiff(40, "easy")]);
     }
   };
 
