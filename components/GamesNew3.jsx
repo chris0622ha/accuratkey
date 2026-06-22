@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
-import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, ALL_WORDS, POOL_MYSTERY, pickWords } from "./WordDB";
+import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, ALL_WORDS, POOL_MYSTERY, pickWords, pickByDiff } from "./WordDB";
 import { SYN_ANT, SYNONYMS_ONLY, ANTONYMS_ONLY, ALL_SYN_ANT } from "./SynAntDB";
 
 function gSave(id,d){try{localStorage.setItem("ak_gs_"+id,JSON.stringify(d));}catch{}}
@@ -548,4 +548,149 @@ export function Antonyms({ T, onBack, onSettings, settings={} }) {
   </div>);
 }
 
-export default { SpeedTest, MissingLetters, Anagram, BrickBreaker, Quotes, HaikuMode, Synonyms, Antonyms };
+// ─── TUG OF WAR ─────────────────────────────────────────────────────────────
+// Real mechanic: typing a word correctly pulls a rope marker toward your
+// side. The marker also decays back toward center every tick on its own, so
+// staying fast AND accurate is what actually wins - slowing down or making
+// mistakes lets the rope drift back rather than just stalling your score.
+export function TugOfWar({ T, onBack, onSettings, settings={} }) {
+  const diff = settings.difficulty || "medium";
+  const TARGET = 100; // rope position needed to win, -100 to +100
+  const DECAY_PER_TICK = 1.2;
+  const PULL_PER_WORD = 9;
+  const [words, setWords] = useState(() => pickByDiff(60, diff));
+  const [wordIdx, setWordIdx] = useState(0);
+  const [typed, setTyped] = useState("");
+  const [rope, setRope] = useState(0); // -100 (opponent wins) to +100 (you win)
+  const [streak, setStreak] = useState(0);
+  const [best, setBest] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [wrongCount, setWrongCount] = useState(0);
+  const [status, setStatus] = useState("playing"); // playing | won | lost
+  const [muted, setMuted] = useState(()=>{try{return localStorage.getItem("ak_sfx_muted")==="1";}catch{return false;}});
+  const ref = useRef(null);
+  const target = words[wordIdx % words.length] || words[0];
+
+  useEffect(() => { ref.current?.focus(); }, []);
+
+  // Decay tick - the rope drifts back toward 0 on its own every 600ms,
+  // independent of typing. This is what makes it a real tug-of-war instead
+  // of a one-directional progress bar: stopping doesn't just pause your
+  // score, it actively costs you ground.
+  useEffect(() => {
+    if (status !== "playing") return;
+    const iv = setInterval(() => {
+      setRope(r => {
+        if (r === 0) return 0;
+        const next = r > 0 ? Math.max(0, r - DECAY_PER_TICK) : Math.min(0, r + DECAY_PER_TICK);
+        return next;
+      });
+    }, 600);
+    return () => clearInterval(iv);
+  }, [status]);
+
+  useEffect(() => {
+    if (rope >= TARGET) { setStatus("won"); gClear("tugofwar"); }
+    else if (rope <= -TARGET) { setStatus("lost"); gClear("tugofwar"); }
+  }, [rope]);
+
+  useEffect(() => { if (status==="playing") gSave("tugofwar", { wordIdx, rope, streak, correctCount, wrongCount }); }, [wordIdx, rope, streak]);
+
+  const toggleMute = () => { const v=!muted; setMuted(v); try{localStorage.setItem("ak_sfx_muted", v?"1":"0");}catch{} };
+
+  const handleType = e => {
+    const v = e.target.value;
+    setTyped(v);
+    // Exact-match required, same standard as the rest of the typing games -
+    // partial/garbled input never advances anything here.
+    if (v === target) {
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+      setBest(b => Math.max(b, newStreak));
+      setCorrectCount(c => c + 1);
+      // Streak bonus: a few words in a row pulls harder, rewarding sustained
+      // accuracy rather than just raw word count.
+      const bonus = Math.min(newStreak, 5) * 0.6;
+      setRope(r => Math.min(TARGET, r + PULL_PER_WORD + bonus));
+      setTyped("");
+      setWordIdx(i => {
+        const next = i + 1;
+        if (next >= words.length) setWords(w => [...w, ...pickByDiff(40, diff)]);
+        return next;
+      });
+      if (!muted) playTone(880, "sine", 0.08, 0.12);
+    } else if (v.length >= target.length) {
+      // Wrong word typed in full - costs ground immediately rather than
+      // just waiting for the next decay tick, so mistakes actually sting.
+      setStreak(0);
+      setWrongCount(c => c + 1);
+      setRope(r => (r > 0 ? Math.max(0, r - 4) : Math.min(0, r + 4)));
+      setTyped("");
+      if (!muted) playTone(180, "sawtooth", 0.15, 0.15);
+    }
+  };
+
+  const retry = () => {
+    setWords(pickByDiff(60, diff)); setWordIdx(0); setTyped(""); setRope(0);
+    setStreak(0); setCorrectCount(0); setWrongCount(0); setStatus("playing");
+    gClear("tugofwar");
+    setTimeout(()=>ref.current?.focus(), 50);
+  };
+
+  if (status !== "playing") {
+    const won = status === "won";
+    return (
+      <div style={{padding:"4px 0"}}>
+        <BackBtn onBack={onBack} onSettings={onSettings} T={T} />
+        <div style={{marginTop:14}}>
+          <ResultScreen
+            emoji={won?"🏆":"💀"}
+            title={won?"You won the tug of war!":"Pulled under..."}
+            color={won?"#10b981":"#ef4444"}
+            stats={[["Best streak", best],["Words correct", correctCount],["Words missed", wrongCount]]}
+            onRetry={retry}
+            T={T}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  const ropePct = ((rope + TARGET) / (TARGET*2)) * 100; // 0-100, 50 = center
+
+  return (
+    <div style={{padding:"4px 0"}}>
+      <div style={{display:"flex",alignItems:"center",marginBottom:14}}>
+        <BackBtn onBack={onBack} onSettings={onSettings} T={T} />
+        <SoundBtn muted={muted} toggle={toggleMute} T={T} />
+      </div>
+
+      <div style={{display:"flex",justifyContent:"space-between",marginBottom:6,fontSize:12,color:T.muted}}>
+        <span>🟢 You</span>
+        <span>🔴 Opponent</span>
+      </div>
+      <div style={{position:"relative",height:24,borderRadius:12,background:T.bg,border:`1px solid ${T.border}`,overflow:"hidden",marginBottom:6}}>
+        <div style={{position:"absolute",left:0,top:0,bottom:0,width:`${ropePct}%`,background:"linear-gradient(90deg,#10b981,#34d399)",transition:"width .25s ease-out"}} />
+        <div style={{position:"absolute",left:"50%",top:0,bottom:0,width:2,background:T.faint}} />
+        <div style={{position:"absolute",left:`${ropePct}%`,top:"50%",transform:"translate(-50%,-50%)",fontSize:18}}>🚩</div>
+      </div>
+      <div style={{textAlign:"center",color:T.faint,fontSize:11,marginBottom:18}}>
+        {streak>0 ? `🔥 ${streak} word streak` : "Type accurately to pull the rope your way"}
+      </div>
+
+      <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"24px 20px",textAlign:"center",marginBottom:14}}>
+        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:26,fontWeight:700,letterSpacing:1}}>
+          {target.split("").map((ch,i)=>(
+            <span key={i} style={{color: i<typed.length ? (typed[i]===ch?"#10b981":"#ef4444") : T.text}}>{ch}</span>
+          ))}
+        </div>
+      </div>
+
+      <input ref={ref} value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
+        placeholder="Type the word above..."
+        style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}} />
+    </div>
+  );
+}
+
+export default { SpeedTest, MissingLetters, Anagram, BrickBreaker, Quotes, HaikuMode, Synonyms, Antonyms, TugOfWar };
