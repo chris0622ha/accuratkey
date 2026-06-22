@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, ALL_WORDS, POOL_MYSTERY, pickWords, pickByDiff } from "./WordDB";
 import { SYN_ANT, SYNONYMS_ONLY, ANTONYMS_ONLY, ALL_SYN_ANT } from "./SynAntDB";
+import { subscribeToChallenge, updateGameLiveState, setGameWinner } from "../lib/firebase";
 
 function gSave(id,d){try{localStorage.setItem("ak_gs_"+id,JSON.stringify(d));}catch{}}
 function gLoad(id){try{return JSON.parse(localStorage.getItem("ak_gs_"+id)||"null");}catch{return null;}}
@@ -549,69 +550,107 @@ export function Antonyms({ T, onBack, onSettings, settings={} }) {
 }
 
 // ─── TUG OF WAR ─────────────────────────────────────────────────────────────
-// Real mechanic: typing a word correctly pulls a rope marker toward your
-// side. The marker also decays back toward center every tick on its own, so
-// staying fast AND accurate is what actually wins - slowing down or making
-// mistakes lets the rope drift back rather than just stalling your score.
-export function TugOfWar({ T, onBack, onSettings, settings={} }) {
+// Two modes:
+//  - Solo: you vs a simulated opponent that actively pulls the rope toward
+//    their side at a steady pace. Win by reaching +100 before the CPU
+//    reaches -100; lose if it gets there first. This replaces the old
+//    version where the rope only ever decayed back toward zero and could
+//    never actually cross to a "you lose" state - there was no real way to
+//    lose, which is the core reason it didn't make sense.
+//  - Multiplayer: challenge a real friend (via the existing challenge
+//    system). Both players' correct words pull a SHARED rope toward their
+//    own side, synced live through the challenge document. First to reach
+//    their target wins for real, against a real person.
+export function TugOfWar({ T, onBack, onSettings, settings={}, multiplayer=null }) {
+  // multiplayer prop, when present: { challengeId, isFromSide, opponentName, user }
   const diff = settings.difficulty || "medium";
-  const TARGET = 100; // rope position needed to win, -100 to +100
-  const DECAY_PER_TICK = 1.2;
+  const TARGET = 100;
   const PULL_PER_WORD = 9;
+  const CPU_PULL_PER_TICK = { easy: 1.4, medium: 2.2, hard: 3.2 }[diff] || 2.2;
   const [words, setWords] = useState(() => pickByDiff(60, diff));
   const [wordIdx, setWordIdx] = useState(0);
   const [typed, setTyped] = useState("");
-  const [rope, setRope] = useState(0); // -100 (opponent wins) to +100 (you win)
+  // rope: -100 = opponent's side fully, +100 = your side fully, 0 = center
+  const [rope, setRope] = useState(0);
   const [streak, setStreak] = useState(0);
   const [best, setBest] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
-  const [status, setStatus] = useState("playing"); // playing | won | lost
+  const [status, setStatus] = useState(multiplayer ? "waiting" : "playing"); // waiting | playing | won | lost
   const [muted, setMuted] = useState(()=>{try{return localStorage.getItem("ak_sfx_muted")==="1";}catch{return false;}});
   const ref = useRef(null);
   const target = words[wordIdx % words.length] || words[0];
+  const myRope = multiplayer && multiplayer.isFromSide===false ? -rope : rope; // display orientation flips for the "to" side so "your side" is always visually on the right for you
 
-  useEffect(() => { ref.current?.focus(); }, []);
+  useEffect(() => { if (status==="playing") ref.current?.focus(); }, [status]);
 
-  // Decay tick - the rope drifts back toward 0 on its own every 600ms,
-  // independent of typing. This is what makes it a real tug-of-war instead
-  // of a one-directional progress bar: stopping doesn't just pause your
-  // score, it actively costs you ground.
+  // Solo mode: CPU actively pulls toward its own side every tick - this is
+  // the actual fix. The old version only ever decayed toward 0, so there
+  // was no way to actually lose; this version has a real opposing force
+  // that can win on its own if you stop typing.
+  useEffect(() => {
+    if (multiplayer || status !== "playing") return;
+    const iv = setInterval(() => {
+      setRope(r => Math.max(-TARGET, r - CPU_PULL_PER_TICK));
+    }, 700);
+    return () => clearInterval(iv);
+  }, [status, multiplayer, CPU_PULL_PER_TICK]);
+
+  // Multiplayer mode: subscribe to the shared challenge doc, mirror the
+  // opponent's contribution into the same rope value both sides see.
+  useEffect(() => {
+    if (!multiplayer) return;
+    const unsub = subscribeToChallenge(multiplayer.challengeId, (doc) => {
+      if (!doc || !doc.liveState) return;
+      const { fromRope, toRope, winnerUid } = doc.liveState;
+      // The rope value from MY perspective: my own pulls are positive,
+      // opponent's pulls are negative, regardless of which side I am.
+      const mine = multiplayer.isFromSide ? (fromRope||0) : (toRope||0);
+      const theirs = multiplayer.isFromSide ? (toRope||0) : (fromRope||0);
+      setRope(Math.max(-TARGET, Math.min(TARGET, mine - theirs)));
+      if (doc.status === "accepted" && status === "waiting") setStatus("playing");
+      if (winnerUid) {
+        setStatus(winnerUid === multiplayer.user.uid ? "won" : "lost");
+      }
+    });
+    return () => unsub();
+  }, [multiplayer, status]);
+
   useEffect(() => {
     if (status !== "playing") return;
-    const iv = setInterval(() => {
-      setRope(r => {
-        if (r === 0) return 0;
-        const next = r > 0 ? Math.max(0, r - DECAY_PER_TICK) : Math.min(0, r + DECAY_PER_TICK);
-        return next;
-      });
-    }, 600);
-    return () => clearInterval(iv);
-  }, [status]);
+    if (rope >= TARGET) {
+      setStatus("won"); gClear("tugofwar");
+      if (multiplayer) setGameWinner(multiplayer.challengeId, multiplayer.user.uid).catch(()=>{});
+    } else if (rope <= -TARGET) {
+      setStatus("lost"); gClear("tugofwar");
+      if (multiplayer) setGameWinner(multiplayer.challengeId, multiplayer.opponentUid).catch(()=>{});
+    }
+  }, [rope, status, multiplayer]);
 
-  useEffect(() => {
-    if (rope >= TARGET) { setStatus("won"); gClear("tugofwar"); }
-    else if (rope <= -TARGET) { setStatus("lost"); gClear("tugofwar"); }
-  }, [rope]);
-
-  useEffect(() => { if (status==="playing") gSave("tugofwar", { wordIdx, rope, streak, correctCount, wrongCount }); }, [wordIdx, rope, streak]);
+  useEffect(() => { if (!multiplayer && status==="playing") gSave("tugofwar", { wordIdx, rope, streak, correctCount, wrongCount }); }, [wordIdx, rope, streak, multiplayer]);
 
   const toggleMute = () => { const v=!muted; setMuted(v); try{localStorage.setItem("ak_sfx_muted", v?"1":"0");}catch{} };
 
   const handleType = e => {
+    if (status !== "playing") return;
     const v = e.target.value;
     setTyped(v);
-    // Exact-match required, same standard as the rest of the typing games -
-    // partial/garbled input never advances anything here.
     if (v === target) {
       const newStreak = streak + 1;
       setStreak(newStreak);
       setBest(b => Math.max(b, newStreak));
       setCorrectCount(c => c + 1);
-      // Streak bonus: a few words in a row pulls harder, rewarding sustained
-      // accuracy rather than just raw word count.
       const bonus = Math.min(newStreak, 5) * 0.6;
-      setRope(r => Math.min(TARGET, r + PULL_PER_WORD + bonus));
+      const pull = PULL_PER_WORD + bonus;
+      if (multiplayer) {
+        // Write only my own contribution - the opponent's side updates
+        // independently from their own client, both meet in the middle via
+        // the subscription above.
+        const myCurrent = multiplayer.isFromSide ? (rope>0?rope:0) : (rope<0?-rope:0);
+        updateGameLiveState(multiplayer.challengeId, multiplayer.isFromSide, myCurrent + pull).catch(()=>{});
+      } else {
+        setRope(r => Math.min(TARGET, r + pull));
+      }
       setTyped("");
       setWordIdx(i => {
         const next = i + 1;
@@ -620,24 +659,34 @@ export function TugOfWar({ T, onBack, onSettings, settings={} }) {
       });
       if (!muted) playTone(880, "sine", 0.08, 0.12);
     } else if (v.length >= target.length) {
-      // Wrong word typed in full - costs ground immediately rather than
-      // just waiting for the next decay tick, so mistakes actually sting.
       setStreak(0);
       setWrongCount(c => c + 1);
-      setRope(r => (r > 0 ? Math.max(0, r - 4) : Math.min(0, r + 4)));
+      if (!multiplayer) setRope(r => Math.max(-TARGET, r - 4));
       setTyped("");
       if (!muted) playTone(180, "sawtooth", 0.15, 0.15);
     }
   };
 
   const retry = () => {
+    if (multiplayer) { onBack(); return; } // rematch flow is handled by re-sending a challenge, not retrying in place
     setWords(pickByDiff(60, diff)); setWordIdx(0); setTyped(""); setRope(0);
     setStreak(0); setCorrectCount(0); setWrongCount(0); setStatus("playing");
     gClear("tugofwar");
     setTimeout(()=>ref.current?.focus(), 50);
   };
 
-  if (status !== "playing") {
+  if (status === "waiting") {
+    return (
+      <div style={{padding:"4px 0"}}>
+        <BackBtn onBack={onBack} onSettings={onSettings} T={T} />
+        <div style={{textAlign:"center",padding:"40px 20px",color:T.muted,fontSize:14}}>
+          Waiting for {multiplayer?.opponentName||"opponent"} to accept...
+        </div>
+      </div>
+    );
+  }
+
+  if (status === "won" || status === "lost") {
     const won = status === "won";
     return (
       <div style={{padding:"4px 0"}}>
@@ -645,7 +694,9 @@ export function TugOfWar({ T, onBack, onSettings, settings={} }) {
         <div style={{marginTop:14}}>
           <ResultScreen
             emoji={won?"🏆":"💀"}
-            title={won?"You won the tug of war!":"Pulled under..."}
+            title={multiplayer
+              ? (won ? `You beat ${multiplayer.opponentName}!` : `${multiplayer.opponentName} won the tug of war`)
+              : (won ? "You won the tug of war!" : "Pulled under by the CPU...")}
             color={won?"#10b981":"#ef4444"}
             stats={[["Best streak", best],["Words correct", correctCount],["Words missed", wrongCount]]}
             onRetry={retry}
@@ -656,18 +707,18 @@ export function TugOfWar({ T, onBack, onSettings, settings={} }) {
     );
   }
 
-  const ropePct = ((rope + TARGET) / (TARGET*2)) * 100; // 0-100, 50 = center
+  const ropePct = ((rope + TARGET) / (TARGET*2)) * 100;
 
   return (
     <div style={{padding:"4px 0"}}>
       <div style={{display:"flex",alignItems:"center",marginBottom:14}}>
         <BackBtn onBack={onBack} onSettings={onSettings} T={T} />
-        <SoundBtn muted={muted} toggle={toggleMute} T={T} />
+        {!multiplayer && <SoundBtn muted={muted} toggle={toggleMute} T={T} />}
       </div>
 
       <div style={{display:"flex",justifyContent:"space-between",marginBottom:6,fontSize:12,color:T.muted}}>
         <span>🟢 You</span>
-        <span>🔴 Opponent</span>
+        <span>🔴 {multiplayer ? multiplayer.opponentName : "CPU"}</span>
       </div>
       <div style={{position:"relative",height:24,borderRadius:12,background:T.bg,border:`1px solid ${T.border}`,overflow:"hidden",marginBottom:6}}>
         <div style={{position:"absolute",left:0,top:0,bottom:0,width:`${ropePct}%`,background:"linear-gradient(90deg,#10b981,#34d399)",transition:"width .25s ease-out"}} />
@@ -675,7 +726,7 @@ export function TugOfWar({ T, onBack, onSettings, settings={} }) {
         <div style={{position:"absolute",left:`${ropePct}%`,top:"50%",transform:"translate(-50%,-50%)",fontSize:18}}>🚩</div>
       </div>
       <div style={{textAlign:"center",color:T.faint,fontSize:11,marginBottom:18}}>
-        {streak>0 ? `🔥 ${streak} word streak` : "Type accurately to pull the rope your way"}
+        {streak>0 ? `🔥 ${streak} word streak` : (multiplayer ? "Type accurately to pull the rope your way" : "Type accurately — the CPU pulls back every few seconds")}
       </div>
 
       <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"24px 20px",textAlign:"center",marginBottom:14}}>

@@ -3,12 +3,13 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import TypingTest from "./TypingTest";
 import GamesTab from "./GamesTab";
+import { TugOfWar } from "./GamesNew3";
 import { KKey } from "./icons/KKey";
 import { FOUNDATIONS_ICONS, PRECISION_FLOW_ICONS, WORD_POWER_ICONS, KEYBOARD_MASTERY_ICONS, SPEED_SURGE_ICONS, FREE_RUN_ICONS, CENTURY_CLUB_ICONS, ENDURANCE_ICONS, LITERATURE_ICONS, MACHINE_MODE_ICONS, LEGEND_TIER_ICONS, IconStar } from "./icons/LevelIcons";
 import { formatKeys } from "@/lib/format";
 import { CertificateModal } from "./Certificates";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback } from "@/lib/firebase";
+import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
 
 export 
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
@@ -713,22 +714,35 @@ const playSound = (type, soundTheme = "default") => {
   } catch(e) {}
 };
 
-function SendChallengeForm({ T, friends, LEVELS, onSend, highestUnlocked }) {
+function SendChallengeForm({ T, friends, LEVELS, onSend, onSendGame, highestUnlocked }) {
   const [toFriend, setToFriend] = React.useState(null);
   const [levelId, setLevelId] = React.useState(1);
+  const [mode, setMode] = React.useState("level"); // "level" | "tugofwar"
   const [sending, setSending] = React.useState(false);
   const maxLevel = Math.min(60, highestUnlocked || 1);
   return (
     <div style={{display:"flex",flexDirection:"column",gap:8}}>
+      <div style={{display:"flex",gap:6}}>
+        <button onClick={()=>setMode("level")} style={{flex:1,padding:"6px",borderRadius:6,border:`1px solid ${mode==="level"?"#ef4444":"#2a2050"}`,background:mode==="level"?"#ef444422":"transparent",color:mode==="level"?"#ef4444":"#888",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Level Challenge</button>
+        <button onClick={()=>setMode("tugofwar")} style={{flex:1,padding:"6px",borderRadius:6,border:`1px solid ${mode==="tugofwar"?"#10b981":"#2a2050"}`,background:mode==="tugofwar"?"#10b98122":"transparent",color:mode==="tugofwar"?"#10b981":"#888",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>🪢 Tug of War</button>
+      </div>
       <select value={toFriend?.uid||""} onChange={e=>{const f=friends.find(fr=>fr.uid===e.target.value);setToFriend(f||null);}} style={{background:"#1a1030",border:"1px solid #2a2050",borderRadius:7,color:"#e0e0ff",fontSize:12,padding:"6px 10px",fontFamily:"inherit",outline:"none"}}>
         <option value="">Select friend…</option>
         {friends.map(f=><option key={f.uid} value={f.uid}>@{f.username}</option>)}
       </select>
-      <select value={levelId} onChange={e=>setLevelId(Number(e.target.value))} style={{background:"#1a1030",border:"1px solid #2a2050",borderRadius:7,color:"#e0e0ff",fontSize:12,padding:"6px 10px",fontFamily:"inherit",outline:"none"}}>
-        {LEVELS.filter(l=>l.id>0&&l.id<=maxLevel).map(l=><option key={l.id} value={l.id}>{l.emoji} Level {l.id}: {l.name}</option>)}
-      </select>
-      <button disabled={!toFriend||sending} onClick={async()=>{setSending(true);try{await onSend(toFriend,levelId);}finally{setSending(false);setToFriend(null);}}} style={{padding:"7px",borderRadius:7,border:"none",background:toFriend?"#ef4444":"#333",color:"#fff",fontSize:12,fontWeight:700,cursor:toFriend?"pointer":"default",fontFamily:"inherit",opacity:sending?0.6:1}}>
-        {sending?"Sending…":"⚔️ Send Challenge"}
+      {mode==="level" && (
+        <select value={levelId} onChange={e=>setLevelId(Number(e.target.value))} style={{background:"#1a1030",border:"1px solid #2a2050",borderRadius:7,color:"#e0e0ff",fontSize:12,padding:"6px 10px",fontFamily:"inherit",outline:"none"}}>
+          {LEVELS.filter(l=>l.id>0&&l.id<=maxLevel).map(l=><option key={l.id} value={l.id}>{l.emoji} Level {l.id}: {l.name}</option>)}
+        </select>
+      )}
+      <button disabled={!toFriend||sending} onClick={async()=>{
+        setSending(true);
+        try{
+          if (mode==="tugofwar") await onSendGame(toFriend, "tugofwar");
+          else await onSend(toFriend,levelId);
+        } finally {setSending(false);setToFriend(null);}
+      }} style={{padding:"7px",borderRadius:7,border:"none",background:toFriend?(mode==="tugofwar"?"#10b981":"#ef4444"):"#333",color:"#fff",fontSize:12,fontWeight:700,cursor:toFriend?"pointer":"default",fontFamily:"inherit",opacity:sending?0.6:1}}>
+        {sending?"Sending…":(mode==="tugofwar"?"🪢 Challenge to Tug of War":"⚔️ Send Challenge")}
       </button>
     </div>
   );
@@ -751,6 +765,7 @@ export default function AccuratKey() {
     birthday: "/game/birthday",
     loading: "/game",
     maintenance: "/maintenance",
+    multiplayerGame: "/game/duel",
     // tabs (used when on levelMap)
     "tab-games": "/game",
     "tab-map": "/game/map",
@@ -899,6 +914,7 @@ export default function AccuratKey() {
   const [showChallenges, setShowChallenges] = useState(false);
   const [challengeMsg, setChallengeMsg] = useState("");
   const [activeChallengeId, setActiveChallengeId] = useState(null);
+  const [activeGameChallenge, setActiveGameChallenge] = useState(null); // {challengeId, gameMode, isFromSide, opponentName, opponentUid}
   // Accuracy mode — custom pass threshold per-session
   const [accuracyTarget, setAccuracyTarget] = useState(75); // 75 | 85 | 95 | 100
   // Weekly summary
@@ -2526,6 +2542,23 @@ const Nav = () => (<>
     );
   }
 
+  if (screen === "multiplayerGame" && activeGameChallenge) {
+    const Comp = activeGameChallenge.gameMode === "tugofwar" ? TugOfWar : null;
+    if (!Comp) { setScreenWithUrl("levelMap"); return null; }
+    return (
+      <div style={{minHeight:"100vh",background:T.bg,padding:"20px 16px",fontFamily:T.font}}>
+        <div style={{maxWidth:480,margin:"0 auto"}}>
+          <Comp
+            T={T}
+            onBack={()=>{ setActiveGameChallenge(null); setScreenWithUrl("levelMap"); }}
+            settings={{}}
+            multiplayer={activeGameChallenge}
+          />
+        </div>
+      </div>
+    );
+  }
+
   if (screen === "fail") {
     const lv = LEVELS.find(l => l.id === playingLevel) || LEVELS[0];
     const lvWords = levelOverrides[String(playingLevel)] || lv.words;
@@ -3285,6 +3318,11 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
                       getPendingChallenges(user.uid).then(setChallenges);
                       setChallengeMsg("Challenge sent! ⚔️");
                     }}
+                    onSendGame={async(toFriend, gameMode)=>{
+                      await sendChallengeEx(user.uid, currentUsername, activeProfile.avatar||"key", toFriend.uid, toFriend.username, null, null, gameMode);
+                      getPendingChallenges(user.uid).then(setChallenges);
+                      setChallengeMsg("Game challenge sent! 🪢");
+                    }}
                   />
                   {challengeMsg && <div style={{color:T.accent2,fontSize:12,marginTop:6}}>{challengeMsg}</div>}
                 </div>
@@ -3298,20 +3336,31 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
                 <div style={{marginBottom:12}}>
                   <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>Incoming</div>
                   {challenges.filter(c=>c.toUid===user?.uid&&c.status==="pending").map(c=>{
-                    const reachable = c.levelId <= (activeProfile?.highestUnlocked||1);
+                    const isGame = !!c.gameMode;
+                    const reachable = isGame || c.levelId <= (activeProfile?.highestUnlocked||1);
                     return (
                     <div key={c.id} style={{background:T.bg,border:"1px solid #ef444433",borderRadius:9,padding:"10px 12px",marginBottom:6}}>
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
                         <span style={{color:T.text,fontSize:13,fontWeight:700}}>@{c.fromUsername} challenged you!</span>
                         <span style={{color:T.faint,fontSize:10}}>{c.fromAvatar?AVATARS.find(a=>a.id===c.fromAvatar)?.e||"⌨️":"⌨️"}</span>
                       </div>
-                      <div style={{color:T.muted,fontSize:12,marginBottom:8}}>Level {c.levelId}: {c.levelName}</div>
+                      <div style={{color:T.muted,fontSize:12,marginBottom:8}}>{isGame ? "🪢 Tug of War" : `Level ${c.levelId}: ${c.levelName}`}</div>
                       {!reachable && (
                         <div style={{color:"#f59e0b",fontSize:11,marginBottom:8}}>You haven't unlocked this level yet — keep playing to reach it.</div>
                       )}
                       <div style={{display:"flex",gap:6}}>
                         {reachable ? (
-                          <button onClick={()=>{setActiveChallengeId(c.id);setShowChallenges(false);requestStartLevel(c.levelId);}} style={{flex:1,padding:"7px",borderRadius:7,border:"none",background:"#ef4444",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>⚔️ Accept & Play</button>
+                          <button onClick={async()=>{
+                            setShowChallenges(false);
+                            if (isGame) {
+                              await startGameChallenge(c.id);
+                              setActiveGameChallenge({ challengeId: c.id, gameMode: c.gameMode, isFromSide: false, opponentName: c.fromUsername, opponentUid: c.fromUid, user });
+                              setScreenWithUrl("multiplayerGame");
+                            } else {
+                              setActiveChallengeId(c.id);
+                              requestStartLevel(c.levelId);
+                            }
+                          }} style={{flex:1,padding:"7px",borderRadius:7,border:"none",background:isGame?"#10b981":"#ef4444",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>{isGame?"🪢 Accept & Play":"⚔️ Accept & Play"}</button>
                         ) : (
                           <button disabled style={{flex:1,padding:"7px",borderRadius:7,border:"none",background:"#333",color:"#777",fontSize:12,fontWeight:700,cursor:"default",fontFamily:T.font}}>🔒 Locked</button>
                         )}
@@ -3336,7 +3385,7 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
                       <div key={c.id} style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:9,padding:"10px 12px",marginBottom:6}}>
                         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                           <span style={{color:T.text,fontSize:12}}>
-                            {isSender ? `→ @${c.toUsername}` : `← @${c.fromUsername}`} · Lv {c.levelId}
+                            {isSender ? `→ @${c.toUsername}` : `← @${c.fromUsername}`} · {c.gameMode ? "🪢 Tug of War" : `Lv ${c.levelId}`}
                           </span>
                           <span style={{color:statusColor,fontSize:11,fontWeight:700}}>
                             {c.status==="pending"?"⏳ Waiting":c.status==="accepted"?"🎮 In progress":c.status==="declined"?"❌ Declined":won?"🏆 Won":"💀 Lost"}
@@ -3348,8 +3397,25 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
                             <span>Them: <span style={{color:T.faint,fontWeight:700}}>{theirResult.wpm} WPM</span></span>
                           </div>
                         )}
+                        {c.status==="accepted"&&c.gameMode&&isSender&&(
+                          <button onClick={()=>{
+                            setShowChallenges(false);
+                            setActiveGameChallenge({ challengeId: c.id, gameMode: c.gameMode, isFromSide: true, opponentName: c.toUsername, opponentUid: c.toUid, user });
+                            setScreenWithUrl("multiplayerGame");
+                          }} style={{marginTop:6,width:"100%",padding:"6px",borderRadius:7,border:"none",background:"#10b981",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>🪢 Join Match</button>
+                        )}
                         {c.status==="pending"&&!isSender&&(
-                          <button onClick={()=>{setActiveChallengeId(c.id);setShowChallenges(false);requestStartLevel(c.levelId);}} style={{marginTop:6,width:"100%",padding:"6px",borderRadius:7,border:"none",background:"#ef4444",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>⚔️ Play Now</button>
+                          <button onClick={async()=>{
+                            setShowChallenges(false);
+                            if (c.gameMode) {
+                              await startGameChallenge(c.id);
+                              setActiveGameChallenge({ challengeId: c.id, gameMode: c.gameMode, isFromSide: false, opponentName: c.fromUsername, opponentUid: c.fromUid, user });
+                              setScreenWithUrl("multiplayerGame");
+                            } else {
+                              setActiveChallengeId(c.id);
+                              requestStartLevel(c.levelId);
+                            }
+                          }} style={{marginTop:6,width:"100%",padding:"6px",borderRadius:7,border:"none",background:c.gameMode?"#10b981":"#ef4444",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>{c.gameMode?"🪢 Play Now":"⚔️ Play Now"}</button>
                         )}
                       </div>
                     );
