@@ -59,6 +59,23 @@ jobs:
           with open('/tmp/LevelsData.js', 'w') as f:
               f.write('\n'.join(lines))
           print(len(entries), 'levels extracted')
+
+          # Same idea for the section banners (Foundations, Legend Tier,
+          # etc.) - this used to be a separate hand-typed array on the tqak
+          # side that went stale the moment a subtitle changed (exactly what
+          # happened when Legend Tier's subtitle was updated but the owner
+          # page kept showing the old 'Seven crowns' text).
+          sec_start = content.find('const SECTIONS = [')
+          sec_end = content.find('];', sec_start) + 2
+          sec_block = content[sec_start:sec_end]
+          sec_entries = re.findall(r'\{\s*firstId:(\d+),\s*label:\"([^\"]+)\",\s*subtitle:\"([^\"]+)\",\s*color:\"([^\"]+)\",\s*icon:\"([^\"]+)\"', sec_block)
+          sec_lines = ['export const ALL_SECTIONS = [']
+          for first_id, label, subtitle, color, icon in sec_entries:
+              sec_lines.append('  {firstId:%s,label:%r,subtitle:%r,color:%r,icon:%r},' % (first_id, label, subtitle, color, icon))
+          sec_lines.append('];')
+          with open('/tmp/SectionsData.js', 'w') as f:
+              f.write('\n'.join(sec_lines))
+          print(len(sec_entries), 'sections extracted')
           "
 
       - name: Sync to tqak if icons changed enough or level data changed
@@ -68,14 +85,15 @@ jobs:
           git clone https://x-access-token:${PAT_TOKEN}@github.com/chris0622ha/tqak.git /tmp/tqak
           cp components/icons/LevelIcons.jsx /tmp/tqak/app/LevelIcons.jsx
           cp /tmp/LevelsData.js /tmp/tqak/app/LevelsData.js
+          cp /tmp/SectionsData.js /tmp/tqak/app/SectionsData.js
           cd /tmp/tqak
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          git add app/LevelIcons.jsx app/LevelsData.js
+          git add app/LevelIcons.jsx app/LevelsData.js app/SectionsData.js
           if git diff --staged --quiet; then
-            echo "No actual change in icons or level data for tqak"
+            echo "No actual change in icons, level data, or section data for tqak"
           else
-            printf 'Sync level icons and metadata from accuratkey\n\nchangelog: Asset gallery updated with the latest level names, icons, and colors\n' > /tmp/commit_msg.txt
+            printf 'Sync level icons and metadata from accuratkey\n\nchangelog: Asset gallery updated with the latest level names, icons, colors, and sections\n' > /tmp/commit_msg.txt
             git commit -F /tmp/commit_msg.txt
             git push
             echo "Synced to tqak"
