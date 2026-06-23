@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, ALL_WORDS, WORD_CATEGORIES, CATEGORY_NAMES, POOL_WORD_RAIN, POOL_SURVIVAL, POOL_SPEED_BURST, POOL_SCRAMBLE, POOL_SUDDEN_DEATH, POOL_ZEN, POOL_LADDER_EASY, POOL_LADDER_MED, POOL_LADDER_HARD, POOL_LADDER_VHARD, POOL_ECHO, POOL_INVADERS, POOL_ASTEROID, POOL_TOWER, POOL_WORD_CHAIN, pickWords, pickByDiff } from "./WordDB";
-import { Sniper, Mirror, Flash, Echo, GhostWords, CodeRain, BossBattle, TypewriterStory, TypingJournal, PoetryMode } from "./GamesExtra";
+import { Sniper, Mirror, Flash, Echo, GhostWords, BossBattle, TypewriterStory, TypingJournal, PoetryMode } from "./GamesExtra";
 import { HundredWords, Endurance, Roulette, WordChain, CategoryBlitz, VocabBuilder, TypingInvaders, AsteroidBelt, TowerDefense, MysteryWords, RhymeTime, MadLibs } from "./GamesNew2";
 import { SpeedTest, MissingLetters, Anagram, BrickBreaker, Quotes, HaikuMode, Synonyms, Antonyms, TugOfWar } from "./GamesNew3";
 // Word pools
@@ -93,7 +93,6 @@ const GAMES = [
   { id:"flash",       emoji:"⚡", name:"Flash",            desc:"Memorize the word before it disappears",          cat:"memory" },
   { id:"echo",        emoji:"🔁", name:"Echo",             desc:"Repeat growing sequences from memory",            cat:"memory" },
   { id:"ghost",       emoji:"👻", name:"Ghost Words",      desc:"Type the word before it fades away",             cat:"accuracy" },
-  { id:"coderain",    emoji:"💻", name:"Code Rain",        desc:"Matrix-style falling words in columns",           cat:"arcade" },
   { id:"boss",        emoji:"👾", name:"Boss Battle",      desc:"Deal damage by typing — dodge boss attacks",      cat:"arcade" },
   { id:"story",       emoji:"🎭", name:"Typewriter Story", desc:"Type classic literature passages",                cat:"chill" },
   { id:"journal",     emoji:"📝", name:"Typing Journal",   desc:"Free type and save your entries locally",         cat:"chill" },
@@ -847,7 +846,6 @@ const GAME_SETTINGS = {
   flash:       [{ key:"flashMs",    label:"Flash time", opts:[500,1000,1500,2000], default:1000, suffix:"ms" }, { key:"count", label:"Words", opts:[10,20,30], default:20 }],
   echo:        [{ key:"lives",      label:"Lives",      opts:[1,2,3,5], default:3 }],
   ghost:       [{ key:"visibleMs",  label:"Visible for", opts:[1500,2500,3500], default:2500, suffix:"ms" }, { key:"count", label:"Words", opts:[15,25,40], default:25 }],
-  coderain:    [{ key:"maxMissed",  label:"Max missed", opts:[3,5,8,12], default:8 }, { key:"speed", label:"Speed", opts:["slow","normal","fast"], default:"normal" }],
   boss:        [{ key:"bossHp",     label:"Boss HP",    opts:[50,100,200], default:100 }, { key:"attackMs", label:"Attack every", opts:[2000,4000,6000], default:4000, suffix:"ms" }],
   story:       [{ key:"passage",    label:"Passage",    opts:["random","raven","frost","dickens","austen","orwell"], default:"random" }],
   journal:     [],
@@ -1209,7 +1207,7 @@ export default function GamesTab({ T }) {
     rain: WordRain, survival: Survival, burst: SpeedBurst, scramble: WordScramble,
     suddendeath: SuddenDeath, zen: ZenMode, ladder: SpeedLadder, tugofwar: TugOfWar,
     sniper: Sniper, mirror: Mirror, flash: Flash, echo: Echo,
-    ghost: GhostWords, coderain: CodeRain, boss: BossBattle,
+    ghost: GhostWords, boss: BossBattle,
     story: TypewriterStory, journal: TypingJournal, poetry: PoetryMode,
     hundred: HundredWords, endurance: Endurance, roulette: Roulette,
     wordchain: WordChain, blitz: CategoryBlitz, vocab: VocabBuilder,
