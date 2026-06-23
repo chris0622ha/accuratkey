@@ -463,7 +463,7 @@ export function Synonyms({ T, onBack, onSettings, settings={} }) {
   const handleType=e=>{
     const v=e.target.value.toLowerCase().trim();
     setTyped(e.target.value);
-    // Accept on space or when word matches
+    // Accept the instant it matches, no space needed
     const checkWord = v.replace(/\s+$/,"");
     if(item.syn.includes(checkWord)||checkWord===item.word){
       if(!muted)playTone(880,"sine",.1,.2);
@@ -471,7 +471,8 @@ export function Synonyms({ T, onBack, onSettings, settings={} }) {
       const ni=idx+1;
       if(ni>=list.length)setDone(true);
       else setIdx(ni);
-    } else if(e.target.value.endsWith(" ")&&checkWord.length>0){
+      setTyped("");
+    } else if(checkWord.length >= (item.syn[0]?.length||4) && checkWord.length>0 && !item.syn.some(s=>s.startsWith(checkWord))){
       if(!muted)playTone(220,"sawtooth",.15,.2);
       setWrong(true);setWrongWord(checkWord);setTyped("");
       setTimeout(()=>setWrong(false),600);
@@ -524,7 +525,8 @@ export function Antonyms({ T, onBack, onSettings, settings={} }) {
       const ni=idx+1;
       if(ni>=list.length)setDone(true);
       else setIdx(ni);
-    } else if(e.target.value.endsWith(" ")&&checkWord.length>0){
+      setTyped("");
+    } else if(checkWord.length >= (item.ant[0]?.length||4) && checkWord.length>0 && !item.ant.some(a=>a.startsWith(checkWord))){
       if(!muted)playTone(220,"sawtooth",.15,.2);
       setWrong(true);setWrongWord(checkWord);setTyped("");
       setTimeout(()=>setWrong(false),600);

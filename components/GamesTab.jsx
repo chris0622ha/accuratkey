@@ -378,27 +378,30 @@ function Survival({ T, onBack, settings = {} }) {
   const handleType = (e) => {
     const val = e.target.value;
     setTyped(val);
-    if (!val.endsWith(" ")) return;
-    const attempt = val.trim();
     const target  = wordListRef.current[currentRef.current] || "";
-    if (attempt === target) {
+    if (val === target) {
       sfx("correct");
       timeRef.current = Math.min(timeRef.current + 2, startTime * 2);
       setTimeLeft(timeRef.current);
       scoreRef.current++;
       setScore(scoreRef.current);
       setFlash("+2s ✓");
-    } else {
+      setTimeout(() => setFlash(null), 700);
+      currentRef.current++;
+      setCurrent(currentRef.current);
+      setTyped("");
+      setTimeout(() => inputRef.current?.focus(), 10);
+    } else if (val.length >= target.length) {
       sfx("wrong");
       timeRef.current = Math.max(0.1, timeRef.current - 3);
       setTimeLeft(timeRef.current);
       setFlash("-3s ✗");
+      setTimeout(() => setFlash(null), 700);
+      currentRef.current++;
+      setCurrent(currentRef.current);
+      setTyped("");
+      setTimeout(() => inputRef.current?.focus(), 10);
     }
-    setTimeout(() => setFlash(null), 700);
-    currentRef.current++;
-    setCurrent(currentRef.current);
-    setTyped("");
-    setTimeout(() => inputRef.current?.focus(), 10);
   };
 
   const handleKey = (e) => {
@@ -431,9 +434,9 @@ function Survival({ T, onBack, settings = {} }) {
       {status === "dead" && (
         <div style={{ textAlign:"center", padding:"20px 0" }}>
           <div style={{ fontSize:48, marginBottom:10 }}>💀</div>
-          <div style={{ color:T.text, fontWeight:800, fontSize:22, marginBottom:4 }}>You survived</div>
+          <div style={{ color:T.text, fontWeight:800, fontSize:22, marginBottom:4 }}>Time's up</div>
           <div style={{ color:T.purple, fontWeight:800, fontSize:44, lineHeight:1 }}>{score}</div>
-          <div style={{ color:T.muted, fontSize:14, marginBottom:4 }}>words</div>
+          <div style={{ color:T.muted, fontSize:14, marginBottom:4 }}>words typed</div>
           {score > 0 && score >= best && <div style={{ color:"#fbbf24", fontSize:13, marginBottom:10 }}>🏆 New Best!</div>}
           <div style={{ display:"flex", gap:10, justifyContent:"center", marginTop:20 }}>
             <button onClick={start} style={{ padding:"12px 28px", borderRadius:10, border:"none", background:T.purple, color:"#fff", fontWeight:700, fontSize:14, cursor:"pointer", fontFamily:T.font }}>Again</button>
@@ -473,7 +476,7 @@ function Survival({ T, onBack, settings = {} }) {
               {wordList.slice(current+1, current+4).map((w,i) => <span key={i} style={{ color:T.faint, fontSize:14 }}>{w}</span>)}
             </div>
           </div>
-          <input ref={inputRef} value={typed} onChange={handleType} onKeyDown={handleKey} placeholder="Type + Space to submit… (Esc to clear)"
+          <input ref={inputRef} value={typed} onChange={handleType} onKeyDown={handleKey} placeholder="Type the word… (Esc to clear)"
             autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
             style={{ width:"100%", background:T.bg, border:`2px solid ${T.purple}`, borderRadius:8, color:T.text, fontFamily:T.font, fontSize:16, padding:"10px 14px", outline:"none", boxSizing:"border-box" }} />
         </div>
@@ -540,20 +543,21 @@ function SpeedBurst({ T, onBack, settings = {} }) {
   const handleType = (e) => {
     const val = e.target.value;
     setTyped(val);
-    if (!val.endsWith(" ")) return;
-    const attempt = val.trim();
     const target  = words[wordIdxRef.current] || "";
-    totalRef.current++;
-    if (attempt === target) {
+    if (val === target) {
+      totalRef.current++;
       sfx("correct");
       correctRef.current++;
       charsRef.current += target.length + 1;
       setChars(charsRef.current); setCorrect(correctRef.current);
-    } else {
+      wordIdxRef.current++;
+      setTyped("");
+    } else if (val.length >= target.length) {
+      totalRef.current++;
       sfx("wrong");
+      wordIdxRef.current++;
+      setTyped("");
     }
-    wordIdxRef.current++;
-    setTyped("");
   };
 
   const elapsed = durationRef.current - timeLeft;

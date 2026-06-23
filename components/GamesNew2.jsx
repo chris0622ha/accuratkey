@@ -254,17 +254,13 @@ export function CategoryBlitz({ T, onBack, onSettings, settings={} }) {
   },[started,done]);
 
   const handleType = e=>{
-    const v=e.target.value.toLowerCase().trim();
+    const raw = e.target.value;
+    const v=raw.toLowerCase().trim();
     if(!started&&v.length>0)setStarted(true);
-    setTyped(e.target.value);
-    if(e.nativeEvent.data===" "||e.target.value.endsWith(" ")){
-      const w=v.trimEnd();
-      if(pool.includes(w)&&!used.has(w)){
-        if(!muted)playTone(880,"sine",.08,.2);
-        setScore(s=>s+1);setUsed(u=>{u.add(w);return new Set(u);});setWrong(false);
-      } else if(w.length>0){
-        if(!muted)playTone(220,"sawtooth",.15,.2);setWrong(true);setTimeout(()=>setWrong(false),500);
-      }
+    setTyped(raw);
+    if(v.length>0 && pool.includes(v) && !used.has(v)){
+      if(!muted)playTone(880,"sine",.08,.2);
+      setScore(s=>s+1);setUsed(u=>{u.add(v);return new Set(u);});setWrong(false);
       setTyped("");
     }
   };
@@ -390,7 +386,7 @@ export function TypingInvaders({ T, onBack, onSettings, settings={} }) {
   useEffect(()=>{
     ref.current?.focus();
     let last=performance.now();
-    const speed = 0.008+wave*0.003;
+    const speed = 0.0022+wave*0.0008;
     const loop=(now)=>{
       const dt=now-last;last=now;
       yRef.current+=speed*dt;
@@ -528,9 +524,9 @@ export function AsteroidBelt({ T, onBack, onSettings, settings={} }) {
       {[...Array(40)].map((_,i)=><div key={i} style={{position:"absolute",width:1,height:1,background:"#fff",opacity:.5,top:`${(i*37)%100}%`,left:`${(i*61)%100}%`}}/>)}
       <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",fontSize:20}}>🚀</div>
       {asteroids.map(a=>(
-        <div key={a.id} style={{position:"absolute",left:`${a.x}%`,top:`${a.y}%`,transform:`rotate(${a.angle}rad)`,textAlign:"center"}}>
-          <div style={{fontSize:16}}>☄️</div>
-          <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:10,color:typed&&a.word.startsWith(typed.trim())?"#88ff88":"#f59e0b",fontWeight:typed&&a.word.startsWith(typed.trim())?800:400,textShadow:typed&&a.word.startsWith(typed.trim())?"0 0 6px #ffff00":"none",whiteSpace:"nowrap"}}>{a.word}</div>
+        <div key={a.id} style={{position:"absolute",left:`${a.x}%`,top:`${a.y}%`,textAlign:"center"}}>
+          <div style={{fontSize:18,transform:`rotate(${a.angle}rad)`}}>☄️</div>
+          <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:13,fontWeight:700,color:typed&&a.word.startsWith(typed.trim())?"#88ff88":"#fbbf24",textShadow:typed&&a.word.startsWith(typed.trim())?"0 0 6px #ffff00":"0 0 4px #000",whiteSpace:"nowrap",background:"#000a",padding:"1px 4px",borderRadius:3,marginTop:2}}>{a.word}</div>
         </div>
       ))}
     </div>
