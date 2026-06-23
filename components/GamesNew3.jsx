@@ -213,56 +213,192 @@ export function Anagram({ T, onBack, onSettings, settings={} }) {
 }
 
 // ─── BRICK BREAKER ────────────────────────────────────────────────────────────
+// ─── BRICK BREAKER ──────────────────────────────────────────────────────────
+// Real mechanic: an actual ball bounces around the play field. The paddle's
+// horizontal position is driven by what you're typing - as you type letters
+// matching a brick's word, the paddle slides toward that brick's column.
+// A brick only breaks when the ball is actually touching/near it AND you've
+// typed its word correctly - typing alone does nothing without the ball
+// being there, which is the real fix for "you're just typing, it's not a
+// game": the ball's position and physics now matter, not just word order.
 export function BrickBreaker({ T, onBack, onSettings, settings={} }) {
   const COLS=6, ROWS=settings.rows||4;
-  const makeBricks=()=>Array.from({length:COLS*ROWS},(_,i)=>({id:i,word:pickWords(1,TYPING_BASIC.filter(w=>w.length>=3&&w.length<=5))[0],col:i%COLS,row:Math.floor(i/COLS),hp:1,alive:true}));
+  const FIELD_W=100, FIELD_H=70; // percentage-space playfield
+  const BRICK_H=9;
+  const PADDLE_W=16, PADDLE_Y=FIELD_H-4;
+  const colW = FIELD_W/COLS;
+
+  const makeBricks=()=>Array.from({length:COLS*ROWS},(_,i)=>({id:i,word:pickWords(1,TYPING_BASIC.filter(w=>w.length>=3&&w.length<=5))[0],col:i%COLS,row:Math.floor(i/COLS),alive:true}));
   const [bricks,setBricks]=useState(makeBricks);
   const [typed,setTyped]=useState("");
   const [score,setScore]=useState(0);
   const [wave,setWave]=useState(1);
+  const [lives,setLives]=useState(settings.lives||3);
   const [done,setDone]=useState(false);
+  const [won,setWon]=useState(false);
   const [muted,setMuted]=useState(false);
+  const [ball,setBall]=useState({x:50,y:PADDLE_Y-2,vx:0.55,vy:-0.7});
+  const [paddleX,setPaddleX]=useState(50);
   const ref=useRef(null);
   const bricksRef=useRef(bricks);
+  const ballRef=useRef(ball);
+  const paddleXRef=useRef(50);
+  const livesRef=useRef(settings.lives||3);
+  const frameRef=useRef(null);
   bricksRef.current=bricks;
 
-  useEffect(()=>ref.current?.focus(),[]);
+  // Find the brick (any alive one) whose word starts with what's currently
+  // typed - that's the brick the paddle steers toward. Prefers the lowest
+  // remaining row so you're naturally working top-to-bottom-ish, but any
+  // match works.
+  const targetBrick = typed.length>0
+    ? bricksRef.current.filter(b=>b.alive && b.word.startsWith(typed)).sort((a,b)=>a.row-b.row)[0]
+    : null;
 
-  const handleType=e=>{
-    const v=e.target.value;
-    setTyped(v);
-    const match=bricksRef.current.find(b=>b.alive&&b.word===v.trim());
-    if(match){
-      if(!muted)playTone(660+score*5,"sine",.08,.2);
-      const nb=bricksRef.current.map(b=>b.id===match.id?{...b,alive:false}:b);
-      setBricks(nb);
-      setScore(s=>s+1);
-      setTyped("");
-      if(nb.every(b=>!b.alive)){
-        // New wave
-        if(!muted)[0,.15,.3].forEach(t=>setTimeout(()=>playTone(880,"sine",.1,.2),t*1000));
-        setWave(w=>w+1);
-        setBricks(makeBricks().map(b=>({...b,word:pickWords(1,wave>=3?TYPING_MEDIUM.filter(w=>w.length>=4&&w.length<=7):TYPING_BASIC.filter(w=>w.length>=3&&w.length<=5))[0],hp:Math.min(wave,3)})));
+  useEffect(()=>{ ref.current?.focus(); }, []);
+
+  // Physics loop: ball moves every frame, bounces off walls/paddle, and
+  // checks collision against alive bricks. A brick only actually breaks if
+  // it's the one the ball is colliding with AND its word has been typed in
+  // full at that moment - hitting it without having typed it just bounces
+  // the ball off harmlessly, same as a wall.
+  useEffect(() => {
+    if (done) return;
+    let last = performance.now();
+    const loop = (now) => {
+      const dt = Math.min(now - last, 40); last = now;
+      const b = { ...ballRef.current };
+      b.x += b.vx * dt * 0.05;
+      b.y += b.vy * dt * 0.05;
+
+      // Wall bounces
+      if (b.x <= 1) { b.x = 1; b.vx = Math.abs(b.vx); }
+      if (b.x >= FIELD_W-1) { b.x = FIELD_W-1; b.vx = -Math.abs(b.vx); }
+      if (b.y <= 1) { b.y = 1; b.vy = Math.abs(b.vy); }
+
+      // Paddle bounce - paddle position comes from paddleXRef, which is
+      // driven by typing (see the effect below), not arrow keys.
+      const px = paddleXRef.current;
+      if (b.y >= PADDLE_Y-2 && b.y <= PADDLE_Y+1 && b.x >= px-PADDLE_W/2 && b.x <= px+PADDLE_W/2 && b.vy > 0) {
+        b.vy = -Math.abs(b.vy);
+        b.vx += (b.x - px) * 0.04; // angle off paddle based on hit position
       }
+
+      // Brick collision - check the row of bricks the ball is currently at
+      const brickRowAtY = Math.floor(b.y / BRICK_H);
+      const brickColAtX = Math.floor(b.x / colW);
+      if (b.vy < 0 && brickRowAtY >= 0 && brickRowAtY < ROWS) {
+        const hit = bricksRef.current.find(br => br.alive && br.row === brickRowAtY && br.col === brickColAtX);
+        if (hit) {
+          const wordTyped = typed === hit.word;
+          if (wordTyped) {
+            if (!muted) playTone(660+score*5, "sine", 0.08, 0.2);
+            const nb = bricksRef.current.map(br => br.id===hit.id ? {...br, alive:false} : br);
+            setBricks(nb); bricksRef.current = nb;
+            setScore(s=>s+1);
+            setTyped("");
+            b.vy = Math.abs(b.vy); // bounce away from the broken brick
+            if (nb.every(br=>!br.alive)) {
+              if (!muted) [0,0.15,0.3].forEach(t=>setTimeout(()=>playTone(880,"sine",0.1,0.2), t*1000));
+              const nextWave = wave+1;
+              setWave(nextWave);
+              const fresh = makeBricks().map(br=>({...br, word: pickWords(1, nextWave>=3?TYPING_MEDIUM.filter(w=>w.length>=4&&w.length<=7):TYPING_BASIC.filter(w=>w.length>=3&&w.length<=5))[0]}));
+              setBricks(fresh); bricksRef.current = fresh;
+            }
+          } else {
+            // Ball hits a brick whose word hasn't been typed yet - bounces
+            // off like a wall, brick stays intact. This is the real stakes:
+            // you have to have the right word ready before the ball gets
+            // there, not just type things whenever.
+            b.vy = Math.abs(b.vy);
+          }
+        }
+      }
+
+      // Missed - ball fell past the paddle
+      if (b.y > FIELD_H) {
+        livesRef.current -= 1;
+        setLives(livesRef.current);
+        if (!muted) playTone(150, "sawtooth", 0.25, 0.2);
+        if (livesRef.current <= 0) {
+          setDone(true); setWon(false);
+          return;
+        }
+        b.x = 50; b.y = PADDLE_Y-2; b.vx = 0.55*(Math.random()>0.5?1:-1); b.vy = -0.7;
+      }
+
+      ballRef.current = b;
+      setBall(b);
+      frameRef.current = requestAnimationFrame(loop);
+    };
+    frameRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(frameRef.current);
+  }, [done, wave, typed, score, muted]);
+
+  // Paddle steering: slides toward the column of whichever brick currently
+  // matches the typed prefix. With nothing typed, or no match, it drifts
+  // back toward center rather than freezing in place.
+  useEffect(() => {
+    const iv = setInterval(() => {
+      const targetX = targetBrick ? (targetBrick.col + 0.5) * colW : 50;
+      const next = paddleXRef.current + (targetX - paddleXRef.current) * 0.25;
+      paddleXRef.current = next;
+      setPaddleX(next);
+    }, 30);
+    return () => clearInterval(iv);
+  }, [targetBrick, colW]);
+
+  const handleType = e => {
+    const v = e.target.value;
+    // Exact-prefix only - if it stops matching any alive brick's word, reset
+    // rather than letting garbage accumulate.
+    if (v.length===0 || bricksRef.current.some(b=>b.alive && b.word.startsWith(v))) {
+      setTyped(v);
     }
   };
 
+  const reset = () => {
+    const fresh = makeBricks();
+    setBricks(fresh); bricksRef.current = fresh;
+    setTyped(""); setScore(0); setWave(1); setDone(false); setWon(false);
+    setLives(settings.lives||3); livesRef.current = settings.lives||3;
+    ballRef.current = {x:50,y:PADDLE_Y-2,vx:0.55,vy:-0.7};
+    setBall(ballRef.current);
+    paddleXRef.current = 50; setPaddleX(50);
+    setTimeout(()=>ref.current?.focus(), 50);
+  };
+
   const COLORS=["#ef4444","#f59e0b","#34d399","#60a5fa","#a78bfa","#f472b6"];
+
+  if (done) return <ResultScreen emoji="🧱" title="Out of lives" color="#ef4444" stats={[["Bricks broken", score],["Wave reached", wave]]} onRetry={reset} T={T}/>;
 
   return(<div>
     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}><BackBtn onBack={onBack} onSettings={onSettings} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>🧱 Brick Breaker</span><SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/></div>
     <div style={{display:"flex",justifyContent:"space-between",marginBottom:8,fontSize:12}}>
       <span style={{color:T.purple,fontWeight:700}}>Score: {score}</span>
       <span style={{color:"#f59e0b",fontWeight:700}}>Wave {wave}</span>
+      <span>{"❤️".repeat(Math.max(0,lives))}{"🖤".repeat(Math.max(0,(settings.lives||3)-lives))}</span>
     </div>
-    <div style={{display:"grid",gridTemplateColumns:`repeat(${COLS},1fr)`,gap:4,marginBottom:10,background:"#050510",padding:8,borderRadius:12,border:"1px solid #1a1a30"}}>
-      {bricks.map(b=>(
-        <div key={b.id} style={{height:36,borderRadius:6,background:b.alive?COLORS[b.col%COLORS.length]+"cc":"#0a0a1a",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'JetBrains Mono',monospace",fontSize:10,fontWeight:b.alive&&typed&&b.word.startsWith(typed.trim())?800:600,color:b.alive?(typed&&b.word.startsWith(typed.trim())?"#fff":"#fff"):"#1a1a2e",textShadow:b.alive&&typed&&b.word.startsWith(typed.trim())?"0 0 8px #fff":"none",transition:"all .15s",transform:b.alive&&typed&&b.word.startsWith(typed.trim())?"scale(1.05)":"scale(1)",boxShadow:b.alive&&typed&&b.word.startsWith(typed.trim())?`0 0 12px ${COLORS[b.col%COLORS.length]}`:"none"}}>
-          {b.alive?b.word:""}
-        </div>
+    <div style={{position:"relative",width:"100%",paddingBottom:`${FIELD_H}%`,background:"#050510",borderRadius:12,border:"1px solid #1a1a30",overflow:"hidden",marginBottom:10}}>
+      {bricks.map(b=>b.alive && (
+        <div key={b.id} style={{
+          position:"absolute", left:`${b.col*colW}%`, top:`${b.row*BRICK_H}%`, width:`${colW-1}%`, height:`${BRICK_H-1}%`,
+          borderRadius:4, background:COLORS[b.col%COLORS.length]+"cc",
+          display:"flex", alignItems:"center", justifyContent:"center",
+          fontFamily:"'JetBrains Mono',monospace", fontSize:9, fontWeight:700, color:"#fff",
+          outline: targetBrick?.id===b.id ? "2px solid #fff" : "none",
+          boxShadow: targetBrick?.id===b.id ? `0 0 10px ${COLORS[b.col%COLORS.length]}` : "none",
+        }}>{b.word}</div>
       ))}
+      {/* Ball */}
+      <div style={{position:"absolute", left:`${ball.x}%`, top:`${(ball.y/FIELD_H)*100}%`, width:10, height:10, marginLeft:-5, marginTop:-5, borderRadius:"50%", background:"#fff", boxShadow:"0 0 8px #fff"}} />
+      {/* Paddle */}
+      <div style={{position:"absolute", left:`${paddleX}%`, top:`${(PADDLE_Y/FIELD_H)*100}%`, width:`${PADDLE_W}%`, height:6, marginLeft:`-${PADDLE_W/2}%`, borderRadius:3, background:T.purple}} />
     </div>
-    <input ref={ref} value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type brick words to destroy them..."
+    <div style={{textAlign:"center",fontSize:11,color:T.faint,marginBottom:8}}>
+      {targetBrick ? "Paddle is steering toward your word — keep typing!" : "Start typing a brick's word to steer the paddle"}
+    </div>
+    <input ref={ref} value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type a brick's word to steer the paddle..."
       style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}/>
   </div>);
 }
