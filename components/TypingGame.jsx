@@ -2499,7 +2499,8 @@ const Nav = () => (<>
   );
 
   if (screen === "tips") {
-    const lv = LEVELS.find(l => l.id === pendingLevelId) || LEVELS[0];
+    const isDaily = pendingLevelId === -1;
+    const lv = isDaily ? null : (LEVELS.find(l => l.id === pendingLevelId) || LEVELS[0]);
     const tips = isFirstPlay
       ? LEVEL_TIPS.beginner
       : (LEVEL_TIPS[pendingLevelId] || LEVEL_TIPS.default);
@@ -2507,9 +2508,9 @@ const Nav = () => (<>
     return (
       <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:24}}>
         <div style={{width:"100%",maxWidth:isMobile?460:760,textAlign:"center"}}>
-          <div style={{fontSize:56,marginBottom:12}}>{lv.emoji}</div>
-          <h2 style={{color:T.text,fontSize:fs(24),fontWeight:800,marginBottom:4}}>Level {lv.id}: {lv.name}</h2>
-          <p style={{color:T.muted,fontSize:13,marginBottom:28}}>Target: {lv.accuracy}% accuracy</p>
+          <div style={{fontSize:56,marginBottom:12}}>{isDaily ? "📅" : lv.emoji}</div>
+          <h2 style={{color:T.text,fontSize:fs(24),fontWeight:800,marginBottom:4}}>{isDaily ? "Daily Challenge" : `Level ${lv.id}: ${lv.name}`}</h2>
+          <p style={{color:T.muted,fontSize:13,marginBottom:28}}>{isDaily ? "New words today — everyone gets the same set" : `Target: ${lv.accuracy}% accuracy`}</p>
           <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:24,marginBottom:24,textAlign:"left"}}>
             <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:14}}>Tips</div>
             {tips.map((tip, i) => (
@@ -2522,6 +2523,7 @@ const Nav = () => (<>
           <div style={{background:"#1a0a2a",border:`1px solid ${T.purple}44`,borderRadius:10,padding:"12px 16px",marginBottom:24,fontSize:13,color:T.muted,textAlign:"left"}}>
             ⚠️ <strong style={{color:T.text}}>No corrections.</strong> Once you type a character, it's locked in. Focus on accuracy.
           </div>
+          {!isDaily && (
           <div style={{marginBottom:14}}>
             <div style={{color:T.faint,fontSize:10,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>Accuracy Target</div>
             <div style={{display:"flex",gap:6}}>
@@ -2530,6 +2532,7 @@ const Nav = () => (<>
               ))}
             </div>
           </div>
+          )}
           <button onClick={() => startLevel(pendingLevelId, pendingIsSkip, pendingSkipTarget)}
             style={{width:"100%",padding:"15px",borderRadius:12,border:"none",background:T.purple,color:"#fff",fontSize:16,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>
             Start Typing →
