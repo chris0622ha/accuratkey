@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, ALL_WORDS, WORD_CATEGORIES, CATEGORY_NAMES, POOL_WORD_RAIN, POOL_SURVIVAL, POOL_SPEED_BURST, POOL_SCRAMBLE, POOL_SUDDEN_DEATH, POOL_ZEN, POOL_LADDER_EASY, POOL_LADDER_MED, POOL_LADDER_HARD, POOL_LADDER_VHARD, POOL_ECHO, POOL_INVADERS, POOL_ASTEROID, POOL_TOWER, POOL_WORD_CHAIN, pickWords, pickByDiff } from "./WordDB";
-import { Sniper, Mirror, Flash, Echo, GhostWords, BossBattle, TypewriterStory, TypingJournal, PoetryMode } from "./GamesExtra";
+import { Sniper, Mirror, Flash, Echo, GhostWords, BossBattle } from "./GamesExtra";
 import { HundredWords, Endurance, Roulette, WordChain, CategoryBlitz, VocabBuilder, TypingInvaders, AsteroidBelt, TowerDefense, MysteryWords, RhymeTime, MadLibs } from "./GamesNew2";
-import { SpeedTest, MissingLetters, Anagram, BrickBreaker, Quotes, HaikuMode, Synonyms, Antonyms, TugOfWar } from "./GamesNew3";
+import { SpeedTest, MissingLetters, Anagram, BrickBreaker, Synonyms, Antonyms, TugOfWar } from "./GamesNew3";
 // Word pools
 const EASY_WORDS = TYPING_BASIC;
 const MED_WORDS = TYPING_MEDIUM;
@@ -85,7 +85,6 @@ const GAMES = [
   { id:"burst",       emoji:"⚡", name:"Speed Burst",     desc:"Sprint for WPM — how fast are you?",              cat:"speed" },
   { id:"scramble",    emoji:"🔀", name:"Word Scramble",   desc:"Unscramble jumbled words against the clock",       cat:"puzzle" },
   { id:"suddendeath", emoji:"☠️", name:"Sudden Death",    desc:"One wrong key and it's all over",                  cat:"accuracy" },
-  { id:"zen",         emoji:"🧘", name:"Zen Mode",        desc:"No timer, no pressure — just type",               cat:"chill" },
   { id:"ladder",      emoji:"🪜", name:"Speed Ladder",    desc:"Each rung must be faster than the last",           cat:"speed" },
   { id:"tugofwar",    emoji:"🪢", name:"Tug of War",      desc:"Type accurately to pull the rope your way",        cat:"challenge" },
   { id:"sniper",      emoji:"🎯", name:"Sniper",          desc:"100% accuracy required — any mistake resets",      cat:"accuracy" },
@@ -94,9 +93,6 @@ const GAMES = [
   { id:"echo",        emoji:"🔁", name:"Echo",             desc:"Repeat growing sequences from memory",            cat:"memory" },
   { id:"ghost",       emoji:"👻", name:"Ghost Words",      desc:"Type the word before it fades away",             cat:"accuracy" },
   { id:"boss",        emoji:"👾", name:"Boss Battle",      desc:"Deal damage by typing — dodge boss attacks",      cat:"arcade" },
-  { id:"story",       emoji:"🎭", name:"Typewriter Story", desc:"Type classic literature passages",                cat:"chill" },
-  { id:"journal",     emoji:"📝", name:"Typing Journal",   desc:"Free type and save your entries locally",         cat:"chill" },
-  { id:"poetry",      emoji:"📜", name:"Poetry Mode",      desc:"Type poems with ambient tones",                  cat:"chill" },
   { id:"hundred",     emoji:"💯", name:"100 Words",         desc:"Type exactly 100 words as fast as possible",      cat:"challenge" },
   { id:"endurance",   emoji:"🏃", name:"Endurance",         desc:"Never stop typing or it's game over",             cat:"challenge" },
   { id:"roulette",    emoji:"🎰", name:"Roulette",          desc:"Spin for a random game mode",                     cat:"random" },
@@ -114,8 +110,6 @@ const GAMES = [
   { id:"missing",     emoji:"🔡", name:"Missing Letters",   desc:"Fill in the blanks — w_rd sh_wn l_ke th_s",       cat:"puzzle" },
   { id:"anagram",     emoji:"🔀", name:"Anagram",           desc:"Unscramble the letters to form a real word",       cat:"puzzle" },
   { id:"bricks",      emoji:"🧱", name:"Brick Breaker",     desc:"Type words to smash bricks in waves",              cat:"arcade" },
-  { id:"quotes",      emoji:"💬", name:"Quotes",            desc:"Type famous quotes from history",                  cat:"chill" },
-  { id:"haiku",       emoji:"🌸", name:"Haiku",             desc:"Type classic haiku poems line by line",            cat:"chill" },
   { id:"synonyms",    emoji:"📖", name:"Synonyms",          desc:"Type any word that means the same thing",          cat:"educational" },
   { id:"antonyms",    emoji:"↔️", name:"Antonyms",          desc:"Type the opposite — any antonym accepted",         cat:"educational" },
 ];
@@ -126,7 +120,6 @@ const CATEGORIES = [
   { id:"accuracy",    label:"🎯 Accuracy" },
   { id:"memory",      label:"🧠 Memory" },
   { id:"arcade",      label:"🕹️ Arcade" },
-  { id:"chill",       label:"🧘 Chill" },
   { id:"puzzle",      label:"🔀 Puzzle" },
   { id:"challenge",   label:"🏆 Challenge" },
   { id:"educational", label:"📚 Educational" },
@@ -838,7 +831,6 @@ const GAME_SETTINGS = {
   burst:       [],
   scramble:    [],
   suddendeath: [{ key:"difficulty", label:"Words",      opts:["easy","medium","hard"], default:"medium" }],
-  zen:         [{ key:"difficulty", label:"Words",      opts:["easy","medium","hard"], default:"easy" }],
   ladder:      [{ key:"rungs",      label:"Rungs",      opts:[5,8,10,15], default:10 }],
   tugofwar:    [{ key:"difficulty", label:"Difficulty",  opts:["easy","medium","hard"], default:"medium" }],
   sniper:      [{ key:"count",      label:"Words",      opts:[10,25,50], default:25 }, { key:"difficulty", label:"Difficulty", opts:["easy","medium","hard"], default:"medium" }],
@@ -847,9 +839,6 @@ const GAME_SETTINGS = {
   echo:        [{ key:"lives",      label:"Lives",      opts:[1,2,3,5], default:3 }],
   ghost:       [{ key:"visibleMs",  label:"Visible for", opts:[1500,2500,3500], default:2500, suffix:"ms" }, { key:"count", label:"Words", opts:[15,25,40], default:25 }],
   boss:        [{ key:"bossHp",     label:"Boss HP",    opts:[50,100,200], default:100 }, { key:"attackMs", label:"Attack every", opts:[2000,4000,6000], default:4000, suffix:"ms" }],
-  story:       [{ key:"passage",    label:"Passage",    opts:["random","raven","frost","dickens","austen","orwell"], default:"random" }],
-  journal:     [],
-  poetry:      [{ key:"poem",       label:"Poem",       opts:["random","byron","dickinson","frost","whitman","poe"], default:"random" }],
   hundred:     [{ key:"difficulty", label:"Difficulty", opts:["easy","medium","hard"], default:"medium" }],
   endurance:   [{ key:"pauseMs",    label:"Pause limit", opts:[1,2,3,5], default:2, suffix:"s" }],
   roulette:    [],
@@ -866,8 +855,6 @@ const GAME_SETTINGS = {
   missing:     [{ key:"difficulty", label:"Difficulty", opts:["easy","medium","hard"], default:"medium" }, { key:"count", label:"Words", opts:[10,15,20,30], default:20 }, { key:"hideRate", label:"Hide amount", opts:["low","medium","high"], default:"medium" }],
   anagram:     [{ key:"difficulty", label:"Difficulty", opts:["easy","medium","hard"], default:"medium" }, { key:"count", label:"Words", opts:[10,15,20], default:20 }],
   bricks:      [{ key:"rows", label:"Rows", opts:[3,4,5,6], default:4 }, { key:"cols", label:"Columns", opts:[4,5,6,8], default:6 }],
-  quotes:      [{ key:"author", label:"Author filter", opts:["all","einstein","shakespeare","wilde","twain","gandhi"], default:"all" }],
-  haiku:       [{ key:"poet", label:"Poet", opts:["all","basho","issa","buson","pound"], default:"all" }],
   synonyms:    [{ key:"count", label:"Words", opts:[10,20,30,"all"], default:20 }],
   antonyms:    [{ key:"count", label:"Words", opts:[10,20,30,"all"], default:20 }],
 };
@@ -1009,67 +996,10 @@ function SuddenDeath({ T, onBack }) {
   );
 }
 
-function ZenMode({ T, onBack }) {
-  const [words, setWords] = useState(() => pickByDiff(80, "easy"));
-  const [typed, setTyped] = useState("");
-  const [correct, setCorrect] = useState(0);
-  const [total, setTotal] = useState(0);
-  const [startTime, setStartTime] = useState(null);
-  const [wpm, setWpm] = useState(0);
-  const [muted, setMuted] = useState(false);
-  const ref = useRef(null);
-  const target = words.join(" ");
-
-  const handleType = e => {
-    const v = e.target.value;
-    if (!startTime && v.length > 0) setStartTime(Date.now());
-    setTyped(v);
-    const elapsed = startTime ? (Date.now() - startTime) / 60000 : 0.001;
-    if (elapsed > 0) setWpm(Math.round((v.length / 5) / elapsed));
-    setCorrect(v.split("").filter((c,i) => c === target[i]).length);
-    setTotal(v.length);
-    // Extend words when approaching end
-    if (v.length > target.length - 100) {
-      setWords(w => [...w, ...pickByDiff(40, "easy")]);
-    }
-  };
-
-  const acc = total > 0 ? Math.round((correct/total)*100) : 100;
-
-  return (
-    <div style={{padding:"4px 0"}}>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
-        <button onClick={onBack} style={{background:"none",border:"none",color:T.faint,fontSize:13,cursor:"pointer",fontFamily:T.font}}>← Back</button>
-        <span style={{color:T.text,fontWeight:800,fontSize:20}}>🧘 Zen Mode</span>
-        <SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/>
-      </div>
-      <div style={{background:"#7c6af711",border:"1px solid #7c6af733",borderRadius:8,padding:"6px 12px",marginBottom:10,fontSize:11,color:T.purple,textAlign:"center"}}>
-        No timer · No pressure · Just type
-      </div>
-      <div onClick={()=>ref.current?.focus()} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"16px 20px",marginBottom:10,fontFamily:"'JetBrains Mono',monospace",fontSize:16,letterSpacing:1,lineHeight:1.8,cursor:"text",userSelect:"none",minHeight:80}}>
-        {target.slice(Math.max(0,typed.length-60), typed.length+120).split("").map((ch,i) => {
-          const absIdx = Math.max(0,typed.length-60)+i;
-          let color = T.faint;
-          if (absIdx < typed.length) color = typed[absIdx]===ch?"#34d399":"#ef4444";
-          else if (absIdx===typed.length) color=T.purple;
-          return <span key={absIdx} style={{color,borderBottom:absIdx===typed.length?"2px solid "+T.purple:"2px solid transparent"}}>{ch}</span>;
-        })}
-      </div>
-      <input ref={ref} autoFocus value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} style={{position:"absolute",opacity:0,pointerEvents:"none"}}/>
-      <div style={{display:"flex",gap:16,justifyContent:"center",color:T.muted,fontSize:13}}>
-        <span style={{color:T.purple,fontWeight:700}}>{startTime?wpm:0} WPM</span>
-        <span style={{color:"#34d399",fontWeight:700}}>{acc}%</span>
-        <span>{typed.length} chars</span>
-        {startTime && <button onClick={()=>{setTyped("");setStartTime(null);setWpm(0);}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.faint,fontSize:11,padding:"2px 8px",cursor:"pointer",fontFamily:"inherit"}}>↺ Reset</button>}
-      </div>
-    </div>
-  );
-}
-
 function SpeedLadder({ T, onBack }) {
   const RUNGS = 10;
   const [rung, setRung] = useState(0);
-  const [words] = useState(()=>Array.from({length:RUNGS},(_,i)=>pickWords(5+i*2,"easy")));
+  const [words] = useState(()=>Array.from({length:RUNGS},(_,i)=>pickByDiff(5+i*2,"easy")));
   const [typed, setTyped] = useState("");
   const [startTime, setStartTime] = useState(null);
   const [rungStart, setRungStart] = useState(null);
@@ -1205,16 +1135,15 @@ export default function GamesTab({ T }) {
 
   const GAME_COMPONENTS = {
     rain: WordRain, survival: Survival, burst: SpeedBurst, scramble: WordScramble,
-    suddendeath: SuddenDeath, zen: ZenMode, ladder: SpeedLadder, tugofwar: TugOfWar,
+    suddendeath: SuddenDeath, ladder: SpeedLadder, tugofwar: TugOfWar,
     sniper: Sniper, mirror: Mirror, flash: Flash, echo: Echo,
     ghost: GhostWords, boss: BossBattle,
-    story: TypewriterStory, journal: TypingJournal, poetry: PoetryMode,
     hundred: HundredWords, endurance: Endurance, roulette: Roulette,
     wordchain: WordChain, blitz: CategoryBlitz, vocab: VocabBuilder,
     invaders: TypingInvaders, asteroid: AsteroidBelt,
     tower: TowerDefense, mystery: MysteryWords, rhyme: RhymeTime, madlibs: MadLibs,
     speedtest: SpeedTest, missing: MissingLetters, anagram: Anagram,
-    bricks: BrickBreaker, quotes: Quotes, haiku: HaikuMode,
+    bricks: BrickBreaker,
     synonyms: Synonyms, antonyms: Antonyms,
   };
 
