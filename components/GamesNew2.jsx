@@ -730,7 +730,6 @@ export function RhymeTime({ T, onBack, onSettings, settings={} }) {
     </div>
     <input ref={ref} autoFocus value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder={`Type a word that rhymes with "${word}"...`}
       style={{width:"100%",background:wrong?"#ef444411":T.bg,border:`1px solid ${wrong?"#ef4444":T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box",transition:"all .15s"}}/>
-    <div style={{marginTop:8,color:T.faint,fontSize:11,textAlign:"center"}}>Possible: {rhymes.slice(0,3).join(", ")} and more...</div>
   </div>);
 }
 
