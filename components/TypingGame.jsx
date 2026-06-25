@@ -9,7 +9,7 @@ import { FOUNDATIONS_ICONS, PRECISION_FLOW_ICONS, WORD_POWER_ICONS, KEYBOARD_MAS
 import { formatKeys } from "@/lib/format";
 import { CertificateModal } from "./Certificates";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
+import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
 
 export 
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
@@ -1068,6 +1068,7 @@ export default function AccuratKey() {
   const [copiedFriendId, setCopiedFriendId] = useState(false);
   const [friendMsg, setFriendMsg] = useState("");
   const [showShop, setShowShop] = useState(false);
+  const [shopTab, setShopTab] = useState("themes"); // "themes" | "sounds" | "fonts"
   const [shopMsg, setShopMsg] = useState("");
   const [confirmBuy, setConfirmBuy] = useState(null); // { th } | null
   const currentLevelNodeRef = useRef(null);
@@ -1095,6 +1096,69 @@ export default function AccuratKey() {
     {id:"forest",label:"Forest",cost:50},{id:"coffee",label:"Coffee",cost:50},
     {id:"sunset",label:"Sunset",cost:75},{id:"ocean",label:"Ocean",cost:75},
     {id:"lavender",label:"Lavender",cost:75},{id:"neon",label:"Neon",cost:100},
+  ];
+  const SHOP_SOUNDS = [
+    {id:"default",label:"Default",cost:0},{id:"mechanical",label:"Mechanical",cost:50},
+    {id:"typewriter",label:"Typewriter",cost:50},{id:"soft",label:"Soft",cost:50},
+    {id:"arcade",label:"Arcade",cost:75},{id:"nature",label:"Nature",cost:75},
+  ];
+  const SHOP_FONTS = [
+    {id:"jetbrains",label:"JetBrains Mono (Default)",cost:0},
+    {id:"firacode",label:"Fira Code",cost:30},
+    {id:"sourcecodepro",label:"Source Code Pro",cost:30},
+    {id:"robototmono",label:"Roboto Mono",cost:30},
+    {id:"spacemono",label:"Space Mono",cost:30},
+    {id:"inconsolata",label:"Inconsolata",cost:30},
+    {id:"ptmono",label:"PT Mono",cost:30},
+    {id:"cousine",label:"Cousine",cost:30},
+    {id:"ibmplexmono",label:"IBM Plex Mono",cost:30},
+    {id:"cascadia",label:"Cascadia",cost:30},
+    {id:"notosamono",label:"Noto Sans Mono",cost:30},
+    {id:"overpassmono",label:"Overpass Mono",cost:30},
+    {id:"sharetechmono",label:"Share Tech Mono",cost:30},
+    {id:"anonymouspro",label:"Anonymous Pro",cost:30},
+    {id:"ubuntu",label:"Ubuntu Mono",cost:30},
+    {id:"inter",label:"Inter",cost:40},
+    {id:"outfit",label:"Outfit",cost:40},
+    {id:"nunito",label:"Nunito",cost:40},
+    {id:"poppins",label:"Poppins",cost:40},
+    {id:"quicksand",label:"Quicksand",cost:40},
+    {id:"dmsans",label:"DM Sans",cost:40},
+    {id:"lexend",label:"Lexend",cost:40},
+    {id:"manrope",label:"Manrope",cost:40},
+    {id:"plusjakarta",label:"Plus Jakarta Sans",cost:40},
+    {id:"syne",label:"Syne",cost:40},
+    {id:"figtree",label:"Figtree",cost:40},
+    {id:"onest",label:"Onest",cost:40},
+    {id:"geist",label:"Geist",cost:40},
+    {id:"playfair",label:"Playfair Display",cost:50},
+    {id:"cormorant",label:"Cormorant Garamond",cost:50},
+    {id:"crimsonpro",label:"Crimson Pro",cost:50},
+    {id:"eb_garamond",label:"EB Garamond",cost:50},
+    {id:"lora",label:"Lora",cost:50},
+    {id:"domine",label:"Domine",cost:50},
+    {id:"orbitron",label:"Orbitron",cost:60},
+    {id:"rajdhani",label:"Rajdhani",cost:60},
+    {id:"exo2",label:"Exo 2",cost:60},
+    {id:"jura",label:"Jura",cost:60},
+    {id:"quantico",label:"Quantico",cost:60},
+    {id:"oxanium",label:"Oxanium",cost:60},
+    {id:"tektur",label:"Tektur",cost:60},
+    {id:"tourney",label:"Tourney",cost:60},
+    {id:"audiowide",label:"Audiowide",cost:75},
+    {id:"nasalization",label:"Russo One",cost:75},
+    {id:"comicsans",label:"Comic Neue",cost:75},
+    {id:"fredoka",label:"Fredoka",cost:75},
+    {id:"boogaloo",label:"Boogaloo",cost:75},
+    {id:"pressstart",label:"Press Start 2P",cost:75},
+    {id:"vt323",label:"VT323",cost:75},
+    {id:"silkscreen",label:"Silkscreen",cost:75},
+    {id:"chewy",label:"Chewy",cost:75},
+    {id:"rubikbubbles",label:"Rubik Bubbles",cost:75},
+    {id:"permanentmarker",label:"Permanent Marker",cost:75},
+    {id:"creepster",label:"Creepster",cost:75},
+    {id:"ultra",label:"Ultra",cost:75},
+    {id:"blender",label:"Blinker",cost:75},
   ];
 
   // Username handlers
@@ -3634,13 +3698,20 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
 
         {showShop && (
           <div onClick={()=>{setShowShop(false);setShopMsg("");}} style={{position:"fixed",inset:0,background:"#000a",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1010,padding:20}}>
-            <div onClick={e=>e.stopPropagation()} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:16,padding:24,width:"100%",maxWidth:400,maxHeight:"80vh",overflowY:"auto"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-                <span style={{color:T.text,fontWeight:800,fontSize:16}}>🛍️ Theme Shop</span>
+            <div onClick={e=>e.stopPropagation()} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:16,padding:24,width:"100%",maxWidth:420,maxHeight:"80vh",overflowY:"auto"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                <span style={{color:T.text,fontWeight:800,fontSize:16}}>🛍️ Shop</span>
                 <button onClick={()=>{setShowShop(false);setShopMsg("");}} style={{background:"none",border:"none",color:T.faint,fontSize:20,cursor:"pointer"}}>×</button>
+              </div>
+              <div style={{display:"flex",gap:6,marginBottom:14}}>
+                {[["themes","🎨 Themes"],["sounds","🔊 Sounds"],["fonts","🔤 Fonts"]].map(([id,label])=>(
+                  <button key={id} onClick={()=>{setShopTab(id);setShopMsg("");}} style={{flex:1,padding:"7px",borderRadius:8,border:`1px solid ${shopTab===id?T.purple:T.border}`,background:shopTab===id?T.purple+"22":"transparent",color:shopTab===id?T.purple:T.muted,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>{label}</button>
+                ))}
               </div>
               <div style={{color:T.muted,fontSize:12,marginBottom:16,display:"flex",alignItems:"center",gap:4}}>You have <strong style={{color:T.accent,display:"flex",alignItems:"center",gap:3}}>{formatKeys(activeProfile?.keys)} <KKey size={12}/></strong></div>
               {shopMsg&&<div style={{color:T.accent2,fontSize:12,marginBottom:12}}>{shopMsg}</div>}
+
+              {shopTab==="themes" && (
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                 {SHOP_THEMES.map(th=>{
                   const owned=(activeProfile?.ownedThemes||[]).includes(th.id)||th.cost===0;
@@ -3661,11 +3732,6 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
                         await setActiveTheme(user.uid,activeProfile.id,th.id);
                       }
                     }catch(e){
-                      // Server-side rejected it (real price differs from what
-                      // the UI assumed, insufficient keys due to a race, or
-                      // tampering) - revert the optimistic update instead of
-                      // leaving the UI showing a purchase that didn't
-                      // actually happen.
                       patchProfile({keys:prevKeys,ownedThemes:prevOwned,activeTheme:prevActive});
                       setShopMsg(e.message||"Purchase failed");
                     }
@@ -3683,6 +3749,87 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
                   );
                 })}
               </div>
+              )}
+
+              {shopTab==="sounds" && (
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                {SHOP_SOUNDS.map(sd=>{
+                  const owned=(activeProfile?.ownedSounds||[]).includes(sd.id)||sd.cost===0;
+                  const active=activeProfile?.activeSound===sd.id||(sd.id==="default"&&!activeProfile?.activeSound);
+                  const preview=()=>{ if(canUse(activeProfile,"sounds")) playSound("correct", sd.id); };
+                  const doBuySound=async()=>{
+                    const prevKeys = activeProfile.keys||0;
+                    const prevOwned = activeProfile.ownedSounds||[];
+                    const prevActive = activeProfile.activeSound;
+                    const newKeys=prevKeys-sd.cost;
+                    if(newKeys<0){setShopMsg("Not enough Keys");return;}
+                    patchProfile({keys:newKeys,ownedSounds:[...prevOwned,sd.id],activeSound:sd.id});
+                    setShopMsg(`${sd.label} purchased!`);
+                    try{
+                      if(isProfileRestricted(activeProfile)){
+                        updateProfileLocal(activeProfile.id,activeProfile,{keys:newKeys,ownedSounds:[...prevOwned,sd.id],activeSound:sd.id});
+                      }else{
+                        await purchaseSound(user.uid,activeProfile.id,sd.id);
+                        await setActiveSound(user.uid,activeProfile.id,sd.id);
+                      }
+                    }catch(e){
+                      patchProfile({keys:prevKeys,ownedSounds:prevOwned,activeSound:prevActive});
+                      setShopMsg(e.message||"Purchase failed");
+                    }
+                  };
+                  return (
+                    <div key={sd.id} style={{background:T.bg,border:`1px solid ${active?T.purple:T.border}`,borderRadius:10,padding:"12px",textAlign:"center"}}>
+                      <div style={{fontWeight:700,fontSize:13,color:T.text,marginBottom:4}}>{sd.label}</div>
+                      <div style={{color:T.faint,fontSize:11,marginBottom:6,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>{sd.cost===0?"Free":<>{sd.cost} <KKey size={10}/></>}</div>
+                      <button onClick={preview} style={{width:"100%",padding:"4px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:10,cursor:"pointer",marginBottom:6}}>🔊 Preview</button>
+                      {active?<div style={{color:T.purple,fontSize:11,fontWeight:700}}>Active</div>
+                        :owned?<button onClick={()=>{patchProfile({activeSound:sd.id});setShopMsg(`${sd.label} activated!`);if(isProfileRestricted(activeProfile)){updateProfileLocal(activeProfile.id,activeProfile,{activeSound:sd.id});}else{setActiveSound(user.uid,activeProfile.id,sd.id);}}} style={{width:"100%",padding:"6px",background:"transparent",border:`1px solid ${T.purple}`,borderRadius:6,color:T.purple,fontSize:11,fontWeight:700,cursor:"pointer"}}>Equip</button>
+                        :<button onClick={()=>setConfirmBuy({th:sd,doBuy:doBuySound})} style={{width:"100%",padding:"6px",background:T.purple,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>Buy</button>
+                      }
+                    </div>
+                  );
+                })}
+              </div>
+              )}
+
+              {shopTab==="fonts" && (
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                {SHOP_FONTS.map(fd=>{
+                  const owned=(activeProfile?.ownedFonts||[]).includes(fd.id)||fd.cost===0;
+                  const active=activeProfile?.activeFont===fd.id||(fd.id==="default"&&!activeProfile?.activeFont);
+                  const doBuyFont=async()=>{
+                    const prevKeys = activeProfile.keys||0;
+                    const prevOwned = activeProfile.ownedFonts||[];
+                    const prevActive = activeProfile.activeFont;
+                    const newKeys=prevKeys-fd.cost;
+                    if(newKeys<0){setShopMsg("Not enough Keys");return;}
+                    patchProfile({keys:newKeys,ownedFonts:[...prevOwned,fd.id],activeFont:fd.id});
+                    setShopMsg(`${fd.label} purchased!`);
+                    try{
+                      if(isProfileRestricted(activeProfile)){
+                        updateProfileLocal(activeProfile.id,activeProfile,{keys:newKeys,ownedFonts:[...prevOwned,fd.id],activeFont:fd.id});
+                      }else{
+                        await purchaseFont(user.uid,activeProfile.id,fd.id);
+                        await setActiveFont(user.uid,activeProfile.id,fd.id);
+                      }
+                    }catch(e){
+                      patchProfile({keys:prevKeys,ownedFonts:prevOwned,activeFont:prevActive});
+                      setShopMsg(e.message||"Purchase failed");
+                    }
+                  };
+                  return (
+                    <div key={fd.id} style={{background:T.bg,border:`1px solid ${active?T.purple:T.border}`,borderRadius:10,padding:"12px",textAlign:"center"}}>
+                      <div style={{fontWeight:700,fontSize:13,color:T.text,marginBottom:4}}>{fd.label}</div>
+                      <div style={{color:T.faint,fontSize:11,marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>{fd.cost===0?"Free":<>{fd.cost} <KKey size={10}/></>}</div>
+                      {active?<div style={{color:T.purple,fontSize:11,fontWeight:700}}>Active</div>
+                        :owned?<button onClick={()=>{patchProfile({activeFont:fd.id});setShopMsg(`${fd.label} activated!`);if(isProfileRestricted(activeProfile)){updateProfileLocal(activeProfile.id,activeProfile,{activeFont:fd.id});}else{setActiveFont(user.uid,activeProfile.id,fd.id);}}} style={{width:"100%",padding:"6px",background:"transparent",border:`1px solid ${T.purple}`,borderRadius:6,color:T.purple,fontSize:11,fontWeight:700,cursor:"pointer"}}>Equip</button>
+                        :<button onClick={()=>setConfirmBuy({th:fd,doBuy:doBuyFont})} style={{width:"100%",padding:"6px",background:T.purple,border:"none",borderRadius:6,color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}}>Buy</button>
+                      }
+                    </div>
+                  );
+                })}
+              </div>
+              )}
             </div>
           </div>
         )}
