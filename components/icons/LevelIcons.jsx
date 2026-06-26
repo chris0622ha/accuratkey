@@ -2146,3 +2146,93 @@ export const LEGEND_TIER_ICONS = {
   161: IconLegend1, 162: IconLegend2, 163: IconLegend3, 164: IconLegend4, 165: IconLegend5,
   166: IconLegend6, 167: IconLegend7, 168: IconLegend8, 169: IconLegend9, 170: IconFinalBoss,
 };
+
+// 171. Burst Drill — a small starburst
+export const IconBurstDrill = ({ size = 28, color = "#facc15" }) => (
+  <Base size={size}>
+    {[0,45,90,135].map(a => (
+      <line key={a} x1="24" y1="24" x2={24+16*Math.cos(a*Math.PI/180)} y2={24+16*Math.sin(a*Math.PI/180)} stroke={color} strokeWidth="3" strokeLinecap="round" />
+    ))}
+    <circle cx="24" cy="24" r="6" fill={color} opacity="0.5" stroke={color} strokeWidth="1.6" />
+  </Base>
+);
+
+// 172. Sprint Patterns — repeating chevrons
+export const IconSprintPatterns = ({ size = 28, color = "#fbbf24" }) => (
+  <Base size={size}>
+    {[8,18,28].map(x => (
+      <path key={x} d={`M${x} 14 L${x+8} 24 L${x} 34`} stroke={color} strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.4+x/40} />
+    ))}
+  </Base>
+);
+
+// 173. Quick Commands — a terminal prompt
+export const IconQuickCommands = ({ size = 28, color = "#4ade80" }) => (
+  <Base size={size}>
+    <rect x="6" y="10" width="36" height="28" rx="4" fill={color} opacity="0.14" stroke={color} strokeWidth="2" />
+    <path d="M12 19 L18 24 L12 29" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    <line x1="22" y1="29" x2="34" y2="29" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
+  </Base>
+);
+
+// 174. Rapid Pairs — two arrows pointing toward each other
+export const IconRapidPairs = ({ size = 28, color = "#60a5fa" }) => (
+  <Base size={size}>
+    <path d="M8 24 H20 M16 19 L20 24 L16 29" stroke={color} strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M40 24 H28 M32 19 L28 24 L32 29" stroke={color} strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.6" />
+  </Base>
+);
+
+// 175. Flash Phrases — a lightning bolt with a speech tail
+export const IconFlashPhrases = ({ size = 28, color = "#a78bfa" }) => (
+  <Base size={size}>
+    <path d="M26 8 L16 24 H23 L20 40 L34 22 H26 Z" fill={color} opacity="0.6" stroke={color} strokeWidth="1.6" strokeLinejoin="round" />
+  </Base>
+);
+
+// 176. Velocity Check — a speedometer needle
+export const IconVelocityCheck = ({ size = 28, color = "#f472b6" }) => (
+  <Base size={size}>
+    <path d="M8 30 A16 16 0 0 1 40 30" stroke={color} strokeWidth="2.4" fill="none" strokeLinecap="round" opacity="0.5" />
+    <line x1="24" y1="28" x2="34" y2="16" stroke={color} strokeWidth="2.6" strokeLinecap="round" />
+    <circle cx="24" cy="28" r="3" fill={color} />
+  </Base>
+);
+
+// 177. Tight Turns — a winding spiral path
+export const IconTightTurns = ({ size = 28, color = "#fb923c" }) => (
+  <Base size={size}>
+    <path d="M10 34 Q10 14, 24 14 Q38 14, 38 26 Q38 36, 28 36 Q20 36, 20 28" stroke={color} strokeWidth="2.4" fill="none" strokeLinecap="round" opacity="0.65" />
+  </Base>
+);
+
+// 178. Overdrive — stacked flame-like chevrons
+export const IconOverdrive = ({ size = 28, color = "#ef4444" }) => (
+  <Base size={size}>
+    <path d="M24 8 C18 18, 14 24, 18 32 C14 30, 12 24, 16 18 C16 26, 20 32, 24 34 C28 32, 32 26, 30 18 C34 22, 34 30, 28 34 C34 30, 36 22, 32 14 C30 18, 28 20, 24 8 Z" fill={color} opacity="0.55" stroke={color} strokeWidth="1.4" strokeLinejoin="round" />
+  </Base>
+);
+
+// 179. Final Sprint — a checkered finish flag
+export const IconFinalSprint = ({ size = 28, color = "#34d399" }) => (
+  <Base size={size}>
+    <line x1="12" y1="8" x2="12" y2="40" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
+    <rect x="12" y="9" width="9" height="9" fill={color} opacity="0.7" />
+    <rect x="21" y="18" width="9" height="9" fill={color} opacity="0.7" />
+    <rect x="12" y="18" width="9" height="9" fill={color} opacity="0.25" />
+    <rect x="21" y="9" width="9" height="9" fill={color} opacity="0.25" />
+  </Base>
+);
+
+// 180. Peak Velocity — a mountain peak with a speed trail
+export const IconPeakVelocity = ({ size = 28, color = "#fbbf24" }) => (
+  <Base size={size}>
+    <path d="M8 34 L18 16 L24 26 L30 12 L40 34 Z" fill={color} opacity="0.5" stroke={color} strokeWidth="1.6" strokeLinejoin="round" />
+    <path d="M4 38 H14 M2 41 H20" stroke={color} strokeWidth="1.6" strokeLinecap="round" opacity="0.4" />
+  </Base>
+);
+
+export const SPEED_SURGE_II_ICONS = {
+  171: IconBurstDrill, 172: IconSprintPatterns, 173: IconQuickCommands, 174: IconRapidPairs, 175: IconFlashPhrases,
+  176: IconVelocityCheck, 177: IconTightTurns, 178: IconOverdrive, 179: IconFinalSprint, 180: IconPeakVelocity,
+};

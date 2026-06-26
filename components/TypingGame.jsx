@@ -5,7 +5,7 @@ import TypingTest from "./TypingTest";
 import GamesTab from "./GamesTab";
 import { TugOfWar } from "./GamesNew3";
 import { KKey } from "./icons/KKey";
-import { FOUNDATIONS_ICONS, PRECISION_FLOW_ICONS, WORD_POWER_ICONS, KEYBOARD_MASTERY_ICONS, SPEED_SURGE_ICONS, FREE_RUN_ICONS, CENTURY_CLUB_ICONS, ENDURANCE_ICONS, LITERATURE_ICONS, MACHINE_MODE_ICONS, LEGEND_TIER_ICONS, IconStar } from "./icons/LevelIcons";
+import { FOUNDATIONS_ICONS, PRECISION_FLOW_ICONS, WORD_POWER_ICONS, KEYBOARD_MASTERY_ICONS, SPEED_SURGE_ICONS, FREE_RUN_ICONS, CENTURY_CLUB_ICONS, ENDURANCE_ICONS, LITERATURE_ICONS, MACHINE_MODE_ICONS, LEGEND_TIER_ICONS, SPEED_SURGE_II_ICONS, IconStar } from "./icons/LevelIcons";
 import { formatKeys } from "@/lib/format";
 import { CertificateModal } from "./Certificates";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
@@ -324,6 +324,16 @@ const LEVELS = [
   { id:168, name:"Legend VIII",         emoji:"💀", wpmTarget:0, accuracy:75, color:"#a855f7", words:["itwasthebestoftimesitwastheworstoftimesitwastheageofwisdomandfoolishness","tobeornottobethatisthequestionwhetheritisnobler","fourscoreandsevenyearsagoourforefathersbroughtforthupon"] },
   { id:169, name:"Legend IX",           emoji:"💀", wpmTarget:0, accuracy:75, color:"#06b6d4", words:["thefastesthumantypistinhistorycouldtype216wordsperminuteconsistently","moderncomputerkeyboardsaredesignedforspeedaccuracyandcomfort","thetypewriterrevolutionizedbusinesscommunicationinthenineteenthcentury"] },
   { id:170, name:"True Final Boss",     emoji:"☠️", wpmTarget:0, accuracy:75, color:"#10b981", words:["practiceisthemotherof allskillsthemorey outypethemoreyouimprove","youdontneedtobeperfectyouneedtobepersistentandconsistent","thekeyboardisaninstrumentandlikeallinstrumentsitmustbepracticed"] },
+  { id:171, name:"Burst Drill",         emoji:"⚡", wpmTarget:70, accuracy:75, color:"#facc15", words:["zip","tap","hop","dip","zap","pop","tip","top","sip","pip","wax","fix","mix","box","fox","wig","jig","rig","big","dig"] },
+  { id:172, name:"Sprint Patterns",     emoji:"💨", wpmTarget:75, accuracy:75, color:"#fbbf24", words:["fjfjfj","dkdkdk","slslsl","kakaka","jhjhjh","gfgfgf","hjhjhj","ueueue","rfrfrf","tytyty","qaqaqa","wswsws","edeede","rfrfrf","vbvbvb"] },
+  { id:173, name:"Quick Commands",      emoji:"⌨️", wpmTarget:73, accuracy:75, color:"#4ade80", words:["lscd","mkdir","rmrf","catfile","grepfind","chmodx","sudoapt","npmrun","pipinstall","dockerrun","kubectl","curlget","sshconnect","tarxvf","psaux"] },
+  { id:174, name:"Rapid Pairs",         emoji:"🔁", wpmTarget:76, accuracy:75, color:"#60a5fa", words:["updown","inout","onoff","yesno","hotcold","bigsmall","fastslow","loudquiet","openclose","pushpull","leftright","topbottom","earlylate","oldnew","wetdry"] },
+  { id:175, name:"Flash Phrases",       emoji:"⚡", wpmTarget:78, accuracy:75, color:"#a78bfa", words:["gofast","betterready","movequick","stayfocused","keeppace","pushharder","trustyourself","staysharp","keepgoing","nevergiveup"] },
+  { id:176, name:"Velocity Check",      emoji:"🚀", wpmTarget:80, accuracy:75, color:"#f472b6", words:["acceleration","momentum","velocity","trajectory","propulsion","thrust","kinetic","dynamic","rapid","swift","brisk","nimble","agile","fleet","speedy"] },
+  { id:177, name:"Tight Turns",         emoji:"🌀", wpmTarget:82, accuracy:75, color:"#fb923c", words:["zigzag","switchback","hairpin","corkscrew","spiral","twist","pivot","swerve","veer","curve","bend","loop","weave","wind","turn"] },
+  { id:178, name:"Overdrive",           emoji:"🔥", wpmTarget:85, accuracy:75, color:"#ef4444", words:["overdrive","afterburner","redline","fullthrottle","maxspeed","topgear","highoctane","turbocharged","supercharged","nitroboost"] },
+  { id:179, name:"Final Sprint",        emoji:"🏁", wpmTarget:88, accuracy:75, color:"#34d399", words:["thefinishlineisinsightpushthroughtotheend","onelaststretchbeforevictoryisyours","everysteptakenbringsyoucloser tothegoal"] },
+  { id:180, name:"Peak Velocity",       emoji:"⚡", wpmTarget:92, accuracy:75, color:"#fbbf24", words:["thequickbrownfoxjumpsoverthelazydogagainandagain","speedwithoutaccuracyisjustchaosbalanceisthekey","masteryisntaboutspeedaloneitsaboutconsistentprecisionatpace"] },
 ];
 
 
@@ -3106,6 +3116,7 @@ const Nav = () => (<>
               { firstId:131, label:"Literature",       subtitle:"Philosophy, scripture, Shakespeare, US history",     color:"#fbbf24", icon:"L" },
               { firstId:146, label:"Machine Mode",     subtitle:"Finger fury, code marathons, length-based gauntlets", color:"#f97316", icon:"M" },
               { firstId:156, label:"Legend Tier",      subtitle:"The final stretch — nine crowns and one last boss",          color:"#dc2626", icon:"X" },
+              { firstId:171, label:"Speed Surge II",   subtitle:"Beyond the ending — pure velocity training",                color:"#fbbf24", icon:"S" },
             ];
 
             const sectionStartIds = new Set(SECTIONS.map(s => s.firstId));
@@ -3206,7 +3217,7 @@ const Nav = () => (<>
                   const unlocked=lv.id<=highestUnlocked,current=lv.id===currentLevel,completed=lv.id<highestUnlocked,locked=!unlocked,canSkipTo=lv.id===highestUnlocked+1;
                   const xPct = xFrac(idx)*100;
                   const topPx = row.y;
-                  const IconComp = FOUNDATIONS_ICONS[lv.id]||PRECISION_FLOW_ICONS[lv.id]||WORD_POWER_ICONS[lv.id]||KEYBOARD_MASTERY_ICONS[lv.id]||SPEED_SURGE_ICONS[lv.id]||FREE_RUN_ICONS[lv.id]||CENTURY_CLUB_ICONS[lv.id]||ENDURANCE_ICONS[lv.id]||LITERATURE_ICONS[lv.id]||MACHINE_MODE_ICONS[lv.id]||LEGEND_TIER_ICONS[lv.id]||null;
+                  const IconComp = FOUNDATIONS_ICONS[lv.id]||PRECISION_FLOW_ICONS[lv.id]||WORD_POWER_ICONS[lv.id]||KEYBOARD_MASTERY_ICONS[lv.id]||SPEED_SURGE_ICONS[lv.id]||FREE_RUN_ICONS[lv.id]||CENTURY_CLUB_ICONS[lv.id]||ENDURANCE_ICONS[lv.id]||LITERATURE_ICONS[lv.id]||MACHINE_MODE_ICONS[lv.id]||LEGEND_TIER_ICONS[lv.id]||SPEED_SURGE_II_ICONS[lv.id]||null;
                   return (
                     <div key={lv.id} id={`lvl-${lv.id}`} ref={current?currentLevelNodeRef:null} style={{position:"absolute",top:topPx,left:`${xPct}%`,transform:"translateX(-50%)",display:"flex",flexDirection:"column",alignItems:"center",zIndex:1}}>
                       <div onClick={()=>{

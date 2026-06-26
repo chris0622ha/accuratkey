@@ -53,7 +53,7 @@ const TOPICS: Record<string, Topic> = {
       { heading: '6. Pass and progress', body: 'Each level has a WPM target and minimum accuracy. Pass to unlock the next level and earn {KKEY} Keys. You can replay levels anytime to improve your personal best.' },
     ],
     faqs: [
-      ['Do I need an account?', 'No. Guest mode gives full access to all 170 levels and all 32 games. Progress saves in your browser. Sign up to sync across devices, use friends and daily challenge features.'],
+      ['Do I need an account?', 'No. Guest mode gives full access to all 180 levels and all 32 games. Progress saves in your browser. Sign up to sync across devices, use friends and daily challenge features.'],
       ['Is AccuratKey free?', 'Yes, AccuratKey is completely free (may add subscriptions or one-time payments in the future). Keys are earned by playing and can also be purchased directly.'],
       ['What browsers are supported?', 'Chrome, Firefox, Safari, and Edge. Chrome is recommended for best performance.'],
       ['Can kids use AccuratKey?', 'Yes. The age-adaptive system adjusts font sizes, word complexity, and level cap based on the birthday you enter. Kids under 10 get larger fonts and simpler words.'],
@@ -62,9 +62,9 @@ const TOPICS: Record<string, Topic> = {
 
   'levels': {
     title: 'Levels & Progress', emoji: '📈', color: '#34d399',
-    intro: 'AccuratKey has 170 levels of increasing difficulty, each targeting a specific typing skill.',
+    intro: 'AccuratKey has 180 levels of increasing difficulty, each targeting a specific typing skill.',
     sections: [
-      { heading: 'The Level Map', body: 'The Level Map shows all 170 levels as connected nodes. Completed levels show ✓ in their color. Your current level glows with a pulse ring. Locked levels show 🔒. Tap a level to start or replay it.' },
+      { heading: 'The Level Map', body: 'The Level Map shows all 180 levels as connected nodes. Completed levels show ✓ in their color. Your current level glows with a pulse ring. Locked levels show 🔒. Tap a level to start or replay it.' },
       { heading: 'WPM (Words Per Minute)', body: 'WPM is calculated as (characters typed ÷ 5) ÷ minutes elapsed. Dividing by 5 is the standard industry method to normalize "word" length. Most people type 40–60 WPM normally; touch typists reach 80–120+.' },
       { heading: 'Accuracy', body: 'Accuracy is the percentage of characters you pressed correctly on the first keypress. There is no Backspace — every typo is permanent and counted against your accuracy. This is a stricter measure than most typing sites.' },
       { heading: 'Why no Backspace?', body: 'AccuratKey deliberately disables Backspace. The goal is to train your fingers to press the right key the first time, building genuine muscle memory. Sites that allow Backspace teach speed-and-fix, not accuracy. You\'ll improve faster this way.' },
@@ -269,7 +269,7 @@ const TOPICS: Record<string, Topic> = {
       { heading: 'Under 7 years old', body: 'Purple/indigo theme. Comic Sans or Chalkboard font (larger, rounder). Only the simplest 3–4 letter words. Maximum level 5. Large emoji icons. Simplified navigation.' },
       { heading: '7–9 years old', body: 'Soft purple theme. Slightly larger fonts. Simple words, some medium-length words. Maximum level 10. Full navigation but with simplified labels.' },
       { heading: '10–12 years old', body: 'Indigo theme. Standard font with slightly larger size. Normal word pool up to 7 letters. Maximum level 12.' },
-      { heading: '13+ years old', body: 'Full dark theme. JetBrains Mono font at standard size. Full word pool. All 170 levels. All features available (subject to Feature Access settings).' },
+      { heading: '13+ years old', body: 'Full dark theme. JetBrains Mono font at standard size. Full word pool. All 180 levels. All features available (subject to Feature Access settings).' },
       { heading: 'Font size scaling', body: 'The app uses relative sizing throughout. If you find text too small, try a theme with a larger base font, or use your browser\'s zoom (Ctrl/Cmd + on desktop).' },
       { heading: 'Color themes', body: 'Many themes are available in the Shop. High-contrast options are available. Dark mode is the default. Switch to a light theme in the Shop if you prefer.' },
       { heading: 'Keyboard-only navigation', body: 'AccuratKey is primarily keyboard-driven by design. All interactions during typing tests are keyboard-only. Navigation buttons are large and touch-friendly for mobile users with a connected keyboard.' },
