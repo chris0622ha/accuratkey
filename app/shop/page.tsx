@@ -1,3 +1,3 @@
-import TypingGame from '@/components/TypingGame';
-export const dynamic = 'force-dynamic';
-export default function Page() { return <TypingGame />; }
+export const dynamic = "force-dynamic";
+import ShopPage from "@/components/ShopPage";
+export default function Shop() { return <ShopPage />; }
