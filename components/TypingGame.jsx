@@ -4124,7 +4124,6 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
       const stats = [
         { label: "WPM", value: String(rWpm), color: "#7c6af7" },
         { label: "Accuracy", value: rAcc + "%", color: "#34d399" },
-        { label: "Stars", value: "★".repeat(stars) + "☆".repeat(3 - stars), color: "#facc15" },
       ];
       const statsTop = 390;
       const colW = (W - 200) / stats.length;
@@ -4134,7 +4133,7 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
         ctx.beginPath(); ctx.roundRect(x - colW/2 + 10, statsTop, colW - 20, 88, 12); ctx.fill();
         ctx.strokeStyle = "#1e1e30"; ctx.lineWidth = 1; ctx.stroke();
         ctx.fillStyle = s.color;
-        ctx.font = `bold ${s.label === "Stars" ? 28 : 34}px 'JetBrains Mono', monospace`;
+        ctx.font = `bold 34px 'JetBrains Mono', monospace`;
         ctx.fillText(s.value, x, statsTop + 52);
         ctx.fillStyle = "#444";
         ctx.font = "13px 'JetBrains Mono', monospace";
