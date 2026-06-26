@@ -1274,15 +1274,33 @@ export default function AccuratKey() {
     check();
     window.addEventListener("resize", check);
     // Detect physical keyboard — if they press a real key, let them through
+    let lastKeyTime = 0;
     const onKey = (e) => {
       // Ignore if it's a software keyboard (mobile virtual)
       // Physical keyboards fire events even on touch devices
       if (e.key && e.key.length === 1 || ['Backspace','Enter','Tab','Shift','Control','Alt','CapsLock','ArrowLeft','ArrowRight'].includes(e.key)) {
+        lastKeyTime = Date.now();
         setHasKeyboard(true);
       }
     };
     window.addEventListener("keydown", onKey);
-    return () => { window.removeEventListener("resize", check); window.removeEventListener("keydown", onKey); };
+    // hasKeyboard previously only ever flipped true once, on the first
+    // keypress, and never back - so disconnecting a Bluetooth keyboard (or
+    // unplugging a wired one) after that first keypress never re-triggered
+    // the block screen, even though there's genuinely no keyboard present
+    // anymore. There's no universal "keyboard disconnected" browser event
+    // to hook into directly, so this checks for prolonged silence instead:
+    // if it's been a long while since the last real keypress while still
+    // on mobile, treat it the same as never having had a keyboard, so the
+    // block screen can re-appear and require proving a keyboard is present
+    // again.
+    const staleCheck = setInterval(() => {
+      if (lastKeyTime && Date.now() - lastKeyTime > 5 * 60 * 1000) {
+        setHasKeyboard(false);
+        lastKeyTime = 0;
+      }
+    }, 30000);
+    return () => { window.removeEventListener("resize", check); window.removeEventListener("keydown", onKey); clearInterval(staleCheck); };
   }, []);
 
   useEffect(() => {
