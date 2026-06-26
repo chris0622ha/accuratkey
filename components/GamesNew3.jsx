@@ -882,4 +882,153 @@ export function TugOfWar({ T, onBack, onSettings, settings={}, multiplayer=null 
   );
 }
 
-export default { SpeedTest, MissingLetters, Anagram, BrickBreaker, Quotes, HaikuMode, Synonyms, Antonyms, TugOfWar };
+// ─── WORD BOMB ──────────────────────────────────────────────────────────────
+// A bomb appears with a word and a visible countdown. Type the word exactly
+// before the timer hits zero to defuse it. Miss the deadline and it
+// explodes - lose a life. Each successful defuse shortens the fuse for the
+// next bomb, so the pressure ramps up round over round.
+export function WordBomb({ T, onBack, onSettings, settings={} }) {
+  const diff = settings.difficulty || "medium";
+  const STARTING_LIVES = settings.lives || 3;
+  const STARTING_FUSE = { easy: 6000, medium: 4500, hard: 3000 }[diff] || 4500;
+  const MIN_FUSE = 1200;
+  const [words, setWords] = useState(() => pickByDiff(60, diff));
+  const [wordIdx, setWordIdx] = useState(0);
+  const [typed, setTyped] = useState("");
+  const [fuseMax, setFuseMax] = useState(STARTING_FUSE);
+  const [fuseLeft, setFuseLeft] = useState(STARTING_FUSE);
+  const [lives, setLives] = useState(STARTING_LIVES);
+  const [score, setScore] = useState(0);
+  const [best, setBest] = useState(0);
+  const [status, setStatus] = useState("playing"); // playing | exploded | done
+  const [exploding, setExploding] = useState(false);
+  const [muted, setMuted] = useState(()=>{try{return localStorage.getItem("ak_sfx_muted")==="1";}catch{return false;}});
+  const ref = useRef(null);
+  const fuseRef = useRef(STARTING_FUSE);
+  const livesRef = useRef(STARTING_LIVES);
+  const frameRef = useRef(null);
+  const target = words[wordIdx % words.length] || words[0];
+
+  useEffect(() => { if (status==="playing") ref.current?.focus(); }, [status, wordIdx]);
+  useEffect(() => { if (status==="playing") gSave("wordbomb", { wordIdx, score, lives: livesRef.current }); }, [wordIdx, score, status]);
+
+  // Fuse countdown loop - real elapsed time, not a fixed tick count, so it
+  // stays accurate even if the tab briefly loses focus.
+  useEffect(() => {
+    if (status !== "playing") return;
+    let last = performance.now();
+    const loop = (now) => {
+      const dt = now - last; last = now;
+      fuseRef.current = Math.max(0, fuseRef.current - dt);
+      setFuseLeft(fuseRef.current);
+      if (fuseRef.current <= 0) {
+        // Boom - missed the deadline
+        setExploding(true);
+        if (!muted) playTone(90, "sawtooth", 0.4, 0.25);
+        livesRef.current -= 1;
+        setLives(livesRef.current);
+        setTimeout(() => {
+          setExploding(false);
+          if (livesRef.current <= 0) {
+            setStatus("done");
+          } else {
+            nextBomb(fuseMax); // same fuse length, didn't earn a shorter one
+          }
+        }, 500);
+        return;
+      }
+      frameRef.current = requestAnimationFrame(loop);
+    };
+    frameRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(frameRef.current);
+  }, [status, wordIdx, muted, fuseMax]);
+
+  const nextBomb = (useFuse) => {
+    setTyped("");
+    setWordIdx(i => {
+      const next = i + 1;
+      if (next >= words.length) setWords(w => [...w, ...pickByDiff(40, diff)]);
+      return next;
+    });
+    fuseRef.current = useFuse;
+    setFuseLeft(useFuse);
+    setTimeout(() => ref.current?.focus(), 30);
+  };
+
+  const handleType = e => {
+    if (status !== "playing" || exploding) return;
+    const v = e.target.value;
+    setTyped(v);
+    if (v === target) {
+      if (!muted) playTone(880, "sine", 0.1, 0.18);
+      const newScore = score + 1;
+      setScore(newScore);
+      setBest(b => Math.max(b, newScore));
+      // Shorten the fuse a bit each successful defuse, floor at MIN_FUSE,
+      // so the game genuinely ramps up rather than staying flat forever.
+      const shorter = Math.max(MIN_FUSE, fuseMax - 120);
+      setFuseMax(shorter);
+      nextBomb(shorter);
+    }
+  };
+
+  const reset = () => {
+    setWords(pickByDiff(60, diff)); setWordIdx(0); setTyped("");
+    setFuseMax(STARTING_FUSE); fuseRef.current = STARTING_FUSE; setFuseLeft(STARTING_FUSE);
+    livesRef.current = STARTING_LIVES; setLives(STARTING_LIVES);
+    setScore(0); setStatus("playing"); setExploding(false);
+    gClear("wordbomb");
+    setTimeout(() => ref.current?.focus(), 50);
+  };
+
+  if (status === "done") {
+    return (
+      <div style={{padding:"4px 0"}}>
+        <BackBtn onBack={onBack} onSettings={onSettings} T={T} />
+        <div style={{marginTop:14}}>
+          <ResultScreen emoji="💥" title="Boom — out of lives" color="#ef4444" stats={[["Bombs defused", score],["Best", best]]} onRetry={reset} T={T} />
+        </div>
+      </div>
+    );
+  }
+
+  const fusePct = fuseMax > 0 ? Math.max(0, fuseLeft / fuseMax) : 0;
+  const urgent = fusePct < 0.25;
+
+  return (
+    <div style={{padding:"4px 0"}}>
+      <div style={{display:"flex",alignItems:"center",marginBottom:14}}>
+        <BackBtn onBack={onBack} onSettings={onSettings} T={T} />
+        <SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T} />
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",marginBottom:10,fontSize:12}}>
+        <span style={{color:T.purple,fontWeight:700}}>Defused: {score}</span>
+        <span>{"💣".repeat(Math.max(0,lives))}{"⬛".repeat(Math.max(0,STARTING_LIVES-lives))}</span>
+      </div>
+
+      <div style={{textAlign:"center",marginBottom:18}}>
+        <div style={{fontSize:64,marginBottom:6,filter: exploding ? "none" : "none", transform: exploding ? "scale(1.4)" : "scale(1)", transition:"transform .15s"}}>
+          {exploding ? "💥" : "💣"}
+        </div>
+        <div style={{height:10,borderRadius:5,background:T.bg,border:`1px solid ${T.border}`,overflow:"hidden",maxWidth:280,margin:"0 auto"}}>
+          <div style={{height:"100%",width:`${fusePct*100}%`,background: urgent ? "#ef4444" : "#facc15",transition:"width .05s linear, background .3s"}} />
+        </div>
+        <div style={{color: urgent ? "#ef4444" : T.faint, fontSize:13,fontWeight:700,marginTop:6}}>{(fuseLeft/1000).toFixed(1)}s</div>
+      </div>
+
+      <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"24px 20px",textAlign:"center",marginBottom:14}}>
+        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:26,fontWeight:700,letterSpacing:1}}>
+          {target.split("").map((ch,i)=>(
+            <span key={i} style={{color: i<typed.length ? (typed[i]===ch?"#10b981":"#ef4444") : T.text}}>{ch}</span>
+          ))}
+        </div>
+      </div>
+
+      <input ref={ref} value={typed} onChange={handleType} disabled={exploding} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
+        placeholder="Defuse the bomb — type the word..."
+        style={{width:"100%",background:T.bg,border:`1px solid ${urgent?"#ef4444":T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box",transition:"border-color .2s"}} />
+    </div>
+  );
+}
+
+export default { SpeedTest, MissingLetters, Anagram, BrickBreaker, Quotes, HaikuMode, Synonyms, Antonyms, TugOfWar, WordBomb };
