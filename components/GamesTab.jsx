@@ -1108,7 +1108,7 @@ export default function GamesTab({ T }) {
     setSettings(null); // show settings first
     setShowSettings(true);
     if (typeof window !== "undefined") {
-      window.history.replaceState({}, "", `/games/${id}`);
+      window.history.pushState({}, "", `/games/${id}`);
       localStorage.setItem("ak_active_game", id);
     }
   };
@@ -1133,7 +1133,29 @@ export default function GamesTab({ T }) {
     }
   }, []);
 
-  const startGame = (s) => { setSettings(s); setShowSettings(false); };
+  // Browser back while actually playing returns to the settings screen
+  // instead of leaving the games tab entirely - previously entering a game
+  // and starting play only ever did history.replaceState (never pushState),
+  // so there was no real history step between "in the menu," "on the
+  // settings screen," and "actively playing" - pressing back from mid-game
+  // skipped straight past both and out of the Games tab altogether.
+  useEffect(() => {
+    const onPop = () => {
+      if (activeGame && !showSettings && settings) {
+        setShowSettings(true);
+      }
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [activeGame, showSettings, settings]);
+
+  const startGame = (s) => {
+    setSettings(s);
+    setShowSettings(false);
+    if (typeof window !== "undefined") {
+      window.history.pushState({}, "", `/games/${activeGame}/play`);
+    }
+  };
 
   const GAME_COMPONENTS = {
     rain: WordRain, survival: Survival, burst: SpeedBurst, scramble: WordScramble,
