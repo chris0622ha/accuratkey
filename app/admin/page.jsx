@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { onAuthStateChanged, signInWithPopup, signOut, signInWithEmailAndPassword, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth";
 import { getAdminAuth, getAdminDb, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, adminSetProfileAdmin, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest, replyToFeedback, getFlaggedScores, getRestoreRequests, approveFlaggedScore, dismissFlaggedScore, resolveRestoreRequest, getCoppaAuditSummary, runCoppaCleanup } from "@/lib/firebase";
+import { KKey } from "@/components/icons/KKey";
 const LEVELS = [
   { id:1,  name:"Home Row Hero",         emoji:"🏠", wpmTarget:12,  accuracy:75, color:"#10b981", words:["ffjj","fjfj","asdf","jkl;","add","ask","fall","glad","flask","lads","fads","salads"] },
   { id:2,  name:"Top Row Climber",       emoji:"🧗", wpmTarget:16,  accuracy:75, color:"#3b82f6", words:["quit","wrap","type","your","power","tower","write","pretty","quite","report"] },
@@ -997,7 +998,7 @@ export default function AdminPage() {
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
                   <div>
                     <div style={{color:T.text,fontWeight:700,fontSize:12,marginBottom:4}}>{p.name}</div>
-                    <div style={{color:T.accent,fontSize:11}}>Lv {p.currentLevel||1} · {p.keys||0} 🔑</div>
+                    <div style={{color:T.accent,fontSize:11,display:"flex",alignItems:"center",gap:3}}>Lv {p.currentLevel||1} · {p.keys||0} <KKey size={10}/></div>
                     {trialsMsgs[p.id]&&<div style={{color:T.accent,fontSize:11}}>{trialsMsgs[p.id]}</div>}
                   </div>
                   <div style={{display:"flex",gap:6,alignItems:"center"}}>

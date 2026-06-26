@@ -1,9 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
-import { auth, getProfile, getProfiles, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, isProfileRestricted, updateProfileLocal } from "@/lib/firebase";
+import { useState, useEffect, useRef } from "react";
+import { auth, getProfile, getProfiles, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, isProfileRestricted, updateProfileLocal } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { KKey } from "./icons/KKey";
+import { formatKeys } from "@/lib/format";
 
 // ─── ALL THEMES ──────────────────────────────────────────────────────────────
 export const ALL_THEMES = [
@@ -159,6 +161,66 @@ export const ALL_FONTS = [
     css:"'Cormorant Garamond', serif", preview:"AaBbCc 123" },
   { id:"crimsonpro", label:"Crimson Pro",    cost:150, category:"Elegant", google:"Crimson+Pro:wght@400;700",
     css:"'Crimson Pro', serif", preview:"AaBbCc 123" },
+  { id:"eb_garamond",label:"EB Garamond",    cost:150, category:"Elegant", google:"EB+Garamond:wght@400;700",
+    css:"'EB Garamond', serif", preview:"AaBbCc 123" },
+  { id:"lora",       label:"Lora",           cost:150, category:"Elegant", google:"Lora:wght@400;700",
+    css:"'Lora', serif", preview:"AaBbCc 123" },
+
+  // MONOSPACE EXTRAS (50🔑)
+  { id:"ibmplexmono",label:"IBM Plex Mono",  cost:50,  category:"Monospace", google:"IBM+Plex+Mono:wght@400;700",
+    css:"'IBM Plex Mono', monospace", preview:"AaBbCc 123" },
+  { id:"cascadia",   label:"Cascadia Code",  cost:50,  category:"Monospace", google:"Roboto+Mono:wght@400;700",
+    css:"'Roboto Mono', monospace", preview:"AaBbCc 123" },
+  { id:"notosamono", label:"Noto Sans Mono", cost:50,  category:"Monospace", google:"Noto+Sans+Mono:wght@400;700",
+    css:"'Noto Sans Mono', monospace", preview:"AaBbCc 123" },
+  { id:"overpassmono",label:"Overpass Mono", cost:50,  category:"Monospace", google:"Overpass+Mono:wght@400;700",
+    css:"'Overpass Mono', monospace", preview:"AaBbCc 123" },
+  { id:"sharetechmono",label:"Share Tech Mono",cost:50,category:"Monospace", google:"Share+Tech+Mono",
+    css:"'Share Tech Mono', monospace", preview:"AaBbCc 123" },
+  { id:"anonymouspro",label:"Anonymous Pro",  cost:50, category:"Monospace", google:"Anonymous+Pro:wght@400;700",
+    css:"'Anonymous Pro', monospace", preview:"AaBbCc 123" },
+
+  // SANS EXTRAS (75🔑)
+  { id:"manrope",    label:"Manrope",        cost:75,  category:"Sans-Serif", google:"Manrope:wght@400;700",
+    css:"'Manrope', sans-serif", preview:"AaBbCc 123" },
+  { id:"plusjakarta",label:"Plus Jakarta Sans",cost:75,category:"Sans-Serif", google:"Plus+Jakarta+Sans:wght@400;700",
+    css:"'Plus Jakarta Sans', sans-serif", preview:"AaBbCc 123" },
+  { id:"syne",       label:"Syne",           cost:75,  category:"Sans-Serif", google:"Syne:wght@400;700",
+    css:"'Syne', sans-serif", preview:"AaBbCc 123" },
+  { id:"figtree",    label:"Figtree",        cost:75,  category:"Sans-Serif", google:"Figtree:wght@400;700",
+    css:"'Figtree', sans-serif", preview:"AaBbCc 123" },
+  { id:"onest",      label:"Onest",          cost:75,  category:"Sans-Serif", google:"Onest:wght@400;700",
+    css:"'Onest', sans-serif", preview:"AaBbCc 123" },
+  { id:"geist",      label:"Geist",          cost:75,  category:"Sans-Serif", google:"Geist:wght@400;700",
+    css:"'Geist', sans-serif", preview:"AaBbCc 123" },
+
+  // DISPLAY EXTRAS (100🔑)
+  { id:"jura",       label:"Jura",           cost:100, category:"Display", google:"Jura:wght@400;700",
+    css:"'Jura', sans-serif", preview:"AaBbCc 123" },
+  { id:"quantico",   label:"Quantico",       cost:100, category:"Display", google:"Quantico:wght@400;700",
+    css:"'Quantico', sans-serif", preview:"AaBbCc 123" },
+  { id:"oxanium",    label:"Oxanium",        cost:100, category:"Display", google:"Oxanium:wght@400;700",
+    css:"'Oxanium', sans-serif", preview:"AaBbCc 123" },
+  { id:"tektur",     label:"Tektur",         cost:100, category:"Display", google:"Tektur:wght@400;700",
+    css:"'Tektur', sans-serif", preview:"AaBbCc 123" },
+  { id:"tourney",    label:"Tourney",        cost:100, category:"Display", google:"Tourney:wght@400;700",
+    css:"'Tourney', sans-serif", preview:"AaBbCc 123" },
+  { id:"blender",    label:"Blinker",        cost:100, category:"Display", google:"Blinker:wght@400;700",
+    css:"'Blinker', sans-serif", preview:"AaBbCc 123" },
+
+  // FUN EXTRAS (125🔑)
+  { id:"chewy",      label:"Chewy",          cost:125, category:"Fun", google:"Chewy",
+    css:"'Chewy', cursive", preview:"AaBbCc 123" },
+  { id:"rubikbubbles",label:"Rubik Bubbles", cost:125, category:"Fun", google:"Rubik+Bubbles",
+    css:"'Rubik Bubbles', cursive", preview:"AaBb" },
+  { id:"permanentmarker",label:"Permanent Marker",cost:125,category:"Fun",google:"Permanent+Marker",
+    css:"'Permanent Marker', cursive", preview:"AaBbCc" },
+  { id:"creepster",  label:"Creepster",      cost:125, category:"Fun", google:"Creepster",
+    css:"'Creepster', cursive", preview:"AaBbCc 123" },
+  { id:"domine",     label:"Domine",         cost:125, category:"Fun", google:"Domine:wght@400;700",
+    css:"'Domine', serif", preview:"AaBbCc 123" },
+  { id:"ultra",      label:"Ultra",          cost:125, category:"Fun", google:"Ultra",
+    css:"'Ultra', serif", preview:"AaBbCc" },
 ];
 
 // Load Google Fonts dynamically
@@ -177,15 +239,45 @@ function loadFont(font) {
 const CATEGORIES_THEMES = ["Classic","Nature","Neon","Soft","Special"];
 const CATEGORIES_FONTS  = ["Monospace","Sans-Serif","Display","Fun","Elegant"];
 
+export const SOUND_THEMES = [
+  { id:"default",   label:"Default",     emoji:"🔊", cost:0,   desc:"Synthesized beeps and chimes" },
+  { id:"mechanical",label:"Mechanical",  emoji:"⌨️", cost:30,  desc:"Satisfying clicky keyboard sounds" },
+  { id:"typewriter",label:"Typewriter",  emoji:"📜", cost:30,  desc:"Classic old-school typewriter" },
+  { id:"soft",      label:"Soft",        emoji:"🎵", cost:20,  desc:"Muted, gentle key presses" },
+  { id:"arcade",    label:"Arcade",      emoji:"🕹️", cost:40,  desc:"8-bit game sound effects" },
+  { id:"nature",    label:"Nature",      emoji:"🌿", cost:50,  desc:"Subtle natural ambient sounds" },
+];
+
 export default function ShopPage() {
+  const previewSound = (soundId) => {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const t = ctx.currentTime;
+      const beep = (freq, start, dur, vol=0.3) => {
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.frequency.value = freq; g.gain.setValueAtTime(vol, t+start);
+        g.gain.exponentialRampToValueAtTime(0.001, t+start+dur);
+        o.start(t+start); o.stop(t+start+dur+0.05);
+      };
+      if (soundId === "default") { beep(880,0,0.08); beep(660,0.15,0.08); beep(1100,0.35,0.2); }
+      else if (soundId === "mechanical") { [0,0.12,0.24].forEach(d=>beep(2200+Math.random()*200,d,0.04,0.15)); beep(3000,0.45,0.06,0.2); }
+      else if (soundId === "typewriter") { [0,0.1,0.2].forEach(d=>beep(1800,d,0.03,0.2)); beep(2400,0.4,0.12,0.25); }
+      else if (soundId === "soft") { beep(660,0,0.15,0.15); beep(440,0.2,0.12,0.1); beep(880,0.4,0.3,0.2); }
+      else if (soundId === "arcade") { beep(220,0,0.05); beep(440,0.08,0.05); [0,0.15,0.3,0.45].forEach((d,i)=>beep(220+i*110,0.5+d,0.08)); }
+      else if (soundId === "nature") { beep(1200,0,0.2,0.15); beep(900,0.3,0.15,0.1); beep(1600,0.55,0.4,0.18); }
+    } catch(e) {}
+  };
   const router = useRouter();
   const [user, setUser]               = useState(null);
   const [profiles, setProfiles]       = useState([]);
   const [activeProfile, setActiveProfile] = useState(null);
-  const [tab, setTab]                 = useState("themes"); // "themes" | "fonts"
+  const [tab, setTab]                 = useState("themes"); // "themes" | "fonts" | "sounds"
   const [catFilter, setCatFilter]     = useState("all");
   const [msg, setMsg]                 = useState("");
   const [loading, setLoading]         = useState(true);
+  // Purchase confirmation dialog: { label, cost, onConfirm } | null
+  const [confirmPurchase, setConfirmPurchase] = useState(null);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async u => {
@@ -207,59 +299,160 @@ export default function ShopPage() {
 
   const showMsg = m => { setMsg(m); setTimeout(() => setMsg(""), 2500); };
 
+  // ─── Trial system ───────────────────────────────────────────────────────────
+  const [trial, setTrial] = useState(null);
+  const [trialSecondsLeft, setTrialSecondsLeft] = useState(0);
+  const trialTimerRef = useRef(null);
+  const TRIAL_SECONDS = 30;
+  const MAX_TRIALS = 5; // per week
+
+  const getWeekKey = () => {
+    const d=new Date(),jan1=new Date(d.getFullYear(),0,1);
+    return `${d.getFullYear()}-w${Math.ceil((((d-jan1)/86400000)+jan1.getDay()+1)/7)}`;
+  };
+  const getTrialUsage = () => {
+    try {
+      const weekKey = getWeekKey();
+      // Check localStorage usage this week
+      const raw = localStorage.getItem("ak_trials");
+      const local = raw ? JSON.parse(raw) : {};
+      const localUsed = local.week === weekKey ? (local.count || 0) : 0;
+      // Check if admin granted extra trials (stored on profile)
+      const adminWeek = activeProfile?.trialWeek;
+      const adminCount = activeProfile?.trialCount;
+      const adminRemaining = adminWeek === weekKey && adminCount > 0 ? adminCount : 0;
+      // Effective max = base MAX_TRIALS + admin bonus
+      const effectiveMax = MAX_TRIALS + adminRemaining;
+      return { count: localUsed, week: weekKey, max: effectiveMax };
+    } catch { return { count: 0, week: getWeekKey(), max: MAX_TRIALS }; }
+  };
+
+  const startTrial = (themeId, fontId) => {
+    // If trial already running, allow swapping theme OR font within same trial
+    if (trial) {
+      const newT = {
+        ...trial,
+        themeId: themeId || trial.themeId,
+        fontId:  fontId  || trial.fontId,
+      };
+      setTrial(newT);
+      if (themeId) setActiveProfile(p => p ? {...p, activeTheme: themeId} : p);
+      if (fontId)  setActiveProfile(p => p ? {...p, activeFont: fontId}  : p);
+      showMsg(`Swapped ${themeId ? "theme" : "font"} — ${trialSecondsLeft}s left`);
+      return;
+    }
+    const usage = getTrialUsage();
+    if (usage.count >= usage.max) { showMsg(`Trial limit reached (${usage.max}/week)`); return; }
+    localStorage.setItem("ak_trials", JSON.stringify({ week: usage.week, count: usage.count + 1 }));
+    const prevTheme = activeProfile?.activeTheme || "dark";
+    const prevFont  = activeProfile?.activeFont  || "jetbrains";
+    const t = { themeId: themeId || prevTheme, fontId: fontId || prevFont, prevTheme, prevFont };
+    setTrial(t);
+    setTrialSecondsLeft(TRIAL_SECONDS);
+    if (themeId) setActiveProfile(p => p ? {...p, activeTheme: themeId} : p);
+    if (fontId)  setActiveProfile(p => p ? {...p, activeFont: fontId}  : p);
+    showMsg(`⏱ ${TRIAL_SECONDS}s trial! (${usage.max - usage.count - 1} left this week)`);
+    if (trialTimerRef.current) clearInterval(trialTimerRef.current);
+    trialTimerRef.current = setInterval(() => {
+      setTrialSecondsLeft(s => {
+        if (s <= 1) {
+          clearInterval(trialTimerRef.current);
+          setTrial(prev => { if(prev) { setActiveProfile(p => p ? {...p, activeTheme: prev.prevTheme, activeFont: prev.prevFont} : p); } return null; });
+          setTrialSecondsLeft(0);
+          setMsg("⏱ Trial ended — reverted");
+          setTimeout(() => setMsg(""), 2500);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+  };
+
+  const cancelTrial = () => {
+    if (!trial) return;
+    clearInterval(trialTimerRef.current);
+    setActiveProfile(p => p ? {...p, activeTheme: trial.prevTheme, activeFont: trial.prevFont} : p);
+    setTrial(null); setTrialSecondsLeft(0);
+    showMsg("Trial cancelled");
+  };
+
+  useEffect(() => () => { if (trialTimerRef.current) clearInterval(trialTimerRef.current); }, []);
+
+  // Optimistic update helper — updates UI instantly, syncs to Firestore in background
+  const optimistic = (patch) => {
+    setActiveProfile(p => ({ ...p, ...patch }));
+  };
+
   const handleBuyTheme = async (th) => {
     if (!activeProfile) return;
-    // Restricted (under-13) profiles never write to the real account doc -
-    // same pattern used everywhere else in the app for COPPA compliance.
-    // purchaseTheme no longer accepts a cost parameter - the real price is
-    // looked up server-side now, closing the price-tampering gap this file
-    // had when it was first built.
+    const newKeys = (activeProfile.keys || 0) - th.cost;
+    if (newKeys < 0) { showMsg("Not enough Keys"); return; }
+    // Instant UI update
+    optimistic({ keys: newKeys, ownedThemes: [...(activeProfile.ownedThemes || []), th.id] });
+    showMsg(`${th.label} unlocked! 🎉`);
     try {
+      // Restricted (under-13) profiles never write to the real account doc.
+      // purchaseTheme no longer accepts a cost argument either - the real
+      // price is looked up server-side now, which closes the exact
+      // price-tampering gap this page had (th.cost came straight from a
+      // plain client-side array, fully editable via DevTools before a
+      // purchase was ever sent).
       if (isProfileRestricted(activeProfile)) {
-        const newKeys = (activeProfile.keys||0) - th.cost;
-        if (newKeys < 0) { showMsg("Not enough 🔑 Keys"); return; }
-        updateProfileLocal(activeProfile.id, activeProfile, { keys:newKeys, ownedThemes:[...(activeProfile.ownedThemes||[]), th.id], activeTheme: th.id });
-        setActiveProfile({ ...activeProfile, keys:newKeys, ownedThemes:[...(activeProfile.ownedThemes||[]), th.id], activeTheme: th.id });
+        updateProfileLocal(activeProfile.id, activeProfile, { keys: newKeys, ownedThemes: [...(activeProfile.ownedThemes || []), th.id], activeTheme: th.id });
       } else {
         await purchaseTheme(user.uid, activeProfile.id, th.id);
-        const fresh = await (await import("@/lib/firebase")).getProfile(user.uid, activeProfile.id);
-        setActiveProfile(fresh);
       }
-      showMsg(`${th.label} unlocked! 🎉`);
-    } catch(e) { showMsg(e.message || "Not enough 🔑 Keys"); }
+    } catch(e) {
+      // Revert if Firestore says no
+      optimistic({ keys: activeProfile.keys, ownedThemes: activeProfile.ownedThemes });
+      showMsg(e.message || "Not enough Keys");
+    }
+  };
+
+  // Opens the confirmation dialog before spending Keys on a theme
+  const requestBuyTheme = (th) => {
+    if (!activeProfile) return;
+    setConfirmPurchase({ label: th.label, cost: th.cost, onConfirm: () => handleBuyTheme(th) });
   };
 
   const handleEquipTheme = async (th) => {
     if (!activeProfile) return;
-    await setActiveTheme(user.uid, activeProfile.id, th.id);
-    const fresh = await (await import("@/lib/firebase")).getProfile(user.uid, activeProfile.id);
-    setActiveProfile(fresh);
+    optimistic({ activeTheme: th.id });
     showMsg(`${th.label} equipped!`);
+    if (isProfileRestricted(activeProfile)) updateProfileLocal(activeProfile.id, activeProfile, { activeTheme: th.id });
+    else setActiveTheme(user.uid, activeProfile.id, th.id); // fire and forget
   };
 
   const handleBuyFont = async (f) => {
     if (!activeProfile) return;
+    const newKeys = (activeProfile.keys || 0) - f.cost;
+    if (newKeys < 0) { showMsg("Not enough Keys"); return; }
+    optimistic({ keys: newKeys, ownedFonts: [...(activeProfile.ownedFonts || []), f.id] });
+    showMsg(`${f.label} unlocked! 🎉`);
     try {
       if (isProfileRestricted(activeProfile)) {
-        const newKeys = (activeProfile.keys||0) - f.cost;
-        if (newKeys < 0) { showMsg("Not enough 🔑 Keys"); return; }
-        updateProfileLocal(activeProfile.id, activeProfile, { keys:newKeys, ownedFonts:[...(activeProfile.ownedFonts||[]), f.id], activeFont: f.id });
-        setActiveProfile({ ...activeProfile, keys:newKeys, ownedFonts:[...(activeProfile.ownedFonts||[]), f.id], activeFont: f.id });
+        updateProfileLocal(activeProfile.id, activeProfile, { keys: newKeys, ownedFonts: [...(activeProfile.ownedFonts || []), f.id], activeFont: f.id });
       } else {
         await purchaseFont(user.uid, activeProfile.id, f.id);
-        const fresh = await (await import("@/lib/firebase")).getProfile(user.uid, activeProfile.id);
-        setActiveProfile(fresh);
       }
-      showMsg(`${f.label} unlocked! 🎉`);
-    } catch(e) { showMsg(e.message || "Not enough 🔑 Keys"); }
+    } catch(e) {
+      optimistic({ keys: activeProfile.keys, ownedFonts: activeProfile.ownedFonts });
+      showMsg(e.message || "Not enough Keys");
+    }
+  };
+
+  // Opens the confirmation dialog before spending Keys on a font
+  const requestBuyFont = (f) => {
+    if (!activeProfile) return;
+    setConfirmPurchase({ label: f.label, cost: f.cost, onConfirm: () => handleBuyFont(f) });
   };
 
   const handleEquipFont = async (f) => {
     if (!activeProfile) return;
-    await setActiveFont(user.uid, activeProfile.id, f.id);
-    const fresh = await (await import("@/lib/firebase")).getProfile(user.uid, activeProfile.id);
-    setActiveProfile(fresh);
+    optimistic({ activeFont: f.id });
     showMsg(`${f.label} equipped!`);
+    if (isProfileRestricted(activeProfile)) updateProfileLocal(activeProfile.id, activeProfile, { activeFont: f.id });
+    else setActiveFont(user.uid, activeProfile.id, f.id); // fire and forget
   };
 
   const keys       = activeProfile?.keys || 0;
@@ -275,7 +468,7 @@ export default function ShopPage() {
     ? ALL_THEMES.filter(t => catFilter === "all" || t.category === catFilter)
     : ALL_FONTS.filter(f => catFilter === "all" || f.category === catFilter);
 
-  const cats = tab === "themes" ? CATEGORIES_THEMES : CATEGORIES_FONTS;
+  const cats = tab === "themes" ? CATEGORIES_THEMES : tab === "fonts" ? CATEGORIES_FONTS : [];
 
   if (loading) return (
     <div style={{minHeight:"100vh",background:"#0a0a0f",display:"flex",alignItems:"center",justifyContent:"center",color:"#7c6af7",fontFamily:"monospace",fontSize:16}}>
@@ -299,19 +492,31 @@ export default function ShopPage() {
           }} style={{background:T.bg,border:`1px solid ${T.border}`,color:T.text,borderRadius:6,padding:"4px 8px",fontSize:12,fontFamily:"inherit"}}>
             {profiles.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
-          <span style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:"4px 12px",fontSize:13,color:T.accent,fontWeight:700}}>
-            🔑 {keys >= 1e6 ? Math.round(keys/1e6)+"M" : keys >= 1e3 ? Math.round(keys/1e3)+"k" : keys}
+          <span style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:"4px 12px",fontSize:13,color:T.accent,fontWeight:700,display:"inline-flex",alignItems:"center",gap:5}}>
+            <KKey size={13}/> {formatKeys(keys)}
           </span>
         </div>
       </div>
 
       {/* Toast */}
       {msg && <div style={{position:"fixed",top:70,left:"50%",transform:"translateX(-50%)",background:T.purple,color:"#fff",padding:"8px 20px",borderRadius:20,fontSize:13,fontWeight:700,zIndex:999,boxShadow:"0 4px 20px rgba(0,0,0,0.4)"}}>{msg}</div>}
+      {/* Trial banner */}
+      {trial && (
+        <div style={{position:"fixed",top:0,left:0,right:0,zIndex:998,background:"#1a0a30",borderBottom:"2px solid #c084fc",padding:"8px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",fontFamily:"'JetBrains Mono',monospace"}}>
+          <div style={{color:"#c084fc",fontSize:12,fontWeight:700}}>
+            ⏱ TRIAL: {trialSecondsLeft}s left
+            <span style={{marginLeft:12,color:"#e0e0ff"}}>Theme: {ALL_THEMES.find(t=>t.id===trial.themeId)?.label || trial.themeId}</span>
+            <span style={{marginLeft:8,color:"#aaa"}}>·</span>
+            <span style={{marginLeft:8,color:"#e0e0ff"}}>Font: {ALL_FONTS.find(f=>f.id===trial.fontId)?.label || trial.fontId}</span>
+          </div>
+          <button onClick={cancelTrial} style={{background:"none",border:"1px solid #c084fc",borderRadius:6,color:"#c084fc",fontSize:11,padding:"3px 10px",cursor:"pointer",fontFamily:"inherit"}}>End trial</button>
+        </div>
+      )}
 
       <div style={{maxWidth:960,margin:"0 auto",padding:"24px 16px"}}>
         {/* Tab bar */}
         <div style={{display:"flex",gap:8,marginBottom:24}}>
-          {[["themes","🎨 Themes"],["fonts","✏️ Fonts"]].map(([k,l])=>(
+          {[["themes","🎨 Themes"],["fonts","✏️ Fonts"],["sounds","🔊 Sounds"]].map(([k,l])=>(
             <button key={k} onClick={()=>{setTab(k);setCatFilter("all");}} style={{padding:"10px 24px",borderRadius:8,border:"none",background:tab===k?T.purple:"transparent",color:tab===k?"#fff":T.muted,fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"inherit",border:`1px solid ${tab===k?T.purple:T.border}`}}>
               {l}
             </button>
@@ -343,7 +548,7 @@ export default function ShopPage() {
                   </div>
                   <div style={{padding:"12px 14px"}}>
                     <div style={{fontWeight:700,fontSize:13,color:th.text,marginBottom:2}}>{th.label}</div>
-                    <div style={{fontSize:10,color:th.muted,marginBottom:8}}>{th.category} · {th.cost===0?"Free":`${th.cost} 🔑`}</div>
+                    <div style={{fontSize:10,color:th.muted,marginBottom:8,display:"flex",alignItems:"center",gap:3}}>{th.category} · {th.cost===0?"Free":<>{th.cost} <KKey size={9}/></>}</div>
                     {/* Mini typing preview */}
                     <div style={{background:th.card,border:`1px solid ${th.border}`,borderRadius:6,padding:"6px 8px",marginBottom:10,fontSize:11,letterSpacing:1,fontFamily:th.font||"'JetBrains Mono',monospace"}}>
                       <span style={{color:th.purple}}>the</span>
@@ -358,9 +563,12 @@ export default function ShopPage() {
                         Equip
                       </button>
                     ) : (
-                      <button onClick={()=>handleBuyTheme(th)} style={{width:"100%",padding:"6px 0",background:th.purple+"22",border:`1px solid ${th.purple}`,borderRadius:6,color:th.purple,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                        Buy {th.cost} 🔑
-                      </button>
+                      <div style={{display:"flex",gap:4}}>
+                        <button onClick={()=>requestBuyTheme(th)} style={{flex:1,padding:"6px 0",background:th.purple+"22",border:`1px solid ${th.purple}`,borderRadius:6,color:th.purple,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
+                          Buy {th.cost} <KKey size={10}/>
+                        </button>
+                        {th.cost > 0 && <button onClick={()=>startTrial(th.id, null)} style={{padding:"6px 8px",background:"transparent",border:`1px solid ${th.border}`,borderRadius:6,color:th.muted,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}} title={trial ? "Swap theme in current trial" : "Try for 30s"}>Try</button>}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -380,7 +588,7 @@ export default function ShopPage() {
                   onMouseEnter={e=>e.currentTarget.style.transform="translateY(-2px)"}
                   onMouseLeave={e=>e.currentTarget.style.transform="none"}>
                   <div style={{fontWeight:700,fontSize:13,color:T.text,marginBottom:2}}>{f.label}</div>
-                  <div style={{fontSize:10,color:T.muted,marginBottom:10}}>{f.category} · {f.cost===0?"Free":`${f.cost} 🔑`}</div>
+                  <div style={{fontSize:10,color:T.muted,marginBottom:10,display:"flex",alignItems:"center",gap:3}}>{f.category} · {f.cost===0?"Free":<>{f.cost} <KKey size={9}/></>}</div>
                   {/* Font preview */}
                   <div style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:6,padding:"8px 10px",marginBottom:10}}>
                     <div style={{fontFamily:f.css,fontSize:15,color:T.text,letterSpacing:0.5,marginBottom:4}}>{f.preview}</div>
@@ -393,9 +601,72 @@ export default function ShopPage() {
                       Equip
                     </button>
                   ) : (
-                    <button onClick={()=>handleBuyFont(f)} style={{width:"100%",padding:"6px 0",background:T.purple+"22",border:`1px solid ${T.purple}`,borderRadius:6,color:T.purple,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-                      Buy {f.cost} 🔑
-                    </button>
+                    <div style={{display:"flex",gap:4}}>
+                      <button onClick={()=>requestBuyFont(f)} style={{flex:1,padding:"6px 0",background:T.purple+"22",border:`1px solid ${T.purple}`,borderRadius:6,color:T.purple,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
+                        Buy {f.cost} <KKey size={10}/>
+                      </button>
+                      {f.cost > 0 && <button onClick={()=>startTrial(null, f.id)} style={{padding:"6px 8px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}} title={trial ? "Swap theme in current trial" : "Try for 30s"}>Try</button>}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {/* SOUND THEMES GRID */}
+        {tab === "sounds" && (
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:14}}>
+            {SOUND_THEMES.map(s => {
+              const owned = s.cost===0 || (activeProfile?.ownedSounds||[]).includes(s.id);
+              const active = (activeProfile?.activeSound||"default") === s.id;
+              const handleEquip = async () => {
+                patchProfile({activeSound:s.id});
+                try {
+                  if (isProfileRestricted(activeProfile)) updateProfileLocal(activeProfile.id, activeProfile, {activeSound:s.id});
+                  else await setActiveSound(user.uid, activeProfile.id, s.id);
+                  showMsg(`${s.label} sound equipped!`);
+                } catch(e){ showMsg("Error equipping"); }
+              };
+              const handleBuy = async () => {
+                const newKeys = (activeProfile.keys||0) - s.cost;
+                if(newKeys < 0){ showMsg("Not enough Keys"); return; }
+                patchProfile({keys:newKeys, ownedSounds:[...(activeProfile.ownedSounds||[]),s.id], activeSound:s.id});
+                showMsg(`${s.label} purchased!`);
+                try {
+                  // Same fix as themes/fonts: this used to write keys/owned
+                  // sounds directly via a generic updateProfile call with
+                  // s.cost computed purely client-side - meaning anyone
+                  // could edit SOUND_THEMES in DevTools to claim any sound
+                  // costs 0 and the server would have accepted it
+                  // unconditionally. purchaseSound looks the real price up
+                  // server-side instead.
+                  if (isProfileRestricted(activeProfile)) {
+                    updateProfileLocal(activeProfile.id, activeProfile, {keys:newKeys, ownedSounds:[...(activeProfile.ownedSounds||[]),s.id], activeSound:s.id});
+                  } else {
+                    await purchaseSound(user.uid, activeProfile.id, s.id);
+                    await setActiveSound(user.uid, activeProfile.id, s.id);
+                  }
+                } catch(e){
+                  patchProfile({keys:activeProfile.keys, ownedSounds:activeProfile.ownedSounds, activeSound:activeProfile.activeSound});
+                  showMsg(e.message || "Error purchasing");
+                }
+              };
+              const requestBuy = () => setConfirmPurchase({ label: s.label, cost: s.cost, onConfirm: handleBuy });
+              return (
+                <div key={s.id} style={{background:T.card,border:`2px solid ${active?T.purple:T.border}`,borderRadius:12,padding:"16px",display:"flex",flexDirection:"column",gap:10}}>
+                  <div style={{fontSize:32,textAlign:"center"}}>{s.emoji}</div>
+                  <div style={{textAlign:"center"}}>
+                    <div style={{fontWeight:700,fontSize:14,color:T.text}}>{s.label}</div>
+                    <div style={{fontSize:11,color:T.muted,marginTop:3}}>{s.desc}</div>
+                    <div style={{fontSize:11,color:T.faint,marginTop:4,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>{s.cost===0?"Free":<>{s.cost} <KKey size={9}/></>}</div>
+                  </div>
+                  <button onClick={()=>previewSound(s.id)} style={{padding:"5px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:11,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>▶ Preview</button>
+                  {active ? (
+                    <div style={{textAlign:"center",color:T.purple,fontSize:11,fontWeight:700,padding:"6px",border:`1px solid ${T.purple}`,borderRadius:6}}>✓ Active</div>
+                  ) : owned ? (
+                    <button onClick={handleEquip} style={{padding:"7px",background:"transparent",border:`1px solid ${T.purple}`,borderRadius:6,color:T.purple,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Equip</button>
+                  ) : (
+                    <button onClick={requestBuy} style={{padding:"7px",background:T.purple+"22",border:`1px solid ${T.purple}`,borderRadius:6,color:T.purple,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>Buy {s.cost} <KKey size={10}/></button>
                   )}
                 </div>
               );
@@ -403,6 +674,22 @@ export default function ShopPage() {
           </div>
         )}
       </div>
+
+      {/* Purchase confirmation dialog */}
+      {confirmPurchase && (
+        <div style={{position:"fixed",inset:0,background:"#00000099",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:20}} onClick={()=>setConfirmPurchase(null)}>
+          <div onClick={e=>e.stopPropagation()} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:14,padding:24,width:"100%",maxWidth:340,textAlign:"center"}}>
+            <div style={{color:T.text,fontWeight:700,fontSize:15,marginBottom:8}}>Confirm Purchase</div>
+            <div style={{color:T.muted,fontSize:13,marginBottom:20,display:"flex",alignItems:"center",justifyContent:"center",gap:5,flexWrap:"wrap"}}>
+              Spend <strong style={{color:T.accent,display:"flex",alignItems:"center",gap:3}}>{confirmPurchase.cost} <KKey size={12}/></strong> on {confirmPurchase.label}?
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>{ confirmPurchase.onConfirm(); setConfirmPurchase(null); }} style={{flex:1,padding:"10px",background:T.purple,border:"none",borderRadius:8,color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Confirm</button>
+              <button onClick={()=>setConfirmPurchase(null)} style={{flex:1,padding:"10px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

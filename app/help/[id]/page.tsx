@@ -2,6 +2,22 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { notFound } from 'next/navigation';
+import { KKey } from '@/components/icons/KKey';
+
+// Help-doc body text is plain strings, not JSX, so the real KKey icon can't
+// just be dropped in like {body}. This splits on a literal "{KKEY}" token
+// (used in the content below instead of the 🔑 emoji) and renders the real
+// icon component between the surrounding text segments.
+function withKKeyIcon(text: string) {
+  const parts = text.split('{KKEY}');
+  if (parts.length === 1) return text;
+  const out: React.ReactNode[] = [];
+  parts.forEach((part, i) => {
+    out.push(part);
+    if (i < parts.length - 1) out.push(<KKey key={i} size={12} />);
+  });
+  return out;
+}
 
 type Section = { heading: string; body: string };
 type Topic = { title: string; emoji: string; color: string; intro: string; sections: Section[]; faqs?: [string,string][] };
@@ -34,7 +50,7 @@ const TOPICS: Record<string, Topic> = {
       { heading: '3. Connect a keyboard', body: 'AccuratKey requires a physical keyboard. On laptop/desktop you\'re already good. On a phone or tablet you\'ll need to connect a Bluetooth or USB keyboard. See the Keyboard Setup guide for step-by-step instructions.' },
       { heading: '4. Pick a level', body: 'From the Level Map tab, tap Level 1. Each level has a brief tip about a specific typing skill. Read it, then tap Start Typing.' },
       { heading: '5. Type — no Backspace', body: 'Type the words shown on screen. Backspace is disabled — every keystroke is final. This is intentional: it trains accurate fingers, not fast-and-fix habits.' },
-      { heading: '6. Pass and progress', body: 'Each level has a WPM target and minimum accuracy. Pass to unlock the next level and earn 🔑 Keys. You can replay levels anytime to improve your personal best.' },
+      { heading: '6. Pass and progress', body: 'Each level has a WPM target and minimum accuracy. Pass to unlock the next level and earn {KKEY} Keys. You can replay levels anytime to improve your personal best.' },
     ],
     faqs: [
       ['Do I need an account?', 'No. Guest mode gives full access to all 170 levels and all 32 games. Progress saves in your browser. Sign up to sync across devices, use friends and daily challenge features.'],
@@ -54,7 +70,7 @@ const TOPICS: Record<string, Topic> = {
       { heading: 'Why no Backspace?', body: 'AccuratKey deliberately disables Backspace. The goal is to train your fingers to press the right key the first time, building genuine muscle memory. Sites that allow Backspace teach speed-and-fix, not accuracy. You\'ll improve faster this way.' },
       { heading: 'Personal Bests', body: 'Your best WPM and accuracy for each level are saved per profile. Replaying a level shows your previous best so you can try to beat it. Replays still earn Keys.' },
       { heading: 'Show More / Show Less', body: 'By default the map shows your current level plus 5 upcoming. Tap Show More to reveal further levels. Tap Show Less to collapse back.' },
-      { heading: 'Keys earned', body: 'Completing a level earns 🔑 Keys. Higher levels pay more. A combo multiplier applies if you type 10+ words correctly in a row (1.5×) or 20+ (2×).' },
+      { heading: 'Keys earned', body: 'Completing a level earns {KKEY} Keys. Higher levels pay more. A combo multiplier applies if you type 10+ words correctly in a row (1.5×) or 20+ (2×).' },
     ],
     faqs: [
       ['Can I skip levels?', 'You can attempt any unlocked level or the next locked one. But you must pass each level to unlock further ones.'],
@@ -88,14 +104,14 @@ const TOPICS: Record<string, Topic> = {
 
   'keys-shop': {
     title: 'Keys & Shop', emoji: '🔑', color: '#fb923c',
-    intro: '🔑 Keys are AccuratKey\'s in-game currency. Earn them by completing levels, spend them on cosmetics.',
+    intro: '{KKEY} Keys are AccuratKey\'s in-game currency. Earn them by completing levels, spend them on cosmetics.',
     sections: [
       { heading: 'Earning Keys', body: 'Keys are earned every time you complete a typing level. Higher levels pay more Keys. Combo multipliers boost earnings: 1.5× for a 10-word streak, 2× for a 20-word streak. Replaying levels also earns Keys each time.' },
       { heading: 'The Shop', body: 'Access the Shop via the 🛍️ button in the nav bar. Browse Themes, Fonts, and Sound Packs. All items are purely cosmetic — nothing in the shop affects gameplay. Once purchased, items are permanently yours on that profile.' },
       { heading: 'Themes', body: 'Themes change the entire color scheme — background, text, accents, borders. Options include dark, light, neon, retro, pastel, ocean, forest, and more. Preview before buying. Equip from the Shop or Edit Profile.' },
       { heading: 'Fonts', body: 'Change the typeface used throughout the app and during typing tests. Choose from monospace (JetBrains Mono, Fira Code, Cascadia), sans-serif (Inter, Outfit, Poppins), display fonts (Orbitron, Press Start 2P), and more.' },
       { heading: 'Sound Packs', body: 'Each keypress can play a satisfying click, clack, pop, or thock sound. Sound packs change the audio profile. Toggle sounds with the 🔇/🔊 button in the nav bar.' },
-      { heading: 'Gifting Keys', body: 'If the Send Keys feature is enabled on your profile, you can gift Keys to friends. Open a friend\'s profile from the Friends panel and tap Gift 🔑.' },
+      { heading: 'Gifting Keys', body: 'If the Send Keys feature is enabled on your profile, you can gift Keys to friends. Open a friend\'s profile from the Friends panel and tap Gift {KKEY}.' },
       { heading: 'Keys display', body: 'Your current Key balance shows in the nav bar (if enabled in Feature Access). Tap it to go directly to the Shop.' },
     ],
     faqs: [
@@ -329,7 +345,7 @@ const TOPICS: Record<string, Topic> = {
       ['How do I change my keyboard layout in AccuratKey?', 'Edit Profile → Keyboard Layout → select your layout (QWERTY, AZERTY, QWERTZ, Colemak, Dvorak, etc.). Make sure it matches your OS keyboard language setting.'],
       ['Can I have multiple profiles?', 'Yes — one account can have unlimited profiles. Each has its own name, progress, Keys, themes, and settings. Great for families.'],
       ['How do I delete my account?', 'Edit Profile → Delete Account. This permanently deletes all profiles, progress, Keys, and your login. Cannot be undone.'],
-      ['What are Keys 🔑?', 'The in-game currency. Earned by completing typing levels. Spent in the Shop on themes, fonts, and sound packs. Can be gifted to friends. No real-money involvement.'],
+      ['What are Keys {KKEY}?', 'The in-game currency. Earned by completing typing levels. Spent in the Shop on themes, fonts, and sound packs. Can be gifted to friends. No real-money involvement.'],
       ['How do I report a bug?', 'Tap the 💬 button in the nav bar (when logged in) and describe what happened. The developer reads every message.'],
       ['Is there a mobile app?', 'Not yet — AccuratKey runs as a web app in any modern browser. It can be added to your home screen as a PWA (Progressive Web App) on both iOS and Android for an app-like experience.'],
       ['Can I use AccuratKey in a classroom?', 'Yes. Create one account per student or use guest mode (no accounts needed). The age-adaptive system adjusts difficulty automatically. Teacher mode / class management is not available yet but is planned.'],
@@ -360,12 +376,12 @@ export default function HelpTopicPage({ params }: { params: { id: string } }) {
             <div style={{width:40,height:3,background:color,borderRadius:2}}/>
           </div>
         </div>
-        <p style={{color:'#666',fontSize:14,lineHeight:1.7,marginTop:16,marginBottom:32}}>{intro}</p>
+        <p style={{color:'#666',fontSize:14,lineHeight:1.7,marginTop:16,marginBottom:32}}>{withKKeyIcon(intro)}</p>
 
         {sections.map(({heading,body}) => (
           <div key={heading} style={{background:'#13131f',border:'1px solid #1e1e30',borderRadius:12,padding:'18px 22px',marginBottom:10}}>
             <div style={{fontWeight:700,fontSize:13,color,marginBottom:8}}>{heading}</div>
-            <p style={{color:'#888',fontSize:13,lineHeight:1.8,margin:0}}>{body}</p>
+            <p style={{color:'#888',fontSize:13,lineHeight:1.8,margin:0}}>{withKKeyIcon(body)}</p>
           </div>
         ))}
 
@@ -375,10 +391,10 @@ export default function HelpTopicPage({ params }: { params: { id: string } }) {
             {faqs.map(([q,a],i) => (
               <div key={i} style={{background:'#13131f',border:`1px solid ${openFaq===i?color+'66':'#1e1e30'}`,borderRadius:10,marginBottom:6,overflow:'hidden'}}>
                 <button onClick={()=>setOpenFaq(openFaq===i?null:i)} style={{width:'100%',padding:'13px 18px',background:'none',border:'none',color:'#e0e0ff',fontFamily:"'JetBrains Mono',monospace",fontSize:13,fontWeight:700,cursor:'pointer',textAlign:'left',display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}>
-                  <span>{q}</span>
+                  <span>{withKKeyIcon(q)}</span>
                   <span style={{color,fontSize:16,flexShrink:0}}>{openFaq===i?'−':'+'}</span>
                 </button>
-                {openFaq===i && <div style={{padding:'0 18px 14px',color:'#777',fontSize:13,lineHeight:1.8}}>{a}</div>}
+                {openFaq===i && <div style={{padding:'0 18px 14px',color:'#777',fontSize:13,lineHeight:1.8}}>{withKKeyIcon(a)}</div>}
               </div>
             ))}
           </div>
