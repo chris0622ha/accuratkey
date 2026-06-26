@@ -1078,6 +1078,55 @@ export default function AccuratKey() {
   const [dailyDone, setDailyDone] = useState(false);
   const [sessionDates, setSessionDates] = useState({});
   const [showFeedback, setShowFeedback] = useState(false);
+
+  // None of the ~17 modals in this app (Friends, Challenges, Profile,
+  // Settings, Certificates, Weekly Summary, etc) ever pushed a browser
+  // history entry when they opened - they're pure React state overlays.
+  // That meant pressing the back button while any modal was open skipped
+  // right past closing it and navigated to whatever URL came before the
+  // modal opened, which is the actual cause of "back arrow sends you back
+  // too much." This pushes one history entry whenever any tracked modal
+  // opens, and on popstate (back button), closes whichever one is open
+  // instead of letting the browser navigate away - a single generic fix
+  // rather than rewriting every modal's onClick individually.
+  const modalSettersRef = useRef(null);
+  modalSettersRef.current = {
+    showProfileModal: [showProfileModal, setShowProfileModal],
+    showSettingsModal: [showSettingsModal, setShowSettingsModal],
+    showFeatureAccess: [showFeatureAccess, setShowFeatureAccess],
+    showChallenges: [showChallenges, setShowChallenges],
+    showWeeklySummary: [showWeeklySummary, setShowWeeklySummary],
+    showCertificates: [showCertificates, setShowCertificates],
+    showFriends: [showFriends, setShowFriends],
+    showShop: [showShop, setShowShop],
+    showFeedback: [showFeedback, setShowFeedback],
+    showListEditor: [showListEditor, setShowListEditor],
+    showChangeUsername: [showChangeUsername, setShowChangeUsername],
+  };
+  const anyModalOpenRef = useRef(false);
+  useEffect(() => {
+    const onPop = () => {
+      const m = modalSettersRef.current;
+      for (const key in m) {
+        const [isOpen, setOpen] = m[key];
+        if (isOpen) { setOpen(false); anyModalOpenRef.current = false; return; }
+      }
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+  useEffect(() => {
+    const m = modalSettersRef.current;
+    const anyOpen = Object.values(m).some(([isOpen]) => isOpen);
+    if (anyOpen && !anyModalOpenRef.current) {
+      // A modal just opened - push a history entry so back closes it first.
+      window.history.pushState({ akModal: true }, "", window.location.href);
+      anyModalOpenRef.current = true;
+    } else if (!anyOpen) {
+      anyModalOpenRef.current = false;
+    }
+  }, [showProfileModal, showSettingsModal, showFeatureAccess, showChallenges, showWeeklySummary, showCertificates, showFriends, showShop, showFeedback, showListEditor, showChangeUsername]);
+
   const [pendingNotifications, setPendingNotifications] = useState([]);
   const [activeNotification, setActiveNotification] = useState(null);
   const [feedbackText, setFeedbackText] = useState("");
