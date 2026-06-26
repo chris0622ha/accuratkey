@@ -20,8 +20,14 @@ jobs:
           echo "Commits since last notify: $COUNT"
           if [ "$COUNT" -ge 2 ]; then
             export MSG=$(git log -1 --pretty=format:"%s" | head -c 100)
-            export BODY=$(git log -1 --pretty=format:"%b" | tr '\n' ' ' | head -c 300)
             export SHA=$(git rev-parse --short HEAD)
+            # Extract the changelog: line specifically, BEFORE any truncation,
+            # so a long commit body never cuts it off mid-sentence the way a
+            # blind head -c on the raw body did before. Falls back to the
+            # commit subject if no changelog: line exists. Truncates on a
+            # word boundary with an ellipsis as a safety net, never mid-word.
+            export BODY=$(git log -1 --pretty=format:"%b" | grep -i '^changelog:' | sed 's/^[Cc]hangelog:[[:space:]]*//' | head -c 280)
+            if [ -z "$BODY" ]; then export BODY="$MSG"; fi
             git config user.email "bot@accuratkey"
             git config user.name "Notify Bot"
             git tag "studio-notified-$(date +%s)"

@@ -71,7 +71,7 @@ const TOPICS = [
     id: 'features',
     icon: <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e879f9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
     title: 'Features & Settings',
-    desc: 'Feature access, sounds, themes, pomodoro',
+    desc: 'Feature access, sounds, themes, fonts',
     color: '#e879f9',
   },
   {
