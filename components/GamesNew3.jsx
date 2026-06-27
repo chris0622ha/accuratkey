@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
-import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, ALL_WORDS, POOL_MYSTERY, pickWords, pickByDiff } from "./WordDB";
+import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, ALL_WORDS, POOL_MYSTERY, pickWords, pickByDiff, RHYMES } from "./WordDB";
 import { SYN_ANT, SYNONYMS_ONLY, ANTONYMS_ONLY, ALL_SYN_ANT } from "./SynAntDB";
 import { subscribeToChallenge, updateGameLiveState, setGameWinner } from "../lib/firebase";
 
@@ -1328,4 +1328,117 @@ export function WordBomb({ T, onBack, onSettings, settings={} }) {
   );
 }
 
-export default { SpeedTest, MissingLetters, Anagram, BrickBreaker, Quotes, HaikuMode, Synonyms, Antonyms, TugOfWar, WordBomb };
+export function Freestyle({ T, onBack, onSettings, settings={} }) {
+  const RHYME_KEYS = Object.keys(RHYMES);
+  const [targetWord] = useState(() => RHYME_KEYS[Math.floor(Math.random() * RHYME_KEYS.length)]);
+  const validRhymes = RHYMES[targetWord] || [];
+  const [lines, setLines] = useState(["", "", "", ""]);
+  const [lineIdx, setLineIdx] = useState(0);
+  const [typed, setTyped] = useState("");
+  const [error, setError] = useState("");
+  const [startTime, setStartTime] = useState(null);
+  const [status, setStatus] = useState("playing"); // playing | done
+  const [muted, setMuted] = useState(()=>{try{return localStorage.getItem("ak_sfx_muted")==="1";}catch{return false;}});
+  const ref = useRef(null);
+
+  useEffect(() => { ref.current?.focus(); }, [lineIdx]);
+
+  const lastWordOf = (line) => {
+    const words = line.trim().toLowerCase().replace(/[^a-z\s]/g, "").split(/\s+/).filter(Boolean);
+    return words[words.length - 1] || "";
+  };
+
+  const handleType = e => {
+    if (!startTime) setStartTime(Date.now());
+    setTyped(e.target.value);
+    setError("");
+  };
+
+  const submitLine = () => {
+    if (!typed.trim()) return;
+    const lastWord = lastWordOf(typed);
+    // Real validation against the actual RHYMES dictionary, not just
+    // trusting the player - the line must genuinely end in a word from
+    // the target's rhyme list (or be the target word itself).
+    const validEnding = lastWord === targetWord || validRhymes.includes(lastWord);
+    if (!validEnding) {
+      setError(`That line needs to end with a word that rhymes with "${targetWord}" (try: ${validRhymes.slice(0,3).join(", ")})`);
+      if (!muted) playTone(220, "sawtooth", 0.15, 0.13);
+      return;
+    }
+    if (!muted) playTone(880, "sine", 0.1, 0.16);
+    const newLines = [...lines];
+    newLines[lineIdx] = typed;
+    setLines(newLines);
+    setTyped("");
+    if (lineIdx >= 3) {
+      setStatus("done");
+    } else {
+      setLineIdx(i => i + 1);
+    }
+  };
+
+  const handleKey = e => {
+    if (e.key === "Enter") { e.preventDefault(); submitLine(); }
+  };
+
+  const reset = () => {
+    setLines(["", "", "", ""]); setLineIdx(0); setTyped(""); setError("");
+    setStartTime(null); setStatus("playing");
+    setTimeout(() => ref.current?.focus(), 50);
+  };
+
+  const elapsedSec = startTime ? Math.max(1, Math.round((Date.now() - startTime) / 1000)) : 0;
+  const totalChars = lines.join(" ").length;
+  const wpm = startTime ? Math.round((totalChars / 5) / (elapsedSec / 60)) : 0;
+
+  if (status === "done") {
+    return (
+      <div style={{padding:"4px 0"}}>
+        <BackBtn onBack={onBack} onSettings={onSettings} T={T} />
+        <div style={{marginTop:14,textAlign:"center"}}>
+          <div style={{fontSize:48,marginBottom:10}}>✍️</div>
+          <div style={{color:T.text,fontWeight:800,fontSize:20,marginBottom:16}}>Your freestyle</div>
+          <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"20px",marginBottom:16,textAlign:"left"}}>
+            {lines.map((l,i) => <div key={i} style={{color:T.text,fontSize:15,lineHeight:1.7,fontFamily:"'JetBrains Mono',monospace"}}>{l}</div>)}
+          </div>
+          <div style={{color:T.muted,fontSize:13,marginBottom:20}}>~{wpm || 0} WPM</div>
+          <button onClick={reset} style={{padding:"12px 28px",borderRadius:10,border:"none",background:T.purple,color:"#fff",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:T.font}}>Freestyle Again</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{padding:"4px 0"}}>
+      <BackBtn onBack={onBack} onSettings={onSettings} T={T} />
+      <div style={{textAlign:"center",margin:"14px 0"}}>
+        <div style={{color:T.faint,fontSize:11,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>Line {lineIdx+1} of 4</div>
+        <div style={{color:T.purple,fontSize:15,fontWeight:700}}>Each line must end with a word that rhymes with "{targetWord}"</div>
+      </div>
+
+      <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"16px 18px",marginBottom:14}}>
+        {lines.slice(0, lineIdx).map((l,i) => (
+          <div key={i} style={{color:T.muted,fontSize:14,lineHeight:1.8,fontFamily:"'JetBrains Mono',monospace",opacity:0.7}}>{l}</div>
+        ))}
+        <textarea
+          ref={ref}
+          value={typed}
+          onChange={handleType}
+          onKeyDown={handleKey}
+          placeholder={`Write line ${lineIdx+1}... (Enter to submit)`}
+          rows={1}
+          style={{width:"100%",background:"transparent",border:"none",color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:15,lineHeight:1.8,outline:"none",resize:"none"}}
+        />
+      </div>
+
+      {error && <div style={{color:"#ef4444",fontSize:12,marginBottom:12,textAlign:"center"}}>{error}</div>}
+
+      <button onClick={submitLine} style={{width:"100%",padding:"13px",borderRadius:10,border:"none",background:T.purple,color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>
+        Submit Line
+      </button>
+    </div>
+  );
+}
+
+export default { SpeedTest, MissingLetters, Anagram, BrickBreaker, Quotes, HaikuMode, Synonyms, Antonyms, TugOfWar, WordBomb, MemoryEdit, WildcardWords, Freestyle };

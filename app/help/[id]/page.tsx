@@ -53,7 +53,7 @@ const TOPICS: Record<string, Topic> = {
       { heading: '6. Pass and progress', body: 'Each level has a WPM target and minimum accuracy. Pass to unlock the next level and earn {KKEY} Keys. You can replay levels anytime to improve your personal best.' },
     ],
     faqs: [
-      ['Do I need an account?', 'No. Guest mode gives full access to all 180 levels and all 34 games. Progress saves in your browser. Sign up to sync across devices, use friends and daily challenge features.'],
+      ['Do I need an account?', 'No. Guest mode gives full access to all 180 levels and all 35 games. Progress saves in your browser. Sign up to sync across devices, use friends and daily challenge features.'],
       ['Is AccuratKey free?', 'Yes, AccuratKey is completely free (may add subscriptions or one-time payments in the future). Keys are earned by playing and can also be purchased directly.'],
       ['What browsers are supported?', 'Chrome, Firefox, Safari, and Edge. Chrome is recommended for best performance.'],
       ['Can kids use AccuratKey?', 'Yes. The age-adaptive system adjusts font sizes, word complexity, and level cap based on the birthday you enter. Kids under 10 get larger fonts and simpler words.'],
@@ -97,7 +97,7 @@ const TOPICS: Record<string, Topic> = {
     ],
     faqs: [
       ['Do games save progress?', 'Each game saves your last session score locally. Personal bests are tracked per game per profile.'],
-      ['Are games in guest mode?', 'Yes — all 34 games are fully playable as a guest.'],
+      ['Are games in guest mode?', 'Yes — all 35 games are fully playable as a guest.'],
       ['Do games earn Keys?', 'Yes — games earn Keys too, just like levels. Every completed game session rewards Keys based on your performance.'],
     ],
   },

@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, ALL_WORDS, WORD_CATEGORIES, CATEGORY_NAMES, POOL_WORD_RAIN, POOL_SURVIVAL, POOL_SPEED_BURST, POOL_SCRAMBLE, POOL_SUDDEN_DEATH, POOL_ZEN, POOL_LADDER_EASY, POOL_LADDER_MED, POOL_LADDER_HARD, POOL_LADDER_VHARD, POOL_ECHO, POOL_INVADERS, POOL_ASTEROID, POOL_TOWER, POOL_WORD_CHAIN, pickWords, pickByDiff } from "./WordDB";
 import { Sniper, Mirror, Flash, Echo, GhostWords, BossBattle } from "./GamesExtra";
 import { HundredWords, Endurance, Roulette, WordChain, CategoryBlitz, VocabBuilder, TypingInvaders, AsteroidBelt, TowerDefense, MysteryWords, RhymeTime, MadLibs } from "./GamesNew2";
-import { SpeedTest, MissingLetters, Anagram, BrickBreaker, Synonyms, Antonyms, TugOfWar, WordBomb, MemoryEdit, WildcardWords } from "./GamesNew3";
+import { SpeedTest, MissingLetters, Anagram, BrickBreaker, Synonyms, Antonyms, TugOfWar, WordBomb, MemoryEdit, WildcardWords, Freestyle } from "./GamesNew3";
 // Word pools
 const EASY_WORDS = TYPING_BASIC;
 const MED_WORDS = TYPING_MEDIUM;
@@ -109,6 +109,7 @@ const GAMES = [
   { id:"mystery",     emoji:"🔮", name:"Mystery Words",     desc:"Symbols slowly reveal as letters — guess the word", cat:"puzzle" },
   { id:"rhyme",       emoji:"🎵", name:"Rhyme Time",        desc:"Type a word that rhymes with the one shown",      cat:"educational" },
   { id:"madlibs",     emoji:"😂", name:"Mad Libs",          desc:"Fill in the blanks to make a funny story",        cat:"creative" },
+  { id:"freestyle",   emoji:"✍️", name:"Freestyle",         desc:"Write your own rhyming lines, validated for real", cat:"creative" },
   { id:"speedtest",   emoji:"⏱️", name:"Speed Test",        desc:"Classic 1, 2, or 5 minute WPM benchmark",         cat:"speed" },
   { id:"missing",     emoji:"🔡", name:"Missing Letters",   desc:"Fill in the blanks — w_rd sh_wn l_ke th_s",       cat:"puzzle" },
   { id:"anagram",     emoji:"🔀", name:"Anagram",           desc:"Unscramble the letters to form a real word",       cat:"puzzle" },
@@ -1163,7 +1164,7 @@ export default function GamesTab({ T }) {
 
   const GAME_COMPONENTS = {
     rain: WordRain, survival: Survival, burst: SpeedBurst, scramble: WordScramble,
-    suddendeath: SuddenDeath, ladder: SpeedLadder, tugofwar: TugOfWar, wordbomb: WordBomb, memoryedit: MemoryEdit, wildcard: WildcardWords,
+    suddendeath: SuddenDeath, ladder: SpeedLadder, tugofwar: TugOfWar, wordbomb: WordBomb, memoryedit: MemoryEdit, wildcard: WildcardWords, freestyle: Freestyle,
     sniper: Sniper, mirror: Mirror, flash: Flash, echo: Echo,
     ghost: GhostWords, boss: BossBattle,
     hundred: HundredWords, endurance: Endurance, roulette: Roulette,
