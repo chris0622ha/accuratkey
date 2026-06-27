@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, ALL_WORDS, WORD_CATEGORIES, CATEGORY_NAMES, POOL_WORD_RAIN, POOL_SURVIVAL, POOL_SPEED_BURST, POOL_SCRAMBLE, POOL_SUDDEN_DEATH, POOL_ZEN, POOL_LADDER_EASY, POOL_LADDER_MED, POOL_LADDER_HARD, POOL_LADDER_VHARD, POOL_ECHO, POOL_INVADERS, POOL_ASTEROID, POOL_TOWER, POOL_WORD_CHAIN, pickWords, pickByDiff } from "./WordDB";
 import { Sniper, Mirror, Flash, Echo, GhostWords, BossBattle } from "./GamesExtra";
 import { HundredWords, Endurance, Roulette, WordChain, CategoryBlitz, VocabBuilder, TypingInvaders, AsteroidBelt, TowerDefense, MysteryWords, RhymeTime, MadLibs } from "./GamesNew2";
-import { SpeedTest, MissingLetters, Anagram, BrickBreaker, Synonyms, Antonyms, TugOfWar, WordBomb, MemoryEdit } from "./GamesNew3";
+import { SpeedTest, MissingLetters, Anagram, BrickBreaker, Synonyms, Antonyms, TugOfWar, WordBomb, MemoryEdit, WildcardWords } from "./GamesNew3";
 // Word pools
 const EASY_WORDS = TYPING_BASIC;
 const MED_WORDS = TYPING_MEDIUM;
@@ -98,6 +98,7 @@ const GAMES = [
   { id:"hundred",     emoji:"💯", name:"100 Words",         desc:"Type exactly 100 words as fast as possible",      cat:"challenge" },
   { id:"endurance",   emoji:"🏃", name:"Endurance",         desc:"Never stop typing or it's game over",             cat:"challenge" },
   { id:"roulette",    emoji:"🎰", name:"Roulette",          desc:"Spin for a random game mode",                     cat:"random" },
+  { id:"wildcard",    emoji:"🎲", name:"Wildcard Words",    desc:"Each word gets a random surprise twist",          cat:"random" },
   { id:"wordchain",   emoji:"🔗", name:"Word Chain",        desc:"Each word must start with the last letter",       cat:"puzzle" },
   { id:"blitz",       emoji:"⚡", name:"Category Blitz",    desc:"Type as many words in a category as possible",    cat:"challenge" },
   { id:"vocab",       emoji:"📚", name:"Vocab Builder",     desc:"Read the definition — type the word",             cat:"educational" },
@@ -837,6 +838,7 @@ const GAME_SETTINGS = {
   tugofwar:    [{ key:"difficulty", label:"Difficulty",  opts:["easy","medium","hard"], default:"medium" }],
   wordbomb:    [{ key:"difficulty", label:"Fuse Speed",  opts:["easy","medium","hard"], default:"medium" }, { key:"lives", label:"Lives", opts:[1,3,5], default:3 }],
   memoryedit:  [{ key:"changes", label:"Words Changed", opts:[1,2,3], default:2 }],
+  wildcard:    [{ key:"difficulty", label:"Difficulty", opts:["easy","medium","hard"], default:"medium" }],
   sniper:      [{ key:"count",      label:"Words",      opts:[10,25,50], default:25 }, { key:"difficulty", label:"Difficulty", opts:["easy","medium","hard"], default:"medium" }],
   mirror:      [{ key:"count",      label:"Words",      opts:[10,20,30], default:20 }],
   flash:       [{ key:"flashMs",    label:"Flash time", opts:[500,1000,1500,2000], default:1000, suffix:"ms" }, { key:"count", label:"Words", opts:[10,20,30], default:20 }],
@@ -1161,7 +1163,7 @@ export default function GamesTab({ T }) {
 
   const GAME_COMPONENTS = {
     rain: WordRain, survival: Survival, burst: SpeedBurst, scramble: WordScramble,
-    suddendeath: SuddenDeath, ladder: SpeedLadder, tugofwar: TugOfWar, wordbomb: WordBomb, memoryedit: MemoryEdit,
+    suddendeath: SuddenDeath, ladder: SpeedLadder, tugofwar: TugOfWar, wordbomb: WordBomb, memoryedit: MemoryEdit, wildcard: WildcardWords,
     sniper: Sniper, mirror: Mirror, flash: Flash, echo: Echo,
     ghost: GhostWords, boss: BossBattle,
     hundred: HundredWords, endurance: Endurance, roulette: Roulette,

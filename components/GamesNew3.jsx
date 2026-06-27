@@ -241,6 +241,144 @@ export function MemoryEdit({ T, onBack, onSettings, settings={} }) {
   );
 }
 
+// ─── WILDCARD WORDS ─────────────────────────────────────────────────────────
+// A real Random-category mechanic where the randomness is IN the typing
+// task itself, unlike Roulette (which just spins to a different game to go
+// play, with no typing of its own). Each word gets a random modifier shown
+// as a small icon: type it backwards, type it in ALL CAPS, race a 2-second
+// bonus window, or type an intentionally letter-swapped version exactly as
+// shown rather than the dictionary-correct spelling.
+const WILDCARDS = [
+  { id: "normal",   icon: "📝", label: "Type normally" },
+  { id: "backwards", icon: "🔄", label: "Type it BACKWARDS" },
+  { id: "caps",      icon: "🔠", label: "Type in ALL CAPS" },
+  { id: "speed",     icon: "⚡", label: "Bonus if under 2s!" },
+  { id: "swap",      icon: "🔀", label: "Type EXACTLY as shown (it's altered)" },
+];
+
+function applyWildcard(word, wildcardId) {
+  if (wildcardId === "backwards") return word.split("").reverse().join("");
+  if (wildcardId === "caps") return word.toUpperCase();
+  if (wildcardId === "swap") {
+    if (word.length < 3) return word;
+    const pos = 1 + Math.floor(Math.random() * (word.length - 2));
+    const letters = "abcdefghijklmnopqrstuvwxyz";
+    let replacement = letters[Math.floor(Math.random() * letters.length)];
+    while (replacement === word[pos]) replacement = letters[Math.floor(Math.random() * letters.length)];
+    return word.slice(0, pos) + replacement + word.slice(pos + 1);
+  }
+  return word;
+}
+
+export function WildcardWords({ T, onBack, onSettings, settings={} }) {
+  const diff = settings.difficulty || "medium";
+  const [words, setWords] = useState(() => pickByDiff(60, diff));
+  const [wordIdx, setWordIdx] = useState(0);
+  const [wildcard, setWildcard] = useState(WILDCARDS[0]);
+  const [displayWord, setDisplayWord] = useState("");
+  const [typed, setTyped] = useState("");
+  const [score, setScore] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [best, setBest] = useState(0);
+  const [roundsLeft, setRoundsLeft] = useState(15);
+  const [status, setStatus] = useState("playing"); // playing | done
+  const [flash, setFlash] = useState(null);
+  const [muted, setMuted] = useState(()=>{try{return localStorage.getItem("ak_sfx_muted")==="1";}catch{return false;}});
+  const ref = useRef(null);
+  const roundStartRef = useRef(0);
+
+  const newRound = () => {
+    const baseWord = words[wordIdx % words.length] || words[0];
+    const wc = WILDCARDS[Math.floor(Math.random() * WILDCARDS.length)];
+    setWildcard(wc);
+    setDisplayWord(applyWildcard(baseWord, wc.id));
+    setTyped("");
+    roundStartRef.current = Date.now();
+    setWordIdx(i => {
+      const next = i + 1;
+      if (next >= words.length) setWords(w => [...w, ...pickByDiff(40, diff)]);
+      return next;
+    });
+    setTimeout(() => ref.current?.focus(), 30);
+  };
+
+  useEffect(() => { newRound(); }, []);
+  useEffect(() => { if (status==="playing") gSave("wildcard", { score, roundsLeft }); }, [score, roundsLeft, status]);
+
+  const handleType = e => {
+    const v = e.target.value;
+    setTyped(v);
+    if (v === displayWord) {
+      const elapsed = Date.now() - roundStartRef.current;
+      let points = 1;
+      let label = "+1";
+      if (wildcard.id === "speed" && elapsed < 2000) { points = 3; label = "+3 ⚡"; }
+      else if (wildcard.id !== "normal") { points = 2; label = "+2"; }
+      setScore(s => s + points);
+      setBest(b => Math.max(b, score + points));
+      setStreak(s => s + 1);
+      setFlash(label);
+      if (!muted) playTone(880, "sine", 0.1, 0.16);
+      setTimeout(() => setFlash(null), 500);
+      const next = roundsLeft - 1;
+      if (next <= 0) { setStatus("done"); }
+      else { setRoundsLeft(next); newRound(); }
+    } else if (v.length >= displayWord.length) {
+      setStreak(0);
+      if (!muted) playTone(180, "sawtooth", 0.12, 0.13);
+      const next = roundsLeft - 1;
+      setTyped("");
+      if (next <= 0) { setStatus("done"); }
+      else { setRoundsLeft(next); newRound(); }
+    }
+  };
+
+  const reset = () => {
+    setWords(pickByDiff(60, diff)); setWordIdx(0); setScore(0); setStreak(0);
+    setRoundsLeft(15); setStatus("playing"); gClear("wildcard");
+    newRound();
+  };
+
+  if (status === "done") {
+    return (
+      <div style={{padding:"4px 0"}}>
+        <BackBtn onBack={onBack} onSettings={onSettings} T={T} />
+        <div style={{marginTop:14}}>
+          <ResultScreen emoji="🎲" title="Round complete" color="#a78bfa" stats={[["Score", score],["Best streak", best]]} onRetry={reset} T={T} />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{padding:"4px 0"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+        <BackBtn onBack={onBack} onSettings={onSettings} T={T} />
+        <span style={{color:T.muted,fontSize:12}}>Score {score} · {roundsLeft} left</span>
+      </div>
+
+      <div style={{textAlign:"center",marginBottom:10}}>
+        <div style={{display:"inline-flex",alignItems:"center",gap:6,background:T.card,border:`1px solid ${T.purple}`,borderRadius:20,padding:"6px 14px",fontSize:13,color:T.purple,fontWeight:700}}>
+          <span style={{fontSize:18}}>{wildcard.icon}</span> {wildcard.label}
+        </div>
+      </div>
+
+      <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"24px 20px",textAlign:"center",marginBottom:14,position:"relative"}}>
+        {flash && <div style={{position:"absolute",top:8,right:14,color:"#34d399",fontWeight:800,fontSize:14}}>{flash}</div>}
+        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:26,fontWeight:700,letterSpacing:1}}>
+          {displayWord.split("").map((ch,i)=>(
+            <span key={i} style={{color: i<typed.length ? (typed[i]===ch?"#10b981":"#ef4444") : T.text}}>{ch}</span>
+          ))}
+        </div>
+      </div>
+
+      <input ref={ref} value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
+        placeholder="Type exactly what's shown above..."
+        style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}} />
+    </div>
+  );
+}
+
 export function MissingLetters({ T, onBack, onSettings, settings={} }) {
   const diff = settings.difficulty||"medium";
   const pool = diff==="easy"?TYPING_BASIC:diff==="hard"?TYPING_HARD:TYPING_MEDIUM;
