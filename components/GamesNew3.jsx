@@ -82,6 +82,165 @@ export function SpeedTest({ T, onBack, onSettings, settings={} }) {
 }
 
 // ─── MISSING LETTERS ──────────────────────────────────────────────────────────
+// ─── MEMORY EDIT ────────────────────────────────────────────────────────────
+// A real, different memory mechanic from anything else in this app: instead
+// of recalling a sequence or a flashed word, you study a full sentence,
+// it's hidden, then a SLIGHTLY ALTERED version reappears with specific
+// words swapped or blanked. You have to remember exactly what the original
+// said and type the correct word back into each changed spot - testing
+// memory of specific content against a near-identical decoy, not pure
+// sequence recall.
+const MEMORY_SENTENCES = [
+  "the quick brown fox jumps over the lazy dog",
+  "she sells seashells by the seashore every summer",
+  "practice makes perfect when you type every single day",
+  "the early bird catches the worm before sunrise",
+  "a journey of a thousand miles begins with one step",
+  "actions speak louder than words in every situation",
+  "the pen is mightier than the sword in many debates",
+  "where there is a will there is always a way",
+  "honesty is the best policy in business and life",
+  "every cloud has a silver lining if you look closely",
+  "the squeaky wheel gets the grease from the mechanic",
+  "better late than never when finishing a project",
+  "all that glitters is not gold in this world",
+  "a picture is worth a thousand words to most people",
+  "do not judge a book by its cover too quickly",
+  "the grass is always greener on the other side",
+  "when in rome do as the romans do every time",
+  "rome was not built in a day according to history",
+  "two wrongs do not make a right in any argument",
+  "the apple does not fall far from the tree usually",
+];
+
+export function MemoryEdit({ T, onBack, onSettings, settings={} }) {
+  const numChanges = settings.changes || 2;
+  const [round, setRound] = useState(0);
+  const [phase, setPhase] = useState("study"); // study | altered | done-round
+  const [original, setOriginal] = useState("");
+  const [altered, setAltered] = useState([]); // array of {word, changed, blank}
+  const [typed, setTyped] = useState({});
+  const [score, setScore] = useState(0);
+  const [wrong, setWrong] = useState(false);
+  const [status, setStatus] = useState("playing"); // playing | results
+  const [studyTime, setStudyTime] = useState(5);
+  const ref = useRef(null);
+  const studyTimerRef = useRef(null);
+
+  const buildRound = () => {
+    const sentence = MEMORY_SENTENCES[Math.floor(Math.random() * MEMORY_SENTENCES.length)];
+    const words = sentence.split(" ");
+    const replacementPool = ALL_WORDS.filter(w => w.length >= 3 && w.length <= 8);
+    const changeIdxs = new Set();
+    while (changeIdxs.size < Math.min(numChanges, words.length - 1) && changeIdxs.size < words.length) {
+      changeIdxs.add(Math.floor(Math.random() * words.length));
+    }
+    const alteredWords = words.map((w, i) => {
+      if (changeIdxs.has(i)) {
+        const replacement = replacementPool[Math.floor(Math.random() * replacementPool.length)];
+        return { word: w, display: replacement, changed: true };
+      }
+      return { word: w, display: w, changed: false };
+    });
+    setOriginal(sentence);
+    setAltered(alteredWords);
+    setTyped({});
+    setPhase("study");
+    setStudyTime(5 + numChanges); // a bit more time for harder rounds
+  };
+
+  useEffect(() => { buildRound(); }, []);
+
+  useEffect(() => {
+    if (phase !== "study") return;
+    if (studyTime <= 0) { setPhase("altered"); setTimeout(() => ref.current?.focus(), 50); return; }
+    studyTimerRef.current = setTimeout(() => setStudyTime(t => t - 1), 1000);
+    return () => clearTimeout(studyTimerRef.current);
+  }, [phase, studyTime]);
+
+  const handleTypeFor = (idx, value) => {
+    setTyped(t => ({ ...t, [idx]: value }));
+  };
+
+  const checkAnswers = () => {
+    const changedIdxs = altered.map((w, i) => w.changed ? i : null).filter(i => i !== null);
+    const allCorrect = changedIdxs.every(i => (typed[i] || "").trim().toLowerCase() === altered[i].word.toLowerCase());
+    if (allCorrect) {
+      setScore(s => s + 1);
+      setWrong(false);
+    } else {
+      setWrong(true);
+      setTimeout(() => setWrong(false), 700);
+    }
+    const nextRound = round + 1;
+    if (nextRound >= 8) {
+      setStatus("results");
+    } else {
+      setRound(nextRound);
+      setTimeout(() => buildRound(), allCorrect ? 400 : 900);
+    }
+  };
+
+  const reset = () => {
+    setRound(0); setScore(0); setStatus("playing");
+    buildRound();
+  };
+
+  if (status === "results") {
+    return (
+      <div style={{padding:"4px 0"}}>
+        <BackBtn onBack={onBack} onSettings={onSettings} T={T} />
+        <div style={{marginTop:14}}>
+          <ResultScreen emoji="🧠" title="Round complete" color="#a78bfa" stats={[["Sentences correct", `${score}/8`]]} onRetry={reset} T={T} />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{padding:"4px 0"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+        <BackBtn onBack={onBack} onSettings={onSettings} T={T} />
+        <span style={{color:T.muted,fontSize:12}}>Round {round+1}/8 · Score {score}</span>
+      </div>
+
+      {phase === "study" ? (
+        <div style={{textAlign:"center"}}>
+          <div style={{color:T.faint,fontSize:11,letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>Memorize this sentence</div>
+          <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"24px 20px",marginBottom:14,fontSize:18,color:T.text,fontFamily:"'JetBrains Mono',monospace",lineHeight:1.6}}>
+            {original}
+          </div>
+          <div style={{color:T.purple,fontWeight:700,fontSize:22}}>{studyTime}</div>
+        </div>
+      ) : (
+        <div>
+          <div style={{color:T.faint,fontSize:11,letterSpacing:2,textTransform:"uppercase",marginBottom:10,textAlign:"center"}}>
+            {numChanges} word{numChanges>1?"s":""} changed — type the original word{numChanges>1?"s":""}
+          </div>
+          <div style={{background:wrong?"#ef444411":T.card,border:`1px solid ${wrong?"#ef4444":T.border}`,borderRadius:12,padding:"20px 16px",marginBottom:16,display:"flex",flexWrap:"wrap",gap:8,alignItems:"center",justifyContent:"center",transition:"all .2s"}}>
+            {altered.map((w, i) => w.changed ? (
+              <input
+                key={i}
+                value={typed[i] || ""}
+                onChange={e => handleTypeFor(i, e.target.value)}
+                autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
+                placeholder={w.display}
+                style={{width:Math.max(60, w.display.length*11),background:T.bg,border:`1px solid ${T.purple}`,borderRadius:6,color:T.purple,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"4px 8px",outline:"none",textAlign:"center"}}
+                ref={i === altered.findIndex(x=>x.changed) ? ref : null}
+              />
+            ) : (
+              <span key={i} style={{fontSize:18,color:T.text,fontFamily:"'JetBrains Mono',monospace"}}>{w.display}</span>
+            ))}
+          </div>
+          <button onClick={checkAnswers} style={{width:"100%",padding:"13px",borderRadius:10,border:"none",background:T.purple,color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>
+            Check
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function MissingLetters({ T, onBack, onSettings, settings={} }) {
   const diff = settings.difficulty||"medium";
   const pool = diff==="easy"?TYPING_BASIC:diff==="hard"?TYPING_HARD:TYPING_MEDIUM;

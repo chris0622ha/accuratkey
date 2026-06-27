@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, ALL_WORDS, WORD_CATEGORIES, CATEGORY_NAMES, POOL_WORD_RAIN, POOL_SURVIVAL, POOL_SPEED_BURST, POOL_SCRAMBLE, POOL_SUDDEN_DEATH, POOL_ZEN, POOL_LADDER_EASY, POOL_LADDER_MED, POOL_LADDER_HARD, POOL_LADDER_VHARD, POOL_ECHO, POOL_INVADERS, POOL_ASTEROID, POOL_TOWER, POOL_WORD_CHAIN, pickWords, pickByDiff } from "./WordDB";
 import { Sniper, Mirror, Flash, Echo, GhostWords, BossBattle } from "./GamesExtra";
 import { HundredWords, Endurance, Roulette, WordChain, CategoryBlitz, VocabBuilder, TypingInvaders, AsteroidBelt, TowerDefense, MysteryWords, RhymeTime, MadLibs } from "./GamesNew2";
-import { SpeedTest, MissingLetters, Anagram, BrickBreaker, Synonyms, Antonyms, TugOfWar, WordBomb } from "./GamesNew3";
+import { SpeedTest, MissingLetters, Anagram, BrickBreaker, Synonyms, Antonyms, TugOfWar, WordBomb, MemoryEdit } from "./GamesNew3";
 // Word pools
 const EASY_WORDS = TYPING_BASIC;
 const MED_WORDS = TYPING_MEDIUM;
@@ -92,6 +92,7 @@ const GAMES = [
   { id:"mirror",      emoji:"🪞", name:"Mirror",           desc:"Words appear backwards — type them forwards",     cat:"accuracy" },
   { id:"flash",       emoji:"⚡", name:"Flash",            desc:"Memorize the word before it disappears",          cat:"memory" },
   { id:"echo",        emoji:"🔁", name:"Echo",             desc:"Repeat growing sequences from memory",            cat:"memory" },
+  { id:"memoryedit",  emoji:"🧠", name:"Memory Edit",      desc:"Spot what changed and fix it from memory",        cat:"memory" },
   { id:"ghost",       emoji:"👻", name:"Ghost Words",      desc:"Type the word before it fades away",             cat:"accuracy" },
   { id:"boss",        emoji:"👾", name:"Boss Battle",      desc:"Deal damage by typing — dodge boss attacks",      cat:"arcade" },
   { id:"hundred",     emoji:"💯", name:"100 Words",         desc:"Type exactly 100 words as fast as possible",      cat:"challenge" },
@@ -835,6 +836,7 @@ const GAME_SETTINGS = {
   ladder:      [{ key:"rungs",      label:"Rungs",      opts:[5,8,10,15], default:10 }],
   tugofwar:    [{ key:"difficulty", label:"Difficulty",  opts:["easy","medium","hard"], default:"medium" }],
   wordbomb:    [{ key:"difficulty", label:"Fuse Speed",  opts:["easy","medium","hard"], default:"medium" }, { key:"lives", label:"Lives", opts:[1,3,5], default:3 }],
+  memoryedit:  [{ key:"changes", label:"Words Changed", opts:[1,2,3], default:2 }],
   sniper:      [{ key:"count",      label:"Words",      opts:[10,25,50], default:25 }, { key:"difficulty", label:"Difficulty", opts:["easy","medium","hard"], default:"medium" }],
   mirror:      [{ key:"count",      label:"Words",      opts:[10,20,30], default:20 }],
   flash:       [{ key:"flashMs",    label:"Flash time", opts:[500,1000,1500,2000], default:1000, suffix:"ms" }, { key:"count", label:"Words", opts:[10,20,30], default:20 }],
@@ -1159,7 +1161,7 @@ export default function GamesTab({ T }) {
 
   const GAME_COMPONENTS = {
     rain: WordRain, survival: Survival, burst: SpeedBurst, scramble: WordScramble,
-    suddendeath: SuddenDeath, ladder: SpeedLadder, tugofwar: TugOfWar, wordbomb: WordBomb,
+    suddendeath: SuddenDeath, ladder: SpeedLadder, tugofwar: TugOfWar, wordbomb: WordBomb, memoryedit: MemoryEdit,
     sniper: Sniper, mirror: Mirror, flash: Flash, echo: Echo,
     ghost: GhostWords, boss: BossBattle,
     hundred: HundredWords, endurance: Endurance, roulette: Roulette,
