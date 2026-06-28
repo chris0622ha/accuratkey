@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, WORD_CATEGORIES, CATEGORY_NAMES, ALL_WORDS, POOL_100_WORDS, POOL_ENDURANCE, POOL_WORD_CHAIN, POOL_VOCAB, POOL_MYSTERY, POOL_INVADERS, POOL_ASTEROID, POOL_TOWER, pickWords, pickByDiff, RHYMES } from "./WordDB";
+import { GAMES } from "./GameCatalog";
 const WORDS_EASY=TYPING_BASIC, WORDS_MED=TYPING_MEDIUM, WORDS_HARD=TYPING_HARD, WORDS_ANIMALS=WORD_CATEGORIES.animals, WORDS_COUNTRIES=WORD_CATEGORIES.countries;
 
 function gSave(id, data) { try { localStorage.setItem("ak_gs_"+id, JSON.stringify(data)); } catch{} }
@@ -125,8 +126,13 @@ export function Endurance({ T, onBack, onSettings, settings={} }) {
 
 // ─── ROULETTE ─────────────────────────────────────────────────────────────────
 export function Roulette({ T, onBack, onSettings, settings={} }) {
-  const ALL_GAME_IDS = ["rain","survival","burst","scramble","suddendeath","zen","ladder","sniper","mirror","flash","echo","ghost","coderain","boss","story","journal","poetry","hundred","endurance","wordchain","categoryblitz","vocabbuilder"];
-  const GAME_NAMES = {rain:"🌧️ Word Rain",survival:"💀 Survival",burst:"⚡ Speed Burst",scramble:"🔀 Word Scramble",suddendeath:"☠️ Sudden Death",zen:"🧘 Zen Mode",ladder:"🪜 Speed Ladder",sniper:"🎯 Sniper",mirror:"🪞 Mirror",flash:"⚡ Flash",echo:"🔁 Echo",ghost:"👻 Ghost Words",coderain:"💻 Code Rain",boss:"👾 Boss Battle",story:"🎭 Typewriter Story",journal:"📝 Journal",poetry:"📜 Poetry",hundred:"💯 100 Words",endurance:"🏃 Endurance",wordchain:"🔗 Word Chain",categoryblitz:"⚡ Category Blitz",vocabbuilder:"📚 Vocab Builder"};
+  // Pulls from the real, shared game catalog instead of a separately
+  // hand-typed list - that list had drifted badly (still offering Zen
+  // Mode, Code Rain, and other removed games, while missing every game
+  // added since). Excludes Roulette itself (spinning to land on itself
+  // makes no sense) and anything marked unavailable.
+  const ALL_GAME_IDS = GAMES.filter(g => g.id !== "roulette" && !g.unavailable).map(g => g.id);
+  const GAME_NAMES = Object.fromEntries(GAMES.map(g => [g.id, `${g.emoji} ${g.name}`]));
   const [spinning, setSpinning] = useState(false);
   const [picked, setPicked] = useState(null);
   const [spinItems, setSpinItems] = useState([]);
@@ -138,7 +144,7 @@ export function Roulette({ T, onBack, onSettings, settings={} }) {
     setSpinItems(items); setSpinPos(0);
     let i=0;
     const iv = setInterval(()=>{
-      i++; setSpinPos(p=>p+1);
+      i++; setSpinPos(i);
       if(i>=20){clearInterval(iv);setSpinning(false);const winner=items[items.length-1];setPicked(winner);playTone(880,"sine",.3,.25);}
     },100);
   };
@@ -147,8 +153,14 @@ export function Roulette({ T, onBack, onSettings, settings={} }) {
     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><BackBtn onBack={onBack} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>🎰 Roulette</span></div>
     <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"24px 20px",marginBottom:16,textAlign:"center",minHeight:120,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
       {spinning?(
-        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:18,color:T.purple,fontWeight:700,animation:"none"}}>
-          {spinItems.slice(-3).map((id,i)=><div key={i} style={{opacity:i===2?1:i===1?.5:.2,marginBottom:4}}>{GAME_NAMES[id]||id}</div>)}
+        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:18,color:T.purple,fontWeight:700}}>
+          {/* spinPos now actually drives which 3 items show, so this
+              genuinely changes every tick instead of sitting static for
+              the whole 2 seconds while a hidden interval ticks. */}
+          {[spinPos-2, spinPos-1, spinPos].map((idx,i)=>{
+            const item = spinItems[Math.max(0,idx)];
+            return <div key={i} style={{opacity:i===2?1:i===1?.5:.2,marginBottom:4,transition:"opacity .08s"}}>{item?GAME_NAMES[item]||item:""}</div>;
+          })}
         </div>
       ):picked?(
         <div>
