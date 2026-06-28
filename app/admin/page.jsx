@@ -475,6 +475,8 @@ export default function AdminPage() {
 
   useEffect(()=>{ if(adminOk) loadBansAndAdmins(); },[adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="log") getActivityLog(100,adminDb).then(setLog).catch(()=>{}); },[tab,adminOk]);
+  const [failStats, setFailStats] = useState(null);
+  const [failStatsLoading, setFailStatsLoading] = useState(false);
   useEffect(()=>{ if(adminOk&&tab==="feedback") getAdminFeedback(50,adminDb).then(setFeedbackList).catch(()=>{}); },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="anticheat"){ getFlaggedScores(adminDb).then(setFlaggedScores).catch(()=>{}); getRestoreRequests(adminDb).then(setRestoreRequests).catch(()=>{}); } },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="birthday") getAdminBirthdayRequests(adminDb).then(setBdayReqList).catch(()=>{}); },[tab,adminOk]);
