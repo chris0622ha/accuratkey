@@ -620,7 +620,7 @@ export default function ShopPage() {
               const owned = s.cost===0 || (activeProfile?.ownedSounds||[]).includes(s.id);
               const active = (activeProfile?.activeSound||"default") === s.id;
               const handleEquip = async () => {
-                patchProfile({activeSound:s.id});
+                optimistic({activeSound:s.id});
                 try {
                   if (isProfileRestricted(activeProfile)) updateProfileLocal(activeProfile.id, activeProfile, {activeSound:s.id});
                   else await setActiveSound(user.uid, activeProfile.id, s.id);
@@ -630,7 +630,7 @@ export default function ShopPage() {
               const handleBuy = async () => {
                 const newKeys = (activeProfile.keys||0) - s.cost;
                 if(newKeys < 0){ showMsg("Not enough Keys"); return; }
-                patchProfile({keys:newKeys, ownedSounds:[...(activeProfile.ownedSounds||[]),s.id], activeSound:s.id});
+                optimistic({keys:newKeys, ownedSounds:[...(activeProfile.ownedSounds||[]),s.id], activeSound:s.id});
                 showMsg(`${s.label} purchased!`);
                 try {
                   // Same fix as themes/fonts: this used to write keys/owned
@@ -647,7 +647,7 @@ export default function ShopPage() {
                     await setActiveSound(user.uid, activeProfile.id, s.id);
                   }
                 } catch(e){
-                  patchProfile({keys:activeProfile.keys, ownedSounds:activeProfile.ownedSounds, activeSound:activeProfile.activeSound});
+                  optimistic({keys:activeProfile.keys, ownedSounds:activeProfile.ownedSounds, activeSound:activeProfile.activeSound});
                   showMsg(e.message || "Error purchasing");
                 }
               };
