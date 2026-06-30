@@ -1015,7 +1015,16 @@ export default function AccuratKey() {
   const [warning, setWarning] = useState(null);
   const [broadcast, setBroadcast] = useState(null);
   const [levelOverrides, setLevelOverrides] = useState({});
-  const [activeTab, setActiveTab] = useState("map");
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window === "undefined") return "map";
+    // A direct load or refresh at /games/{id} needs the Games tab selected
+    // on the very first render, or GamesTab's own (correct) URL-restoration
+    // logic never gets a chance to run at all - the parent was defaulting
+    // to the level map unconditionally, so a fresh visit to a specific
+    // game's URL silently landed on the map instead of that game.
+    if (/^\/games\//.test(window.location.pathname)) return "games";
+    return "map";
+  });
 
   const pathname = usePathname();
   // Reverse mapping: URL → screen, built once from SCREEN_URLS so the two
@@ -1060,7 +1069,7 @@ export default function AccuratKey() {
 
     if (targetScreen && targetScreen !== screen) setScreen(targetScreen);
 
-    const targetTab = URL_TO_TAB[pathname];
+    const targetTab = URL_TO_TAB[pathname] || (/^\/games\//.test(pathname) ? "games" : undefined);
     if (targetTab && targetScreen === "levelMap") setActiveTab(targetTab);
   }, [pathname, user]);
 
