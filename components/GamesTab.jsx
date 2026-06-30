@@ -845,7 +845,20 @@ function getSettings(id) {
 function SettingsPanel({ gameId, T, onStart }) {
   const defs = GAME_SETTINGS[gameId] || [];
   const [vals, setVals] = useState(() => getSettings(gameId));
-  if (defs.length === 0) { onStart(vals); return null; }
+
+  // Games with no settings auto-start immediately after mount.
+  // Previously this called onStart(vals) directly during render, which is
+  // a React anti-pattern - updating a parent's state mid-render causes
+  // the "Cannot update a component while rendering a different component"
+  // warning and produces unpredictable behavior, including the Start button
+  // silently doing nothing in games that DO have settings (because the
+  // render-time call from a no-settings game's mount was corrupting the
+  // parent's state update queue).
+  useEffect(() => {
+    if (defs.length === 0) onStart(vals);
+  }, []);
+
+  if (defs.length === 0) return null;
   const set = (k, v) => {
     const nv = {...vals, [k]: v};
     setVals(nv);

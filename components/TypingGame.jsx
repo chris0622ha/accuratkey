@@ -3005,7 +3005,7 @@ const Nav = () => (<>
           </Overlay>
         )}
 
-        <div style={{maxWidth:(activeTab==="map"&&!isMobile)?"min(1180px, 96%)":"min(860px, 100%)",margin:"0 auto",padding:"0 8px",transition:"max-width 0.2s"}}>
+        <div style={{maxWidth:isMobile?"min(860px, 100%)":"min(1180px, 96%)",margin:"0 auto",padding:"0 8px",transition:"max-width 0.2s"}}>
           <Nav />
           {/* Tabs */}
           <div style={{display:"flex",gap:6,marginBottom:16,background:T.card,borderRadius:10,padding:3,border:`1px solid ${T.border}`}}>
