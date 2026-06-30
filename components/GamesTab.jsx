@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, ALL_WORDS, WORD_CATEGORIES, CATEGORY_NAMES, POOL_WORD_RAIN, POOL_SURVIVAL, POOL_SPEED_BURST, POOL_SCRAMBLE, POOL_SUDDEN_DEATH, POOL_ZEN, POOL_LADDER_EASY, POOL_LADDER_MED, POOL_LADDER_HARD, POOL_LADDER_VHARD, POOL_ECHO, POOL_INVADERS, POOL_ASTEROID, POOL_TOWER, POOL_WORD_CHAIN, pickWords, pickByDiff } from "./WordDB";
 import { Sniper, Mirror, Flash, Echo, GhostWords, BossBattle } from "./GamesExtra";
-import { HundredWords, Endurance, Roulette, WordChain, CategoryBlitz, VocabBuilder, TypingInvaders, AsteroidBelt, TowerDefense, MysteryWords, RhymeTime, MadLibs } from "./GamesNew2";
+import { HundredWords, Endurance, Roulette, WordChain, CategoryBlitz, VocabBuilder, TypingInvaders, AsteroidBelt, TowerDefense, MysteryWords, RhymeTime } from "./GamesNew2";
 import { SpeedTest, MissingLetters, Anagram, BrickBreaker, Synonyms, Antonyms, TugOfWar, WordBomb, MemoryEdit, WildcardWords, Freestyle } from "./GamesNew3";
 import { GAMES } from "./GameCatalog";
 // Word pools
@@ -819,7 +819,6 @@ const GAME_SETTINGS = {
   tower:       [],
   mystery:     [{ key:"difficulty", label:"Difficulty", opts:["easy","medium","hard"], default:"medium" }],
   rhyme:       [],
-  madlibs:     [],
   speedtest:   [{ key:"duration", label:"Duration", opts:[1,2,5], default:1, suffix:" min" }, { key:"difficulty", label:"Words", opts:["easy","medium","hard"], default:"medium" }],
   missing:     [{ key:"difficulty", label:"Difficulty", opts:["easy","medium","hard"], default:"medium" }, { key:"count", label:"Words", opts:[10,15,20,30], default:20 }, { key:"hideRate", label:"Hide amount", opts:["low","medium","high"], default:"medium" }],
   anagram:     [{ key:"difficulty", label:"Difficulty", opts:["easy","medium","hard"], default:"medium" }, { key:"count", label:"Words", opts:[10,15,20], default:20 }],
@@ -1132,7 +1131,7 @@ export default function GamesTab({ T }) {
     hundred: HundredWords, endurance: Endurance, roulette: Roulette,
     wordchain: WordChain, blitz: CategoryBlitz, vocab: VocabBuilder,
     invaders: TypingInvaders, asteroid: AsteroidBelt,
-    tower: TowerDefense, mystery: MysteryWords, rhyme: RhymeTime, madlibs: MadLibs,
+    tower: TowerDefense, mystery: MysteryWords, rhyme: RhymeTime,
     speedtest: SpeedTest, missing: MissingLetters, anagram: Anagram,
     bricks: BrickBreaker,
     synonyms: Synonyms, antonyms: Antonyms,

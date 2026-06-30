@@ -926,7 +926,6 @@ export function Synonyms({ T, onBack, onSettings, settings={} }) {
     <input ref={ref} value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type a synonym and press Space..."
       style={{width:"100%",background:wrong?"#ef444411":T.bg,border:`1px solid ${wrong?"#ef4444":T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box",transition:"all .15s"}}/>
     {wrong&&<div style={{color:"#ef4444",fontSize:12,marginTop:4,textAlign:"center"}}>"{wrongWord}" is not a synonym — try again</div>}
-    <div style={{color:T.faint,fontSize:10,marginTop:8,textAlign:"center"}}>Accepted: {item?.syn.slice(0,4).join(", ")}...</div>
   </div>);
 }
 
@@ -980,7 +979,6 @@ export function Antonyms({ T, onBack, onSettings, settings={} }) {
     <input ref={ref} value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type the opposite and press Space..."
       style={{width:"100%",background:wrong?"#ef444411":T.bg,border:`1px solid ${wrong?"#ef4444":T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box",transition:"all .15s"}}/>
     {wrong&&<div style={{color:"#ef4444",fontSize:12,marginTop:4,textAlign:"center"}}>"{wrongWord}" is not an antonym — try another word</div>}
-    <div style={{color:T.faint,fontSize:10,marginTop:8,textAlign:"center"}}>Accepted: {item?.ant.slice(0,4).join(", ")}...</div>
   </div>);
 }
 

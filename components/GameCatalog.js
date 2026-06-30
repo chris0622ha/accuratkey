@@ -34,7 +34,6 @@ export const GAMES = [
   { id:"tower",       emoji:"🏰", name:"Tower Defense",     desc:"Stop enemies from reaching your base",            cat:"arcade" },
   { id:"mystery",     emoji:"🔮", name:"Mystery Words",     desc:"Symbols slowly reveal as letters — guess the word", cat:"puzzle" },
   { id:"rhyme",       emoji:"🎵", name:"Rhyme Time",        desc:"Type a word that rhymes with the one shown",      cat:"educational" },
-  { id:"madlibs",     emoji:"😂", name:"Mad Libs",          desc:"Fill in the blanks to make a funny story",        cat:"creative" },
   { id:"freestyle",   emoji:"✍️", name:"Freestyle",         desc:"Write your own rhyming lines, validated for real", cat:"creative" },
   { id:"speedtest",   emoji:"⏱️", name:"Speed Test",        desc:"Classic 1, 2, or 5 minute WPM benchmark",         cat:"speed" },
   { id:"missing",     emoji:"🔡", name:"Missing Letters",   desc:"Fill in the blanks — w_rd sh_wn l_ke th_s",       cat:"puzzle" },
