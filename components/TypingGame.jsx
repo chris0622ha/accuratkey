@@ -2265,6 +2265,11 @@ const Nav = () => (<>
       <div style={{fontSize:48,marginBottom:16}}>🔧</div>
       <div style={{color:"#a78bfa",fontSize:20,fontWeight:700,marginBottom:8}}>Under Maintenance</div>
       <div style={{color:"#6b7280",fontSize:13}}>{maintenance?.message || "We'll be back soon."}</div>
+      {user?.uid === "qM3qeYBLwvRXy8D0gOKGCQbGuA12" && (
+        <button onClick={()=>setScreen("levelMap")} style={{marginTop:28,padding:"10px 22px",borderRadius:10,border:"1px solid #7c6af7",background:"transparent",color:"#a78bfa",fontFamily:"'JetBrains Mono',monospace",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+          Continue as owner (bypass maintenance)
+        </button>
+      )}
     </div>
   );
 
