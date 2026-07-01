@@ -1297,8 +1297,12 @@ export default function AccuratKey() {
   useEffect(() => {
     getMaintenanceMode().then(m => {
       setMaintenance(m);
-      // Initial check before auth - only block if users trigger is on
-      if (m.enabled && (m.triggers?.users !== false) && screen === "loading") setScreen("maintenance");
+      // Don't immediately block here - we don't know who's logged in yet,
+      // so the owner and admin bypass logic hasn't run. Setting maintenance
+      // screen here and then immediately reversing it in the auth callback
+      // caused a visible flash for the owner account even when maintenance
+      // wasn't supposed to block them at all. The post-auth check below
+      // handles the real gate with proper owner/admin bypass logic.
     }).catch(() => {});
     getBroadcast().then(b => { if (b?.active && b?.message) setBroadcast(b); }).catch(()=>{});
     getLevelOverrides().then(setLevelOverrides).catch(()=>{});

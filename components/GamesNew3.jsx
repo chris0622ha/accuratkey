@@ -894,10 +894,29 @@ export function Synonyms({ T, onBack, onSettings, settings={} }) {
   useEffect(()=>{setTyped("");setLastAccepted("");setTimeout(()=>ref.current?.focus(),50);},[idx]);
 
   const handleType=e=>{
-    const v=e.target.value.toLowerCase().trim();
-    setTyped(e.target.value);
-    // Accept the instant it matches, no space needed
-    const checkWord = v.replace(/\s+$/,"");
+    const raw=e.target.value;
+    setTyped(raw);
+    const v=raw.toLowerCase();
+    // Submit on space - validate the completed word
+    if(v.endsWith(" ")){
+      const checkWord=v.trim();
+      if(!checkWord)return;
+      if(item.syn.includes(checkWord)||checkWord===item.word){
+        if(!muted)playTone(880,"sine",.1,.2);
+        setCorrect(c=>c+1);setLastAccepted(checkWord);
+        const ni=idx+1;
+        if(ni>=list.length)setDone(true);
+        else setIdx(ni);
+        setTyped("");
+      } else {
+        if(!muted)playTone(220,"sawtooth",.15,.2);
+        setWrong(true);setWrongWord(checkWord);setTyped("");
+        setTimeout(()=>setWrong(false),600);
+      }
+      return;
+    }
+    // Live match - accept immediately on exact match without needing space
+    const checkWord=v.trim();
     if(item.syn.includes(checkWord)||checkWord===item.word){
       if(!muted)playTone(880,"sine",.1,.2);
       setCorrect(c=>c+1);setLastAccepted(checkWord);
@@ -905,11 +924,8 @@ export function Synonyms({ T, onBack, onSettings, settings={} }) {
       if(ni>=list.length)setDone(true);
       else setIdx(ni);
       setTyped("");
-    } else if(checkWord.length >= (item.syn[0]?.length||4) && checkWord.length>0 && !item.syn.some(s=>s.startsWith(checkWord))){
-      if(!muted)playTone(220,"sawtooth",.15,.2);
-      setWrong(true);setWrongWord(checkWord);setTyped("");
-      setTimeout(()=>setWrong(false),600);
     }
+    // No mid-keystroke punishment - only reject on explicit space submission
   };
 
   if(done) return <ResultScreen emoji="📖" title="Synonym Expert!" color="#34d399" stats={[["Correct",`${correct}/${list.length}`],["Score",Math.round(correct/list.length*100)+"%"]]} onRetry={()=>{gClear("synonyms");setIdx(0);setTyped("");setCorrect(0);setDone(false);}} T={T}/>;
@@ -948,9 +964,27 @@ export function Antonyms({ T, onBack, onSettings, settings={} }) {
   useEffect(()=>{setTyped("");setLastAccepted("");setTimeout(()=>ref.current?.focus(),50);},[idx]);
 
   const handleType=e=>{
-    const v=e.target.value.toLowerCase().trim();
-    setTyped(e.target.value);
-    const checkWord=v.replace(/\s+$/,"");
+    const raw=e.target.value;
+    setTyped(raw);
+    const v=raw.toLowerCase();
+    if(v.endsWith(" ")){
+      const checkWord=v.trim();
+      if(!checkWord)return;
+      if(item.ant.includes(checkWord)){
+        if(!muted)playTone(880,"sine",.1,.2);
+        setCorrect(c=>c+1);setLastAccepted(checkWord);
+        const ni=idx+1;
+        if(ni>=list.length)setDone(true);
+        else setIdx(ni);
+        setTyped("");
+      } else {
+        if(!muted)playTone(220,"sawtooth",.15,.2);
+        setWrong(true);setWrongWord(checkWord);setTyped("");
+        setTimeout(()=>setWrong(false),600);
+      }
+      return;
+    }
+    const checkWord=v.trim();
     if(item.ant.includes(checkWord)){
       if(!muted)playTone(880,"sine",.1,.2);
       setCorrect(c=>c+1);setLastAccepted(checkWord);
@@ -958,10 +992,6 @@ export function Antonyms({ T, onBack, onSettings, settings={} }) {
       if(ni>=list.length)setDone(true);
       else setIdx(ni);
       setTyped("");
-    } else if(checkWord.length >= (item.ant[0]?.length||4) && checkWord.length>0 && !item.ant.some(a=>a.startsWith(checkWord))){
-      if(!muted)playTone(220,"sawtooth",.15,.2);
-      setWrong(true);setWrongWord(checkWord);setTyped("");
-      setTimeout(()=>setWrong(false),600);
     }
   };
 

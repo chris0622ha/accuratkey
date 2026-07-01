@@ -126,26 +126,52 @@ export function Endurance({ T, onBack, onSettings, settings={} }) {
 
 // ─── ROULETTE ─────────────────────────────────────────────────────────────────
 export function Roulette({ T, onBack, onSettings, settings={} }) {
-  // Pulls from the real, shared game catalog instead of a separately
-  // hand-typed list - that list had drifted badly (still offering Zen
-  // Mode, Code Rain, and other removed games, while missing every game
-  // added since). Excludes Roulette itself (spinning to land on itself
-  // makes no sense) and anything marked unavailable.
   const ALL_GAME_IDS = GAMES.filter(g => g.id !== "roulette" && !g.unavailable).map(g => g.id);
   const GAME_NAMES = Object.fromEntries(GAMES.map(g => [g.id, `${g.emoji} ${g.name}`]));
   const [spinning, setSpinning] = useState(false);
   const [picked, setPicked] = useState(null);
   const [spinItems, setSpinItems] = useState([]);
   const [spinPos, setSpinPos] = useState(0);
+  const spinSoundRef = useRef(null);
+
+  // Fully synthesized spin sound - royalty-free, no samples.
+  // Creates a slot-machine-style click track that speeds up then slows
+  // down, matching the visual spin timing. All done via Web Audio API
+  // oscillators and gain nodes, no external files needed.
+  const playSpinSound = () => {
+    try {
+      const ctx = new (window.AudioContext||window.webkitAudioContext)();
+      spinSoundRef.current = ctx;
+      const totalMs = 2100; // ~2s spin = 20 ticks at 100ms each
+      for (let i = 0; i < 20; i++) {
+        // Ticks get further apart toward the end (slow-down effect)
+        const t = ctx.currentTime + (i < 10
+          ? i * 0.08                    // fast at start
+          : 0.8 + (i - 10) * 0.13);    // slows toward end
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = "square";
+        // Pitch descends from high to low as spin slows
+        osc.frequency.value = 900 - i * 28;
+        gain.gain.setValueAtTime(0.18, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+        osc.start(t); osc.stop(t + 0.05);
+      }
+      // Win chime at end
+      setTimeout(() => playTone(880, "sine", 0.3, 0.25), totalMs);
+    } catch {}
+  };
 
   const spin = () => {
     setSpinning(true); setPicked(null);
     const items = [...ALL_GAME_IDS,...ALL_GAME_IDS,...ALL_GAME_IDS].sort(()=>Math.random()-.5).slice(0,20);
     setSpinItems(items); setSpinPos(0);
+    playSpinSound();
     let i=0;
     const iv = setInterval(()=>{
       i++; setSpinPos(i);
-      if(i>=20){clearInterval(iv);setSpinning(false);const winner=items[items.length-1];setPicked(winner);playTone(880,"sine",.3,.25);}
+      if(i>=20){clearInterval(iv);setSpinning(false);const winner=items[items.length-1];setPicked(winner);}
     },100);
   };
 

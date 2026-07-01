@@ -1087,7 +1087,7 @@ export default function AdminPage() {
                   <div style={{color:T.muted,fontSize:10,marginBottom:8}}>Top failing levels</div>
                   {Object.entries(failStats).sort((a,b)=>b[1]-a[1]).slice(0,20).map(([level,count])=>(
                     <div key={level} style={{display:"flex",alignItems:"center",gap:10,padding:"6px 0",borderBottom:`1px solid ${T.faint}`}}>
-                      <div style={{color:T.text,fontSize:12,minWidth:60}}>Level {level}</div>
+                      <div style={{color:T.text,fontSize:12,minWidth:60}}>{isNaN(Number(level)) ? level : `Level ${level}`}</div>
                       <div style={{flex:1,height:6,background:T.faint,borderRadius:3,overflow:"hidden"}}>
                         <div style={{height:"100%",background:T.danger,width:`${Math.min(100,(count/Math.max(...Object.values(failStats)))*100)}%`,borderRadius:3}} />
                       </div>
