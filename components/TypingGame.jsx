@@ -4110,7 +4110,6 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
           <div style={{height:"100%",background:lv.color,borderRadius:2,width:progress+"%",transition:"width 0.3s"}} />
         </div>}
         <div style={{width:"100%",maxWidth:isMobile?660:980,background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"20px 24px",marginBottom:12}}>
-          {lines[lineIdx+1] && <div style={{fontSize:14,letterSpacing:1,marginBottom:10,color:"#2a2a3a",overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis",fontFamily:T.font}}>{lines[lineIdx+1]}</div>}
           <div style={{fontSize:20,letterSpacing:2,display:"flex",flexWrap:"wrap",lineHeight:1.8,fontFamily:T.font}}>
             {current.split("").map((ch,ci) => {
               let color=T.faint, underline="2px solid transparent";
