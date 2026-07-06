@@ -2725,12 +2725,23 @@ const Nav = () => (<>
   if (screen === "fail") {
     const lv = LEVELS.find(l => l.id === playingLevel) || LEVELS[0];
     const lvWords = levelOverrides[String(playingLevel)] || lv.words;
+    const worstKeys = Object.entries(keyMistakes).sort((a,b) => b[1]-a[1]).slice(0,5);
     return (
       <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:24,textAlign:"center"}}>
         <div style={{fontSize:64,marginBottom:16}}>❌</div>
         <h2 style={{color:"#ef4444",fontSize:28,fontWeight:800,marginBottom:8}}>Accuracy too low</h2>
         <p style={{color:T.muted,fontSize:15,marginBottom:6}}>{failReason}</p>
-        <p style={{color:T.faint,fontSize:13,marginBottom:32}}>{lv.emoji} {lv.name} requires 75% accuracy.</p>
+        <p style={{color:T.faint,fontSize:13,marginBottom:24}}>{lv.emoji} {lv.name} requires 75% accuracy.</p>
+        <div style={{width:"100%",maxWidth:480,marginBottom:20}}>
+          <AICoach
+            wpm={resultData?.wpm || 0}
+            accuracy={resultData?.accuracy || 0}
+            passed={false}
+            levelName={lv.name}
+            worstKeys={worstKeys.map(([k,n]) => `${k}(×${n})`)}
+            T={T}
+          />
+        </div>
         <div style={{display:"flex",gap:10}}>
           <button onClick={() => requestStartLevel(playingLevel, isSkipChallenge, skipTargetLevel)}
             style={{padding:"14px 32px",borderRadius:12,border:"none",background:T.purple,color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>
