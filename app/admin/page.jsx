@@ -1146,6 +1146,13 @@ export default function AdminPage() {
                   </div>
                 </div>
                 <div style={{color:T.text,fontSize:13,whiteSpace:"pre-wrap",lineHeight:1.5}}>{f.text}</div>
+                {f.screenshot && (
+                  <div style={{marginTop:8}}>
+                    <div style={{color:T.faint,fontSize:10,marginBottom:4,letterSpacing:1,textTransform:"uppercase"}}>Attached screenshot</div>
+                    <img src={f.screenshot} alt="User screenshot" onClick={()=>window.open(f.screenshot,'_blank')}
+                      style={{maxWidth:"100%",maxHeight:200,borderRadius:6,border:"1px solid #333",cursor:"pointer",objectFit:"contain"}} />
+                  </div>
+                )}
                 {f.reply && <div style={{background:"#7c6af722",border:"1px solid #7c6af744",borderRadius:6,padding:"8px 10px",marginTop:8,fontSize:12,color:"#a78bfa"}}><span style={{fontWeight:700}}>Reply from {f.replyBy||"Admin"}:</span> {f.reply}</div>}
                 {replyingTo===f.id ? (
                   <div style={{marginTop:10}}>
