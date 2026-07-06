@@ -894,7 +894,7 @@ export default function AdminPage() {
               <div key={b.uid} style={st.card}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
                   <div>
-                    <div style={{color:T.danger,fontWeight:700,fontSize:12}}>{u?.username?`@${u.username} · `:""}{u?.email ? `${u.email.slice(0,3)}***@${u.email.split("@")[1]}` : b.uid}</div>
+                    <div style={{color:T.danger,fontWeight:700,fontSize:12}}>{u?.username ? `@${u.username}` : b.uid.slice(0,12)+"…"}</div>
                     <div style={{color:T.muted,fontSize:11,marginTop:2}}>Reason: {b.reason}</div>
                     {b.expiresAt&&<div style={{color:T.warn,fontSize:10}}>Expires: {new Date(b.expiresAt).toLocaleDateString()}</div>}
                     <div style={{color:T.faint,fontSize:10}}>By: {b.bannedBy?.slice(0,8)}... · {b.bannedAt?.seconds?new Date(b.bannedAt.seconds*1000).toLocaleDateString():""}</div>
@@ -1456,8 +1456,7 @@ function UserRow({ u, bannedUids, adminUids, currentUid, onBan, onUnban, onSkip,
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
         <div>
           <div style={{color:"#e0e0ff",fontWeight:700,fontSize:12}}>
-            {u.username&&<span style={{color:"#a78bfa"}}>@{u.username} · </span>}
-            {u.email ? `${u.email.slice(0,3)}***@${u.email.split("@")[1]}` : "No email"}
+            {u.username ? <span style={{color:"#a78bfa"}}>@{u.username}</span> : <span style={{color:"#666"}}>{u.uid.slice(0,12)}…</span>}
             {isAdm&&<span style={{marginLeft:6,background:"#a78bfa33",color:"#a78bfa",fontSize:9,padding:"1px 6px",borderRadius:8}}>ADMIN</span>}
             {isBanned&&<span style={{marginLeft:5,background:"#ef444422",color:"#ef4444",fontSize:9,padding:"1px 6px",borderRadius:8}}>BANNED</span>}
           </div>
