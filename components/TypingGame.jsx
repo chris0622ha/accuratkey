@@ -8,6 +8,7 @@ import { KKey } from "./icons/KKey";
 import { FOUNDATIONS_ICONS, PRECISION_FLOW_ICONS, WORD_POWER_ICONS, KEYBOARD_MASTERY_ICONS, SPEED_SURGE_ICONS, FREE_RUN_ICONS, CENTURY_CLUB_ICONS, ENDURANCE_ICONS, LITERATURE_ICONS, MACHINE_MODE_ICONS, LEGEND_TIER_ICONS, SPEED_SURGE_II_ICONS, IconStar } from "./icons/LevelIcons";
 import { formatKeys } from "@/lib/format";
 import { CertificateModal } from "./Certificates";
+import { AICoach } from "./AICoach";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
 import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
 
@@ -4278,6 +4279,14 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
               </div>
             </div>
           )}
+          <AICoach
+            wpm={rWpm}
+            accuracy={rAcc}
+            passed={passed}
+            levelName={lv.name}
+            worstKeys={worstKeys.map(([k,n]) => `${k}(×${n})`)}
+            T={T}
+          />
           <div style={{display:"flex",gap:8}}>
             <button onClick={() => requestStartLevel(resultData.level)}
               style={{flex:1,padding:14,borderRadius:10,border:"none",background:T.purple,color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>
