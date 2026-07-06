@@ -2723,8 +2723,9 @@ const Nav = () => (<>
   }
 
   if (screen === "fail") {
-    const lv = LEVELS.find(l => l.id === playingLevel) || LEVELS[0];
-    const lvWords = levelOverrides[String(playingLevel)] || lv.words;
+    const _lvRaw = LEVELS.find(l => l.id === playingLevel);
+    const lv = _lvRaw || (playingLevel === -1 ? {id:-1, name:"Daily Challenge", emoji:"📅", wpmTarget:0, accuracy:75} : LEVELS[0]);
+    const lvWords = levelOverrides[String(playingLevel)] || lv.words || [];
     const worstKeys = Object.entries(keyMistakes).sort((a,b) => b[1]-a[1]).slice(0,5);
     return (
       <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:24,textAlign:"center"}}>
@@ -4032,8 +4033,9 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
   if (screen === "game") {
     const current = lines[lineIdx] || "";
     const progress = (lineIdx / TOTAL_LINES) * 100;
-    const lv = LEVELS.find(l => l.id === playingLevel) || LEVELS[0];
-    const lvWords = levelOverrides[String(playingLevel)] || lv.words;
+    const _lvRaw2 = LEVELS.find(l => l.id === playingLevel);
+    const lv = _lvRaw2 || (playingLevel === -1 ? {id:-1, name:"Daily Challenge", emoji:"📅", wpmTarget:0, accuracy:75} : LEVELS[0]);
+    const lvWords = levelOverrides[String(playingLevel)] || lv.words || [];
 
     const Keyboard = () => {
       const nextChar = current[typed.length] || null;
