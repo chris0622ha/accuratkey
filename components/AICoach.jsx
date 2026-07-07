@@ -44,7 +44,11 @@ Give exactly 2-3 sentences of specific, actionable coaching advice based on thes
       if (data?.error) {
         console.error('Gemini error:', data.error.code, data.error.message?.slice(0, 100));
         inFlight.delete(sessionKey);
-        return null;
+        const fallback = passed
+          ? `${wpm} WPM at ${accuracy}% — keep building consistency across all key positions.`
+          : `${accuracy}% accuracy needs work. Slow down and focus on hitting each key correctly before worrying about speed.`;
+        coachCache.set(sessionKey, fallback);
+        return fallback;
       }
       // Safety block
       if (data?.promptFeedback?.blockReason) {
@@ -67,7 +71,15 @@ Give exactly 2-3 sentences of specific, actionable coaching advice based on thes
       inFlight.delete(sessionKey);
       return result;
     })
-    .catch(() => { inFlight.delete(sessionKey); return null; });
+    .catch((e) => {
+      console.error('Gemini fetch failed:', e?.message);
+      inFlight.delete(sessionKey);
+      const fallback = passed
+        ? `${wpm} WPM at ${accuracy}% — keep building consistency across all key positions.`
+        : `${accuracy}% accuracy needs work. Slow down and focus on hitting each key correctly before worrying about speed.`;
+      coachCache.set(sessionKey, fallback);
+      return fallback;
+    });
 
   inFlight.set(sessionKey, promise);
   return promise;
