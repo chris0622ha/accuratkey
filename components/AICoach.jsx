@@ -40,6 +40,7 @@ Give exactly 2-3 sentences of specific, actionable coaching advice based on thes
   })
     .then(r => r.json())
     .then(data => {
+      console.log('Gemini response:', JSON.stringify(data).slice(0, 300));
       const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
       if (text) coachCache.set(sessionKey, text);
       inFlight.delete(sessionKey);
