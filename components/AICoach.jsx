@@ -2,16 +2,10 @@
 import { useState, useEffect } from "react";
 
 const GEMINI_KEY = process.env.NEXT_PUBLIC_GEMINI_KEY || "";
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
 
-// Cache and in-flight promises live OUTSIDE the component entirely so they
-// survive unmount/remount cycles. When the result screen re-renders multiple
-// times (keys earned, progress saved, etc.), the component unmounts and
-// remounts but the fetch is already in progress and the result gets stored
-// here so the next mount picks it up instantly without a new API call.
-const coachCache = new Map();
-const inFlight = new Map();
-
+// Call through our own API route to avoid CORS — the browser can't call
+// generativelanguage.googleapis.com directly, but our own /api/coach
+// endpoint can since it runs server-side.
 function fetchTip(sessionKey, wpm, accuracy, passed, levelName, worstKeys) {
   if (coachCache.has(sessionKey)) return Promise.resolve(coachCache.get(sessionKey));
   if (inFlight.has(sessionKey)) return inFlight.get(sessionKey);
@@ -30,7 +24,7 @@ ${worstStr}
 
 Give exactly 2-3 sentences of specific, actionable coaching advice based on these real stats. Be direct and concrete - mention the actual keys or numbers. Don't be generic. Don't use bullet points. Don't start with "Great job" or similar filler. Keep it under 60 words total.`;
 
-  const promise = fetch(GEMINI_URL, {
+  const promise = fetch("/api/coach", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -92,11 +86,6 @@ export function AICoach({ wpm, accuracy, passed, levelName, worstKeys, T }) {
   const [debugMsg, setDebugMsg] = useState("");
 
   useEffect(() => {
-    if (!GEMINI_KEY) {
-      setDebugMsg("No API key");
-      setLoading(false);
-      return;
-    }
     if (coachCache.has(sessionKey)) {
       setTip(coachCache.get(sessionKey));
       setLoading(false);
