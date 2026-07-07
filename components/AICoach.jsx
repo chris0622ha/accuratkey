@@ -55,10 +55,14 @@ export function AICoach({ wpm, accuracy, passed, levelName, worstKeys, T }) {
   const sessionKey = `${levelName}|${wpm}|${accuracy}`;
   const [tip, setTip] = useState(() => coachCache.get(sessionKey) || null);
   const [loading, setLoading] = useState(!coachCache.has(sessionKey));
+  const [debugMsg, setDebugMsg] = useState("");
 
   useEffect(() => {
-    if (!GEMINI_KEY) return;
-    // Already have it cached - nothing to do
+    if (!GEMINI_KEY) {
+      setDebugMsg("No API key");
+      setLoading(false);
+      return;
+    }
     if (coachCache.has(sessionKey)) {
       setTip(coachCache.get(sessionKey));
       setLoading(false);
@@ -67,13 +71,14 @@ export function AICoach({ wpm, accuracy, passed, levelName, worstKeys, T }) {
     setLoading(true);
     fetchTip(sessionKey, wpm, accuracy, passed, levelName, worstKeys)
       .then(text => {
-        if (text) setTip(text);
+        if (text) { setTip(text); setDebugMsg(""); }
+        else setDebugMsg("No tip returned");
         setLoading(false);
-      });
+      })
+      .catch(e => { setDebugMsg("Error: " + e.message); setLoading(false); });
   }, [sessionKey]);
 
-  if (!loading && !tip) return null;
-
+  // Always render the card so we can see what's happening
   return (
     <div style={{
       background: "linear-gradient(135deg, #0d0b1e 0%, #1a0d2e 100%)",
@@ -99,9 +104,13 @@ export function AICoach({ wpm, accuracy, passed, levelName, worstKeys, T }) {
           <span style={{ color: "#666", fontSize: 13 }}>Analyzing your session…</span>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
-      ) : (
+      ) : tip ? (
         <p style={{ color: "#c4b5fd", fontSize: 13, lineHeight: 1.7, margin: 0, fontStyle: "italic" }}>
           "{tip}"
+        </p>
+      ) : (
+        <p style={{ color: "#666", fontSize: 12, margin: 0 }}>
+          {debugMsg || "Coach unavailable"}
         </p>
       )}
     </div>
