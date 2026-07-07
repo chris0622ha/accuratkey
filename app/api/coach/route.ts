@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export const runtime = "edge";
-
 export async function POST(req: NextRequest) {
-  const key = process.env.NEXT_PUBLIC_GEMINI_KEY;
-  if (!key) return NextResponse.json({ error: "No key" }, { status: 500 });
+  // Edge runtime doesn't reliably get NEXT_PUBLIC_ vars, check both
+  const key = process.env.GEMINI_KEY || process.env.NEXT_PUBLIC_GEMINI_KEY;
+  if (!key) return NextResponse.json({ error: "No key configured" }, { status: 500 });
 
   const body = await req.json();
 
