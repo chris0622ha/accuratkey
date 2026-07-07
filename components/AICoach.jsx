@@ -8,6 +8,19 @@ const inFlight = new Map();
 // Call through our own API route to avoid CORS — the browser can't call
 // generativelanguage.googleapis.com directly, but our own /api/coach
 // endpoint can since it runs server-side.
+
+function generateFallback(wpm, accuracy, passed, levelName, worstKeys) {
+  const worst = worstKeys[0]?.split("(")[0]?.trim();
+  if (!passed) {
+    if (accuracy < 60) return `${accuracy}% accuracy on ${levelName} — that's too many errors to build speed on. Try going half as fast and focus purely on hitting the right key every time.`;
+    if (accuracy < 75) return `${accuracy}% on ${levelName}. You're close to the 75% target. ${worst ? `Watch the ${worst.toUpperCase()} key especially` : "Slow down just slightly"} and you should clear it next attempt.`;
+    return `${accuracy}% accuracy on ${levelName} — just under the target. ${worst ? `The ${worst.toUpperCase()} key is your main stumble` : "A small slowdown"} should get you over the line.`;
+  }
+  if (wpm < 30) return `${wpm} WPM on ${levelName} — you passed! Speed comes with repetition. ${worst ? `Clean up the ${worst.toUpperCase()} key` : "Keep practicing this level"} and your WPM will rise naturally.`;
+  if (wpm < 60) return `${wpm} WPM at ${accuracy}% on ${levelName}. ${worst ? `The ${worst.toUpperCase()} key cost you some time — isolate it` : "Try to keep your eyes off the keyboard"} to push past ${wpm + 10} WPM.`;
+  return `${wpm} WPM at ${accuracy}% on ${levelName} — strong result. ${worst ? `Even the ${worst.toUpperCase()} key trips you up occasionally` : "Consistency across all fingers"} is the next thing to tighten up.`;
+}
+
 function fetchTip(sessionKey, wpm, accuracy, passed, levelName, worstKeys) {
   if (coachCache.has(sessionKey)) return Promise.resolve(coachCache.get(sessionKey));
   if (inFlight.has(sessionKey)) return inFlight.get(sessionKey);
@@ -40,9 +53,7 @@ Give exactly 2-3 sentences of specific, actionable coaching advice based on thes
       if (data?.error) {
         console.error('Gemini error:', data.error.code, data.error.message?.slice(0, 100));
         inFlight.delete(sessionKey);
-        const fallback = passed
-          ? `${wpm} WPM at ${accuracy}% — keep building consistency across all key positions.`
-          : `${accuracy}% accuracy needs work. Slow down and focus on hitting each key correctly before worrying about speed.`;
+        const fallback = generateFallback(wpm, accuracy, passed, levelName, worstKeys);
         coachCache.set(sessionKey, fallback);
         return fallback;
       }
@@ -59,10 +70,7 @@ Give exactly 2-3 sentences of specific, actionable coaching advice based on thes
         return "Keep practicing — consistency is key to improvement.";
       }
       const text = candidate?.content?.parts?.[0]?.text?.trim();
-      const fallback = passed
-        ? `${wpm} WPM at ${accuracy}% accuracy — solid work. Focus on maintaining consistency across all your key positions.`
-        : `${accuracy}% accuracy needs work before worrying about speed. Slow down and prioritize hitting each key correctly first.`;
-      const result = text || fallback;
+      const result = text || generateFallback(wpm, accuracy, passed, levelName, worstKeys);
       coachCache.set(sessionKey, result);
       inFlight.delete(sessionKey);
       return result;
@@ -71,8 +79,7 @@ Give exactly 2-3 sentences of specific, actionable coaching advice based on thes
       console.error('Gemini fetch failed:', e?.message);
       inFlight.delete(sessionKey);
       const fallback = passed
-        ? `${wpm} WPM at ${accuracy}% — keep building consistency across all key positions.`
-        : `${accuracy}% accuracy needs work. Slow down and focus on hitting each key correctly before worrying about speed.`;
+generateFallback(wpm, accuracy, passed, levelName, worstKeys);
       coachCache.set(sessionKey, fallback);
       return fallback;
     });
