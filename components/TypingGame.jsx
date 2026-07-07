@@ -1311,7 +1311,23 @@ export default function AccuratKey() {
 
   useEffect(() => {
     if(activeTab==="daily"&&!dailyWords){
-      getDailyChallenge().then(d=>setDailyWords(d.words||["typefast","accuracy","keyboard","practice","daily"])).catch(()=>{});
+      getDailyChallenge().then(d=>{
+        if (d.words) { setDailyWords(d.words); return; }
+        // No Firestore doc for today - generate words deterministically
+        // from the date seed so they change every day without needing
+        // manual admin input. Simple seeded shuffle of the word pool.
+        const seed = parseInt(d.seed || d.date?.replace(/-/g,'') || '20260101', 10);
+        const pool = ["accuracy","keyboard","practice","rhythm","fluent","swift","precise","steady","crisp","agile","nimble","focus","master","speed","fluid","sharp","clean","quick","typed","words","skill","craft","grace","power","build","train","reach","score","level","match","chain","streak","combo","pulse","drive","press","click","flow","lock","beam","spin","flex","dash","rush","leap","rise","push","glow","bold","calm"];
+        // Seeded shuffle - pick 20 words for the daily challenge
+        const shuffled = [...pool];
+        let s = seed;
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          s = (s * 1664525 + 1013904223) & 0xffffffff;
+          const j = Math.abs(s) % (i + 1);
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        setDailyWords(shuffled.slice(0, 20));
+      }).catch(()=>{ setDailyWords(["typefast","accuracy","keyboard","practice","daily"]); });
       getDailyLeaderboard().then(setDailyBoard).catch(()=>{});
     }
     if(activeTab==="daily"&&user&&activeProfile&&!isProfileRestricted(activeProfile)){

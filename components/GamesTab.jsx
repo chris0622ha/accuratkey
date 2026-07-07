@@ -199,8 +199,8 @@ function WordRain({ T, onBack, settings = {} }) {
       setScore(scoreRef.current);
       setTyped("");
       sfx("correct");
-      // Increase speed 10% every 10 words
-      if (scoreRef.current % 10 === 0) {
+      // Increase speed 10% every 5 words
+      if (scoreRef.current % 5 === 0) {
         speedMultRef.current = Math.round((speedMultRef.current * 1.1) * 100) / 100;
         setSpeedMult(speedMultRef.current);
         if (!muted) playTone(1200, "sine", 0.12, 0.2); // special sound on speed up
