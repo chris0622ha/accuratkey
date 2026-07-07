@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 
 const GEMINI_KEY = process.env.NEXT_PUBLIC_GEMINI_KEY || "";
+const coachCache = new Map();
+const inFlight = new Map();
 
 // Call through our own API route to avoid CORS — the browser can't call
 // generativelanguage.googleapis.com directly, but our own /api/coach
