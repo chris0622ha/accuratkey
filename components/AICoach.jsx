@@ -100,6 +100,8 @@ export function AICoach({ wpm, accuracy, passed, levelName, worstKeys, T }) {
   }, [sessionKey]);
 
   if (!loading && !tip) return null;
+
+  return (
     <div style={{
       background: "linear-gradient(135deg, #0d0b1e 0%, #1a0d2e 100%)",
       border: "1px solid #7c6af744",
