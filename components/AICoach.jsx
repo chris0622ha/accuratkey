@@ -1,45 +1,26 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 
 const GEMINI_KEY = process.env.NEXT_PUBLIC_GEMINI_KEY || "";
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
 
+// Cache and in-flight promises live OUTSIDE the component entirely so they
+// survive unmount/remount cycles. When the result screen re-renders multiple
+// times (keys earned, progress saved, etc.), the component unmounts and
+// remounts but the fetch is already in progress and the result gets stored
+// here so the next mount picks it up instantly without a new API call.
 const coachCache = new Map();
+const inFlight = new Map();
 
-export function AICoach({ wpm, accuracy, passed, levelName, worstKeys, T }) {
-  const [tip, setTip] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  // Use a stable key built from the actual session data so the effect only
-  // fires once per real session, not on every re-render of the result screen
-  // (which causes the "pops up then disappears" bug — the component mounts,
-  // starts the API call, then the parent re-renders as keys/progress saves
-  // complete, unmounting and remounting the coach mid-call).
-  const sessionKey = `${levelName}|${wpm}|${accuracy}`;
-  const fetchedKey = useRef(null);
+function fetchTip(sessionKey, wpm, accuracy, passed, levelName, worstKeys) {
+  if (coachCache.has(sessionKey)) return Promise.resolve(coachCache.get(sessionKey));
+  if (inFlight.has(sessionKey)) return inFlight.get(sessionKey);
 
-  useEffect(() => {
-    // If we've already fetched for this exact session, don't re-fetch
-    if (fetchedKey.current === sessionKey) return;
-    fetchedKey.current = sessionKey;
+  const worstStr = worstKeys.length > 0
+    ? `Their most-missed keys were: ${worstKeys.join(", ")}.`
+    : "They made no notable key mistakes.";
 
-    setTip(null);
-    setLoading(true);
-    setError(false);
-
-    if (coachCache.has(sessionKey)) {
-      setTip(coachCache.get(sessionKey));
-      setLoading(false);
-      return;
-    }
-
-    if (!GEMINI_KEY) { setError(true); setLoading(false); return; }
-
-    const worstStr = worstKeys.length > 0
-      ? `Their most-missed keys were: ${worstKeys.join(", ")}.`
-      : "They made no notable key mistakes.";
-
-    const prompt = `You are a concise, encouraging typing coach inside a typing practice app called AccuratKey. A student just finished a level.
+  const prompt = `You are a concise, encouraging typing coach inside a typing practice app called AccuratKey. A student just finished a level.
 
 Level: "${levelName}"
 Result: ${passed ? "Passed" : "Did not pass"}
@@ -49,57 +30,81 @@ ${worstStr}
 
 Give exactly 2-3 sentences of specific, actionable coaching advice based on these real stats. Be direct and concrete - mention the actual keys or numbers. Don't be generic. Don't use bullet points. Don't start with "Great job" or similar filler. Keep it under 60 words total.`;
 
-    fetch(GEMINI_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 120, temperature: 0.7 }
-      })
+  const promise = fetch(GEMINI_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { maxOutputTokens: 120, temperature: 0.7 }
     })
-      .then(r => r.json())
-      .then(data => {
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-        if (text) { coachCache.set(sessionKey, text); setTip(text); }
-        else setError(true);
-      })
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
+  })
+    .then(r => r.json())
+    .then(data => {
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      if (text) coachCache.set(sessionKey, text);
+      inFlight.delete(sessionKey);
+      return text || null;
+    })
+    .catch(() => { inFlight.delete(sessionKey); return null; });
+
+  inFlight.set(sessionKey, promise);
+  return promise;
+}
+
+export function AICoach({ wpm, accuracy, passed, levelName, worstKeys, T }) {
+  const sessionKey = `${levelName}|${wpm}|${accuracy}`;
+  const [tip, setTip] = useState(() => coachCache.get(sessionKey) || null);
+  const [loading, setLoading] = useState(!coachCache.has(sessionKey));
+
+  useEffect(() => {
+    if (!GEMINI_KEY) return;
+    // Already have it cached - nothing to do
+    if (coachCache.has(sessionKey)) {
+      setTip(coachCache.get(sessionKey));
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    fetchTip(sessionKey, wpm, accuracy, passed, levelName, worstKeys)
+      .then(text => {
+        if (text) setTip(text);
+        setLoading(false);
+      });
   }, [sessionKey]);
 
-  if (error) return null;
+  if (!loading && !tip) return null;
 
   return (
     <div style={{
-      background:"linear-gradient(135deg, #0d0b1e 0%, #1a0d2e 100%)",
-      border:"1px solid #7c6af744",
-      borderRadius:12, padding:"14px 16px", marginBottom:14,
-      textAlign:"left", position:"relative", overflow:"hidden"
+      background: "linear-gradient(135deg, #0d0b1e 0%, #1a0d2e 100%)",
+      border: "1px solid #7c6af744",
+      borderRadius: 12, padding: "14px 16px", marginBottom: 14,
+      textAlign: "left", position: "relative", overflow: "hidden"
     }}>
       <div style={{
-        position:"absolute", top:-20, right:-20, width:80, height:80,
-        borderRadius:"50%", background:"#7c6af722", pointerEvents:"none"
+        position: "absolute", top: -20, right: -20, width: 80, height: 80,
+        borderRadius: "50%", background: "#7c6af722", pointerEvents: "none"
       }} />
-      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
-        <span style={{fontSize:14}}>🤖</span>
-        <span style={{color:"#a78bfa",fontSize:10,fontWeight:700,letterSpacing:1.5,textTransform:"uppercase"}}>AI Coach</span>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+        <span style={{ fontSize: 14 }}>🤖</span>
+        <span style={{ color: "#a78bfa", fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>AI Coach</span>
       </div>
       {loading ? (
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{
-            width:14, height:14, borderRadius:"50%",
-            border:"2px solid #7c6af744", borderTopColor:"#a78bfa",
-            animation:"spin 0.8s linear infinite"
+            width: 14, height: 14, borderRadius: "50%",
+            border: "2px solid #7c6af744", borderTopColor: "#a78bfa",
+            animation: "spin 0.8s linear infinite"
           }} />
-          <span style={{color:"#666",fontSize:13}}>Analyzing your session…</span>
+          <span style={{ color: "#666", fontSize: 13 }}>Analyzing your session…</span>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       ) : (
-        <p style={{color:"#c4b5fd",fontSize:13,lineHeight:1.7,margin:0,fontStyle:"italic"}}>
+        <p style={{ color: "#c4b5fd", fontSize: 13, lineHeight: 1.7, margin: 0, fontStyle: "italic" }}>
           "{tip}"
         </p>
       )}
     </div>
   );
 }
-// rebuilt: 1783446023
+// rebuilt: module-level cache
