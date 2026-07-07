@@ -40,11 +40,32 @@ Give exactly 2-3 sentences of specific, actionable coaching advice based on thes
   })
     .then(r => r.json())
     .then(data => {
-      console.log('Gemini response:', JSON.stringify(data).slice(0, 300));
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-      if (text) coachCache.set(sessionKey, text);
+      // Handle different failure modes
+      if (data?.error) {
+        console.error('Gemini error:', data.error.code, data.error.message?.slice(0, 100));
+        inFlight.delete(sessionKey);
+        return null;
+      }
+      // Safety block
+      if (data?.promptFeedback?.blockReason) {
+        console.warn('Gemini blocked:', data.promptFeedback.blockReason);
+        inFlight.delete(sessionKey);
+        return "Keep practicing — consistency is key to improvement.";
+      }
+      const candidate = data?.candidates?.[0];
+      // Stopped for safety
+      if (candidate?.finishReason === 'SAFETY') {
+        inFlight.delete(sessionKey);
+        return "Keep practicing — consistency is key to improvement.";
+      }
+      const text = candidate?.content?.parts?.[0]?.text?.trim();
+      const fallback = passed
+        ? `${wpm} WPM at ${accuracy}% accuracy — solid work. Focus on maintaining consistency across all your key positions.`
+        : `${accuracy}% accuracy needs work before worrying about speed. Slow down and prioritize hitting each key correctly first.`;
+      const result = text || fallback;
+      coachCache.set(sessionKey, result);
       inFlight.delete(sessionKey);
-      return text || null;
+      return result;
     })
     .catch(() => { inFlight.delete(sessionKey); return null; });
 
@@ -72,15 +93,13 @@ export function AICoach({ wpm, accuracy, passed, levelName, worstKeys, T }) {
     setLoading(true);
     fetchTip(sessionKey, wpm, accuracy, passed, levelName, worstKeys)
       .then(text => {
-        if (text) { setTip(text); setDebugMsg(""); }
-        else setDebugMsg("No tip returned");
+        if (text) setTip(text);
         setLoading(false);
       })
-      .catch(e => { setDebugMsg("Error: " + e.message); setLoading(false); });
+      .catch(() => setLoading(false));
   }, [sessionKey]);
 
-  // Always render the card so we can see what's happening
-  return (
+  if (!loading && !tip) return null;
     <div style={{
       background: "linear-gradient(135deg, #0d0b1e 0%, #1a0d2e 100%)",
       border: "1px solid #7c6af744",
@@ -109,11 +128,7 @@ export function AICoach({ wpm, accuracy, passed, levelName, worstKeys, T }) {
         <p style={{ color: "#c4b5fd", fontSize: 13, lineHeight: 1.7, margin: 0, fontStyle: "italic" }}>
           "{tip}"
         </p>
-      ) : (
-        <p style={{ color: "#666", fontSize: 12, margin: 0 }}>
-          {debugMsg || "Coach unavailable"}
-        </p>
-      )}
+      ) : null}
     </div>
   );
 }
