@@ -14,6 +14,8 @@ import { UiIcon } from "./icons/UiIcons";
 import PrefsModal from "./PrefsModal";
 import Tour, { TOUR_LENGTH } from "./Tour";
 import WhatsNewModal from "./WhatsNewModal";
+import StatsModal from "./StatsModal";
+import { logRun, getHistory, newlyUnlocked } from "@/lib/stats";
 import { WHATS_NEW } from "@/lib/whatsNew";
 import { getPrefs, setPrefs, getBest, recordRun } from "@/lib/prefs";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
@@ -999,6 +1001,8 @@ export default function AccuratKey() {
   const [showPrefs, setShowPrefs] = useState(false);
   const [tourStep, setTourStep] = useState(-1);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+  const [newBadges, setNewBadges] = useState([]);
   const [newSeen, setNewSeen] = useState(true);
   const [paused, setPaused] = useState(false);
   const pausedAtRef = useRef(null);
@@ -1789,6 +1793,8 @@ export default function AccuratKey() {
       const prev = getBest(activeProfile?.id, resultData.level);
       setRunCompare(prev ? { ...prev, wpm: resultData.wpm, acc: resultData.accuracy } : { first: true, wpm: resultData.wpm, acc: resultData.accuracy });
       recordRun(activeProfile?.id, resultData.level, resultData.wpm, resultData.accuracy);
+      logRun(activeProfile?.id, resultData);
+      setNewBadges(newlyUnlocked(activeProfile?.id, getHistory(activeProfile?.id)));
     }
   }, [screen, resultData]);
 
@@ -2351,6 +2357,7 @@ const Nav = () => (<>
                 {currentUsername && <div style={{fontSize:11,color:T.muted}}>@{currentUsername}</div>}
               </div>
               {item("settings","Profile",()=>openProfileModal())}
+              {item("stats","Stats & achievements",()=>setShowStats(true))}
               {item("star","Preferences",()=>setShowPrefs(true))}
               {item("calendar","What's new",()=>setShowWhatsNew(true),!newSeen)}
               {canUse(activeProfile,"friends")&&item("friends","Friends",()=>{getFriends(user?.uid).then(setFriends);getIncomingRequests(user?.uid).then(setFriendReqs);setShowFriends(true);})}
@@ -2369,6 +2376,7 @@ const Nav = () => (<>
     </div>
     {showPrefs && <PrefsModal T={T} prefs={prefs} setPref={setPref} profile={activeProfile} onClose={()=>setShowPrefs(false)} onTour={()=>setTourStep(0)} onWhatsNew={()=>setShowWhatsNew(true)} />}
     {tourStep >= 0 && <Tour T={T} step={tourStep} setStep={setTourStep} onClose={()=>{setTourStep(-1);try{localStorage.setItem("ak_onboarded","1");}catch{}}} />}
+    {showStats && <StatsModal T={T} profile={activeProfile} onClose={()=>setShowStats(false)} />}
     {showWhatsNew && <WhatsNewModal T={T} onClose={()=>{setShowWhatsNew(false);setNewSeen(true);try{localStorage.setItem("ak_whatsnew_seen",WHATS_NEW[0].id);}catch{}}} />}
   </>
   );
@@ -4434,6 +4442,7 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
               <span>Best: <b style={{color:T.text}}>{Math.max(runCompare.bestWpm, runCompare.wpm)} WPM</b>{newPB && <b style={{color:T.accent,marginLeft:6}}>New personal best!</b>}</span>
             </div>;
           })()}
+          {newBadges.length > 0 && <div style={{display:"flex",justifyContent:"center",gap:8,flexWrap:"wrap",marginBottom:14}}>{newBadges.map(b => <div key={b.id} style={{display:"flex",alignItems:"center",gap:8,background:T.accent+"22",border:`1px solid ${T.accent}`,borderRadius:10,padding:"8px 12px",fontSize:12,color:T.text}}><UiIcon name="star" size={16} color={T.accent}/><span><b>Achievement unlocked:</b> {b.name} — {b.desc}</span></div>)}</div>}
           {runCompare?.first && <div style={{textAlign:"center",fontSize:12,color:T.muted,marginBottom:14}}>First run on this level — this is your baseline.</div>}
           {passed && user && (
             <div style={{background:T.purple+"22",border:`1px solid ${T.purple}55`,borderRadius:10,padding:"10px 16px",marginBottom:14,fontSize:13,color:T.text}}>✓ Progress saved! <KKey size={13} style={{margin:"0 2px"}}/> {activeProfile?.keys || 0}</div>
