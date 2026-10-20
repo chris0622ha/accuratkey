@@ -9,6 +9,7 @@ import { FOUNDATIONS_ICONS, PRECISION_FLOW_ICONS, WORD_POWER_ICONS, KEYBOARD_MAS
 import { formatKeys } from "@/lib/format";
 import { CertificateModal } from "./Certificates";
 import { AICoach } from "./AICoach";
+import { getThemeFx } from "@/lib/themeFx";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
 import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
 
@@ -979,6 +980,8 @@ export default function AccuratKey() {
   // (ghost mode removed - was confusing/unreliable, replay cursor during
   // typing showing your previous best run)
   const [combo, setCombo] = useState(0);
+  const [bursts, setBursts] = useState([]);
+  const [shakeKey, setShakeKey] = useState(0);
   const [keyMistakes, setKeyMistakes] = useState({});
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [resultData, setResultData] = useState(null);
@@ -1740,8 +1743,15 @@ export default function AccuratKey() {
       const k = ch.toLowerCase();
       setKeyMistakes(p => ({ ...p, [k]: (p[k] || 0) + 1 }));
       if(canUse(activeProfile,"sounds"))playSound("wrong", activeProfile?.activeSound||"default");
+      if (getThemeFx(activeProfile?.activeTheme).shake) setShakeKey(n => n + 1);
     } else if (ch) {
       if(canUse(activeProfile,"sounds"))playSound("correct", activeProfile?.activeSound||"default");
+      const _fx = getThemeFx(activeProfile?.activeTheme);
+      if (_fx.burst) {
+        const id = Date.now() + Math.random();
+        setBursts(b => [...b.slice(-5), { id, ch: _fx.burst, pos, dx: Math.round((Math.random() - 0.5) * 24) }]);
+        setTimeout(() => setBursts(b => b.filter(x => x.id !== id)), 650);
+      }
     }
 
     setTyped(newTyped);
@@ -4120,21 +4130,30 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
           <div style={{display:"flex",gap:14,alignItems:"center"}}>
             {canUse(activeProfile,"wpmLive") && <span style={{color:T.purple,fontWeight:700,fontSize:14,display:"flex",alignItems:"center",gap:6}}>{wpm} WPM</span>}
             {canUse(activeProfile,"accuracyLive") && <span style={{color:T.accent2,fontWeight:700,fontSize:14}}>{accuracy}%</span>}
-            {canUse(activeProfile,"combo") && combo > 1 && <span style={{color:T.accent,fontWeight:700,fontSize:13}}>×{combo}{combo>=20?" 🔥🔥":combo>=10?" 🔥":""}</span>}
+            {canUse(activeProfile,"combo") && combo > 1 && <span style={(() => { const cs = getThemeFx(activeProfile?.activeTheme).combo; return cs==="rainbow" ? {fontWeight:800,fontSize:13,background:"linear-gradient(90deg,#f87171,#fbbf24,#34d399,#60a5fa,#c084fc)",WebkitBackgroundClip:"text",backgroundClip:"text",color:"transparent"} : cs==="glow" ? {color:T.accent,fontWeight:800,fontSize:13,textShadow:`0 0 8px ${T.accent}`} : cs==="flame" ? {color:"#fb923c",fontWeight:800,fontSize:13,textShadow:"0 0 8px #f97316"} : {color:T.accent,fontWeight:700,fontSize:13}; })()}>×{combo}{combo>=20?" 🔥🔥":combo>=10?" 🔥":""}</span>}
             <span style={{color:T.faint,fontSize:12}}>{lineIdx}/{TOTAL_LINES}</span>
           </div>
         </div>
         {canUse(activeProfile,"progressBar") && <div style={{width:"100%",maxWidth:isMobile?660:980,height:4,background:"#1a1a2e",borderRadius:2,marginBottom:14}}>
-          <div style={{height:"100%",background:lv.color,borderRadius:2,width:progress+"%",transition:"width 0.3s"}} />
+          <div style={(() => { const bs = getThemeFx(activeProfile?.activeTheme).bar; return {height:"100%",background: bs==="solid" ? lv.color : `linear-gradient(90deg,${T.purple},${T.accent})`,boxShadow: bs==="glow" ? `0 0 10px ${T.purple}` : "none",borderRadius:2,width:progress+"%",transition:"width 0.3s"}; })()} />
         </div>}
-        <div style={{width:"100%",maxWidth:isMobile?660:980,background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"20px 24px",marginBottom:12}}>
+        <style>{`@keyframes akShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}} @keyframes akBurst{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),-26px) scale(1.4)}} @keyframes akCaret{0%,100%{opacity:1}50%{opacity:.35}}`}</style>
+        <div key={"card"+shakeKey} style={{width:"100%",maxWidth:isMobile?660:980,background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"20px 24px",marginBottom:12,animation:shakeKey>0?"akShake 0.2s":"none"}}>
           <div style={{fontSize:20,letterSpacing:2,display:"flex",flexWrap:"wrap",lineHeight:1.8,fontFamily:T.font}}>
-            {current.split("").map((ch,ci) => {
-              let color=T.faint, underline="2px solid transparent";
-              if (ci < typed.length) color = typed[ci]===ch ? T.accent2 : "#ef4444";
-              else if (ci === typed.length) { color=T.purple; underline=`2px solid ${T.purple}`; }
-              return <span key={ci} style={{color, borderBottom: underline, background: "transparent"}}>{ch}</span>;
-            })}
+            {(() => { const fx = getThemeFx(activeProfile?.activeTheme); return current.split("").map((ch,ci) => {
+              let color=T.faint, underline="2px solid transparent", bg="transparent", shadow="none", anim="none", radius=0;
+              if (ci < typed.length) { const ok = typed[ci]===ch; color = ok ? T.accent2 : "#ef4444"; if (ok && fx.glow) shadow=`0 0 8px ${T.accent2}88`; }
+              else if (ci === typed.length) {
+                color=T.purple;
+                if (fx.caret==="block") { bg=T.purple; color=T.bg; radius=3; underline="2px solid transparent"; }
+                else if (fx.caret==="bar") { underline="2px solid transparent"; shadow=`-2px 0 0 ${T.purple}`; anim="akCaret 1s infinite"; }
+                else if (fx.caret==="glow") { underline=`2px solid ${T.purple}`; shadow=`0 0 12px ${T.purple}`; anim="akCaret 1s infinite"; }
+                else underline=`2px solid ${T.purple}`;
+              }
+              return <span key={ci} style={{position:"relative",color, borderBottom: underline, background:bg, borderRadius:radius, textShadow:shadow, animation:anim}}>{ch}
+                {bursts.filter(b=>b.pos===ci).map(b=><span key={b.id} style={{position:"absolute",left:"30%",top:0,fontSize:12,color:T.accent,pointerEvents:"none","--dx":b.dx+"px",animation:"akBurst 0.65s ease-out forwards"}}>{b.ch}</span>)}
+              </span>;
+            }); })()}
           </div>
         </div>
         <input ref={inputRef} value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Backspace") e.preventDefault();}} style={{position:"absolute",opacity:0,pointerEvents:"none"}} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
@@ -4153,6 +4172,7 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
     const stars = rAcc >= 95 ? 3 : (lv && rWpm >= lv.wpmTarget && lv.wpmTarget > 0) ? 2 : 1;
 
     const downloadCertificate = () => {
+      const _cf = getThemeFx(activeProfile?.activeTheme).cert || {};
       const W = 1200, H = 720;
       const DPR = window.devicePixelRatio || 2;
       const canvas = document.createElement("canvas");
@@ -4170,7 +4190,7 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
 
       // Decorative corner accents
       const drawCorner = (x, y, dx, dy) => {
-        ctx.strokeStyle = "#7c6af7";
+        ctx.strokeStyle = _cf.border || "#7c6af7";
         ctx.lineWidth = 2;
         ctx.beginPath(); ctx.moveTo(x, y + dy*30); ctx.lineTo(x, y); ctx.lineTo(x + dx*30, y); ctx.stroke();
       };
@@ -4186,13 +4206,13 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
       ctx.fillStyle = "#7c6af711";
       ctx.beginPath(); ctx.roundRect(W/2 - 90, 44, 180, 30, 15); ctx.fill();
       ctx.strokeStyle = "#7c6af733"; ctx.lineWidth = 1; ctx.stroke();
-      ctx.fillStyle = "#a78bfa";
+      ctx.fillStyle = _cf.accent || "#a78bfa";
       ctx.font = "bold 12px 'JetBrains Mono', monospace";
       ctx.textAlign = "center";
       ctx.fillText("⌨  ACCURATKEY", W/2, 65);
 
       // Title
-      ctx.fillStyle = "#e0e0ff";
+      ctx.fillStyle = _cf.title || "#e0e0ff";
       ctx.font = "bold 42px 'JetBrains Mono', monospace";
       ctx.fillText("Certificate of Completion", W/2, 140);
 

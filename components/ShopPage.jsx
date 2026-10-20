@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { KKey } from "./icons/KKey";
 import { formatKeys } from "@/lib/format";
+import { describePerks } from "@/lib/themeFx";
 
 // ─── ALL THEMES ──────────────────────────────────────────────────────────────
 export const ALL_THEMES = [
@@ -555,6 +556,9 @@ export default function ShopPage() {
                       <span style={{color:th.text}}> quick</span>
                       <span style={{background:th.accent,color:"#000",borderRadius:2,padding:"0 2px"}}> b</span>
                       <span style={{color:th.muted}}>rown fox</span>
+                    </div>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:10}}>
+                      {describePerks(th.id).map(pk=><span key={pk} style={{fontSize:9,padding:"2px 6px",borderRadius:10,background:th.purple+"22",color:th.text,border:`1px solid ${th.purple}55`}}>{pk}</span>)}
                     </div>
                     {active ? (
                       <div style={{textAlign:"center",color:th.purple,fontSize:11,fontWeight:700,padding:"5px 0",border:`1px solid ${th.purple}`,borderRadius:6}}>✓ Active</div>
