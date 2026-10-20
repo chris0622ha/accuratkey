@@ -982,6 +982,7 @@ export default function AccuratKey() {
   // typing showing your previous best run)
   const [combo, setCombo] = useState(0);
   const [bursts, setBursts] = useState([]);
+  const [navMenu, setNavMenu] = useState(false);
   const [shakeKey, setShakeKey] = useState(0);
   const [keyMistakes, setKeyMistakes] = useState({});
   const [showHeatmap, setShowHeatmap] = useState(false);
@@ -2240,25 +2241,42 @@ const Nav = () => (<>
         <span style={{fontWeight:800,fontSize:fs(16),color:T.text,fontFamily:T.font}}><span style={{color:T.purple}}>Accurat</span>Key</span>
         {currentUsername && <div style={{fontSize:9,color:T.muted,marginTop:1}}>@{currentUsername}</div>}
       </div>
-      {activeProfile && (
-        <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"nowrap",overflowX:"auto",maxWidth:"none"}}>
+      {activeProfile && (() => {
+        const pendingCh = challenges.some(c=>c.toUid===user?.uid&&c.status==="pending");
+        const showShop = (canUse(activeProfile,"shop")||user?.uid==="qM3qeYBLwvRXy8D0gOKGCQbGuA12")&&!activeProfile?.isGuest;
+        const item = (icon, label, onClick, badge) => (
+          <button key={label} onClick={e=>{e.stopPropagation();setNavMenu(false);onClick();}} style={{display:"flex",alignItems:"center",gap:10,width:"100%",background:"none",border:"none",color:T.text,fontSize:13,padding:"9px 12px",cursor:"pointer",fontFamily:T.font,textAlign:"left",borderRadius:8}}>
+            <UiIcon name={icon} size={16} color={badge?"#ef4444":T.muted} />{label}{badge&&<span style={{marginLeft:"auto",width:8,height:8,borderRadius:4,background:"#ef4444"}}/>}
+          </button>);
+        return (
+        <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"nowrap",position:"relative"}}>
           {streak>0&&<span style={{color:"#f97316",fontWeight:700,fontSize:12,display:"inline-flex",alignItems:"center",gap:3}}><UiIcon name="flame" size={14} color="#f97316" />{streak}</span>}
-          <button onClick={e=>{e.stopPropagation();setShowFeedback(true);setFeedbackSent(false);setFeedbackText("");}} title="Send feedback" style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:12,padding:"3px 7px",cursor:"pointer",fontFamily:T.font,lineHeight:1}}>💬</button>
           {canUse(activeProfile,"keys")&&<span style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:20,padding:"4px 10px",fontSize:fs(13),color:T.accent,fontWeight:700,display:"flex",alignItems:"center",gap:4}}><KKey size={14}/>{formatKeys(activeProfile.keys)}</span>}
-                    {canUse(activeProfile,"friends")&&<button onClick={()=>{getFriends(user?.uid).then(setFriends);getIncomingRequests(user?.uid).then(setFriendReqs);setShowFriends(true);}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:fs(13),padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Friends">👥</button>}
-          {canUse(activeProfile,"challenges")&&<button onClick={()=>{getPendingChallenges(user.uid).then(setChallenges);setShowChallenges(true);setChallengeMsg("");}} style={{background:challenges.some(c=>c.toUid===user?.uid&&c.status==="pending")?"#ef444422":"none",border:`1px solid ${challenges.some(c=>c.toUid===user?.uid&&c.status==="pending")?"#ef4444":T.border}`,borderRadius:6,color:challenges.some(c=>c.toUid===user?.uid&&c.status==="pending")?"#ef4444":T.muted,fontSize:fs(13),padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Challenges">⚔️</button>}
-          {(canUse(activeProfile,"shop")||user?.uid==="qM3qeYBLwvRXy8D0gOKGCQbGuA12")&&!activeProfile?.isGuest&&<button onClick={()=>{
-    localStorage.setItem('ak_returnScreen', screen||'levelMap');
-    localStorage.setItem('ak_returnProfileId', activeProfile?.id||'');
-    window.location.href='/shop';
-  }} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.muted,fontSize:13,padding:"4px 7px",cursor:"pointer",fontFamily:T.font}} title="Shop"><UiIcon name="shop" size={16} color={T.muted} /></button>}
-          <button onClick={openProfileModal} style={{background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",alignItems:"center",gap:7}} title="Profile">
-            <AvatarImg profile={activeProfile} size={30} />
-            <span style={{fontSize:12,color:T.muted,maxWidth:90,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{activeProfile.name}</span>
+          {showShop&&<button onClick={()=>{
+            localStorage.setItem('ak_returnScreen', screen||'levelMap');
+            localStorage.setItem('ak_returnProfileId', activeProfile?.id||'');
+            window.location.href='/shop';
+          }} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:8,padding:"5px 8px",cursor:"pointer",display:"flex"}} title="Shop"><UiIcon name="shop" size={16} color={T.muted} /></button>}
+          <button onClick={e=>{e.stopPropagation();setNavMenu(m=>!m);}} title="Menu" style={{position:"relative",background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",alignItems:"center"}}>
+            <AvatarImg profile={activeProfile} size={32} />
+            {pendingCh && <span style={{position:"absolute",top:-2,right:-2,width:9,height:9,borderRadius:5,background:"#ef4444",border:`2px solid ${T.bg}`}}/>}
           </button>
-          <button onClick={() => requirePin("switch", () => setScreenWithUrl("profilePicker"))} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:6,color:T.faint,fontSize:fs(11),padding:"4px 8px",cursor:"pointer",fontFamily:T.font}}>Switch</button>
-        </div>
-      )}
+          {navMenu && <>
+            <div onClick={e=>{e.stopPropagation();setNavMenu(false);}} style={{position:"fixed",inset:0,zIndex:40}} />
+            <div style={{position:"absolute",top:42,right:0,zIndex:41,minWidth:210,background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:6,boxShadow:"0 12px 32px rgba(0,0,0,.5)"}}>
+              <div style={{padding:"8px 12px 10px",borderBottom:`1px solid ${T.border}`,marginBottom:4}}>
+                <div style={{fontSize:13,fontWeight:700,color:T.text}}>{activeProfile.name}</div>
+                {currentUsername && <div style={{fontSize:11,color:T.muted}}>@{currentUsername}</div>}
+              </div>
+              {item("settings","Profile",()=>openProfileModal())}
+              {canUse(activeProfile,"friends")&&item("friends","Friends",()=>{getFriends(user?.uid).then(setFriends);getIncomingRequests(user?.uid).then(setFriendReqs);setShowFriends(true);})}
+              {canUse(activeProfile,"challenges")&&item("trophy","Challenges",()=>{getPendingChallenges(user.uid).then(setChallenges);setShowChallenges(true);setChallengeMsg("");},pendingCh)}
+              {item("feedback","Send feedback",()=>{setShowFeedback(true);setFeedbackSent(false);setFeedbackText("");})}
+              {item("lock","Switch profile",()=>requirePin("switch", () => setScreenWithUrl("profilePicker")))}
+            </div>
+          </>}
+        </div>);
+      })()}
       {!activeProfile && (
         <button onClick={() => setScreenWithUrl("auth")} style={{background:T.purple,border:"none",borderRadius:8,color:"#fff",fontSize:12,fontWeight:700,padding:"7px 16px",cursor:"pointer",fontFamily:T.font}}>
           Sign in
