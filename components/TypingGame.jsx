@@ -12,6 +12,9 @@ import { AICoach } from "./AICoach";
 import { getThemeFx } from "@/lib/themeFx";
 import { UiIcon } from "./icons/UiIcons";
 import PrefsModal from "./PrefsModal";
+import Tour, { TOUR_LENGTH } from "./Tour";
+import WhatsNewModal from "./WhatsNewModal";
+import { WHATS_NEW } from "@/lib/whatsNew";
 import { getPrefs, setPrefs, getBest, recordRun } from "@/lib/prefs";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
 import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
@@ -994,6 +997,9 @@ export default function AccuratKey() {
   const [bursts, setBursts] = useState([]);
   const [navMenu, setNavMenu] = useState(false);
   const [showPrefs, setShowPrefs] = useState(false);
+  const [tourStep, setTourStep] = useState(-1);
+  const [showWhatsNew, setShowWhatsNew] = useState(false);
+  const [newSeen, setNewSeen] = useState(true);
   const [paused, setPaused] = useState(false);
   const pausedAtRef = useRef(null);
   const recordedRunRef = useRef(null);
@@ -1739,6 +1745,14 @@ export default function AccuratKey() {
     }
   }, [prefs.volume, prefs.dyslexiaFont]);
 
+  // First-run tour (once per device) and "what's new" dot
+  useEffect(() => {
+    try {
+      if (screen === "levelMap" && !localStorage.getItem("ak_onboarded")) setTourStep(0);
+      setNewSeen(localStorage.getItem("ak_whatsnew_seen") === WHATS_NEW[0].id);
+    } catch {}
+  }, [screen]);
+
   // ── Pause / resume (Esc), quick restart (Tab), preferences (?) ──
   const togglePause = () => {
     if (screen !== "game") return;
@@ -1755,7 +1769,7 @@ export default function AccuratKey() {
       const tag = (e.target?.tagName || "").toLowerCase();
       if (e.key === "Escape" && screen === "game") { e.preventDefault(); togglePause(); return; }
       if (e.key === "Tab" && screen === "game") { e.preventDefault(); setPaused(false); pausedAtRef.current = null; startLevel(playingLevel, isSkipChallenge, skipTargetLevel); return; }
-      if (e.key === "?" && screen !== "game" && tag !== "input" && tag !== "textarea") { e.preventDefault(); setShowPrefs(v => !v); }
+      if ((e.key === "?" || (e.key === "/" && e.shiftKey)) && screen !== "game" && tag !== "input" && tag !== "textarea") { e.preventDefault(); setShowPrefs(v => !v); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -2338,6 +2352,7 @@ const Nav = () => (<>
               </div>
               {item("settings","Profile",()=>openProfileModal())}
               {item("star","Preferences",()=>setShowPrefs(true))}
+              {item("calendar","What's new",()=>setShowWhatsNew(true),!newSeen)}
               {canUse(activeProfile,"friends")&&item("friends","Friends",()=>{getFriends(user?.uid).then(setFriends);getIncomingRequests(user?.uid).then(setFriendReqs);setShowFriends(true);})}
               {canUse(activeProfile,"challenges")&&item("trophy","Challenges",()=>{getPendingChallenges(user.uid).then(setChallenges);setShowChallenges(true);setChallengeMsg("");},pendingCh)}
               {item("feedback","Send feedback",()=>{setShowFeedback(true);setFeedbackSent(false);setFeedbackText("");})}
@@ -2352,7 +2367,9 @@ const Nav = () => (<>
         </button>
       )}
     </div>
-    {showPrefs && <PrefsModal T={T} prefs={prefs} setPref={setPref} onClose={()=>setShowPrefs(false)} />}
+    {showPrefs && <PrefsModal T={T} prefs={prefs} setPref={setPref} profile={activeProfile} onClose={()=>setShowPrefs(false)} onTour={()=>setTourStep(0)} onWhatsNew={()=>setShowWhatsNew(true)} />}
+    {tourStep >= 0 && <Tour T={T} step={tourStep} setStep={setTourStep} onClose={()=>{setTourStep(-1);try{localStorage.setItem("ak_onboarded","1");}catch{}}} />}
+    {showWhatsNew && <WhatsNewModal T={T} onClose={()=>{setShowWhatsNew(false);setNewSeen(true);try{localStorage.setItem("ak_whatsnew_seen",WHATS_NEW[0].id);}catch{}}} />}
   </>
   );
 

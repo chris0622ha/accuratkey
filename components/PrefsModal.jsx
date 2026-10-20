@@ -13,7 +13,13 @@ const Seg = ({ T, options, value, onChange }) => options.map(([v, l]) => (
 ));
 const Toggle = ({ T, value, onChange }) => <Seg T={T} value={value} onChange={onChange} options={[[false,"Off"],[true,"On"]]} />;
 
-export default function PrefsModal({ T, prefs, setPref, onClose }) {
+function exportData(profile) {
+  const data = { exportedAt: new Date().toISOString(), profile: profile ? { id: profile.id, name: profile.name, keys: profile.keys, highestUnlocked: profile.highestUnlocked, activeTheme: profile.activeTheme, activeFont: profile.activeFont, ownedThemes: profile.ownedThemes, ownedFonts: profile.ownedFonts, streak: profile.streak } : null, localData: {} };
+  try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith("ak_") && !/token|secret|uid/i.test(k)) data.localData[k] = localStorage.getItem(k); } } catch {}
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "accuratkey-my-data.json"; document.body.appendChild(a); a.click(); a.remove();
+}
+export default function PrefsModal({ T, prefs, setPref, onClose, profile, onTour, onWhatsNew }) {
   return (
     <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:9000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
       <div onClick={e=>e.stopPropagation()} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:16,padding:"20px 22px",width:"100%",maxWidth:460,maxHeight:"88vh",overflowY:"auto"}}>
@@ -38,6 +44,16 @@ export default function PrefsModal({ T, prefs, setPref, onClose }) {
         <div style={{color:T.purple,fontSize:11,fontWeight:800,letterSpacing:1,marginTop:16}}>ACCESSIBILITY</div>
         <Row T={T} label="High contrast text" hint="Brighter untyped letters and labels"><Toggle T={T} value={prefs.highContrast} onChange={v=>setPref({highContrast:v})} /></Row>
         <Row T={T} label="Dyslexia-friendly font" hint="Uses Lexend for all text"><Toggle T={T} value={prefs.dyslexiaFont} onChange={v=>setPref({dyslexiaFont:v})} /></Row>
+
+        <div style={{color:T.purple,fontSize:11,fontWeight:800,letterSpacing:1,marginTop:16}}>YOUR DATA & HELP</div>
+        <Row T={T} label="Download my data" hint="A JSON copy of your profile and saved settings">
+          <button onClick={()=>exportData(profile)} style={{padding:"5px 10px",fontSize:11,fontWeight:700,borderRadius:6,cursor:"pointer",fontFamily:"inherit",border:`1px solid ${T.border}`,background:"transparent",color:T.text}}>Download</button>
+        </Row>
+        <Row T={T} label="Clear saved settings" hint="Resets preferences and personal bests on this device">
+          <button onClick={()=>{ try{ Object.keys(localStorage).filter(k=>k.startsWith("ak_prefs_")||k.startsWith("ak_best_")).forEach(k=>localStorage.removeItem(k)); }catch{} window.location.reload(); }} style={{padding:"5px 10px",fontSize:11,fontWeight:700,borderRadius:6,cursor:"pointer",fontFamily:"inherit",border:"1px solid #ef444466",background:"transparent",color:"#ef4444"}}>Clear</button>
+        </Row>
+        <Row T={T} label="Quick tour"><button onClick={()=>{onClose();onTour&&onTour();}} style={{padding:"5px 10px",fontSize:11,fontWeight:700,borderRadius:6,cursor:"pointer",fontFamily:"inherit",border:`1px solid ${T.border}`,background:"transparent",color:T.text}}>Replay</button></Row>
+        <Row T={T} label="What's new"><button onClick={()=>{onClose();onWhatsNew&&onWhatsNew();}} style={{padding:"5px 10px",fontSize:11,fontWeight:700,borderRadius:6,cursor:"pointer",fontFamily:"inherit",border:`1px solid ${T.border}`,background:"transparent",color:T.text}}>Open</button></Row>
 
         <div style={{color:T.purple,fontSize:11,fontWeight:800,letterSpacing:1,marginTop:16}}>SHORTCUTS</div>
         <div style={{color:T.muted,fontSize:12,lineHeight:1.9,marginTop:6}}>
