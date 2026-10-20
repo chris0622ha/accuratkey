@@ -11,6 +11,8 @@ import { CertificateModal } from "./Certificates";
 import { AICoach } from "./AICoach";
 import { getThemeFx } from "@/lib/themeFx";
 import { UiIcon } from "./icons/UiIcons";
+import PrefsModal from "./PrefsModal";
+import { getPrefs, setPrefs, getBest, recordRun } from "@/lib/prefs";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
 import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
 
@@ -607,11 +609,16 @@ const getAudioCtx = () => {
   if (_audioCtx.state === "suspended") _audioCtx.resume();
   return _audioCtx;
 };
+let _akVolume = 1;
 const playSound = (type, soundTheme = "default") => {
+  if (_akVolume <= 0) return;
   try {
     const ctx = getAudioCtx();
     const g = ctx.createGain();
-    g.connect(ctx.destination);
+    const _master = ctx.createGain();
+    _master.gain.value = _akVolume;
+    _master.connect(ctx.destination);
+    g.connect(_master);
     const t = ctx.currentTime;
 
     if (soundTheme === "mechanical") {
@@ -823,6 +830,7 @@ export default function AccuratKey() {
   const [user, setUser] = useState(null);
   const [profiles, setProfiles] = useState([]);
   const [activeProfile, setActiveProfile] = useState(null);
+  const [prefs, setPrefsState] = useState(() => getPrefs(null));
 
   // Optimistic profile patch — updates UI instantly without waiting for Firestore
   const patchProfile = (patch) => setActiveProfile(p => p ? {...p, ...patch} : p);
@@ -872,6 +880,8 @@ export default function AccuratKey() {
   const _fontFamily = (_activeFont && FONT_MAP[_activeFont]) ? FONT_MAP[_activeFont] : T.font;
   // Shop font always wins - override age-based theme font
   if (_fontFamily) T.font = _fontFamily;
+  if (prefs.dyslexiaFont) T.font = "'Lexend',sans-serif";
+  if (prefs.highContrast) { T.faint = "#9aa0b8"; T.muted = "#b4bad0"; T.text = "#ffffff"; }
   // Inject font into document so elements without explicit fontFamily pick it up
   // Only when a profile is actually selected (not during profile picker)
   if (typeof document !== "undefined" && _fontFamily && activeProfile) {
@@ -983,6 +993,12 @@ export default function AccuratKey() {
   const [combo, setCombo] = useState(0);
   const [bursts, setBursts] = useState([]);
   const [navMenu, setNavMenu] = useState(false);
+  const [showPrefs, setShowPrefs] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const pausedAtRef = useRef(null);
+  const recordedRunRef = useRef(null);
+  const [, setClock] = useState(0);
+  const [runCompare, setRunCompare] = useState(null);
   const [shakeKey, setShakeKey] = useState(0);
   const [keyMistakes, setKeyMistakes] = useState({});
   const [showHeatmap, setShowHeatmap] = useState(false);
@@ -1701,7 +1717,8 @@ export default function AccuratKey() {
     let tick = 0;
     const iv = setInterval(() => {
       const st = startTimeRef.current;
-      if (!st) return;
+      if (!st || pausedAtRef.current) return;
+      setClock(c => c + 1);
       const elMs = Date.now() - st;
       if (elMs < 3000) return;
       const w = Math.round((totalCharsRef.current / 5) / (elMs / 60000));
@@ -1711,6 +1728,56 @@ export default function AccuratKey() {
     return () => clearInterval(iv);
   }, [screen]);
 
+  // ── Preferences: load per profile, apply globals ──
+  const setPref = (patch) => setPrefsState(setPrefs(activeProfile?.id, patch));
+  useEffect(() => { setPrefsState(getPrefs(activeProfile?.id)); }, [activeProfile?.id]);
+  useEffect(() => {
+    _akVolume = prefs.volume;
+    if (prefs.dyslexiaFont && typeof document !== "undefined" && !document.getElementById("gf-lexend-pref")) {
+      const l = document.createElement("link"); l.id = "gf-lexend-pref"; l.rel = "stylesheet";
+      l.href = "https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;800&display=swap"; document.head.appendChild(l);
+    }
+  }, [prefs.volume, prefs.dyslexiaFont]);
+
+  // ── Pause / resume (Esc), quick restart (Tab), preferences (?) ──
+  const togglePause = () => {
+    if (screen !== "game") return;
+    if (!paused) { pausedAtRef.current = Date.now(); setPaused(true); }
+    else {
+      const d = Date.now() - (pausedAtRef.current || Date.now());
+      if (startTimeRef.current) { startTimeRef.current += d; setStartTime(t => (t ? t + d : t)); }
+      pausedAtRef.current = null; setPaused(false);
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  };
+  useEffect(() => {
+    const onKey = (e) => {
+      const tag = (e.target?.tagName || "").toLowerCase();
+      if (e.key === "Escape" && screen === "game") { e.preventDefault(); togglePause(); return; }
+      if (e.key === "Tab" && screen === "game") { e.preventDefault(); setPaused(false); pausedAtRef.current = null; startLevel(playingLevel, isSkipChallenge, skipTargetLevel); return; }
+      if (e.key === "?" && screen !== "game" && tag !== "input" && tag !== "textarea") { e.preventDefault(); setShowPrefs(v => !v); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+  useEffect(() => { if (screen !== "game" && paused) { setPaused(false); pausedAtRef.current = null; } }, [screen]);
+  // Auto-pause when the tab loses focus mid-run
+  useEffect(() => {
+    const onVis = () => { if (document.hidden && screen === "game" && startTimeRef.current && !pausedAtRef.current) { pausedAtRef.current = Date.now(); setPaused(true); } };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  });
+
+  // ── Compare this run to the last one / personal best (local only) ──
+  useEffect(() => {
+    if (screen === "result" && resultData && resultData.level != null && recordedRunRef.current !== resultData) {
+      recordedRunRef.current = resultData;
+      const prev = getBest(activeProfile?.id, resultData.level);
+      setRunCompare(prev ? { ...prev, wpm: resultData.wpm, acc: resultData.accuracy } : { first: true, wpm: resultData.wpm, acc: resultData.accuracy });
+      recordRun(activeProfile?.id, resultData.level, resultData.wpm, resultData.accuracy);
+    }
+  }, [screen, resultData]);
+
   useEffect(() => {
     if (pendingOpenSettings && screen === "levelMap") {
       setPendingOpenSettings(false);
@@ -1719,6 +1786,7 @@ export default function AccuratKey() {
   }, [screen, pendingOpenSettings]);
 
   const handleType = (e) => {
+    if (paused) return;
     const val = e.target.value;
     const current = lines[lineIdx] || "";
 
@@ -1745,11 +1813,11 @@ export default function AccuratKey() {
       const k = ch.toLowerCase();
       setKeyMistakes(p => ({ ...p, [k]: (p[k] || 0) + 1 }));
       if(canUse(activeProfile,"sounds"))playSound("wrong", activeProfile?.activeSound||"default");
-      if (getThemeFx(activeProfile?.activeTheme).shake) setShakeKey(n => n + 1);
+      if (!prefs.reducedMotion && getThemeFx(activeProfile?.activeTheme).shake) setShakeKey(n => n + 1);
     } else if (ch) {
       if(canUse(activeProfile,"sounds"))playSound("correct", activeProfile?.activeSound||"default");
       const _fx = getThemeFx(activeProfile?.activeTheme);
-      if (_fx.burst) {
+      if (_fx.burst && !prefs.reducedMotion) {
         const id = Date.now() + Math.random();
         setBursts(b => [...b.slice(-5), { id, ch: _fx.burst, pos, dx: Math.round((Math.random() - 0.5) * 24) }]);
         setTimeout(() => setBursts(b => b.filter(x => x.id !== id)), 650);
@@ -2269,6 +2337,7 @@ const Nav = () => (<>
                 {currentUsername && <div style={{fontSize:11,color:T.muted}}>@{currentUsername}</div>}
               </div>
               {item("settings","Profile",()=>openProfileModal())}
+              {item("star","Preferences",()=>setShowPrefs(true))}
               {canUse(activeProfile,"friends")&&item("friends","Friends",()=>{getFriends(user?.uid).then(setFriends);getIncomingRequests(user?.uid).then(setFriendReqs);setShowFriends(true);})}
               {canUse(activeProfile,"challenges")&&item("trophy","Challenges",()=>{getPendingChallenges(user.uid).then(setChallenges);setShowChallenges(true);setChallengeMsg("");},pendingCh)}
               {item("feedback","Send feedback",()=>{setShowFeedback(true);setFeedbackSent(false);setFeedbackText("");})}
@@ -2283,6 +2352,7 @@ const Nav = () => (<>
         </button>
       )}
     </div>
+    {showPrefs && <PrefsModal T={T} prefs={prefs} setPref={setPref} onClose={()=>setShowPrefs(false)} />}
   </>
   );
 
@@ -4137,8 +4207,8 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
 
     return (
       <div onClick={() => inputRef.current?.focus()} style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",padding:"20px 12px",fontFamily:T.font,userSelect:"none"}}>
-        <div style={{width:"100%",maxWidth:isMobile?660:980,marginBottom:8}}><Nav /></div>
-        <div style={{width:"100%",maxWidth:isMobile?660:980,display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+        {!prefs.focusMode && <div style={{width:"100%",maxWidth:isMobile?660:980,marginBottom:8}}><Nav /></div>}
+        {!prefs.focusMode && <div style={{width:"100%",maxWidth:isMobile?660:980,display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <span style={{fontSize:20}}>{lv.emoji}</span>
             <div>
@@ -4147,19 +4217,20 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
             </div>
           </div>
           <div style={{display:"flex",gap:14,alignItems:"center"}}>
-            {canUse(activeProfile,"wpmLive") && <span style={{color:T.purple,fontWeight:700,fontSize:14,display:"flex",alignItems:"center",gap:6}}>{wpm} WPM</span>}
-            {canUse(activeProfile,"accuracyLive") && <span style={{color:T.accent2,fontWeight:700,fontSize:14}}>{accuracy}%</span>}
-            {canUse(activeProfile,"combo") && combo > 1 && <span style={(() => { const cs = getThemeFx(activeProfile?.activeTheme).combo; return cs==="rainbow" ? {fontWeight:800,fontSize:13,background:"linear-gradient(90deg,#f87171,#fbbf24,#34d399,#60a5fa,#c084fc)",WebkitBackgroundClip:"text",backgroundClip:"text",color:"transparent"} : cs==="glow" ? {color:T.accent,fontWeight:800,fontSize:13,textShadow:`0 0 8px ${T.accent}`} : cs==="flame" ? {color:"#fb923c",fontWeight:800,fontSize:13,textShadow:"0 0 8px #f97316"} : {color:T.accent,fontWeight:700,fontSize:13}; })()}>×{combo}{combo>=20?" 🔥🔥":combo>=10?" 🔥":""}</span>}
+            {prefs.showTimer && (() => { const e = startTimeRef.current ? Math.max(0, Math.floor(((pausedAtRef.current || Date.now()) - startTimeRef.current) / 1000)) : 0; return <span style={{color:T.muted,fontWeight:700,fontSize:14,fontVariantNumeric:"tabular-nums"}}>{Math.floor(e/60)}:{String(e%60).padStart(2,"0")}</span>; })()}
+            {!prefs.zen && canUse(activeProfile,"wpmLive") && <span style={{color:T.purple,fontWeight:700,fontSize:14,display:"flex",alignItems:"center",gap:6}}>{wpm} WPM</span>}
+            {!prefs.zen && canUse(activeProfile,"accuracyLive") && <span style={{color:T.accent2,fontWeight:700,fontSize:14}}>{accuracy}%</span>}
+            {!prefs.zen && canUse(activeProfile,"combo") && combo > 1 && <span style={(() => { const cs = getThemeFx(activeProfile?.activeTheme).combo; return cs==="rainbow" ? {fontWeight:800,fontSize:13,background:"linear-gradient(90deg,#f87171,#fbbf24,#34d399,#60a5fa,#c084fc)",WebkitBackgroundClip:"text",backgroundClip:"text",color:"transparent"} : cs==="glow" ? {color:T.accent,fontWeight:800,fontSize:13,textShadow:`0 0 8px ${T.accent}`} : cs==="flame" ? {color:"#fb923c",fontWeight:800,fontSize:13,textShadow:"0 0 8px #f97316"} : {color:T.accent,fontWeight:700,fontSize:13}; })()}>×{combo}{combo>=20?" 🔥🔥":combo>=10?" 🔥":""}</span>}
             <span style={{color:T.faint,fontSize:12}}>{lineIdx}/{TOTAL_LINES}</span>
           </div>
-        </div>
-        {canUse(activeProfile,"progressBar") && <div style={{width:"100%",maxWidth:isMobile?660:980,height:4,background:"#1a1a2e",borderRadius:2,marginBottom:14}}>
+        </div>}
+        {canUse(activeProfile,"progressBar") && !prefs.focusMode && <div style={{width:"100%",maxWidth:isMobile?660:980,height:4,background:"#1a1a2e",borderRadius:2,marginBottom:14}}>
           <div style={(() => { const bs = getThemeFx(activeProfile?.activeTheme).bar; return {height:"100%",background: bs==="solid" ? lv.color : `linear-gradient(90deg,${T.purple},${T.accent})`,boxShadow: bs==="glow" ? `0 0 10px ${T.purple}` : "none",borderRadius:2,width:progress+"%",transition:"width 0.3s"}; })()} />
         </div>}
         <style>{`@keyframes akShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}} @keyframes akBurst{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),-26px) scale(1.4)}} @keyframes akCaret{0%,100%{opacity:1}50%{opacity:.35}}`}</style>
-        <div key={"card"+shakeKey} style={{width:"100%",maxWidth:isMobile?660:980,background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"20px 24px",marginBottom:12,animation:shakeKey>0?"akShake 0.2s":"none"}}>
-          <div style={{fontSize:20,letterSpacing:2,display:"flex",flexWrap:"wrap",lineHeight:1.8,fontFamily:T.font}}>
-            {(() => { const fx = getThemeFx(activeProfile?.activeTheme); return current.split("").map((ch,ci) => {
+        <div key={"card"+shakeKey} style={{width:"100%",maxWidth:isMobile?660:980,background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"20px 24px",marginBottom:12,animation:shakeKey>0&&!prefs.reducedMotion?"akShake 0.2s":"none"}}>
+          <div style={{fontSize:Math.round(20*prefs.textScale),letterSpacing:2,display:"flex",flexWrap:"wrap",lineHeight:1.8,fontFamily:T.font}}>
+            {(() => { const fx = {...getThemeFx(activeProfile?.activeTheme)}; if (prefs.caret !== "auto") fx.caret = prefs.caret; return current.split("").map((ch,ci) => {
               let color=T.faint, underline="2px solid transparent", bg="transparent", shadow="none", anim="none", radius=0;
               if (ci < typed.length) { const ok = typed[ci]===ch; color = ok ? T.accent2 : "#ef4444"; if (ok && fx.glow) shadow=`0 0 8px ${T.accent2}88`; }
               else if (ci === typed.length) {
@@ -4169,17 +4240,29 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
                 else if (fx.caret==="glow") { underline=`2px solid ${T.purple}`; shadow=`0 0 12px ${T.purple}`; anim="akCaret 1s infinite"; }
                 else underline=`2px solid ${T.purple}`;
               }
-              return <span key={ci} style={{position:"relative",color, borderBottom: underline, background:bg, borderRadius:radius, textShadow:shadow, animation:anim}}>{ch}
+              return <span key={ci} style={{position:"relative",color, borderBottom: underline, background:bg, borderRadius:radius, textShadow:shadow, animation:prefs.reducedMotion?"none":anim}}>{ch}
                 {bursts.filter(b=>b.pos===ci).map(b=><span key={b.id} style={{position:"absolute",left:"30%",top:0,fontSize:12,color:T.accent,pointerEvents:"none","--dx":b.dx+"px",animation:"akBurst 0.65s ease-out forwards"}}>{b.ch}</span>)}
               </span>;
             }); })()}
           </div>
         </div>
         <input ref={inputRef} value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Backspace") e.preventDefault();}} style={{position:"absolute",opacity:0,pointerEvents:"none"}} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
-        {canUse(activeProfile,"keyboard") && <Keyboard />}
-        <button onClick={() => setScreenWithUrl("levelMap")} style={{marginTop:20,background:"none",border:"none",color:T.faint,fontSize:12,cursor:"pointer",fontFamily:T.font}}>
+        {canUse(activeProfile,"keyboard") && !prefs.focusMode && <Keyboard />}
+        {!prefs.focusMode && <button onClick={() => setScreenWithUrl("levelMap")} style={{marginTop:20,background:"none",border:"none",color:T.faint,fontSize:12,cursor:"pointer",fontFamily:T.font}}>
           ← Back to map
-        </button>
+        </button>}
+        {!prefs.focusMode && <div style={{marginTop:8,color:T.faint,fontSize:11}}>Esc pause · Tab restart</div>}
+        {paused && (
+          <div onClick={e=>e.stopPropagation()} style={{position:"fixed",inset:0,background:"rgba(5,5,12,.85)",zIndex:8000,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:14}}>
+            <div style={{color:T.text,fontSize:26,fontWeight:800}}>Paused</div>
+            <div style={{color:T.muted,fontSize:13}}>Your timer is stopped.</div>
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={togglePause} style={{padding:"10px 22px",borderRadius:10,border:"none",background:T.purple,color:"#fff",fontWeight:700,cursor:"pointer",fontFamily:T.font}}>Resume (Esc)</button>
+              <button onClick={()=>{setPaused(false);pausedAtRef.current=null;startLevel(playingLevel,isSkipChallenge,skipTargetLevel);}} style={{padding:"10px 22px",borderRadius:10,border:`1px solid ${T.border}`,background:"transparent",color:T.text,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>Restart</button>
+              <button onClick={()=>{setPaused(false);pausedAtRef.current=null;setScreenWithUrl("levelMap");}} style={{padding:"10px 22px",borderRadius:10,border:`1px solid ${T.border}`,background:"transparent",color:T.muted,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>Quit</button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -4312,7 +4395,7 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
 
     return (
       <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:20}}>
-        {showConfetti && passed && <Confetti sectionName={sectionUnlockName} />}
+        {showConfetti && passed && prefs.confetti && !prefs.reducedMotion && <Confetti sectionName={sectionUnlockName} />}
         <div style={{width:"100%",maxWidth:isMobile?460:760,textAlign:"center"}}>
           <div style={{fontSize:64,marginBottom:10}}>{passed ? "🎉" : "💪"}</div>
           <h2 style={{color:T.text,fontSize:28,fontWeight:800,margin:0}}>
@@ -4324,6 +4407,17 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
               <div key={l} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:10,padding:"14px 10px"}}><div style={{color:c,fontSize:26,fontWeight:800}}>{v}</div><div style={{color:T.faint,fontSize:11,marginTop:3}}>{l}</div></div>
             ))}
           </div>
+          {runCompare && !runCompare.first && (() => {
+            const dW = runCompare.wpm - runCompare.lastWpm, dA = runCompare.acc - runCompare.lastAcc;
+            const newPB = runCompare.wpm > runCompare.bestWpm;
+            const fmt = (d, u) => (d > 0 ? "+" : "") + d + u;
+            const col = (d) => d > 0 ? T.accent2 : d < 0 ? "#ef4444" : T.muted;
+            return <div style={{display:"flex",justifyContent:"center",gap:14,flexWrap:"wrap",fontSize:12,color:T.muted,marginBottom:14}}>
+              <span>vs last run: <b style={{color:col(dW)}}>{fmt(dW," WPM")}</b> · <b style={{color:col(dA)}}>{fmt(dA,"%")}</b></span>
+              <span>Best: <b style={{color:T.text}}>{Math.max(runCompare.bestWpm, runCompare.wpm)} WPM</b>{newPB && <b style={{color:T.accent,marginLeft:6}}>New personal best!</b>}</span>
+            </div>;
+          })()}
+          {runCompare?.first && <div style={{textAlign:"center",fontSize:12,color:T.muted,marginBottom:14}}>First run on this level — this is your baseline.</div>}
           {passed && user && (
             <div style={{background:T.purple+"22",border:`1px solid ${T.purple}55`,borderRadius:10,padding:"10px 16px",marginBottom:14,fontSize:13,color:T.text}}>✓ Progress saved! <KKey size={13} style={{margin:"0 2px"}}/> {activeProfile?.keys || 0}</div>
           )}
