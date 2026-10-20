@@ -7,6 +7,7 @@ import Link from "next/link";
 import { KKey } from "./icons/KKey";
 import { formatKeys } from "@/lib/format";
 import { describePerks } from "@/lib/themeFx";
+import { ThemeIcon, SoundIcon } from "./icons/UiIcons";
 
 // ─── ALL THEMES ──────────────────────────────────────────────────────────────
 export const ALL_THEMES = [
@@ -548,7 +549,7 @@ export default function ShopPage() {
                     {th.preview.map((c,i)=><div key={i} style={{flex:1,background:c}}/>)}
                   </div>
                   <div style={{padding:"12px 14px"}}>
-                    <div style={{fontWeight:700,fontSize:13,color:th.text,marginBottom:2}}>{th.label}</div>
+                    <div style={{fontWeight:700,fontSize:13,color:th.text,marginBottom:2,display:"flex",alignItems:"center",gap:6}}><ThemeIcon id={th.id} size={18} color={th.purple} accent={th.accent} />{th.label}</div>
                     <div style={{fontSize:10,color:th.muted,marginBottom:8,display:"flex",alignItems:"center",gap:3}}>{th.category} · {th.cost===0?"Free":<>{th.cost} <KKey size={9}/></>}</div>
                     {/* Mini typing preview */}
                     <div style={{background:th.card,border:`1px solid ${th.border}`,borderRadius:6,padding:"6px 8px",marginBottom:10,fontSize:11,letterSpacing:1,fontFamily:th.font||"'JetBrains Mono',monospace"}}>
@@ -658,7 +659,7 @@ export default function ShopPage() {
               const requestBuy = () => setConfirmPurchase({ label: s.label, cost: s.cost, onConfirm: handleBuy });
               return (
                 <div key={s.id} style={{background:T.card,border:`2px solid ${active?T.purple:T.border}`,borderRadius:12,padding:"16px",display:"flex",flexDirection:"column",gap:10}}>
-                  <div style={{fontSize:32,textAlign:"center"}}>{s.emoji}</div>
+                  <div style={{textAlign:"center"}}><SoundIcon id={s.id} size={38} color={T.purple} accent={T.accent} /></div>
                   <div style={{textAlign:"center"}}>
                     <div style={{fontWeight:700,fontSize:14,color:T.text}}>{s.label}</div>
                     <div style={{fontSize:11,color:T.muted,marginTop:3}}>{s.desc}</div>

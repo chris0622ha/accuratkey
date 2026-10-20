@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, ALL_WORDS, WORD_CATEGORIES, CATEGORY_NAMES, POOL_WORD_RAIN, POOL_SURVIVAL, POOL_SPEED_BURST, POOL_SCRAMBLE, POOL_SUDDEN_DEATH, POOL_ZEN, POOL_LADDER_EASY, POOL_LADDER_MED, POOL_LADDER_HARD, POOL_LADDER_VHARD, POOL_ECHO, POOL_INVADERS, POOL_ASTEROID, POOL_TOWER, POOL_WORD_CHAIN, pickWords, pickByDiff } from "./WordDB";
 import { Sniper, Mirror, Flash, Echo, GhostWords, BossBattle } from "./GamesExtra";
+import { GameIcon } from "./icons/UiIcons";
 import { HundredWords, Endurance, Roulette, WordChain, CategoryBlitz, VocabBuilder, TypingInvaders, AsteroidBelt, TowerDefense, MysteryWords, RhymeTime } from "./GamesNew2";
 import { SpeedTest, MissingLetters, Anagram, BrickBreaker, Synonyms, Antonyms, TugOfWar, WordBomb, MemoryEdit, WildcardWords, Freestyle } from "./GamesNew3";
 import { GAMES } from "./GameCatalog";
@@ -1159,7 +1160,7 @@ export default function GamesTab({ T }) {
           <>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
               <button onClick={exitGame} style={{background:"none",border:"none",color:"#555",fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>← Games</button>
-              <span style={{color:"#e0e0ff",fontWeight:800,fontSize:18}}>{GAMES.find(g=>g.id===activeGame)?.emoji} {GAMES.find(g=>g.id===activeGame)?.name}</span>
+              <span style={{color:"#e0e0ff",fontWeight:800,fontSize:18}}><GameIcon id={activeGame} cat={GAMES.find(g=>g.id===activeGame)?.cat} size={22} /> {GAMES.find(g=>g.id===activeGame)?.name}</span>
             </div>
             <SettingsPanel gameId={activeGame} T={T} onStart={startGame}/>
           </>
@@ -1190,7 +1191,7 @@ export default function GamesTab({ T }) {
       <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
         {paged.map(g => (
           <div key={g.id} style={{ display:"flex", alignItems:"center", gap:14, padding:"14px 16px", borderRadius:12, border:`1px solid ${T.border}`, background:T.card, fontFamily:T.font, opacity:g.unavailable?0.5:1 }}>
-            <span style={{ fontSize:30, cursor:g.unavailable?"default":"pointer" }} onClick={()=>!g.unavailable&&enterGame(g.id)}>{g.emoji}</span>
+            <span style={{ fontSize:30, cursor:g.unavailable?"default":"pointer" }} onClick={()=>!g.unavailable&&enterGame(g.id)}><GameIcon id={g.id} cat={g.cat} size={32} /></span>
             <div style={{flex:1,minWidth:0,cursor:g.unavailable?"default":"pointer"}} onClick={()=>!g.unavailable&&enterGame(g.id)}>
               <div style={{ color:T.text, fontWeight:700, fontSize:15 }}>{g.name}</div>
               <div style={{ color:g.unavailable?"#ef4444":T.muted, fontSize:12, marginTop:2 }}>{g.desc}</div>
