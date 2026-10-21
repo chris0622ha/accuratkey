@@ -79,7 +79,7 @@ export default function StatsModal({ T, profile, onClose }) {
           </div>
           {!rows.length ? <div style={{color:T.muted,fontSize:13}}>Nothing here yet.</div> : rows.map((r,i) => <div key={i} style={{display:"flex",justifyContent:"space-between",gap:8,padding:"7px 0",borderBottom:`1px solid ${T.border}`,fontSize:12,color:T.text}}>
             <span style={{color:T.muted,minWidth:110}}>{new Date(r.t).toLocaleDateString()} {new Date(r.t).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}</span>
-            <span>{r.level===-1?"Daily":`Level ${r.level}`}</span><span><b>{r.wpm}</b> WPM</span><span>{r.acc}%</span><span style={{color:r.passed?"#34d399":"#ef4444",minWidth:44,textAlign:"right"}}>{r.passed?"Pass":"Fail"}</span></div>)}
+            <span>{r.level===-1?"Daily":r.level===-2?"Practice":`Level ${r.level}`}</span><span><b>{r.wpm}</b> WPM</span><span>{r.acc}%</span><span style={{color:r.passed?"#34d399":"#ef4444",minWidth:44,textAlign:"right"}}>{r.passed?"Pass":"Fail"}</span></div>)}
         </>}
 
         {tab === "badges" && <>

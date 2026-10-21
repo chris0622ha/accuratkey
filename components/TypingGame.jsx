@@ -15,6 +15,8 @@ import PrefsModal from "./PrefsModal";
 import Tour, { TOUR_LENGTH } from "./Tour";
 import WhatsNewModal from "./WhatsNewModal";
 import StatsModal from "./StatsModal";
+import PracticeLab from "./PracticeLab";
+import { mergeKeyStats } from "@/lib/practice";
 import { logRun, getHistory, newlyUnlocked } from "@/lib/stats";
 import { WHATS_NEW } from "@/lib/whatsNew";
 import { getPrefs, setPrefs, getBest, recordRun } from "@/lib/prefs";
@@ -1002,6 +1004,10 @@ export default function AccuratKey() {
   const [tourStep, setTourStep] = useState(-1);
   const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showPractice, setShowPractice] = useState(false);
+  const practicePoolRef = useRef([]);
+  const [practiceName, setPracticeName] = useState("Practice");
+  const keyAttemptsRef = useRef({});
   const [newBadges, setNewBadges] = useState([]);
   const [newSeen, setNewSeen] = useState(true);
   const [paused, setPaused] = useState(false);
@@ -1671,7 +1677,7 @@ export default function AccuratKey() {
     const ov = customWords || levelOverrides[String(levelId)] || null;
     setLines(Array.from({ length: TOTAL_LINES }, () => genLine(levelId, ov)));
     setLineIdx(0); setTyped(""); setTotalChars(0); totalCharsRef.current = 0; setTotalCorrectChars(0);
-    setStartTime(null); startTimeRef.current = null; setWpm(0); setAccuracy(100); setCombo(0); setKeyMistakes({}); setShowHeatmap(false);
+    setStartTime(null); startTimeRef.current = null; setWpm(0); setAccuracy(100); setCombo(0); setKeyMistakes({}); keyAttemptsRef.current = {}; setShowHeatmap(false);
   }, []);
 
   const startLevel = (levelId, isSkip = false, skipTarget = null) => {
@@ -1681,6 +1687,9 @@ export default function AccuratKey() {
       const words = generateSkipChallenge(skipTarget);
       setSkipChallengeWords(words);
       initGame(levelId, words);
+    } else if (levelId === -2) {
+      setSkipChallengeWords(null);
+      initGame(1, practicePoolRef.current);
     } else if (levelId === -1) {
       setSkipChallengeWords(null);
       initGame(1, dailyWords || ["typefast","accuracy","keyboard","practice","daily"]);
@@ -1694,7 +1703,12 @@ export default function AccuratKey() {
   };
 
   // Show tips before starting a level
+  const startPractice = (pool, name) => {
+    practicePoolRef.current = pool; setPracticeName(name); setKeysEarned(0);
+    startLevel(-2);
+  };
   const requestStartLevel = (levelId, isSkip = false, skipTarget = null) => {
+    if (levelId === -2) { startLevel(-2); return; }
     // Enforced HERE, not just at each button's onClick, so every path that
     // can ever call this - including challenge-accept buttons whose levelId
     // comes from a Firestore document, not from the level map UI itself -
@@ -1790,9 +1804,10 @@ export default function AccuratKey() {
   useEffect(() => {
     if (screen === "result" && resultData && resultData.level != null && recordedRunRef.current !== resultData) {
       recordedRunRef.current = resultData;
-      const prev = getBest(activeProfile?.id, resultData.level);
+      const prev = resultData.level === -2 ? null : getBest(activeProfile?.id, resultData.level);
       setRunCompare(prev ? { ...prev, wpm: resultData.wpm, acc: resultData.accuracy } : { first: true, wpm: resultData.wpm, acc: resultData.accuracy });
-      recordRun(activeProfile?.id, resultData.level, resultData.wpm, resultData.accuracy);
+      if (resultData.level !== -2) recordRun(activeProfile?.id, resultData.level, resultData.wpm, resultData.accuracy);
+      mergeKeyStats(activeProfile?.id, keyAttemptsRef.current);
       logRun(activeProfile?.id, resultData);
       setNewBadges(newlyUnlocked(activeProfile?.id, getHistory(activeProfile?.id)));
     }
@@ -1829,6 +1844,10 @@ export default function AccuratKey() {
 
     // Track mistakes
     const pos = newTyped.length - 1;
+    if (ch && current[pos]) {
+      const ek = current[pos].toLowerCase(); const ka = keyAttemptsRef.current;
+      ka[ek] = ka[ek] || { n: 0, miss: 0 }; ka[ek].n++; if (ch !== current[pos]) ka[ek].miss++;
+    }
     if (ch && ch !== current[pos]) {
       const k = ch.toLowerCase();
       setKeyMistakes(p => ({ ...p, [k]: (p[k] || 0) + 1 }));
@@ -1889,7 +1908,7 @@ export default function AccuratKey() {
           getPendingChallenges(user.uid).then(setChallenges).catch(() => {});
         }
         setWpm(fw);
-        if (user && activeProfile) {
+        if (user && activeProfile && playingLevel !== -2) {
           const sessionData = { wpm: fw, accuracy: newAcc, layout: layoutKey, level: playingLevel, chars: nt, passed };
           if (isProfileRestricted(activeProfile)) {
             // COPPA: under-13 profile — keep progress entirely in this browser,
@@ -2357,6 +2376,7 @@ const Nav = () => (<>
                 {currentUsername && <div style={{fontSize:11,color:T.muted}}>@{currentUsername}</div>}
               </div>
               {item("settings","Profile",()=>openProfileModal())}
+              {item("target","Practice lab",()=>setShowPractice(true))}
               {item("stats","Stats & achievements",()=>setShowStats(true))}
               {item("star","Preferences",()=>setShowPrefs(true))}
               {item("calendar","What's new",()=>setShowWhatsNew(true),!newSeen)}
@@ -2369,13 +2389,17 @@ const Nav = () => (<>
         </div>);
       })()}
       {!activeProfile && (
-        <button onClick={() => setScreenWithUrl("auth")} style={{background:T.purple,border:"none",borderRadius:8,color:"#fff",fontSize:12,fontWeight:700,padding:"7px 16px",cursor:"pointer",fontFamily:T.font}}>
-          Sign in
-        </button>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <button onClick={() => setShowPractice(true)} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:8,color:T.muted,fontSize:12,fontWeight:700,padding:"6px 12px",cursor:"pointer",fontFamily:T.font,display:"flex",alignItems:"center",gap:6}}><UiIcon name="target" size={14} color={T.muted}/>Practice</button>
+          <button onClick={() => setScreenWithUrl("auth")} style={{background:T.purple,border:"none",borderRadius:8,color:"#fff",fontSize:12,fontWeight:700,padding:"7px 16px",cursor:"pointer",fontFamily:T.font}}>
+            Sign in
+          </button>
+        </div>
       )}
     </div>
     {showPrefs && <PrefsModal T={T} prefs={prefs} setPref={setPref} profile={activeProfile} onClose={()=>setShowPrefs(false)} onTour={()=>setTourStep(0)} onWhatsNew={()=>setShowWhatsNew(true)} />}
     {tourStep >= 0 && <Tour T={T} step={tourStep} setStep={setTourStep} onClose={()=>{setTourStep(-1);try{localStorage.setItem("ak_onboarded","1");}catch{}}} />}
+    {showPractice && <PracticeLab T={T} profile={activeProfile} onClose={()=>setShowPractice(false)} onStart={startPractice} />}
     {showStats && <StatsModal T={T} profile={activeProfile} onClose={()=>setShowStats(false)} />}
     {showWhatsNew && <WhatsNewModal T={T} onClose={()=>{setShowWhatsNew(false);setNewSeen(true);try{localStorage.setItem("ak_whatsnew_seen",WHATS_NEW[0].id);}catch{}}} />}
   </>
@@ -2864,7 +2888,7 @@ const Nav = () => (<>
 
   if (screen === "fail") {
     const _lvRaw = LEVELS.find(l => l.id === playingLevel);
-    const lv = _lvRaw || (playingLevel === -1 ? {id:-1, name:"Daily Challenge", emoji:"📅", wpmTarget:0, accuracy:75} : LEVELS[0]);
+    const lv = _lvRaw || (playingLevel === -1 ? {id:-1, name:"Daily Challenge", emoji:"📅", wpmTarget:0, accuracy:75} : playingLevel === -2 ? {id:-2, name:practiceName, emoji:"🎯", wpmTarget:0, accuracy:75, color:T.purple} : LEVELS[0]);
     const lvWords = levelOverrides[String(playingLevel)] || lv.words || [];
     const worstKeys = Object.entries(keyMistakes).sort((a,b) => b[1]-a[1]).slice(0,5);
     return (
@@ -4174,7 +4198,7 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
     const current = lines[lineIdx] || "";
     const progress = (lineIdx / TOTAL_LINES) * 100;
     const _lvRaw2 = LEVELS.find(l => l.id === playingLevel);
-    const lv = _lvRaw2 || (playingLevel === -1 ? {id:-1, name:"Daily Challenge", emoji:"📅", wpmTarget:0, accuracy:75} : LEVELS[0]);
+    const lv = _lvRaw2 || (playingLevel === -1 ? {id:-1, name:"Daily Challenge", emoji:"📅", wpmTarget:0, accuracy:75} : playingLevel === -2 ? {id:-2, name:practiceName, emoji:"🎯", wpmTarget:0, accuracy:75, color:T.purple} : LEVELS[0]);
     const lvWords = levelOverrides[String(playingLevel)] || lv.words || [];
 
     const Keyboard = () => {
@@ -4293,7 +4317,7 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
   }
 
   if (screen === "result" && resultData) {
-    const lv = LEVELS.find(l => l.id === resultData.level) || LEVELS[0];
+    const lv = LEVELS.find(l => l.id === resultData.level) || (resultData.level === -2 ? {id:-2, name:practiceName, emoji:"🎯", wpmTarget:0, accuracy:75, color:T.purple} : resultData.level === -1 ? {id:-1, name:"Daily Challenge", emoji:"📅", wpmTarget:0, accuracy:75, color:T.purple} : LEVELS[0]);
     const { passed, wpm: rWpm, accuracy: rAcc, isSkipChallenge: rSkip } = resultData;
     const worstKeys = Object.entries(keyMistakes).sort((a,b) => b[1]-a[1]).slice(0,5);
     const stars = rAcc >= 95 ? 3 : (lv && rWpm >= lv.wpmTarget && lv.wpmTarget > 0) ? 2 : 1;
@@ -4444,7 +4468,7 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
           })()}
           {newBadges.length > 0 && <div style={{display:"flex",justifyContent:"center",gap:8,flexWrap:"wrap",marginBottom:14}}>{newBadges.map(b => <div key={b.id} style={{display:"flex",alignItems:"center",gap:8,background:T.accent+"22",border:`1px solid ${T.accent}`,borderRadius:10,padding:"8px 12px",fontSize:12,color:T.text}}><UiIcon name="star" size={16} color={T.accent}/><span><b>Achievement unlocked:</b> {b.name} — {b.desc}</span></div>)}</div>}
           {runCompare?.first && <div style={{textAlign:"center",fontSize:12,color:T.muted,marginBottom:14}}>First run on this level — this is your baseline.</div>}
-          {passed && user && (
+          {passed && user && resultData.level !== -2 && (
             <div style={{background:T.purple+"22",border:`1px solid ${T.purple}55`,borderRadius:10,padding:"10px 16px",marginBottom:14,fontSize:13,color:T.text}}>✓ Progress saved! <KKey size={13} style={{margin:"0 2px"}}/> {activeProfile?.keys || 0}</div>
           )}
           {passed && !user && (
@@ -4484,7 +4508,7 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
               Level Map
             </button>
           </div>
-          {passed && resultData.level < LEVELS.length && (
+          {passed && resultData.level > 0 && resultData.level < LEVELS.length && (
             <button onClick={() => requestStartLevel(resultData.level + 1)}
               style={{width:"100%",marginTop:10,padding:14,borderRadius:10,border:"none",background:lv.color,color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>
               Next Level →
