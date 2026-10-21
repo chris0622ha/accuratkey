@@ -17,12 +17,13 @@ import Tour, { TOUR_LENGTH } from "./Tour";
 import WhatsNewModal from "./WhatsNewModal";
 import StatsModal from "./StatsModal";
 import PracticeLab from "./PracticeLab";
+import NotificationsModal from "./NotificationsModal";
 import { mergeKeyStats, mergeMissedWords, wordAt } from "@/lib/practice";
 import { logRun, getHistory, newlyUnlocked } from "@/lib/stats";
 import { WHATS_NEW } from "@/lib/whatsNew";
 import { getPrefs, setPrefs, getBest, recordRun } from "@/lib/prefs";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, getLocks, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
+import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, getLocks, getAllNotifications, markAllNotificationsRead, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
 
 export 
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
@@ -1006,6 +1007,8 @@ export default function AccuratKey() {
   const [showWhatsNew, setShowWhatsNew] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showPractice, setShowPractice] = useState(false);
+  const [notifs, setNotifs] = useState([]);
+  const [showNotifs, setShowNotifs] = useState(false);
   const practicePoolRef = useRef([]);
   const [practiceName, setPracticeName] = useState("Practice");
   const keyAttemptsRef = useRef({});
@@ -2152,7 +2155,9 @@ export default function AccuratKey() {
         setCustomLists(activeProfile.customLists || []);
         if (!activeProfile?.isGuest && !isProfileRestricted(activeProfile)) {
           getRecentSessions(user.uid, activeProfile.id, 10).then(setSessions).catch(() => {});
-          getPendingNotifications(user.uid).then(notifs=>{ if(notifs.length>0){setPendingNotifications(notifs);setActiveNotification(notifs[0]);} }).catch(()=>{});
+          getPendingNotifications(user.uid).then(notifs=>{ const fr=notifs.filter(n=>n.type==='feedback_reply'); if(fr.length>0){setPendingNotifications(fr);setActiveNotification(fr[0]);} }).catch(()=>{});
+          getAllNotifications(user.uid).then(setNotifs).catch(()=>{});
+          if (canUse(activeProfile, 'friends')) getIncomingRequests(user.uid).then(setFriendReqs).catch(()=>{});
           if (canUse(activeProfile, 'challenges')) {
             getPendingChallenges(user.uid).then(setChallenges).catch(() => {});
           }
@@ -2372,7 +2377,7 @@ const Nav = () => (<>
           }} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:8,padding:"5px 8px",cursor:"pointer",display:"flex"}} title="Shop"><UiIcon name="shop" size={16} color={T.muted} /></button>}
           <button onClick={e=>{e.stopPropagation();setNavMenu(m=>!m);}} title="Menu" style={{position:"relative",background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",alignItems:"center"}}>
             <AvatarImg profile={activeProfile} size={32} />
-            {pendingCh && <span style={{position:"absolute",top:-2,right:-2,width:9,height:9,borderRadius:5,background:"#ef4444",border:`2px solid ${T.bg}`}}/>}
+            {(pendingCh || !newSeen || notifs.some(n=>!n.read) || friendReqs.length>0) && <span aria-label="New" style={{position:"absolute",top:-4,right:-5,minWidth:15,height:15,borderRadius:8,background:"#ef4444",color:"#fff",fontSize:10,fontWeight:900,lineHeight:"15px",textAlign:"center",border:`2px solid ${T.bg}`,boxSizing:"content-box"}}>!</span>}
           </button>
           {navMenu && <>
             <div onClick={e=>{e.stopPropagation();setNavMenu(false);}} style={{position:"fixed",inset:0,zIndex:40}} />
@@ -2382,6 +2387,7 @@ const Nav = () => (<>
                 {currentUsername && <div style={{fontSize:11,color:T.muted}}>@{currentUsername}</div>}
               </div>
               {item("settings","Profile",()=>openProfileModal())}
+              {item("flame","Notifications",()=>{setNotifs(ns=>ns.map(n=>({...n,wasUnread:!n.read})));setShowNotifs(true);markAllNotificationsRead(user.uid,notifs).then(()=>setNotifs(ns=>ns.map(n=>({...n,read:true}))));},notifs.some(n=>!n.read))}
               {canUse(activeProfile,"practice")&&item("target","Practice lab",()=>setShowPractice(true))}
               {canUse(activeProfile,"stats")&&item("stats","Stats & achievements",()=>setShowStats(true))}
               {item("star","Preferences",()=>setShowPrefs(true))}
@@ -2407,6 +2413,7 @@ const Nav = () => (<>
     {tourStep >= 0 && <Tour T={T} step={tourStep} setStep={setTourStep} onClose={()=>{setTourStep(-1);try{localStorage.setItem("ak_onboarded","1");}catch{}}} />}
     {showPractice && <PracticeLab T={T} profile={activeProfile} canSubmit={!!user && !isProfileRestricted(activeProfile) && canUse(activeProfile,"wordsets")} onClose={()=>setShowPractice(false)} onStart={startPractice} />}
     {showStats && <StatsModal T={T} profile={activeProfile} onClose={()=>setShowStats(false)} />}
+    {showNotifs && <NotificationsModal T={T} items={notifs} onClose={()=>setShowNotifs(false)} />}
     {showWhatsNew && <WhatsNewModal T={T} onClose={()=>{setShowWhatsNew(false);setNewSeen(true);try{localStorage.setItem("ak_whatsnew_seen",WHATS_NEW[0].id);}catch{}}} />}
   </>
   );
