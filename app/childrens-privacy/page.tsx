@@ -8,7 +8,7 @@ export default function ChildrensPrivacyPage() {
       sections={[
         { h: "1. How child profiles work", p: ["Accounts are held by an adult who signs in with email, Google or GitHub. That adult creates a profile for each person who practices, and enters a birthday for each profile. When a profile's birthday shows the person is under 13, AccuratKey treats it as a restricted child profile."] },
         { h: "2. What restricted profiles can and can't do", ul: [
-            "No public username, no public profile page and no leaderboard or daily-challenge scores.",
+            "No public profile page and no leaderboard or daily-challenge scores.",
             "No username, so other players can't search for or find the profile, and challenges aren't available.",
             "No profile photo uploads. Avatars are chosen from the built-in icons.",
             "Ongoing practice progress (sessions, Keys, personal bests, streaks, stats) is kept on the device, not sent to our servers.",
