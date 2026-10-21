@@ -3,10 +3,29 @@ import React, { useState, useMemo } from "react";
 import { UiIcon } from "./icons/UiIcons";
 import { PRESETS, fromText, weakKeyDrill, weakKeys } from "@/lib/practice";
 import { ALL_WORDS } from "./WordDB";
+import { getPublicWordSets, submitWordSet, parseWords, validateSubmission, badgeInfo, LIMITS } from "@/lib/wordsets";
+import { isFeatureLocked } from "@/lib/locks";
 
-export default function PracticeLab({ T, profile, onStart, onClose }) {
+export default function PracticeLab({ T, profile, onStart, onClose, canSubmit }) {
   const [text, setText] = useState("");
   const [msg, setMsg] = useState("");
+  const [sets, setSets] = useState(null);
+  const [showSubmit, setShowSubmit] = useState(false);
+  const [sTitle, setSTitle] = useState("");
+  const [sWords, setSWords] = useState("");
+  const [sMsg, setSMsg] = useState("");
+  const [sBusy, setSBusy] = useState(false);
+  const community = !isFeatureLocked("wordsets");
+  React.useEffect(() => { if (community) getPublicWordSets().then(setSets); }, [community]);
+  const practiceSet = (w) => { const pool = []; while (pool.length < 60) pool.push(...[...w.words].sort(() => Math.random() - 0.5)); go(fromText(pool.slice(0, Math.max(60, w.words.length)).join(" ")), w.title); };
+  const submit = async () => {
+    const words = parseWords(sWords); const err = validateSubmission(sTitle, words);
+    if (err) { setSMsg(err); return; }
+    setSBusy(true);
+    try { await submitWordSet(sTitle, words); setSMsg("Thanks! Your word set is waiting for review. If approved it will appear here for everyone, with no name attached."); setSTitle(""); setSWords(""); }
+    catch (e) { setSMsg("Couldn't submit: " + (e.code === "permission-denied" ? "you may already have one waiting for review." : e.message)); }
+    setSBusy(false);
+  };
   const weak = useMemo(() => weakKeys(profile?.id), [profile?.id]);
   const go = (lines, name) => { if (!lines || lines.length < 3) { setMsg("Not enough text — add a bit more (at least a couple of sentences)."); return; } onClose(); onStart(lines, name); };
   const Card = ({ icon, title, desc, onClick, disabled }) => (
@@ -33,6 +52,24 @@ export default function PracticeLab({ T, profile, onStart, onClose }) {
           <Card icon="feedback" title="Punctuation" desc="Commas, quotes, dashes and numbers in real sentences" onClick={()=>go(PRESETS.punctuation(), "Punctuation")} />
           <Card icon="settings" title="Code" desc="JavaScript, Python, SQL and shell snippets" onClick={()=>go(PRESETS.code(), "Code")} />
         </div>
+
+        {community && <>
+          <div style={{color:T.purple,fontSize:11,fontWeight:800,letterSpacing:1,margin:"16px 0 6px"}}>COMMUNITY WORD SETS</div>
+          {sets === null ? <div style={{color:T.muted,fontSize:11}}>Loading…</div> : sets.length === 0 ? <div style={{color:T.muted,fontSize:11}}>No community sets yet.</div> :
+            <div style={{display:"grid",gap:6,maxHeight:190,overflowY:"auto"}}>{sets.map(w => { const b = badgeInfo(w.badge); return (
+              <button key={w.id} onClick={()=>practiceSet(w)} style={{display:"flex",alignItems:"center",gap:8,textAlign:"left",padding:"9px 12px",borderRadius:9,border:`1px solid ${T.border}`,background:T.bg,color:T.text,cursor:"pointer",fontFamily:"inherit"}}>
+                <span style={{flex:1,fontWeight:700,fontSize:12}}>{w.title}</span>
+                {b && <span style={{color:b.color,fontSize:10,fontWeight:800,border:`1px solid ${b.color}55`,borderRadius:99,padding:"1px 8px"}}>{b.label}</span>}
+              </button>); })}</div>}
+          {canSubmit && (!showSubmit ? <button onClick={()=>setShowSubmit(true)} style={{marginTop:8,padding:"7px 12px",borderRadius:8,border:`1px dashed ${T.border}`,background:"transparent",color:T.muted,cursor:"pointer",fontFamily:"inherit",fontSize:11}}>+ Submit your own word set</button> :
+            <div style={{marginTop:8,padding:10,border:`1px solid ${T.border}`,borderRadius:10}}>
+              <input value={sTitle} onChange={e=>{setSTitle(e.target.value.slice(0,LIMITS.titleMax));setSMsg("");}} placeholder="Set title" style={{width:"100%",boxSizing:"border-box",background:T.bg,color:T.text,border:`1px solid ${T.border}`,borderRadius:8,padding:8,fontSize:12,fontFamily:"inherit",marginBottom:6}} />
+              <textarea value={sWords} onChange={e=>{setSWords(e.target.value.slice(0,2500));setSMsg("");}} rows={3} placeholder={`${LIMITS.minWords}-${LIMITS.maxWords} words separated by spaces or commas`} style={{width:"100%",boxSizing:"border-box",background:T.bg,color:T.text,border:`1px solid ${T.border}`,borderRadius:8,padding:8,fontSize:12,fontFamily:"inherit",resize:"vertical"}} />
+              <div style={{color:T.muted,fontSize:10,margin:"4px 0"}}>Only the title and words are shared, and only after an admin approves them. Your name is never shown. Don't include personal information.</div>
+              {sMsg && <div style={{color:sMsg.startsWith("Thanks")?"#10b981":"#ef4444",fontSize:11,marginBottom:4}}>{sMsg}</div>}
+              <button disabled={sBusy} onClick={submit} style={{padding:"7px 14px",borderRadius:8,border:"none",background:T.purple,color:"#fff",fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:12}}>{sBusy?"Sending…":"Submit for review"}</button>
+            </div>)}
+        </>}
 
         <div style={{color:T.purple,fontSize:11,fontWeight:800,letterSpacing:1,margin:"16px 0 6px"}}>YOUR OWN TEXT</div>
         <textarea value={text} onChange={e=>{setText(e.target.value.slice(0,2000));setMsg("");}} placeholder="Paste a paragraph, a poem, your own notes…" rows={4}

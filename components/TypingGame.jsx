@@ -2402,7 +2402,7 @@ const Nav = () => (<>
     </div>
     {showPrefs && <PrefsModal T={T} prefs={prefs} setPref={setPref} profile={activeProfile} onClose={()=>setShowPrefs(false)} onTour={()=>setTourStep(0)} onWhatsNew={()=>setShowWhatsNew(true)} />}
     {tourStep >= 0 && <Tour T={T} step={tourStep} setStep={setTourStep} onClose={()=>{setTourStep(-1);try{localStorage.setItem("ak_onboarded","1");}catch{}}} />}
-    {showPractice && <PracticeLab T={T} profile={activeProfile} onClose={()=>setShowPractice(false)} onStart={startPractice} />}
+    {showPractice && <PracticeLab T={T} profile={activeProfile} canSubmit={!!user && !isProfileRestricted(activeProfile) && canUse(activeProfile,"wordsets")} onClose={()=>setShowPractice(false)} onStart={startPractice} />}
     {showStats && <StatsModal T={T} profile={activeProfile} onClose={()=>setShowStats(false)} />}
     {showWhatsNew && <WhatsNewModal T={T} onClose={()=>{setShowWhatsNew(false);setNewSeen(true);try{localStorage.setItem("ak_whatsnew_seen",WHATS_NEW[0].id);}catch{}}} />}
   </>

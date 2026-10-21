@@ -4,6 +4,7 @@ import { onAuthStateChanged, signInWithPopup, signOut, signInWithEmailAndPasswor
 import { getAdminAuth, getAdminDb, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, adminSetProfileAdmin, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest, replyToFeedback, getFlaggedScores, getRestoreRequests, approveFlaggedScore, dismissFlaggedScore, resolveRestoreRequest, getCoppaAuditSummary, runCoppaCleanup } from "@/lib/firebase";
 import { KKey } from "@/components/icons/KKey";
 import LocksTab from "./LocksTab";
+import WordSetsTab from "./WordSetsTab";
 const LEVELS = [
   { id:1,  name:"Home Row Hero",         emoji:"🏠", wpmTarget:12,  accuracy:75, color:"#10b981", words:["ffjj","fjfj","asdf","jkl;","add","ask","fall","glad","flask","lads","fads","salads"] },
   { id:2,  name:"Top Row Climber",       emoji:"🧗", wpmTarget:16,  accuracy:75, color:"#3b82f6", words:["quit","wrap","type","your","power","tower","write","pretty","quite","report"] },
@@ -285,7 +286,7 @@ const st = {
   input:{ width:"100%",background:T.faint,border:`1px solid ${T.border}`,borderRadius:7,color:T.text,fontFamily:T.font,fontSize:12,padding:"8px 11px",outline:"none",boxSizing:"border-box" },
   label:{ color:T.muted,fontSize:9,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:5 },
 };
-const TABS = ["stats","users","bans","admins","keys","trials","warn","broadcast","levels","analytics","log","feedback","anticheat","birthday","locks","settings"];
+const TABS = ["stats","users","bans","admins","keys","trials","warn","broadcast","levels","analytics","log","feedback","anticheat","birthday","locks","wordsets","settings"];
 
 export default function AdminPage() {
   // adminDb is safe to create anywhere (no browser-only APIs). adminAuth uses
@@ -798,7 +799,7 @@ export default function AdminPage() {
         <div style={{display:"flex",gap:4,marginBottom:16,background:T.card,borderRadius:10,padding:4,border:`1px solid ${T.border}`,flexWrap:"wrap"}}>
           {TABS.map(t=>(
             <button key={t} onClick={()=>setTab(t)} style={st.tab(tab===t)}>
-              {t==="locks"?"🔒 Locks": t==="stats"?"📊 Stats":t==="users"?`👥 Users (${users.length})`:t==="bans"?`🔨 Bans (${bans.length})`:t==="admins"?`🔑 Admins`:t==="keys"?"💰 Keys":t==="trials"?"⏱ Trials":t==="warn"?"⚠️ Warn":t==="broadcast"?"📢 Broadcast":t==="levels"?"🗺️ Levels":t==="analytics"?"📈 Analytics":t==="log"?"📋 Log":t==="feedback"?"💬 Feedback":t==="anticheat"?`🚩 Anti-cheat (${flaggedScores.filter(f=>f.status==="pending").length+restoreRequests.filter(r=>r.status==="pending").length})`:t==="birthday"?`🎂 Birthdays (${bdayReqList.length})`:t==="settings"?"⚙️ Settings":""}
+              {t==="locks"?"🔒 Locks":t==="wordsets"?"📝 Word sets": t==="stats"?"📊 Stats":t==="users"?`👥 Users (${users.length})`:t==="bans"?`🔨 Bans (${bans.length})`:t==="admins"?`🔑 Admins`:t==="keys"?"💰 Keys":t==="trials"?"⏱ Trials":t==="warn"?"⚠️ Warn":t==="broadcast"?"📢 Broadcast":t==="levels"?"🗺️ Levels":t==="analytics"?"📈 Analytics":t==="log"?"📋 Log":t==="feedback"?"💬 Feedback":t==="anticheat"?`🚩 Anti-cheat (${flaggedScores.filter(f=>f.status==="pending").length+restoreRequests.filter(r=>r.status==="pending").length})`:t==="birthday"?`🎂 Birthdays (${bdayReqList.length})`:t==="settings"?"⚙️ Settings":""}
             </button>
           ))}
         </div>
@@ -1053,6 +1054,8 @@ export default function AdminPage() {
         )}
 
         {tab==="locks"&&<LocksTab T={T} st={st} adminDb={adminDb} uid={user.uid} flash={flash} />}
+
+        {tab==="wordsets"&&<WordSetsTab T={T} st={st} adminDb={adminDb} flash={flash} />}
 
         {/* LEVELS */}
         {tab==="levels"&&(
