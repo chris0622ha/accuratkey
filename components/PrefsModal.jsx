@@ -32,6 +32,7 @@ export default function PrefsModal({ T, prefs, setPref, onClose, profile, onTour
         <div style={{color:T.purple,fontSize:11,fontWeight:800,letterSpacing:1,marginTop:10}}>TYPING</div>
         <Row T={T} label="Text size"><Seg T={T} value={prefs.textScale} onChange={v=>setPref({textScale:v})} options={[[0.85,"S"],[1,"M"],[1.3,"L"],[1.6,"XL"]]} /></Row>
         <Row T={T} label="Caret style" hint="Auto uses your theme's"><Seg T={T} value={prefs.caret} onChange={v=>setPref({caret:v})} options={[["auto","Auto"],["underline","_"],["bar","|"],["block","█"],["glow","✦"]]} /></Row>
+        <Row T={T} label="Ghost pace (vs your best)"><Toggle T={T} value={prefs.ghost} onChange={v=>setPref({ghost:v})} /></Row>
         <Row T={T} label="Show timer"><Toggle T={T} value={prefs.showTimer} onChange={v=>setPref({showTimer:v})} /></Row>
         <Row T={T} label="Focus mode" hint="Hide everything except the text"><Toggle T={T} value={prefs.focusMode} onChange={v=>setPref({focusMode:v})} /></Row>
         <Row T={T} label="Zen mode" hint="Hide WPM, accuracy and combo while typing"><Toggle T={T} value={prefs.zen} onChange={v=>setPref({zen:v})} /></Row>

@@ -4276,6 +4276,7 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
             </div>
           </div>
           <div style={{display:"flex",gap:14,alignItems:"center"}}>
+            {prefs.ghost && playingLevel > 0 && (() => { const b = getBest(activeProfile?.id, playingLevel); const st0 = startTimeRef.current; if (!b?.bestWpm || !st0) return null; const el = ((pausedAtRef.current || Date.now()) - st0) / 60000; const diff = Math.round(totalCharsRef.current - b.bestWpm * 5 * el); return <span style={{color:diff>=0?"#10b981":"#f59e0b",fontWeight:700,fontSize:13,display:"inline-flex",alignItems:"center",gap:4}} title={`Pace of your best (${b.bestWpm} WPM)`}>👻 {diff>=0?`+${diff} ahead`:`${-diff} behind`}</span>; })()}
             {prefs.showTimer && (() => { const e = startTimeRef.current ? Math.max(0, Math.floor(((pausedAtRef.current || Date.now()) - startTimeRef.current) / 1000)) : 0; return <span style={{color:T.muted,fontWeight:700,fontSize:14,fontVariantNumeric:"tabular-nums"}}>{Math.floor(e/60)}:{String(e%60).padStart(2,"0")}</span>; })()}
             {!prefs.zen && canUse(activeProfile,"wpmLive") && <span style={{color:T.purple,fontWeight:700,fontSize:14,display:"flex",alignItems:"center",gap:6}}>{wpm} WPM</span>}
             {!prefs.zen && canUse(activeProfile,"accuracyLive") && <span style={{color:T.accent2,fontWeight:700,fontSize:14}}>{accuracy}%</span>}
