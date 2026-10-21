@@ -17,7 +17,7 @@ import Tour, { TOUR_LENGTH } from "./Tour";
 import WhatsNewModal from "./WhatsNewModal";
 import StatsModal from "./StatsModal";
 import PracticeLab from "./PracticeLab";
-import { mergeKeyStats } from "@/lib/practice";
+import { mergeKeyStats, mergeMissedWords, wordAt } from "@/lib/practice";
 import { logRun, getHistory, newlyUnlocked } from "@/lib/stats";
 import { WHATS_NEW } from "@/lib/whatsNew";
 import { getPrefs, setPrefs, getBest, recordRun } from "@/lib/prefs";
@@ -1009,6 +1009,7 @@ export default function AccuratKey() {
   const practicePoolRef = useRef([]);
   const [practiceName, setPracticeName] = useState("Practice");
   const keyAttemptsRef = useRef({});
+  const missedWordsRef = useRef({});
   const [newBadges, setNewBadges] = useState([]);
   const [newSeen, setNewSeen] = useState(true);
   const [paused, setPaused] = useState(false);
@@ -1680,7 +1681,7 @@ export default function AccuratKey() {
     const ov = customWords || levelOverrides[String(levelId)] || null;
     setLines(Array.from({ length: TOTAL_LINES }, () => genLine(levelId, ov)));
     setLineIdx(0); setTyped(""); setTotalChars(0); totalCharsRef.current = 0; setTotalCorrectChars(0);
-    setStartTime(null); startTimeRef.current = null; setWpm(0); setAccuracy(100); setCombo(0); setKeyMistakes({}); keyAttemptsRef.current = {}; setShowHeatmap(false);
+    setStartTime(null); startTimeRef.current = null; setWpm(0); setAccuracy(100); setCombo(0); setKeyMistakes({}); keyAttemptsRef.current = {}; missedWordsRef.current = {}; setShowHeatmap(false);
   }, []);
 
   const startLevel = (levelId, isSkip = false, skipTarget = null) => {
@@ -1811,6 +1812,7 @@ export default function AccuratKey() {
       setRunCompare(prev ? { ...prev, wpm: resultData.wpm, acc: resultData.accuracy } : { first: true, wpm: resultData.wpm, acc: resultData.accuracy });
       if (resultData.level !== -2) recordRun(activeProfile?.id, resultData.level, resultData.wpm, resultData.accuracy);
       mergeKeyStats(activeProfile?.id, keyAttemptsRef.current);
+      mergeMissedWords(activeProfile?.id, missedWordsRef.current);
       logRun(activeProfile?.id, resultData);
       setNewBadges(newlyUnlocked(activeProfile?.id, getHistory(activeProfile?.id)));
     }
@@ -1852,6 +1854,7 @@ export default function AccuratKey() {
       ka[ek] = ka[ek] || { n: 0, miss: 0 }; ka[ek].n++; if (ch !== current[pos]) ka[ek].miss++;
     }
     if (ch && ch !== current[pos]) {
+      const mw = wordAt(current, pos); if (mw) missedWordsRef.current[mw] = 1;
       const k = ch.toLowerCase();
       setKeyMistakes(p => ({ ...p, [k]: (p[k] || 0) + 1 }));
       if(canUse(activeProfile,"sounds"))playSound("wrong", activeProfile?.activeSound||"default");

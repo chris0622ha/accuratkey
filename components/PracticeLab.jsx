@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useMemo } from "react";
 import { UiIcon } from "./icons/UiIcons";
-import { PRESETS, fromText, weakKeyDrill, weakKeys } from "@/lib/practice";
+import { PRESETS, fromText, weakKeyDrill, weakKeys, getMissedWords, missedDrill, clearMissedWords } from "@/lib/practice";
 import { ALL_WORDS } from "./WordDB";
 import { getPublicWordSets, submitWordSet, parseWords, validateSubmission, badgeInfo, LIMITS } from "@/lib/wordsets";
 import { isFeatureLocked } from "@/lib/locks";
@@ -27,6 +27,7 @@ export default function PracticeLab({ T, profile, onStart, onClose, canSubmit })
     setSBusy(false);
   };
   const weak = useMemo(() => weakKeys(profile?.id), [profile?.id]);
+  const missed = useMemo(() => Object.keys(getMissedWords(profile?.id)), [profile?.id]);
   const go = (lines, name) => { if (!lines || lines.length < 3) { setMsg("Not enough text — add a bit more (at least a couple of sentences)."); return; } onClose(); onStart(lines, name); };
   const Card = ({ icon, title, desc, onClick, disabled }) => (
     <button onClick={onClick} disabled={disabled} style={{textAlign:"left",display:"flex",gap:12,alignItems:"center",width:"100%",padding:"12px 14px",borderRadius:10,border:`1px solid ${T.border}`,background:T.bg,color:T.text,cursor:disabled?"default":"pointer",opacity:disabled?.5:1,fontFamily:"inherit"}}>
@@ -45,6 +46,9 @@ export default function PracticeLab({ T, profile, onStart, onClose, canSubmit })
           <Card icon="target" title="Drill my weak keys" disabled={!weak.length}
             desc={weak.length ? `Focus on: ${weak.map(w => w.k.toUpperCase()).join(" ")} (your highest miss rates)` : "Finish a few level runs first — I track which keys you miss."}
             onClick={()=>go(weakKeyDrill(weak.map(w=>w.k), ALL_WORDS), "Weak-key drill")} />
+          <Card icon="feedback" title="Drill my missed words" disabled={missed.length < 4}
+            desc={missed.length >= 4 ? `${missed.length} words you've slipped on: ${missed.slice(0,4).join(", ")}…` : "Finish a few level runs first — I remember words you mistype."}
+            onClick={()=>go(missedDrill(missed.slice(0,40)), "Missed words")} />
           <Card icon="keyboard" title="Numbers" desc="Number-row digits in groups" onClick={()=>go(PRESETS.numbers(), "Numbers")} />
           <Card icon="stats" title="Numpad math" desc="Digits with + - * / like a 10-key" onClick={()=>go(PRESETS.numpad(), "Numpad")} />
           <Card icon="lock" title="Symbols" desc="!@#$%^&* and brackets" onClick={()=>go(PRESETS.symbols(), "Symbols")} />

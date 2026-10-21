@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useMemo } from "react";
 import { UiIcon } from "./icons/UiIcons";
-import { getHistory, summary, xpInfo, dayCounts, dayKey, currentDayStreak, ACHIEVEMENTS, unlockedIds, getGoal, setGoal, toCsv } from "@/lib/stats";
+import { getHistory, summary, xpInfo, dayCounts, dayKey, currentDayStreak, ACHIEVEMENTS, unlockedIds, todaysQuests, weeklyReport, getGoal, setGoal, toCsv } from "@/lib/stats";
 import { getBest } from "@/lib/prefs";
 
 const Pill = ({ T, on, children, onClick }) => <button onClick={onClick} style={{padding:"6px 12px",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",border:`1px solid ${on?T.purple:T.border}`,background:on?T.purple+"33":"transparent",color:on?T.text:T.muted}}>{children}</button>;
@@ -48,8 +48,30 @@ export default function StatsModal({ T, profile, onClose }) {
         </div>
         <div style={{color:T.muted,fontSize:11,marginBottom:12}}>Saved on this device only — not uploaded anywhere.</div>
         <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
-          {[["overview","Overview"],["history","History"],["badges","Achievements"],["goals","Goals"]].map(([k,l]) => <Pill key={k} T={T} on={tab===k} onClick={()=>setTab(k)}>{l}</Pill>)}
+          {[["overview","Overview"],["quests","Quests"],["history","History"],["badges","Achievements"],["goals","Goals"],["report","Weekly report"]].map(([k,l]) => <Pill key={k} T={T} on={tab===k} onClick={()=>setTab(k)}>{l}</Pill>)}
         </div>
+
+        {tab === "quests" && <>
+          <div style={{color:T.muted,fontSize:12,marginBottom:10}}>Three new quests every day, tracked on this device. They’re just for fun — no Keys, no pressure.</div>
+          {todaysQuests(hist).map(q => <div key={q.id} style={{background:T.bg,border:`1px solid ${q.done?"#10b981":T.border}`,borderRadius:10,padding:"10px 14px",marginBottom:8}}>
+            <div style={{display:"flex",justifyContent:"space-between",color:T.text,fontWeight:700,fontSize:13}}><span>{q.done?"✓ ":""}{q.name}</span><span style={{color:T.muted,fontSize:12}}>{q.value}/{q.target}</span></div>
+            <div style={{height:5,background:T.border,borderRadius:3,marginTop:7}}><div style={{height:"100%",width:`${(q.value/q.target)*100}%`,background:q.done?"#10b981":T.purple,borderRadius:3}}/></div>
+          </div>)}
+          {todaysQuests(hist).every(q => q.done) && <div style={{color:"#10b981",fontWeight:700,fontSize:13,marginTop:6}}>All quests done today — nice work!</div>}
+        </>}
+
+        {tab === "report" && (() => { const r = weeklyReport(hist); const d = (a, b, u = "") => { const x = a - b; return x === 0 ? "same as last week" : `${x > 0 ? "+" : ""}${x}${u} vs last week`; };
+          const Row = ({ l, v, c }) => <div style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:`1px solid ${T.border}`,fontSize:13,color:T.text}}><span>{l}</span><span><b>{v}</b> <span style={{color:T.muted,fontSize:11}}>{c}</span></span></div>;
+          return <>
+            <div style={{color:T.muted,fontSize:12,marginBottom:8}}>Last 7 days for {profile?.name || "this profile"}. A quick summary a parent or teacher can read; stored only on this device.</div>
+            <Row l="Days practiced" v={`${r.week.days} / 7`} c={d(r.week.days, r.before.days)} />
+            <Row l="Runs finished" v={r.week.runs} c={d(r.week.runs, r.before.runs)} />
+            <Row l="Levels passed" v={r.week.passed} c={d(r.week.passed, r.before.passed)} />
+            <Row l="Practice time" v={`${r.week.minutes} min`} c={d(r.week.minutes, r.before.minutes, " min")} />
+            <Row l="Average speed" v={`${r.week.avgWpm} WPM`} c={r.before.runs ? d(r.week.avgWpm, r.before.avgWpm) : ""} />
+            <Row l="Average accuracy" v={`${r.week.avgAcc}%`} c={r.before.runs ? d(r.week.avgAcc, r.before.avgAcc, "%") : ""} />
+            <button onClick={()=>window.print()} style={{marginTop:12,padding:"8px 16px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.text,cursor:"pointer",fontFamily:"inherit",fontWeight:700,fontSize:12}}>Print this report</button>
+          </>; })()}
 
         {tab === "overview" && <>
           <div style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:10,padding:"12px 14px",marginBottom:12}}>
