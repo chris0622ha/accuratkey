@@ -4448,7 +4448,7 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
         <div style={{width:"100%",maxWidth:isMobile?460:760,textAlign:"center"}}>
           <div style={{fontSize:64,marginBottom:10}}>{passed ? "🎉" : "💪"}</div>
           <h2 style={{color:T.text,fontSize:28,fontWeight:800,margin:0}}>
-            {passed ? (rSkip ? "Level Skipped!" : "Level Complete!") : "Not quite!"}
+            {passed ? (rSkip ? "Level Skipped!" : resultData.level === -2 ? "Practice complete!" : "Level Complete!") : "Not quite!"}
           </h2>
           <p style={{color:T.muted,fontSize:14,marginTop:6,marginBottom:20}}>{lv.emoji} {lv.name}</p>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
@@ -4467,7 +4467,7 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
             </div>;
           })()}
           {newBadges.length > 0 && <div style={{display:"flex",justifyContent:"center",gap:8,flexWrap:"wrap",marginBottom:14}}>{newBadges.map(b => <div key={b.id} style={{display:"flex",alignItems:"center",gap:8,background:T.accent+"22",border:`1px solid ${T.accent}`,borderRadius:10,padding:"8px 12px",fontSize:12,color:T.text}}><UiIcon name="star" size={16} color={T.accent}/><span><b>Achievement unlocked:</b> {b.name} — {b.desc}</span></div>)}</div>}
-          {runCompare?.first && <div style={{textAlign:"center",fontSize:12,color:T.muted,marginBottom:14}}>First run on this level — this is your baseline.</div>}
+          {runCompare?.first && resultData.level !== -2 && <div style={{textAlign:"center",fontSize:12,color:T.muted,marginBottom:14}}>First run on this level — this is your baseline.</div>}
           {passed && user && resultData.level !== -2 && (
             <div style={{background:T.purple+"22",border:`1px solid ${T.purple}55`,borderRadius:10,padding:"10px 16px",marginBottom:14,fontSize:13,color:T.text}}>✓ Progress saved! <KKey size={13} style={{margin:"0 2px"}}/> {activeProfile?.keys || 0}</div>
           )}
@@ -4514,7 +4514,7 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
               Next Level →
             </button>
           )}
-          {passed && (
+          {passed && resultData.level !== -2 && (
             <button onClick={downloadCertificate}
               style={{width:"100%",marginTop:10,padding:12,borderRadius:10,border:`1px solid ${T.purple}55`,background:T.purple+"18",color:T.purple,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:T.font}}>
               🏆 Download Certificate
