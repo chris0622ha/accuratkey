@@ -9,6 +9,7 @@ import { FOUNDATIONS_ICONS, PRECISION_FLOW_ICONS, WORD_POWER_ICONS, KEYBOARD_MAS
 import { formatKeys } from "@/lib/format";
 import { CertificateModal } from "./Certificates";
 import { AICoach } from "./AICoach";
+import { setGlobalLocks, isFeatureLocked, lockMessage } from "../lib/locks";
 import { getThemeFx } from "@/lib/themeFx";
 import { UiIcon } from "./icons/UiIcons";
 import PrefsModal from "./PrefsModal";
@@ -21,7 +22,7 @@ import { logRun, getHistory, newlyUnlocked } from "@/lib/stats";
 import { WHATS_NEW } from "@/lib/whatsNew";
 import { getPrefs, setPrefs, getBest, recordRun } from "@/lib/prefs";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
+import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, getLocks, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
 
 export 
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
@@ -387,7 +388,7 @@ const AV = Object.fromEntries(AVATARS.map(a => [a.id, a.e]));
 
 const isTeen=p=>((p?.age??0)||0)>=13,isKid=p=>{const a=p?.age;return a!=null&&a>0&&a<13;};
 const KID_FEATURES=["keys","friends","shop","daily","test","skip","sounds"];
-const canUse=(p,feat)=>{if(!p)return false;if(p.isProfileAdmin)return true;return p.features?.[feat]!==false;};
+const canUse=(p,feat)=>{if(!p)return false;if(p.isProfileAdmin)return true;if(isFeatureLocked(feat))return false;return p.features?.[feat]!==false;};
 
 const QRCanvas=({url,size=160})=>{const r=useRef(null);useEffect(()=>{if(url&&r.current)import("qrcode").then(Q=>Q.toCanvas(r.current,url,{width:size,margin:1,color:{dark:"#000",light:"#fff"}})).catch(()=>{});},[url,size]);return <canvas ref={r} style={{borderRadius:8,display:"block"}}/>;};
 
@@ -1044,6 +1045,7 @@ export default function AccuratKey() {
   const [showChangeUsername, setShowChangeUsername] = useState(false);
   const [newUsernameInput, setNewUsernameInput] = useState("");
   const [maintenance, setMaintenance] = useState(null);
+  const [, setLocksLoaded] = useState(0);
   const [pinModal, setPinModal] = useState(null);
   const [pinInput, setPinInput] = useState('');
   const [pinErr, setPinErr] = useState('');
@@ -1333,6 +1335,7 @@ export default function AccuratKey() {
 
   // Check maintenance, broadcast, level overrides on load
   useEffect(() => {
+    getLocks().then(l => { setGlobalLocks(l); setLocksLoaded(n => n + 1); });
     getMaintenanceMode().then(m => {
       setMaintenance(m);
       // Don't immediately block here - we don't know who's logged in yet,
@@ -2376,8 +2379,8 @@ const Nav = () => (<>
                 {currentUsername && <div style={{fontSize:11,color:T.muted}}>@{currentUsername}</div>}
               </div>
               {item("settings","Profile",()=>openProfileModal())}
-              {item("target","Practice lab",()=>setShowPractice(true))}
-              {item("stats","Stats & achievements",()=>setShowStats(true))}
+              {canUse(activeProfile,"practice")&&item("target","Practice lab",()=>setShowPractice(true))}
+              {canUse(activeProfile,"stats")&&item("stats","Stats & achievements",()=>setShowStats(true))}
               {item("star","Preferences",()=>setShowPrefs(true))}
               {item("calendar","What's new",()=>setShowWhatsNew(true),!newSeen)}
               {canUse(activeProfile,"friends")&&item("friends","Friends",()=>{getFriends(user?.uid).then(setFriends);getIncomingRequests(user?.uid).then(setFriendReqs);setShowFriends(true);})}
@@ -2902,14 +2905,14 @@ const Nav = () => (<>
         <p style={{color:T.muted,fontSize:15,marginBottom:6}}>{failReason}</p>
         <p style={{color:T.faint,fontSize:13,marginBottom:24}}>{lv.emoji} {lv.name} requires 75% accuracy.</p>
         <div style={{width:"100%",maxWidth:480,marginBottom:20}}>
-          <AICoach
+          {canUse(activeProfile,"coach") && <AICoach
             wpm={resultData?.wpm || 0}
             accuracy={resultData?.accuracy || 0}
             passed={false}
             levelName={lv.name}
             worstKeys={worstKeys.map(([k,n]) => `${k}(×${n})`)}
             T={T}
-          />
+          />}
         </div>
         <div style={{display:"flex",gap:10}}>
           <button onClick={() => requestStartLevel(playingLevel, isSkipChallenge, skipTargetLevel)}
@@ -4494,14 +4497,14 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
               </div>
             </div>
           )}
-          <AICoach
+          {canUse(activeProfile,"coach") && <AICoach
             wpm={rWpm}
             accuracy={rAcc}
             passed={passed}
             levelName={lv.name}
             worstKeys={worstKeys.map(([k,n]) => `${k}(×${n})`)}
             T={T}
-          />
+          />}
           <div style={{display:"flex",gap:8}}>
             <button onClick={() => requestStartLevel(resultData.level)}
               style={{flex:1,padding:14,borderRadius:10,border:"none",background:T.purple,color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:T.font}}>

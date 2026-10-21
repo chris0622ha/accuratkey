@@ -5,7 +5,10 @@ import { Sniper, Mirror, Flash, Echo, GhostWords, BossBattle } from "./GamesExtr
 import { GameIcon } from "./icons/UiIcons";
 import { HundredWords, Endurance, Roulette, WordChain, CategoryBlitz, VocabBuilder, TypingInvaders, AsteroidBelt, TowerDefense, MysteryWords, RhymeTime } from "./GamesNew2";
 import { SpeedTest, MissingLetters, Anagram, BrickBreaker, Synonyms, Antonyms, TugOfWar, WordBomb, MemoryEdit, WildcardWords, Freestyle } from "./GamesNew3";
-import { GAMES } from "./GameCatalog";
+import { GAMES as BASE_GAMES } from "./GameCatalog";
+import { isGameLocked, lockMessage } from "../lib/locks";
+// Admin-locked games are treated exactly like unavailable ones (menu + direct URL).
+const getGames = () => BASE_GAMES.map(g => isGameLocked(g.id) ? { ...g, unavailable: true, desc: "Locked by admin - " + lockMessage() } : g);
 // Word pools
 const EASY_WORDS = TYPING_BASIC;
 const MED_WORDS = TYPING_MEDIUM;
@@ -1071,7 +1074,7 @@ export default function GamesTab({ T }) {
     // after being hidden from the menu. This is the actual fix for "make
     // sure no one can bypass" - hiding a button alone never closes a
     // direct-navigation path.
-    const game = GAMES.find(g => g.id === id);
+    const game = getGames().find(g => g.id === id);
     if (!game || game.unavailable) {
       if (typeof window !== "undefined") window.history.replaceState({}, "", "/games");
       return null;
@@ -1082,7 +1085,7 @@ export default function GamesTab({ T }) {
   const [showSettings, setShowSettings] = useState(false);
 
   const enterGame = (id) => {
-    const game = GAMES.find(g => g.id === id);
+    const game = getGames().find(g => g.id === id);
     if (!game || game.unavailable) return;
     setActiveGame(id);
     setSettings(null); // show settings first
@@ -1160,7 +1163,7 @@ export default function GamesTab({ T }) {
           <>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
               <button onClick={exitGame} style={{background:"none",border:"none",color:"#555",fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>← Games</button>
-              <span style={{color:"#e0e0ff",fontWeight:800,fontSize:18}}><GameIcon id={activeGame} cat={GAMES.find(g=>g.id===activeGame)?.cat} size={22} /> {GAMES.find(g=>g.id===activeGame)?.name}</span>
+              <span style={{color:"#e0e0ff",fontWeight:800,fontSize:18}}><GameIcon id={activeGame} cat={getGames().find(g=>g.id===activeGame)?.cat} size={22} /> {getGames().find(g=>g.id===activeGame)?.name}</span>
             </div>
             <SettingsPanel gameId={activeGame} T={T} onStart={startGame}/>
           </>
@@ -1184,7 +1187,7 @@ export default function GamesTab({ T }) {
         ))}
       </div>
       {(() => {
-        const filtered = GAMES.filter(g => activeCat==="all" || g.cat===activeCat);
+        const filtered = getGames().filter(g => activeCat==="all" || g.cat===activeCat);
         const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
         const paged = filtered.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE);
         return (<>
