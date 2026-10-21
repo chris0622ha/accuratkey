@@ -18,6 +18,7 @@ import WhatsNewModal from "./WhatsNewModal";
 import StatsModal from "./StatsModal";
 import PracticeLab from "./PracticeLab";
 import NotificationsModal from "./NotificationsModal";
+import WordSetsPanel from "./WordSetsPanel";
 import { mergeKeyStats, mergeMissedWords, wordAt } from "@/lib/practice";
 import { logRun, getHistory, newlyUnlocked } from "@/lib/stats";
 import { WHATS_NEW } from "@/lib/whatsNew";
@@ -807,7 +808,7 @@ export default function AccuratKey() {
   const setActiveTabWithUrl = React.useCallback((tab) => {
     setActiveTab(tab);
     if (tab === "test") setTestMountKey(k => k + 1);
-    const tabUrls = { games: "/game", map: "/game/map", daily: "/game/daily", test: "/game/test" };
+    const tabUrls = { games: "/game", map: "/game/map", daily: "/game/daily", test: "/game/test", sets: "/game/sets" };
     const url = tabUrls[tab] || "/game";
     if (typeof window !== "undefined" && window.location.pathname !== url) {
       // Use history.replaceState directly, same as setScreenWithUrl below —
@@ -1009,6 +1010,7 @@ export default function AccuratKey() {
   const [showPractice, setShowPractice] = useState(false);
   const [notifs, setNotifs] = useState([]);
   const [showNotifs, setShowNotifs] = useState(false);
+  useEffect(() => { if (!user?.uid || !activeProfile || isProfileRestricted(activeProfile)) return; const iv = setInterval(() => getAllNotifications(user.uid).then(n => setNotifs(p => n.map(x => ({ ...x, wasUnread: p.find(q => q.id === x.id)?.wasUnread })))).catch(() => {}), 60000); return () => clearInterval(iv); }, [user?.uid, activeProfile?.id]);
   const practicePoolRef = useRef([]);
   const [practiceName, setPracticeName] = useState("Practice");
   const keyAttemptsRef = useRef({});
@@ -1092,7 +1094,7 @@ export default function AccuratKey() {
     }
     return map;
   }, []);
-  const URL_TO_TAB = { "/game": "games", "/game/map": "map", "/game/daily": "daily", "/game/test": "test" };
+  const URL_TO_TAB = { "/game": "games", "/game/map": "map", "/game/daily": "daily", "/game/test": "test", "/game/sets": "sets" };
   const hasMountedRef = React.useRef(false);
   useEffect(() => {
     // Skip the very first run — the initial screen is decided by the
@@ -1550,6 +1552,7 @@ export default function AccuratKey() {
               // Restore tab from URL
               if (p === "/game/daily") setActiveTab("daily");
               else if (p === "/game/test") setActiveTab("test");
+              else if (p === "/game/sets") setActiveTab("sets");
               else if (p === "/game/map" || p === "/game") setActiveTab("map");
             }
           }
@@ -2375,7 +2378,7 @@ const Nav = () => (<>
             localStorage.setItem('ak_returnProfileId', activeProfile?.id||'');
             window.location.href='/shop';
           }} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:8,padding:"5px 8px",cursor:"pointer",display:"flex"}} title="Shop"><UiIcon name="shop" size={16} color={T.muted} /></button>}
-          <button onClick={e=>{e.stopPropagation();setNavMenu(m=>!m);}} title="Menu" style={{position:"relative",background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",alignItems:"center"}}>
+          <button onClick={e=>{e.stopPropagation();setNavMenu(m=>!m);if(user?.uid&&!isProfileRestricted(activeProfile))getAllNotifications(user.uid).then(setNotifs).catch(()=>{});}} title="Menu" style={{position:"relative",background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",alignItems:"center"}}>
             <AvatarImg profile={activeProfile} size={32} />
             {(pendingCh || !newSeen || notifs.some(n=>!n.read) || friendReqs.length>0) && <span aria-label="New" style={{position:"absolute",top:-4,right:-5,minWidth:15,height:15,borderRadius:8,background:"#ef4444",color:"#fff",fontSize:10,fontWeight:900,lineHeight:"15px",textAlign:"center",border:`2px solid ${T.bg}`,boxSizing:"content-box"}}>!</span>}
           </button>
@@ -3291,6 +3294,15 @@ const Nav = () => (<>
                   <rect x="11" y="26" width="18" height="4" rx="2" fill={active?"#fff":"currentColor"} opacity={active?0.7:0.4}/>
                 </svg>
               ), canUse(activeProfile,"test")],
+              ["sets", (active) => (
+                // Sets — three stacked word cards
+                <svg width={active?22:18} height={active?22:18} viewBox="0 0 40 40" fill="none">
+                  <rect x="6" y="8" width="28" height="7" rx="2.5" stroke={active?"#fff":"currentColor"} strokeWidth="2" opacity={active?0.9:0.5}/>
+                  <rect x="6" y="17" width="28" height="7" rx="2.5" stroke={active?"#fff":"currentColor"} strokeWidth="2" opacity={active?0.9:0.5}/>
+                  <rect x="6" y="26" width="28" height="7" rx="2.5" stroke={active?"#fff":"currentColor"} strokeWidth="2" opacity={active?0.9:0.5}/>
+                  <circle cx="11" cy="11.5" r="1.3" fill={active?"#fff":"currentColor"}/><circle cx="11" cy="20.5" r="1.3" fill={active?"#fff":"currentColor"}/><circle cx="11" cy="29.5" r="1.3" fill={active?"#fff":"currentColor"}/>
+                </svg>
+              ), !isFeatureLocked("wordsets")],
             ]).filter(t=>t[2]).map(([k,renderIcon])=>(
               <button key={k} onClick={()=>setActiveTabWithUrl(k)} style={{
                 flex:1,padding:isMobile?"5px 0":"7px 0",borderRadius:7,border:"none",
@@ -3300,13 +3312,19 @@ const Nav = () => (<>
               }}>
                 {renderIcon(activeTab===k)}
                 <span style={{fontSize:9,fontWeight:700,letterSpacing:0.5,textTransform:"uppercase",fontFamily:"monospace",opacity:activeTab===k?0.9:0.6}}>
-                  {k==="games"?"Games":k==="map"?"Map":k==="daily"?"Daily":"Test"}
+                  {k==="games"?"Games":k==="map"?"Map":k==="daily"?"Daily":k==="sets"?"Sets":"Test"}
                 </span>
               </button>
             ))}
           </div>
 
           {activeTab==="games" && <GamesTab T={T} />}
+
+          {activeTab==="sets" && !isFeatureLocked("wordsets") && <div style={{padding:"4px 0 20px"}}>
+            <div style={{color:T.text,fontWeight:800,fontSize:18,marginBottom:4}}>Community word sets</div>
+            <div style={{color:T.muted,fontSize:12,marginBottom:14}}>Word lists made by other players and approved by an admin. Practice runs here don't earn Keys or unlock levels.</div>
+            <WordSetsPanel T={T} canSubmit={!!user && !isProfileRestricted(activeProfile) && canUse(activeProfile,"wordsets")} onPractice={startPractice} />
+          </div>}
 
           {activeTab==="map" && <>
           {(() => {

@@ -14,7 +14,7 @@ export default function WordSetsTab({ T, st, adminDb, flash }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminDb]);
   useEffect(() => { load(); }, [load]);
-  const run = async (fn, ok) => { setBusy(true); try { await fn(); flash(ok); await load(); } catch (e) { flash("Failed: " + (e.code || e.message)); } setBusy(false); };
+  const run = async (fn, ok) => { setBusy(true); try { const r = await fn(); flash(r === false ? ok + " (but the user notification could not be sent)" : ok); await load(); } catch (e) { flash("Failed: " + (e.code || e.message)); } setBusy(false); };
   const BadgePick = ({ value, onChange }) => (
     <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
       <button onClick={() => onChange(null)} style={{ ...st.btn(!value ? "#fff" : T.muted, !value ? T.purple : T.faint), fontSize: 10 }}>No badge</button>
