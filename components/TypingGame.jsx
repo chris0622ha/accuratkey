@@ -2672,6 +2672,10 @@ const Nav = () => (<>
           <button onClick={() => setScreenWithUrl("levelMap")} style={{width:"100%",marginTop:12,background:"transparent",border:"none",color:"#444",fontSize:12,cursor:"pointer",fontFamily:"'JetBrains Mono',monospace"}}>
             Continue without signing in
           </button>
+          <div style={{marginTop:16,textAlign:"center",fontSize:11,color:"#555",lineHeight:1.7}}>
+            {authMode === "login" ? "By logging in" : "By signing up"} you agree to our <a href="/tos" style={{color:"#8a8aa8"}}>Terms</a> and <a href="/privacy" style={{color:"#8a8aa8"}}>Privacy Policy</a>.<br/>
+            Parents: see <a href="/childrens-privacy" style={{color:"#8a8aa8"}}>Children's Privacy</a>.
+          </div>
         </div>
       </div>
     {NotificationPopup}

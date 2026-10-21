@@ -55,6 +55,9 @@ export default function PrefsModal({ T, prefs, setPref, onClose, profile, onTour
         <Row T={T} label="Quick tour"><button onClick={()=>{onClose();onTour&&onTour();}} style={{padding:"5px 10px",fontSize:11,fontWeight:700,borderRadius:6,cursor:"pointer",fontFamily:"inherit",border:`1px solid ${T.border}`,background:"transparent",color:T.text}}>Replay</button></Row>
         <Row T={T} label="What's new"><button onClick={()=>{onClose();onWhatsNew&&onWhatsNew();}} style={{padding:"5px 10px",fontSize:11,fontWeight:700,borderRadius:6,cursor:"pointer",fontFamily:"inherit",border:`1px solid ${T.border}`,background:"transparent",color:T.text}}>Open</button></Row>
 
+        <Row T={T} label="Legal"><span style={{display:"flex",gap:10,fontSize:11}}>
+          <a href="/privacy" style={{color:T.muted}}>Privacy</a><a href="/childrens-privacy" style={{color:T.muted}}>Children</a><a href="/tos" style={{color:T.muted}}>Terms</a></span></Row>
+
         <div style={{color:T.purple,fontSize:11,fontWeight:800,letterSpacing:1,marginTop:16}}>SHORTCUTS</div>
         <div style={{color:T.muted,fontSize:12,lineHeight:1.9,marginTop:6}}>
           <b style={{color:T.text}}>Esc</b> pause / resume &nbsp;·&nbsp; <b style={{color:T.text}}>Tab</b> restart level &nbsp;·&nbsp; <b style={{color:T.text}}>?</b> open this panel
