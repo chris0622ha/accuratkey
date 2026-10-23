@@ -2,7 +2,7 @@
 import React from "react";
 import { UiIcon } from "./icons/UiIcons";
 
-const ICON = { wordset_approved: "star", wordset_rejected: "feedback", feedback_reply: "feedback" };
+const ICON = { wordset_approved: "star", wordset_rejected: "feedback", wordset_removed: "feedback", feedback_reply: "feedback" };
 const when = (t) => { try { const d = t?.toDate ? t.toDate() : null; return d ? d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""; } catch { return ""; } };
 
 export default function NotificationsModal({ T, items, onClose }) {

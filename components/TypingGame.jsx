@@ -3423,7 +3423,10 @@ const Nav = () => (<>
               rowItems.push({ type:'level', data:lv, idx, y });
               y += ROW_H;
             });
-            const totalH = y + NODE;
+            const hiddenCount = LEVELS.filter(l => l.id >= visibleUntil).length;
+            const TEASER_H = lockedSec ? 150 : 0;
+            const teaserTop = y + NODE + 24;
+            const totalH = y + NODE + TEASER_H;
 
             // SVG path only through level nodes
             const levelItems = rowItems.filter(r => r.type==='level');
@@ -3542,6 +3545,15 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
                     </div>
                   );
                 })}
+                {lockedSec && (
+                  <div style={{position:"absolute",top:teaserTop,left:8,right:8,zIndex:2,borderRadius:14,padding:"16px 16px",textAlign:"center",border:`1.5px dashed ${lockedSec.color}66`,background:`linear-gradient(180deg, ${lockedSec.color}14, transparent)`}}>
+                    <div style={{fontSize:22,lineHeight:1}}>🔒</div>
+                    <div style={{color:T.text,fontWeight:800,fontSize:14,marginTop:6}}>{hiddenCount} more level{hiddenCount===1?"":"s"} ahead</div>
+                    <div style={{color:T.faint,fontSize:12,marginTop:4,lineHeight:1.5}}>
+                      You've unlocked {Math.min(highestUnlocked,LEVELS.length)} of {LEVELS.length} levels. Next up: <b style={{color:lockedSec.color}}>{lockedSec.label}</b>, which opens at Level {lockedSec.firstId}. New sections stay hidden until you reach them.
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })()}

@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { moderate } from "@/lib/moderation";
+import { getModeration } from "@/lib/firebase";
 import { adminListSubmissions, adminListPublic, adminApprove, adminReject, adminSetBadge, adminSetReward, adminDeleteSet, parseWords, validateSubmission, BADGES, badgeInfo } from "@/lib/wordsets";
 
 export default function WordSetsTab({ T, st, adminDb, flash }) {
@@ -9,6 +11,9 @@ export default function WordSetsTab({ T, st, adminDb, flash }) {
   const [edit, setEdit] = useState({}); // submission id -> edited words text
   const [busy, setBusy] = useState(false);
   const [rew, setRew] = useState({}); // id -> reward keys text
+  const [why, setWhy] = useState({}); // submission id -> rejection reason
+  const [mod, setMod] = useState({});
+  useEffect(() => { getModeration().then(setMod); }, []);
   const load = useCallback(async () => {
     try { setSubs(await adminListSubmissions(adminDb)); setPub(await adminListPublic(adminDb)); }
     catch (e) { flash("Load failed: " + (e.code || e.message)); }
@@ -34,14 +39,16 @@ export default function WordSetsTab({ T, st, adminDb, flash }) {
         return (
           <div key={s.id} style={st.card}>
             <div style={{ color: T.text, fontWeight: 800, fontSize: 14, marginBottom: 6 }}>{s.title}</div>
+            {(() => { const fl = [...new Set([...(s.flags || []), ...moderate(s.title, s.words, { ...mod, enabled: true })])]; return fl.length ? <div style={{ background: "#f59e0b22", border: "1px solid #f59e0b66", color: "#f59e0b", borderRadius: 8, padding: "6px 8px", fontSize: 11, marginBottom: 8 }}>⚠ Auto-moderation flagged: {fl.join(" · ")}</div> : null; })()}
             <textarea value={text} onChange={e => setEdit(x => ({ ...x, [s.id]: e.target.value }))} rows={4} style={{ ...st.input, resize: "vertical", marginBottom: 6 }} />
             <div style={{ color: err ? "#ef4444" : T.muted, fontSize: 11, marginBottom: 8 }}>{err || `${words.length} words — you can edit the list before approving`}</div>
             <div style={{ marginBottom: 8 }}><BadgePick value={pick[s.id] || null} onChange={b => setPick(x => ({ ...x, [s.id]: b }))} /></div>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, color: T.muted, fontSize: 11 }}>Keys reward (0-50, once a day per player):
               <input value={rew[s.id] ?? ""} onChange={e => setRew(x => ({ ...x, [s.id]: e.target.value.replace(/\D/g, "").slice(0, 2) }))} placeholder="0" inputMode="numeric" style={{ ...st.input, width: 64, textAlign: "right" }} /></div>
+            <input value={why[s.id] || ""} onChange={e => setWhy(x => ({ ...x, [s.id]: e.target.value.slice(0, 140) }))} placeholder="Reason if rejecting (optional, shown to the user)" style={{ ...st.input, marginBottom: 8 }} />
             <div style={{ display: "flex", gap: 8 }}>
               <button disabled={busy || !!err} onClick={() => run(() => adminApprove(adminDb, s, { title: s.title, words, badge: pick[s.id] || null, rewardKeys: rew[s.id] }), "Approved & published")} style={{ ...st.btn("#fff", "#10b981"), flex: 1, padding: 10, opacity: err ? .5 : 1 }}>Approve</button>
-              <button disabled={busy} onClick={() => run(() => adminReject(adminDb, s), "Rejected & deleted")} style={st.btn("#fff", "#ef4444")}>Reject</button>
+              <button disabled={busy} onClick={() => run(() => adminReject(adminDb, s, why[s.id]), "Rejected & user notified")} style={st.btn("#fff", "#ef4444")}>Reject</button>
             </div>
           </div>
         );
@@ -52,7 +59,7 @@ export default function WordSetsTab({ T, st, adminDb, flash }) {
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
             <span style={{ color: T.text, fontWeight: 800, fontSize: 13, flex: 1 }}>{p.title} <span style={{ color: T.muted, fontWeight: 400, fontSize: 11 }}>· {p.words.length} words</span></span>
             {badgeInfo(p.badge) && <span style={{ color: badgeInfo(p.badge).color, fontSize: 10, fontWeight: 800 }}>{badgeInfo(p.badge).label.toUpperCase()}</span>}
-            <button disabled={busy} onClick={() => { if (confirm("Delete this word set?")) run(() => adminDeleteSet(adminDb, p.id), "Deleted"); }} style={st.btn("#fff", "#ef4444")}>Delete</button>
+            <button disabled={busy} onClick={() => { { const r = prompt("Remove this word set? Optional reason (shown to the creator if known). Cancel to keep it.", ""); if (r !== null) run(async () => { const n = await adminDeleteSet(adminDb, p.id, r, p.title); return n === null ? true : n; }, "Removed"); } }} style={st.btn("#fff", "#ef4444")}>Delete</button>
           </div>
           <BadgePick value={p.badge || null} onChange={b => run(() => adminSetBadge(adminDb, p.id, b), "Badge updated")} />
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8, color: T.muted, fontSize: 11 }}>Keys reward:
