@@ -26,7 +26,7 @@ import { logRun, getHistory, newlyUnlocked } from "@/lib/stats";
 import { WHATS_NEW } from "@/lib/whatsNew";
 import { getPrefs, setPrefs, getBest, recordRun } from "@/lib/prefs";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, getLocks, getRewards, getAllNotifications, markAllNotificationsRead, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, getLevelNameOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
+import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, getLocks, getRewards, getAllNotifications, markAllNotificationsRead, deleteNotification, deleteAllNotifications, markNotificationRevertRequested, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, getLevelNameOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
 
 export 
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
@@ -2471,7 +2471,14 @@ const Nav = () => (<>
     {tourStep >= 0 && <Tour T={T} step={tourStep} setStep={setTourStep} onClose={()=>{setTourStep(-1);try{localStorage.setItem("ak_onboarded","1");}catch{}}} />}
     {showPractice && <PracticeLab T={T} profile={activeProfile} canSubmit={!!user && !isProfileRestricted(activeProfile) && canUse(activeProfile,"wordsets")} onClose={()=>setShowPractice(false)} onStart={startPractice} />}
     {showStats && <StatsModal T={T} profile={activeProfile} onClose={()=>setShowStats(false)} />}
-    {showNotifs && <NotificationsModal T={T} items={notifs} onClose={()=>setShowNotifs(false)} />}
+    {showNotifs && <NotificationsModal T={T} items={notifs} onClose={()=>setShowNotifs(false)}
+      onDismiss={async(id)=>{ setNotifs(ns=>ns.filter(n=>n.id!==id)); try{ await deleteNotification(user.uid,id); }catch{} }}
+      onClearAll={async()=>{ const all=notifs; setNotifs([]); try{ await deleteAllNotifications(user.uid,all); }catch{} }}
+      onRevert={async(n)=>{ try{
+        await submitFeedback(user.uid, activeProfile?.id||null, `[Word set revert request] set id: ${n.setId}\n${n.body||""}`, null, null, null);
+        await markNotificationRevertRequested(user.uid, n.id);
+        setNotifs(ns=>ns.map(x=>x.id===n.id?{...x,revertRequested:true}:x));
+      }catch(e){ alert("Couldn't send the request. Please try again."); } }} />}
     {showWhatsNew && <WhatsNewModal T={T} onClose={()=>{setShowWhatsNew(false);setNewSeen(true);try{localStorage.setItem("ak_whatsnew_seen",WHATS_NEW[0].id);}catch{}}} />}
   </>
   );

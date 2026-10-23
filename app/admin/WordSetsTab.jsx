@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { moderate } from "@/lib/moderation";
 import { getModeration } from "@/lib/firebase";
-import { adminListSubmissions, adminListPublic, adminApprove, adminReject, adminSetBadge, adminSetReward, adminDeleteSet, parseWords, validateSubmission, BADGES, badgeInfo, BADGE_REWARD, adminSeedStarters, adminUpdateSet } from "@/lib/wordsets";
+import { adminListSubmissions, adminListPublic, adminApprove, adminReject, adminSetBadge, adminSetReward, adminDeleteSet, parseWords, validateSubmission, BADGES, badgeInfo, BADGE_REWARD, adminSeedStarters, adminUpdateSet, adminRevertSet, adminHasPrev } from "@/lib/wordsets";
 
 export default function WordSetsTab({ T, st, adminDb, flash }) {
   const [subs, setSubs] = useState([]);
@@ -13,10 +13,11 @@ export default function WordSetsTab({ T, st, adminDb, flash }) {
   const [rew, setRew] = useState({}); // id -> reward keys text
   const [why, setWhy] = useState({}); // submission id -> rejection reason
   const [mod, setMod] = useState({});
+  const [hasPrev, setHasPrev] = useState({});
   const [ed, setEd] = useState(null); // { id, title, text } while editing a published set
   useEffect(() => { getModeration().then(setMod); }, []);
   const load = useCallback(async () => {
-    try { setSubs(await adminListSubmissions(adminDb)); setPub(await adminListPublic(adminDb)); }
+    try { setSubs(await adminListSubmissions(adminDb)); const pl = await adminListPublic(adminDb); setPub(pl); const h = {}; await Promise.all(pl.map(async p => { h[p.id] = await adminHasPrev(adminDb, p.id); })); setHasPrev(h); }
     catch (e) { flash("Load failed: " + (e.code || e.message)); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminDb]);
@@ -69,10 +70,11 @@ export default function WordSetsTab({ T, st, adminDb, flash }) {
               <textarea value={ed.text} onChange={e => setEd(x => ({ ...x, text: e.target.value }))} rows={5} style={{ ...st.input, resize: "vertical", marginBottom: 4 }} />
               <div style={{ color: e2 ? "#ef4444" : T.muted, fontSize: 11, marginBottom: 6 }}>{e2 || `${w.length} words`}</div>
               <div style={{ display: "flex", gap: 8 }}>
-                <button disabled={busy || !!e2} onClick={async () => { await run(() => adminUpdateSet(adminDb, p.id, ed.title, w), "Set updated"); setEd(null); }} style={{ ...st.btn("#fff", "#10b981"), flex: 1, opacity: e2 ? .5 : 1 }}>Save changes</button>
+                <button disabled={busy || !!e2} onClick={async () => { await run(async () => { const n = await adminUpdateSet(adminDb, p.id, ed.title, w, { title: p.title, words: p.words }); return n === null ? true : n; }, "Set updated"); setEd(null); }} style={{ ...st.btn("#fff", "#10b981"), flex: 1, opacity: e2 ? .5 : 1 }}>Save changes</button>
                 <button onClick={() => setEd(null)} style={st.btn(T.muted, T.faint)}>Cancel</button>
               </div>
             </div>); })() : <button onClick={() => setEd({ id: p.id, title: p.title, text: p.words.join(" ") })} style={{ ...st.btn("#fff", T.purple), marginBottom: 8 }}>Edit title & words</button>}
+          {hasPrev[p.id] && <button disabled={busy} onClick={() => { if (confirm("Put back the version from before the last edit?")) run(async () => { const n = await adminRevertSet(adminDb, p.id); return n === null ? true : n; }, "Reverted"); }} style={{ ...st.btn("#fff", "#f59e0b"), marginBottom: 8, marginLeft: 6 }}>Revert last edit</button>}
           <BadgePick value={p.badge || null} onChange={b => run(() => adminSetBadge(adminDb, p.id, b), "Badge updated")} />
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8, color: T.muted, fontSize: 11 }}>Keys reward:
             <input defaultValue={p.rewardKeys || 0} onBlur={e => { const v = e.target.value; if (String(p.rewardKeys || 0) !== v) run(() => adminSetReward(adminDb, p.id, v), "Reward updated"); }} inputMode="numeric" style={{ ...st.input, width: 64, textAlign: "right" }} /> (saves when you tap away)</div>
