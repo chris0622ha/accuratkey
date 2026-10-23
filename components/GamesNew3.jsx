@@ -76,7 +76,7 @@ export function SpeedTest({ T, onBack, onSettings, settings={} }) {
     <div onClick={()=>ref.current?.focus()} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"16px 20px",marginBottom:10,fontFamily:"'JetBrains Mono',monospace",fontSize:15,lineHeight:1.9,cursor:"text",userSelect:"none",minHeight:80}}>
       {shown.split("").map((ch,i)=>{const ai=windowStart+i;let color=T.faint;if(ai<typed.length)color=typed[ai]===ch?"#34d399":"#ef4444";else if(ai===typed.length)color=T.purple;return<span key={ai} style={{color,borderBottom:ai===typed.length?"2px solid "+T.purple:"2px solid transparent"}}>{ch}</span>;})}
     </div>
-    <input ref={ref} autoFocus value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} style={{position:"absolute",opacity:0,pointerEvents:"none"}}/>
+    <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} style={{position:"absolute",opacity:0,pointerEvents:"none"}}/>
     {!started&&<div style={{textAlign:"center",color:T.faint,fontSize:12,marginTop:4}}>Start typing to begin the timer</div>}
   </div>);
 }
@@ -372,7 +372,7 @@ export function WildcardWords({ T, onBack, onSettings, settings={} }) {
         </div>
       </div>
 
-      <input ref={ref} value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
+      <input ref={ref} value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
         placeholder="Type exactly what's shown above..."
         style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}} />
     </div>
@@ -440,7 +440,7 @@ export function Anagram({ T, onBack, onSettings, settings={} }) {
       <div style={{background:T.card,border:`1px solid ${wrong?"#ef4444":T.border}`,borderRadius:12,padding:"14px",marginBottom:10,fontFamily:"'JetBrains Mono',monospace",fontSize:22,textAlign:"center",letterSpacing:2}}>
         {target.split("").map((ch,i)=><span key={i} style={{color:i<typed.length?(typed[i]===ch?"#34d399":"#ef4444"):i===typed.length?"#a78bfa":T.faint,borderBottom:i===typed.length?"2px solid #a78bfa":"2px solid transparent"}}>{i<typed.length?typed[i]:"_"}</span>)}
       </div>
-      <input ref={ref} autoFocus value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Unscramble the letters..."
+      <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Unscramble the letters..."
         style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box",marginBottom:8}}/>
       <button onClick={skip} style={{width:"100%",padding:"8px",borderRadius:7,border:`1px solid ${T.border}`,background:"transparent",color:T.faint,fontSize:12,cursor:"pointer",fontFamily:T.font}}>Give up — show answer</button>
     </>}
@@ -557,7 +557,7 @@ export function Quotes({ T, onBack, onSettings, settings={} }) {
           <span>{typed.length}/{target.length} chars</span>
           <span>{start?`${Math.round((typed.length/5)/Math.max((Date.now()-start)/60000,.001))} WPM`:"Start typing..."}</span>
         </div>
-        <input ref={ref} autoFocus value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} style={{position:"absolute",opacity:0,pointerEvents:"none"}}/>
+        <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} style={{position:"absolute",opacity:0,pointerEvents:"none"}}/>
       </>
     )}
   </div>);
@@ -626,7 +626,7 @@ export function HaikuMode({ T, onBack, onSettings, settings={} }) {
       {target.split("").map((ch,i)=><span key={i} style={{color:i<typed.length?(typed[i]===ch?"#f472b6":"#ef4444"):i===typed.length?"#f472b6":T.faint,borderBottom:i===typed.length?"2px solid #f472b6":"2px solid transparent"}}>{ch}</span>)}
     </div>
     <div style={{color:T.faint,fontSize:11,textAlign:"center",marginBottom:8}}>Line {lineIdx+1} of 3 · {["5","7","5"][lineIdx]} syllables</div>
-    <input ref={ref} autoFocus value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type the haiku line..."
+    <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type the haiku line..."
       style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}/>
   </div>);
 }
@@ -695,7 +695,7 @@ export function Synonyms({ T, onBack, onSettings, settings={} }) {
       <div style={{color:"#e0e0ff",fontFamily:"'JetBrains Mono',monospace",fontSize:32,fontWeight:800,letterSpacing:3}}>{item?.word}</div>
       {lastAccepted&&<div style={{color:"#34d399",fontSize:12,marginTop:8}}>✓ "{lastAccepted}" accepted!</div>}
     </div>
-    <input ref={ref} value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type a synonym and press Space..."
+    <input ref={ref} value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type a synonym and press Space..."
       style={{width:"100%",background:wrong?"#ef444411":T.bg,border:`1px solid ${wrong?"#ef4444":T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box",transition:"all .15s"}}/>
     {wrong&&<div style={{color:"#ef4444",fontSize:12,marginTop:4,textAlign:"center"}}>"{wrongWord}" is not a synonym — try again</div>}
   </div>);
@@ -762,7 +762,7 @@ export function Antonyms({ T, onBack, onSettings, settings={} }) {
       <div style={{color:"#e0e0ff",fontFamily:"'JetBrains Mono',monospace",fontSize:32,fontWeight:800,letterSpacing:3}}>{item?.word}</div>
       {lastAccepted&&<div style={{color:"#f472b6",fontSize:12,marginTop:8}}>✓ "{lastAccepted}" accepted!</div>}
     </div>
-    <input ref={ref} value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type the opposite and press Space..."
+    <input ref={ref} value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type the opposite and press Space..."
       style={{width:"100%",background:wrong?"#ef444411":T.bg,border:`1px solid ${wrong?"#ef4444":T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box",transition:"all .15s"}}/>
     {wrong&&<div style={{color:"#ef4444",fontSize:12,marginTop:4,textAlign:"center"}}>"{wrongWord}" is not an antonym — try another word</div>}
   </div>);
@@ -956,7 +956,7 @@ export function TugOfWar({ T, onBack, onSettings, settings={}, multiplayer=null 
         </div>
       </div>
 
-      <input ref={ref} value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
+      <input ref={ref} value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
         placeholder="Type the word above..."
         style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}} />
     </div>
@@ -1105,7 +1105,7 @@ export function WordBomb({ T, onBack, onSettings, settings={} }) {
         </div>
       </div>
 
-      <input ref={ref} value={typed} onChange={handleType} disabled={exploding} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
+      <input ref={ref} value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} disabled={exploding} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
         placeholder="Defuse the bomb — type the word..."
         style={{width:"100%",background:T.bg,border:`1px solid ${urgent?"#ef4444":T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box",transition:"border-color .2s"}} />
     </div>
