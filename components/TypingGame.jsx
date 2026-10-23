@@ -4662,6 +4662,9 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
               </div>
             </div>
           )}
+          {breakNudge && <div style={{background:"#0ea5e922",border:"1px solid #0ea5e966",color:T.text,borderRadius:10,padding:"10px 14px",fontSize:13,marginBottom:12,display:"flex",gap:10,alignItems:"center"}}><span style={{flex:1}}>You've been practicing a while. Look away from the screen, stretch your hands and sip some water for a minute.</span><button onClick={()=>setBreakNudge(false)} style={{background:"none",border:"none",color:T.muted,cursor:"pointer",fontSize:16}} aria-label="Dismiss">×</button></div>}
+          <button onClick={()=>setShowReplay(true)} style={{width:"100%",padding:"9px",marginBottom:12,borderRadius:10,border:`1px solid ${T.border}`,background:"transparent",color:T.text,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Watch replay & rhythm</button>
+          {showReplay && <ReplayModal T={T} pid={activeProfile?.id} onClose={()=>setShowReplay(false)} />}
           {canUse(activeProfile,"coach") && <AICoach
             wpm={rWpm}
             accuracy={rAcc}
