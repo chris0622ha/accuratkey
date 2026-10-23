@@ -1,10 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
 import { onAuthStateChanged, signInWithPopup, signOut, signInWithEmailAndPassword, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth";
-import { getAdminAuth, getAdminDb, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, adminSetProfileAdmin, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest, replyToFeedback, getFlaggedScores, getRestoreRequests, approveFlaggedScore, dismissFlaggedScore, resolveRestoreRequest, getCoppaAuditSummary, runCoppaCleanup } from "@/lib/firebase";
+import { getAdminAuth, getAdminDb, getLevelNameOverrides, deleteLevelOverride, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, adminSetProfileAdmin, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest, replyToFeedback, getFlaggedScores, getRestoreRequests, approveFlaggedScore, dismissFlaggedScore, resolveRestoreRequest, getCoppaAuditSummary, runCoppaCleanup } from "@/lib/firebase";
 import { KKey } from "@/components/icons/KKey";
 import LocksTab from "./LocksTab";
-import { applyLevelContent } from "@/lib/levelText";
+import { applyLevelContent, applyLevelNames } from "@/lib/levelText";
 import WordSetsTab from "./WordSetsTab";
 import ModerationTab from "./ModerationTab";
 import RewardsTab from "./RewardsTab";
@@ -395,6 +395,7 @@ export default function AdminPage() {
 
   // Level editor
   const [levelOverrides,setLevelOverrides]=useState({});
+  const [editName,setEditName]=useState("");
   const [editingLevel,setEditingLevel]=useState(null);
   const [editWords,setEditWords]=useState("");
 
@@ -489,7 +490,7 @@ export default function AdminPage() {
   useEffect(()=>{ if(adminOk&&tab==="settings") getMaintenanceMode().then(m=>{setMaintEnabled(m.enabled);setMaintMsg(m.message||"");if(m.triggers)setMaintTriggers(m.triggers);}); },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="analytics"&&!failStats){setFailStatsLoading(true);getLevelFailStats(adminDb).then(d=>{setFailStats(d);setFailStatsLoading(false);}).catch(()=>setFailStatsLoading(false));} },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="broadcast") getBroadcast().then(b=>{if(b)setCurrentBroadcast(b);}); },[tab,adminOk]);
-  useEffect(()=>{ if(adminOk&&tab==="levels") getLevelOverrides().then(setLevelOverrides).catch(()=>{}); },[tab,adminOk]);
+  useEffect(()=>{ if(adminOk&&tab==="levels") getLevelOverrides().then(o=>{applyLevelNames(LEVELS,getLevelNameOverrides());setLevelOverrides(o);}).catch(()=>{}); },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="stats") getAppStats(adminDb).then(setStats).catch(()=>{}); },[tab,adminOk]);
 
   // COPPA: getAllUsers() returns every account AND every profile under every
@@ -655,11 +656,16 @@ export default function AdminPage() {
   async function handleSaveLevel() {
     if(!editingLevel) return;
     const words = editWords.split('\n').map(w=>w.trim()).filter(Boolean);
-    if(!words.length) return;
-    await updateLevelWords(editingLevel, words, adminDb);
-    await logActivity("edit_level",{adminUid:user.uid,detail:`level ${editingLevel}: ${words.length} words`},adminDb);
-    setLevelOverrides(p=>({...p,[String(editingLevel)]:words}));
-    flash(`Level ${editingLevel} words updated`);
+    const lv = LEVELS.find(l=>l.id===editingLevel);
+    const orig = lv?.__origName ?? lv?.name;
+    const name = editName.trim().slice(0,40);
+    const nameChanged = name && name !== orig;
+    const wordsChanged = words.length && words.join("\n") !== (lv?.words||[]).join("\n");
+    if(!nameChanged && !wordsChanged){ await deleteLevelOverride(editingLevel, adminDb); setLevelOverrides(p=>{const n={...p};delete n[String(editingLevel)];return n;}); applyLevelNames(LEVELS,{...getLevelNameOverrides(),[String(editingLevel)]:null}); flash("No changes - using defaults"); setEditingLevel(null); setEditWords(""); return; }
+    await updateLevelWords(editingLevel, wordsChanged?words:[], adminDb, nameChanged?name:null);
+    await logActivity("edit_level",{adminUid:user.uid,detail:`level ${editingLevel}: ${nameChanged?`name "${name}" `:""}${wordsChanged?words.length+" words":""}`},adminDb);
+    const o = await getLevelOverrides(); applyLevelNames(LEVELS,getLevelNameOverrides()); setLevelOverrides(o);
+    flash(`Level ${editingLevel} updated`);
     setEditingLevel(null); setEditWords("");
   }
 
@@ -1068,11 +1074,11 @@ export default function AdminPage() {
           <div>
             <div style={{color:T.muted,fontSize:11,marginBottom:12}}>Override word lists for any level. Leave as default to use built-in words.</div>
             {LEVELS.map(lv=>(
-              <div key={lv.id} style={{...st.card,cursor:"pointer"}} onClick={()=>{ setEditingLevel(lv.id); setEditWords((levelOverrides[String(lv.id)]||lv.words).join('\n')); }}>
+              <div key={lv.id} style={{...st.card,cursor:"pointer"}} onClick={()=>{ setEditingLevel(lv.id); setEditName(lv.name); setEditWords((levelOverrides[String(lv.id)]||lv.words).join('\n')); }}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                   <div>
                     <span style={{color:lv.color,fontWeight:700,fontSize:12}}>{lv.emoji} Lv {lv.id} — {lv.name}</span>
-                    {levelOverrides[String(lv.id)]&&<span style={{marginLeft:8,background:T.warn+"22",color:T.warn,fontSize:9,padding:"1px 6px",borderRadius:6}}>CUSTOM</span>}
+                    {(levelOverrides[String(lv.id)]||getLevelNameOverrides()[String(lv.id)])&&<span style={{marginLeft:8,background:T.warn+"22",color:T.warn,fontSize:9,padding:"1px 6px",borderRadius:6}}>CUSTOM</span>}
                   </div>
                   <span style={{color:T.faint,fontSize:10}}>{(levelOverrides[String(lv.id)]||lv.words).length} words</span>
                 </div>
@@ -1436,12 +1442,15 @@ export default function AdminPage() {
       {/* LEVEL EDITOR MODAL */}
       {editingLevel&&(
         <Modal onClose={()=>{setEditingLevel(null);setEditWords("");}}>
-          <div style={{fontWeight:700,fontSize:14,color:T.text,marginBottom:4}}>Edit Level {editingLevel} Words</div>
-          <div style={{color:T.muted,fontSize:11,marginBottom:14}}>One word per line. No spaces within words.</div>
+          <div style={{fontWeight:700,fontSize:14,color:T.text,marginBottom:8}}>Edit Level {editingLevel}</div>
+          <div style={st.label}>Level name</div>
+          <input value={editName} maxLength={40} onChange={e=>setEditName(e.target.value)} style={{...st.input,marginBottom:12}} />
+          <div style={st.label}>Words</div>
+          <div style={{color:T.muted,fontSize:11,marginBottom:8}}>One word per line. No spaces within words. Leave the words unchanged to keep the built-in list.</div>
           <textarea value={editWords} onChange={e=>setEditWords(e.target.value)} rows={12} style={{...st.input,resize:"vertical",marginBottom:14,fontFamily:"monospace"}} />
           <div style={{display:"flex",gap:8}}>
             <button onClick={handleSaveLevel} style={{...st.btn(),flex:1,padding:"10px"}}>Save Words</button>
-            <button onClick={()=>{ setLevelOverrides(p=>{const n={...p};delete n[String(editingLevel)];return n;}); updateLevelWords(editingLevel,LEVELS.find(l=>l.id===editingLevel)?.words||[],adminDb); flash("Reset to default"); setEditingLevel(null); }} style={st.btn(T.warn,T.warn+"22")}>Reset Default</button>
+            <button onClick={()=>{ setLevelOverrides(p=>{const n={...p};delete n[String(editingLevel)];return n;}); deleteLevelOverride(editingLevel,adminDb).then(()=>{applyLevelNames(LEVELS,{...getLevelNameOverrides(),[String(editingLevel)]:null});}); flash("Reset to default"); setEditingLevel(null); }} style={st.btn(T.warn,T.warn+"22")}>Reset Default</button>
             <button onClick={()=>{setEditingLevel(null);setEditWords("");}} style={{...st.btn(T.muted,T.faint),padding:"10px 14px"}}>Cancel</button>
           </div>
         </Modal>

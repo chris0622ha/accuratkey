@@ -20,13 +20,13 @@ import StatsModal from "./StatsModal";
 import PracticeLab from "./PracticeLab";
 import NotificationsModal from "./NotificationsModal";
 import WordSetsPanel from "./WordSetsPanel";
-import { applyLevelContent, EXTRA_SECTIONS } from "../lib/levelText";
+import { applyLevelContent, applyLevelNames, EXTRA_SECTIONS } from "../lib/levelText";
 import { mergeKeyStats, mergeMissedWords, wordAt } from "@/lib/practice";
 import { logRun, getHistory, newlyUnlocked } from "@/lib/stats";
 import { WHATS_NEW } from "@/lib/whatsNew";
 import { getPrefs, setPrefs, getBest, recordRun } from "@/lib/prefs";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, getLocks, getRewards, getAllNotifications, markAllNotificationsRead, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
+import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, getLocks, getRewards, getAllNotifications, markAllNotificationsRead, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, getLevelNameOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
 
 export 
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
@@ -1355,7 +1355,7 @@ export default function AccuratKey() {
       // handles the real gate with proper owner/admin bypass logic.
     }).catch(() => {});
     getBroadcast().then(b => { if (b?.active && b?.message) setBroadcast(b); }).catch(()=>{});
-    getLevelOverrides().then(setLevelOverrides).catch(()=>{});
+    getLevelOverrides().then(o=>{applyLevelNames(LEVELS,getLevelNameOverrides());setLevelOverrides(o);}).catch(()=>{});
   }, []);
 
   useEffect(() => {
@@ -2207,7 +2207,7 @@ export default function AccuratKey() {
     getLocks().then(l => { setGlobalLocks(l); setLocksLoaded(n => n + 1); }).catch(() => {});
     getRewards().then(setGlobalRewards).catch(() => {});
     getBroadcast().then(b => setBroadcast(b?.active && b?.message ? b : null)).catch(() => {});
-    getLevelOverrides().then(setLevelOverrides).catch(() => {});
+    getLevelOverrides().then(o=>{applyLevelNames(LEVELS,getLevelNameOverrides());setLevelOverrides(o);}).catch(() => {});
     if (!u || !p || p.isGuest || isProfileRestricted(p)) return;
     getPendingNotifications(u.uid).then(n => { const fr = n.filter(x => x.type === "feedback_reply"); if (fr.length) { setPendingNotifications(fr); setActiveNotification(cur => cur || fr[0]); } }).catch(() => {});
     getAllNotifications(u.uid).then(n => setNotifs(prev => n.map(x => ({ ...x, wasUnread: prev.find(q => q.id === x.id)?.wasUnread })))).catch(() => {});
