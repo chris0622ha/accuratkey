@@ -56,7 +56,7 @@ export function HundredWords({ T, onBack, onSettings, settings={} }) {
     <div onClick={()=>ref.current?.focus()} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"16px 20px",marginBottom:10,fontFamily:"'JetBrains Mono',monospace",fontSize:15,lineHeight:1.9,cursor:"text",userSelect:"none",minHeight:90}}>
       {shown.split("").map((ch,i)=>{const ai=windowStart+i;let color=T.faint;if(ai<typed.length)color=typed[ai]===ch?"#34d399":"#ef4444";else if(ai===typed.length)color=T.purple;return<span key={ai} style={{color,borderBottom:ai===typed.length?"2px solid "+T.purple:"2px solid transparent"}}>{ch}</span>;})}
     </div>
-    <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} style={{position:"absolute",opacity:0,pointerEvents:"none"}}/>
+    <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} style={{position:"absolute",opacity:0,pointerEvents:"none"}}/>
   </div>);
 }
 
@@ -120,7 +120,7 @@ export function Endurance({ T, onBack, onSettings, settings={} }) {
     <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"16px 20px",marginBottom:10,fontFamily:"'JetBrains Mono',monospace",fontSize:22,textAlign:"center",letterSpacing:2,minHeight:60,display:"flex",alignItems:"center",justifyContent:"center"}}>
       {target.split("").map((ch,i)=><span key={i} style={{color:i<typed.length?(typed[i]===ch?"#34d399":"#ef4444"):i===typed.length?T.purple:T.faint,borderBottom:i===typed.length?"2px solid "+T.purple:"none"}}>{ch}</span>)}
     </div>
-    <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}/>
+    <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}/>
   </div>);
 }
 
@@ -264,7 +264,7 @@ export function WordChain({ T, onBack, onSettings, settings={} }) {
       {chain.slice(-8).map((w,i)=><span key={i} style={{fontFamily:"'JetBrains Mono',monospace",fontSize:13,color:i===chain.slice(-8).length-1?T.purple:T.faint,fontWeight:i===chain.slice(-8).length-1?800:400}}>{w}</span>)}
     </div>
     <div style={{textAlign:"center",marginBottom:8,color:T.text,fontSize:16}}>Must start with: <span style={{color:T.purple,fontWeight:800,fontSize:24,fontFamily:"'JetBrains Mono',monospace"}}>"{requiredStart}"</span></div>
-    <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder={`Type a word starting with "${requiredStart}"...`}
+    <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder={`Type a word starting with "${requiredStart}"...`}
       style={{width:"100%",background:T.bg,border:`1px solid ${typed.length>0&&typed[0]!==requiredStart?"#ef4444":T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}/>
   </div>);
 }
@@ -318,7 +318,7 @@ export function CategoryBlitz({ T, onBack, onSettings, settings={} }) {
     <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:10,padding:12,marginBottom:10,minHeight:50,display:"flex",flexWrap:"wrap",gap:6}}>
       {[...used].slice(-12).map(w=><span key={w} style={{background:T.purple+"22",color:T.purple,borderRadius:5,padding:"2px 8px",fontSize:12,fontFamily:"'JetBrains Mono',monospace"}}>{w}</span>)}
     </div>
-    <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder={`Type a ${catName}...`}
+    <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder={`Type a ${catName}...`}
       style={{width:"100%",background:wrong?"#ef444411":T.bg,border:`1px solid ${wrong?"#ef4444":T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box",transition:"all .15s"}}/>
     {!started&&<div style={{textAlign:"center",color:T.faint,fontSize:11,marginTop:6}}>Timer starts when you type</div>}
   </div>);
@@ -393,7 +393,7 @@ export function VocabBuilder({ T, onBack, onSettings, settings={} }) {
     <div style={{background:T.card,border:`1px solid ${wrong?"#ef4444":T.border}`,borderRadius:12,padding:"16px",marginBottom:10,fontFamily:"'JetBrains Mono',monospace",fontSize:22,textAlign:"center",letterSpacing:2,transition:"border-color .15s"}}>
       {item.word.split("").map((ch,i)=><span key={i} style={{color:i<typed.length?(typed[i]===ch?"#34d399":"#ef4444"):i===typed.length?T.purple:T.faint,borderBottom:i===typed.length?"2px solid "+T.purple:"2px solid transparent"}}>{ch}</span>)}
     </div>
-    <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type the word..."
+    <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type the word..."
       style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}/>
   </div>);
 }
@@ -485,7 +485,7 @@ export function TypingInvaders({ T, onBack, onSettings, settings={} }) {
         </div>
       ))}
     </div>
-    <input ref={ref} value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type invader words to destroy them..."
+    <input ref={ref} value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type invader words to destroy them..."
       style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}/>
   </div>);
 }
@@ -568,7 +568,7 @@ export function AsteroidBelt({ T, onBack, onSettings, settings={} }) {
         </div>
       ))}
     </div>
-    <input ref={inputRef} value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type asteroid words to destroy them..."
+    <input ref={inputRef} value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type asteroid words to destroy them..."
       style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}/>
   </div>);
 }
@@ -666,7 +666,7 @@ export function TowerDefense({ T, onBack, onSettings, settings={} }) {
         </div>);
       })}
     </div>
-    <input ref={inputRef} value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type enemy words to stop them..."
+    <input ref={inputRef} value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type enemy words to stop them..."
       style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}/>
   </div>);
 }
@@ -723,7 +723,7 @@ export function MysteryWords({ T, onBack, onSettings, settings={} }) {
       ))}
     </div>
     <div style={{textAlign:"center",color:T.faint,fontSize:11,marginBottom:8}}>{revealed}/{target.length} letters revealed</div>
-    <input ref={ref} value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type the mystery word..."
+    <input ref={ref} value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type the mystery word..."
       style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}/>
   </div>);
 }
@@ -766,7 +766,7 @@ export function RhymeTime({ T, onBack, onSettings, settings={} }) {
     <div style={{background:T.card,border:"1px solid #f472b633",borderRadius:12,padding:"24px 20px",marginBottom:10,fontFamily:"'JetBrains Mono',monospace",fontSize:32,textAlign:"center",letterSpacing:4,color:"#f472b6",fontWeight:800}}>
       {word}
     </div>
-    <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder={`Type a word that rhymes with "${word}"...`}
+    <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder={`Type a word that rhymes with "${word}"...`}
       style={{width:"100%",background:wrong?"#ef444411":T.bg,border:`1px solid ${wrong?"#ef4444":T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box",transition:"all .15s"}}/>
   </div>);
 }

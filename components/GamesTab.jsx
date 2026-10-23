@@ -367,7 +367,7 @@ function Survival({ T, onBack, settings = {} }) {
   };
 
   const handleKey = (e) => {
-    if (e.key === "Escape" || e.key === "Enter") { e.preventDefault(); setTyped(""); inputRef.current?.focus(); }
+    if (e.key === "Enter") { e.preventDefault(); setTyped(""); inputRef.current?.focus(); }
   };
 
   const timerCol = timeLeft < 8 ? "#ef4444" : timeLeft < 15 ? "#f59e0b" : T.accent2 || "#34d399";
@@ -438,7 +438,7 @@ function Survival({ T, onBack, settings = {} }) {
               {wordList.slice(current+1, current+4).map((w,i) => <span key={i} style={{ color:T.faint, fontSize:14 }}>{w}</span>)}
             </div>
           </div>
-          <input ref={inputRef} value={typed} onChange={handleType} onKeyDown={handleKey} placeholder="Type the word… (Enter or Esc to clear)"
+          <input ref={inputRef} value={typed} onChange={handleType} onKeyDown={handleKey} placeholder="Type the word… (Enter to clear)"
             autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
             style={{ width:"100%", background:T.bg, border:`2px solid ${T.purple}`, borderRadius:8, color:T.text, fontFamily:T.font, fontSize:16, padding:"10px 14px", outline:"none", boxSizing:"border-box" }} />
         </div>
@@ -595,7 +595,7 @@ function SpeedBurst({ T, onBack, settings = {} }) {
               return <span key={i} style={{ color: i < 3 ? T.muted : T.faint, marginRight:10 }}>{w}</span>;
             })}
           </div>
-          <input ref={inputRef} value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} placeholder="Type + Space…"
+          <input ref={inputRef} value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); setTyped(""); } }} placeholder="Type + Space…"
             autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
             style={{ width:"100%", background:T.bg, border:`2px solid ${T.purple}`, borderRadius:8, color:T.text, fontFamily:T.font, fontSize:16, padding:"10px 14px", outline:"none", boxSizing:"border-box" }} />
         </div>
@@ -763,7 +763,7 @@ function WordScramble({ T, onBack, settings = {} }) {
             <div style={{ fontSize:44, fontWeight:800, color:T.purple, letterSpacing:6, marginBottom:6 }}>{scrambled}</div>
             <div style={{ fontSize:11, color:T.faint }}>{target.length} letters</div>
           </div>
-          <input ref={inputRef} value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} placeholder="Type the word…"
+          <input ref={inputRef} value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); setTyped(""); } }} placeholder="Type the word…"
             autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
             style={{ width:"100%", background:T.bg, border:`2px solid ${T.purple}`, borderRadius:8, color:T.text, fontFamily:T.font, fontSize:16, padding:"10px 14px", outline:"none", boxSizing:"border-box", marginBottom:10 }} />
           <div style={{ display:"flex", gap:8 }}>
@@ -969,7 +969,7 @@ function SuddenDeath({ T, onBack }) {
             <span>Word {current+1} / {words.length}</span>
             <span>{startTime ? Math.round((Date.now()-startTime)/1000)+"s" : "Start typing..."}</span>
           </div>
-          <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
+          <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
             style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}
           />
         </>
@@ -1044,7 +1044,7 @@ function SpeedLadder({ T, onBack }) {
             <span>Rung {rung+1} / {RUNGS}</span>
             <span>{rung>0?`Last: ${rungWpms[rung-1]} WPM`:"Go!"}</span>
           </div>
-          <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
+          <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
             style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}
           />
         </>

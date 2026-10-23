@@ -119,7 +119,7 @@ export function Sniper({ T, onBack, onSettings, settings = {} }) {
           <span key={i} style={{color:i<typed.length?"#34d399":i===typed.length?T.purple:T.faint,borderBottom:i===typed.length?"2px solid "+T.purple:"2px solid transparent"}}>{ch}</span>
         ))}
       </div>
-      <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
+      <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
         style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}/>
     </div>
   );
@@ -173,7 +173,7 @@ export function Flash({ T, onBack, onSettings, settings = {} }) {
         {phase==="show" ? <span style={{color:T.text}}>{target}</span> : <span style={{color:T.faint,fontSize:14}}>Type it from memory...</span>}
       </div>
       {phase==="type" && (
-        <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type the word..."
+        <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type the word..."
           style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}/>
       )}
     </div>
@@ -262,7 +262,7 @@ export function Echo({ T, onBack, onSettings, settings = {} }) {
         )}
       </div>
       {phase==="type" && (
-        <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder={`Type word ${typeIdx+1}...`}
+        <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder={`Type word ${typeIdx+1}...`}
           style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}/>
       )}
     </div>
@@ -320,7 +320,7 @@ export function GhostWords({ T, onBack, onSettings, settings = {} }) {
       <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"30px 20px",marginBottom:10,fontFamily:"'JetBrains Mono',monospace",fontSize:28,textAlign:"center",letterSpacing:4,minHeight:90,display:"flex",alignItems:"center",justifyContent:"center",transition:"opacity 0.5s",opacity:visible?opacity:0}}>
         {target}
       </div>
-      <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
+      <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
         style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}/>
     </div>
   );
@@ -423,7 +423,7 @@ export function CodeRain({ T, onBack, onSettings, settings = {} }) {
           </div>
         ))}
       </div>
-      <input ref={inputRef} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type falling words..."
+      <input ref={inputRef} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type falling words..."
         style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}/>
     </div>
   );
@@ -534,7 +534,7 @@ export function BossBattle({ T, onBack, onSettings, settings = {} }) {
           <span key={i} style={{color:i<typed.length?(typed[i]===ch?"#34d399":"#ef4444"):i===typed.length?T.purple:T.faint}}>{ch}</span>
         ))}
       </div>
-      <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
+      <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
         style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}/>
     </div>
   );
@@ -605,7 +605,7 @@ export function TypewriterStory({ T, onBack, onSettings, settings = {} }) {
         <span>{typed.length}/{target.length} chars</span>
         <span>{start?`${wpm} WPM · ${acc}%`:"Start typing..."}</span>
       </div>
-      <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
+      <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
         style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'Courier New',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}/>
     </div>
   );
@@ -751,7 +751,7 @@ export function PoetryMode({ T, onBack, onSettings, settings = {} }) {
           {poemIdx<POEMS.length-1&&<button onClick={()=>reset(poemIdx+1)} style={{padding:"10px 28px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.muted,fontSize:13,cursor:"pointer"}}>Next poem →</button>}
         </div>
       ) : (
-        <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"||e.key==="Escape"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type the line..."
+        <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); setTyped(""); } }} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder="Type the line..."
           style={{width:"100%",background:"#080810",border:"1px solid #1a1a30",borderRadius:8,color:"#a78bfa",fontFamily:"'Georgia',serif",fontSize:15,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}/>
       )}
     </div>
