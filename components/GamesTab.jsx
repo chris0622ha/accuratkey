@@ -272,7 +272,7 @@ function WordRain({ T, onBack, settings = {} }) {
               </div>
             ))}
           </div>
-          <input ref={inputRef} value={typed} onChange={handleType} placeholder="Type the falling word…"
+          <input ref={inputRef} value={typed} onChange={handleType} onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); setTyped(""); } }} placeholder="Type the falling word… (Enter clears)"
             autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
             onClick={() => inputRef.current?.focus()}
             style={{ width:"100%", background:T.bg, border:`2px solid ${T.purple}`, borderRadius:8, color:T.text, fontFamily:T.font, fontSize:16, padding:"10px 14px", outline:"none", boxSizing:"border-box" }} />
