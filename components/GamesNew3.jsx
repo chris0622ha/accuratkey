@@ -390,6 +390,7 @@ function scramble(word){
 export function Anagram({ T, onBack, onSettings, settings={} }) {
   const diff = settings.difficulty||"medium";
   const pool = diff==="easy"?TYPING_BASIC.filter(w=>w.length>=4&&w.length<=6):diff==="hard"?TYPING_HARD.filter(w=>w.length>=5&&w.length<=9):TYPING_MEDIUM.filter(w=>w.length>=4&&w.length<=8);
+  const count = settings.count || 15;
   const sv = gLoad("anagram");
   const [words] = useState(()=>sv?.words||pickWords(count,pool));
   const [idx, setIdx] = useState(()=>sv?.idx||0);
@@ -1224,4 +1225,4 @@ export function Freestyle({ T, onBack, onSettings, settings={} }) {
   );
 }
 
-export default { SpeedTest, MissingLetters, Anagram, BrickBreaker, Quotes, HaikuMode, Synonyms, Antonyms, TugOfWar, WordBomb, MemoryEdit, WildcardWords, Freestyle };
+export default { SpeedTest, Anagram, Quotes, HaikuMode, Synonyms, Antonyms, TugOfWar, WordBomb, MemoryEdit, WildcardWords, Freestyle };
