@@ -26,7 +26,7 @@ import { logRun, getHistory, newlyUnlocked } from "@/lib/stats";
 import { WHATS_NEW } from "@/lib/whatsNew";
 import { getPrefs, setPrefs, getBest, recordRun } from "@/lib/prefs";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, getLocks, getRewards, getAllNotifications, markAllNotificationsRead, deleteNotification, deleteAllNotifications, markNotificationRevertRequested, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, getLevelNameOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
+import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, getLocks, getRewards, getAllNotifications, markAllNotificationsRead, deleteNotification, deleteAllNotifications, getAnnouncements, markNotificationRevertRequested, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, getLevelNameOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
 
 export 
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
@@ -1013,6 +1013,11 @@ export default function AccuratKey() {
   const [showPractice, setShowPractice] = useState(false);
   const [notifs, setNotifs] = useState([]);
   const [showNotifs, setShowNotifs] = useState(false);
+  const [anns, setAnns] = useState([]);
+  const [viewerAdmin, setViewerAdmin] = useState(false);
+  const readLS = (k) => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch { return {}; } };
+  const [annSeen, setAnnSeen] = useState({});
+  const [annGone, setAnnGone] = useState({});
   const practicePoolRef = useRef([]);
   const [practiceName, setPracticeName] = useState("Practice");
   const keyAttemptsRef = useRef({});
@@ -1340,6 +1345,22 @@ export default function AccuratKey() {
   };
 
   const inputRef = useRef(null);
+
+  // Notifications = personal inbox + admin group announcements (filtered for this viewer)
+  const tms = (t) => (t?.toDate ? t.toDate().getTime() : (typeof t === "number" ? t : 0));
+  const annItems = (user && activeProfile && !isProfileRestricted(activeProfile)) ? anns
+    .filter(a => (!a.expiresAt || a.expiresAt > Date.now()) && !annGone[a.id] && (a.audience === "all" || (a.audience === "admins" && viewerAdmin) || (a.audience === "users" && !viewerAdmin)))
+    .map(a => ({ id: "ann_" + a.id, annId: a.id, type: "announcement", title: a.title, body: a.body, level: a.level, createdAt: { toDate: () => new Date(a.at) }, read: !!annSeen[a.id], local: true })) : [];
+  const allNotifs = [...notifs, ...annItems].sort((x, y) => tms(y.createdAt) - tms(x.createdAt));
+  const urgentPending = allNotifs.find(n => !n.read && n.level === "urgent");
+  const hasImportant = allNotifs.some(n => !n.read && (n.level === "important" || n.level === "urgent"));
+  const saveAnn = (k, uidv, obj) => { try { localStorage.setItem(k + uidv, JSON.stringify(obj)); } catch {} };
+  const markAnnSeen = (ids) => { setAnnSeen(prev => { const n = { ...prev }; ids.forEach(i => { n[i] = true; }); if (user?.uid) saveAnn("ak_annseen_", user.uid, n); return n; }); };
+  const goneAnn = (ids) => { setAnnGone(prev => { const n = { ...prev }; ids.forEach(i => { n[i] = true; }); if (user?.uid) saveAnn("ak_anngone_", user.uid, n); return n; }); };
+  const ackNotif = async (n) => {
+    if (n.local) markAnnSeen([n.annId]);
+    else { setNotifs(ns => ns.map(x => x.id === n.id ? { ...x, read: true } : x)); try { await markNotificationRead(user.uid, n.id); } catch {} }
+  };
 
   // Check maintenance, broadcast, level overrides on load
   useEffect(() => {
@@ -2209,6 +2230,9 @@ export default function AccuratKey() {
     getBroadcast().then(b => setBroadcast(b?.active && b?.message ? b : null)).catch(() => {});
     getLevelOverrides().then(o=>{applyLevelNames(LEVELS,getLevelNameOverrides());setLevelOverrides(o);}).catch(() => {});
     if (!u || !p || p.isGuest || isProfileRestricted(p)) return;
+    getAnnouncements().then(setAnns).catch(() => {});
+    isAdmin(u.uid).then(setViewerAdmin).catch(() => {});
+    setAnnSeen(readLS("ak_annseen_" + u.uid)); setAnnGone(readLS("ak_anngone_" + u.uid));
     getPendingNotifications(u.uid).then(n => { const fr = n.filter(x => x.type === "feedback_reply"); if (fr.length) { setPendingNotifications(fr); setActiveNotification(cur => cur || fr[0]); } }).catch(() => {});
     getAllNotifications(u.uid).then(n => setNotifs(prev => n.map(x => ({ ...x, wasUnread: prev.find(q => q.id === x.id)?.wasUnread })))).catch(() => {});
     if (canUse(p, "challenges")) getPendingChallenges(u.uid).then(setChallenges).catch(() => {});
@@ -2432,7 +2456,7 @@ const Nav = () => (<>
           }} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:8,padding:"5px 8px",cursor:"pointer",display:"flex"}} title="Shop"><UiIcon name="shop" size={16} color={T.muted} /></button>}
           <button onClick={e=>{e.stopPropagation();setNavMenu(m=>!m);if(user?.uid&&!isProfileRestricted(activeProfile))getAllNotifications(user.uid).then(setNotifs).catch(()=>{});}} title="Menu" style={{position:"relative",background:"none",border:"none",cursor:"pointer",padding:0,display:"flex",alignItems:"center"}}>
             <AvatarImg profile={activeProfile} size={32} />
-            {(pendingCh || !newSeen || notifs.some(n=>!n.read) || friendReqs.length>0) && <span aria-label="New" style={{position:"absolute",top:-4,right:-5,minWidth:15,height:15,borderRadius:8,background:"#ef4444",color:"#fff",fontSize:10,fontWeight:900,lineHeight:"15px",textAlign:"center",border:`2px solid ${T.bg}`,boxSizing:"content-box"}}>!</span>}
+            {(pendingCh || !newSeen || allNotifs.some(n=>!n.read) || friendReqs.length>0) && <span aria-label="New" style={{position:"absolute",top:-4,right:-5,minWidth:15,height:15,borderRadius:8,background:"#ef4444",color:"#fff",fontSize:10,fontWeight:900,lineHeight:"15px",textAlign:"center",border:`2px solid ${T.bg}`,boxSizing:"content-box"}}>{hasImportant?"!!":"!"}</span>}
           </button>
           {navMenu && <>
             <div onClick={e=>{e.stopPropagation();setNavMenu(false);}} style={{position:"fixed",inset:0,zIndex:40}} />
@@ -2442,7 +2466,7 @@ const Nav = () => (<>
                 {currentUsername && <div style={{fontSize:11,color:T.muted}}>@{currentUsername}</div>}
               </div>
               {item("settings","Profile",()=>openProfileModal())}
-              {item("flame","Notifications",()=>{setNotifs(ns=>ns.map(n=>({...n,wasUnread:!n.read})));setShowNotifs(true);markAllNotificationsRead(user.uid,notifs).then(()=>setNotifs(ns=>ns.map(n=>({...n,read:true}))));},notifs.some(n=>!n.read))}
+              {item("flame","Notifications",()=>{setNotifs(ns=>ns.map(n=>({...n,wasUnread:!n.read})));setShowNotifs(true);markAnnSeen(annItems.map(a=>a.annId));markAllNotificationsRead(user.uid,notifs).then(()=>setNotifs(ns=>ns.map(n=>({...n,read:true}))));},allNotifs.some(n=>!n.read))}
               {canUse(activeProfile,"practice")&&item("target","Practice lab",()=>setShowPractice(true))}
               {canUse(activeProfile,"stats")&&item("stats","Stats & achievements",()=>setShowStats(true))}
               {item("star","Preferences",()=>setShowPrefs(true))}
@@ -2471,9 +2495,19 @@ const Nav = () => (<>
     {tourStep >= 0 && <Tour T={T} step={tourStep} setStep={setTourStep} onClose={()=>{setTourStep(-1);try{localStorage.setItem("ak_onboarded","1");}catch{}}} />}
     {showPractice && <PracticeLab T={T} profile={activeProfile} canSubmit={!!user && !isProfileRestricted(activeProfile) && canUse(activeProfile,"wordsets")} onClose={()=>setShowPractice(false)} onStart={startPractice} />}
     {showStats && <StatsModal T={T} profile={activeProfile} onClose={()=>setShowStats(false)} />}
-    {showNotifs && <NotificationsModal T={T} items={notifs} onClose={()=>setShowNotifs(false)}
-      onDismiss={async(id)=>{ setNotifs(ns=>ns.filter(n=>n.id!==id)); try{ await deleteNotification(user.uid,id); }catch{} }}
-      onClearAll={async()=>{ const all=notifs; setNotifs([]); try{ await deleteAllNotifications(user.uid,all); }catch{} }}
+    {urgentPending && screen !== "game" && !showNotifs && (
+      <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.8)",zIndex:9500,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+        <div style={{background:T.card,border:"2px solid #ef4444",borderRadius:16,padding:"22px 24px",width:"100%",maxWidth:420}}>
+          <div style={{color:"#ef4444",fontWeight:900,fontSize:11,letterSpacing:1,marginBottom:6}}>URGENT</div>
+          <div style={{color:T.text,fontWeight:800,fontSize:18,marginBottom:8}}>{urgentPending.title}</div>
+          <div style={{color:T.muted,fontSize:14,lineHeight:1.6,marginBottom:18,whiteSpace:"pre-wrap"}}>{urgentPending.body}</div>
+          <button onClick={()=>ackNotif(urgentPending)} style={{width:"100%",padding:"11px",borderRadius:10,border:"none",background:"#ef4444",color:"#fff",fontWeight:800,fontSize:14,cursor:"pointer"}}>Got it</button>
+        </div>
+      </div>
+    )}
+    {showNotifs && <NotificationsModal T={T} items={allNotifs} onClose={()=>setShowNotifs(false)}
+      onDismiss={async(id)=>{ if(String(id).startsWith("ann_")){ goneAnn([String(id).slice(4)]); return; } setNotifs(ns=>ns.filter(n=>n.id!==id)); try{ await deleteNotification(user.uid,id); }catch{} }}
+      onClearAll={async()=>{ const all=notifs; goneAnn(annItems.map(a=>a.annId)); setNotifs([]); try{ await deleteAllNotifications(user.uid,all); }catch{} }}
       onRevert={async(n)=>{ try{
         await requestSetRevert(user.uid, n.setId, (n.body||"").slice(0,200));
         await markNotificationRevertRequested(user.uid, n.id);

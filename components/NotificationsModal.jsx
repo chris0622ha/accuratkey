@@ -2,7 +2,7 @@
 import React from "react";
 import { UiIcon } from "./icons/UiIcons";
 
-const ICON = { wordset_approved: "star", wordset_rejected: "feedback", wordset_removed: "feedback", wordset_edited: "feedback", wordset_reverted: "star", feedback_reply: "feedback" };
+const ICON = { wordset_approved: "star", wordset_rejected: "feedback", wordset_removed: "feedback", wordset_edited: "feedback", wordset_reverted: "star", announcement: "flame", admin_message: "flame", feedback_reply: "feedback" };
 const when = (t) => { try { const d = t?.toDate ? t.toDate() : null; return d ? d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""; } catch { return ""; } };
 
 export default function NotificationsModal({ T, items, onClose, onDismiss, onClearAll, onRevert }) {
@@ -19,9 +19,10 @@ export default function NotificationsModal({ T, items, onClose, onDismiss, onCle
         </div>
         {items.length === 0 ? <div style={{color:T.muted,fontSize:13,padding:"14px 0"}}>You're all caught up.</div> :
           items.map(n => (
-            <div key={n.id} style={{position:"relative",display:"flex",gap:10,background:T.bg,border:`1px solid ${n.wasUnread?T.purple:T.border}`,borderRadius:10,padding:"10px 12px",marginBottom:8}}>
+            <div key={n.id} style={{position:"relative",display:"flex",gap:10,background:T.bg,border:`1px solid ${n.level==="urgent"?"#ef4444":n.level==="important"?"#f59e0b":n.wasUnread?T.purple:T.border}`,borderRadius:10,padding:"10px 12px",marginBottom:8}}>
               <UiIcon name={ICON[n.type] || "star"} size={18} color={T.purple}/>
               <div style={{flex:1,minWidth:0}}>
+                {(n.level==="urgent"||n.level==="important") && <div style={{color:n.level==="urgent"?"#ef4444":"#f59e0b",fontSize:9,fontWeight:900,letterSpacing:1}}>{n.level.toUpperCase()}</div>}
                 <div style={{color:T.text,fontWeight:700,fontSize:13}}>{n.title || (n.type === "feedback_reply" ? "Reply to your feedback" : n.type && n.type.startsWith("wordset_") ? "Word set update" : "Update")}</div>
                 <div style={{color:T.muted,fontSize:12,marginTop:2,lineHeight:1.5}}>{n.body || n.reply || ""}</div>
                 {n.type === "wordset_edited" && n.setId && onRevert && (n.revertRequested
