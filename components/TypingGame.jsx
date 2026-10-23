@@ -19,6 +19,7 @@ import StatsModal from "./StatsModal";
 import PracticeLab from "./PracticeLab";
 import NotificationsModal from "./NotificationsModal";
 import WordSetsPanel from "./WordSetsPanel";
+import { applyLevelContent, EXTRA_SECTIONS } from "../lib/levelText";
 import { mergeKeyStats, mergeMissedWords, wordAt } from "@/lib/practice";
 import { logRun, getHistory, newlyUnlocked } from "@/lib/stats";
 import { WHATS_NEW } from "@/lib/whatsNew";
@@ -202,7 +203,7 @@ const LEVELS = [
   { id:54, name:"Shortcut Words",        emoji:"⌨️", wpmTarget:55,  accuracy:75, color:"#38bdf8", words:["control","command","option","shift","alt","delete","backspace","escape","enter","return","tab","capslock","pageup","pagedown","home","end","insert","function","print","scroll","pause","numlock","select","all","copy","paste","cut","undo","redo","save","open","close","quit","find","replace","bold","italic","underline","zoom","minimize","maximize","screenshot","spotlight","refresh","reload","newwindow","newtab","closetab","switchtab","history","bookmark","fullscreen","sidebar"] },
 
   // World languages words
-  { id:55, name:"World Languages",       emoji:"🗣️", wpmTarget:50,  accuracy:75, color:"#e879f9", words:["bonjour","merci","baguette","croissant","cafe","rendezvous","entrepreneur","ballet","genre","naive","hola","gracias","tortilla","siesta","fiesta","mañana","ciao","pasta","pizza","espresso","cappuccino","gelato","aria","crescendo","andante","danke","gesundheit","kindergarten","hamburger","angst","wanderlust","zeitgeist","schadenfreude","karate","karaoke","origami","tsunami","typhoon","tofu","kimchi","bibimbap","ramen","sake","ninja","samurai","anime","manga"] },
+  { id:55, name:"World Languages",       emoji:"🗣️", wpmTarget:50,  accuracy:75, color:"#e879f9", words:["bonjour","merci","baguette","croissant","cafe","rendezvous","entrepreneur","ballet","genre","naive","hola","gracias","tortilla","siesta","fiesta","manana","ciao","pasta","pizza","espresso","cappuccino","gelato","aria","crescendo","andante","danke","gesundheit","kindergarten","hamburger","angst","wanderlust","zeitgeist","schadenfreude","karate","karaoke","origami","tsunami","typhoon","tofu","kimchi","bibimbap","ramen","sake","ninja","samurai","anime","manga"] },
 
   // Running words (long continuous phrases)
   { id:56, name:"Long Phrases",          emoji:"🎯", wpmTarget:62,  accuracy:75, color:"#f43f5e", words:["thefastesttypistsneverlookdown","buildingspeedtakesdailycommitment","everykeystrokebringsyoucloser","thegoalisnotperfectionbutprogress","onehourofpracticetranslatestolifetimeskills","focusonthepresentstrokenottheprevious","letyourfingersleadyourmind","typingislikeswimmingyoujustdoit","muscmemorymakesmastershappen","thesecretisrelentlessdailypractice","speedcomesafteraccuracy","neverrushtheprocess","enjoythejourney","celebratesmallwins","trackingprogressmotivates"] },
@@ -350,6 +351,7 @@ const LEVELS = [
   { id:179, name:"Final Sprint",        emoji:"🏁", wpmTarget:88, accuracy:75, color:"#34d399", words:["thefinishlineisinsightpushthroughtotheend","onelaststretchbeforevictoryisyours","everysteptakenbringsyoucloser tothegoal"] },
   { id:180, name:"Peak Velocity",       emoji:"⚡", wpmTarget:92, accuracy:75, color:"#fbbf24", words:["thequickbrownfoxjumpsoverthelazydogagainandagain","speedwithoutaccuracyisjustchaosbalanceisthekey","masteryisntaboutspeedaloneitsaboutconsistentprecisionatpace"] },
 ];
+applyLevelContent(LEVELS);
 
 
 const LEVEL_TIPS = {
@@ -396,7 +398,7 @@ const QRCanvas=({url,size=160})=>{const r=useRef(null);useEffect(()=>{if(url&&r.
 
 function getTheme(age){const base={accent:"#fb923c",accent2:"#34d399",bg:"#0a0a0f",card:"#13131f",border:"#1e1e30",font:"'JetBrains Mono',monospace",bigEmoji:false,simpleWords:false,maxLevel:15};if(age<7)return{...base,bg:"#0d0b1a",card:"#1a1030",border:"#2d1f50",purple:"#c084fc",text:"#f0e8ff",muted:"#a78bfa",faint:"#7c5cbf",font:"'Comic Sans MS','Chalkboard SE',cursive",bigEmoji:true,simpleWords:true,maxLevel:5};if(age<10)return{...base,bg:"#0a0a18",card:"#141428",border:"#2a2050",purple:"#a78bfa",accent:"#f472b6",text:"#e8e0ff",muted:"#8b78d0",faint:"#5a4898",bigEmoji:true,simpleWords:true,maxLevel:10};if(age<13)return{...base,purple:"#818cf8",text:"#e2e8ff",muted:"#6b72a0",faint:"#454870"};return{...base,purple:"#7c6af7",text:"#e0e0ff",muted:"#555",faint:"#444"};}
 
-function genLine(levelId,overrideWords){const lv=LEVELS.find(l=>l.id===levelId)||LEVELS[0];const pool=overrideWords||lv.words;if(pool[0]&&pool[0].length>20)return pool[Math.floor(Math.random()*pool.length)];let r="",n=0;while(n<25){const w=pool[Math.floor(Math.random()*pool.length)];r+=w;n+=w.length;}return r;}
+function genLine(levelId,overrideWords){const lv=LEVELS.find(l=>l.id===levelId)||LEVELS[0];const pool=overrideWords||lv.words;const avg=pool.reduce((a,w)=>a+w.length,0)/Math.max(1,pool.length);const pick=()=>pool[Math.floor(Math.random()*pool.length)];if(avg>=32)return pick();const out=[];let n=0,tries=0;while(n<28&&tries++<200){const w=pick();if(pool.length>4&&out.includes(w))continue;out.push(w);n+=w.length+1;}return out.join(" ");}
 
 // Skip challenge — unique word set per target level
 const SKIP_CHALLENGES = {
@@ -3350,6 +3352,7 @@ const Nav = () => (<>
               { firstId:146, label:"Machine Mode",     subtitle:"Finger fury, code marathons, length-based gauntlets", color:"#f97316", icon:"M" },
               { firstId:156, label:"Legend Tier",      subtitle:"The final stretch — nine crowns and one last boss",          color:"#dc2626", icon:"X" },
               { firstId:171, label:"Speed Surge II",   subtitle:"Beyond the ending — pure velocity training",                color:"#fbbf24", icon:"S" },
+              ...EXTRA_SECTIONS,
             ];
 
             const sectionStartIds = new Set(SECTIONS.map(s => s.firstId));
@@ -3357,7 +3360,11 @@ const Nav = () => (<>
             // Build layout: each level gets a y-position; banners insert extra height before their section's first level
             let rowItems = []; // { type:'banner'|'level', data, y }
             let y = 0;
+            // Only show sections that are already unlocked: stop before the first section whose first level is still locked.
+            const lockedSec = SECTIONS.filter(s => s.firstId > Math.max(highestUnlocked, 1)).sort((x, y) => x.firstId - y.firstId)[0];
+            const visibleUntil = lockedSec ? lockedSec.firstId : Infinity;
             LEVELS.forEach((lv, idx) => {
+              if (lv.id >= visibleUntil) return;
               const sec = SECTIONS.find(s => s.firstId === lv.id);
               if (sec) {
                 rowItems.push({ type:'banner', data:sec, y });
