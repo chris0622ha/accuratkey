@@ -10,7 +10,7 @@ import { formatKeys } from "@/lib/format";
 import { CertificateModal } from "./Certificates";
 import { AICoach } from "./AICoach";
 import { setGlobalLocks, setGlobalRewards, isFeatureLocked, lockMessage } from "../lib/locks";
-import { setClaimedToday, markSetClaimed } from "../lib/wordsets";
+import { setClaimedToday, markSetClaimed, requestSetRevert } from "../lib/wordsets";
 import { getThemeFx } from "@/lib/themeFx";
 import { UiIcon } from "./icons/UiIcons";
 import PrefsModal from "./PrefsModal";
@@ -2475,7 +2475,7 @@ const Nav = () => (<>
       onDismiss={async(id)=>{ setNotifs(ns=>ns.filter(n=>n.id!==id)); try{ await deleteNotification(user.uid,id); }catch{} }}
       onClearAll={async()=>{ const all=notifs; setNotifs([]); try{ await deleteAllNotifications(user.uid,all); }catch{} }}
       onRevert={async(n)=>{ try{
-        await submitFeedback(user.uid, activeProfile?.id||null, `[Word set revert request] set id: ${n.setId}\n${n.body||""}`, null, null, null);
+        await requestSetRevert(user.uid, n.setId, (n.body||"").slice(0,200));
         await markNotificationRevertRequested(user.uid, n.id);
         setNotifs(ns=>ns.map(x=>x.id===n.id?{...x,revertRequested:true}:x));
       }catch(e){ alert("Couldn't send the request. Please try again."); } }} />}

@@ -22,7 +22,7 @@ export default function NotificationsModal({ T, items, onClose, onDismiss, onCle
             <div key={n.id} style={{position:"relative",display:"flex",gap:10,background:T.bg,border:`1px solid ${n.wasUnread?T.purple:T.border}`,borderRadius:10,padding:"10px 12px",marginBottom:8}}>
               <UiIcon name={ICON[n.type] || "star"} size={18} color={T.purple}/>
               <div style={{flex:1,minWidth:0}}>
-                <div style={{color:T.text,fontWeight:700,fontSize:13}}>{n.title || (n.type === "feedback_reply" ? "Reply to your feedback" : "Update")}</div>
+                <div style={{color:T.text,fontWeight:700,fontSize:13}}>{n.title || (n.type === "feedback_reply" ? "Reply to your feedback" : n.type && n.type.startsWith("wordset_") ? "Word set update" : "Update")}</div>
                 <div style={{color:T.muted,fontSize:12,marginTop:2,lineHeight:1.5}}>{n.body || n.reply || ""}</div>
                 {n.type === "wordset_edited" && n.setId && onRevert && (n.revertRequested
                   ? <div style={{color:T.faint,fontSize:11,marginTop:6,fontWeight:700}}>Revert requested - an admin will review it</div>

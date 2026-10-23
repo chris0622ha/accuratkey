@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { moderate } from "@/lib/moderation";
 import { getModeration } from "@/lib/firebase";
-import { adminListSubmissions, adminListPublic, adminApprove, adminReject, adminSetBadge, adminSetReward, adminDeleteSet, parseWords, validateSubmission, BADGES, badgeInfo, BADGE_REWARD, adminSeedStarters, adminUpdateSet, adminRevertSet, adminHasPrev } from "@/lib/wordsets";
+import { adminListSubmissions, adminListPublic, adminApprove, adminReject, adminSetBadge, adminSetReward, adminDeleteSet, parseWords, validateSubmission, BADGES, badgeInfo, BADGE_REWARD, adminSeedStarters, adminUpdateSet, adminGetHistory, adminRestoreVersion, adminListRevertRequests, adminClearRevertRequests } from "@/lib/wordsets";
 
 export default function WordSetsTab({ T, st, adminDb, flash }) {
   const [subs, setSubs] = useState([]);
@@ -13,11 +13,12 @@ export default function WordSetsTab({ T, st, adminDb, flash }) {
   const [rew, setRew] = useState({}); // id -> reward keys text
   const [why, setWhy] = useState({}); // submission id -> rejection reason
   const [mod, setMod] = useState({});
-  const [hasPrev, setHasPrev] = useState({});
+  const [reqs, setReqs] = useState({}); // setId -> number of revert requests
+  const [hist, setHist] = useState(null); // { id, items } while a History panel is open
   const [ed, setEd] = useState(null); // { id, title, text } while editing a published set
   useEffect(() => { getModeration().then(setMod); }, []);
   const load = useCallback(async () => {
-    try { setSubs(await adminListSubmissions(adminDb)); const pl = await adminListPublic(adminDb); setPub(pl); const h = {}; await Promise.all(pl.map(async p => { h[p.id] = await adminHasPrev(adminDb, p.id); })); setHasPrev(h); }
+    try { setSubs(await adminListSubmissions(adminDb)); const pl = await adminListPublic(adminDb); setPub(pl); const r = {}; (await adminListRevertRequests(adminDb).catch(() => [])).forEach(x => { r[x.setId] = (r[x.setId] || 0) + 1; }); setReqs(r); }
     catch (e) { flash("Load failed: " + (e.code || e.message)); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminDb]);
@@ -74,7 +75,24 @@ export default function WordSetsTab({ T, st, adminDb, flash }) {
                 <button onClick={() => setEd(null)} style={st.btn(T.muted, T.faint)}>Cancel</button>
               </div>
             </div>); })() : <button onClick={() => setEd({ id: p.id, title: p.title, text: p.words.join(" ") })} style={{ ...st.btn("#fff", T.purple), marginBottom: 8 }}>Edit title & words</button>}
-          {hasPrev[p.id] && <button disabled={busy} onClick={() => { if (confirm("Put back the version from before the last edit?")) run(async () => { const n = await adminRevertSet(adminDb, p.id); return n === null ? true : n; }, "Reverted"); }} style={{ ...st.btn("#fff", "#f59e0b"), marginBottom: 8, marginLeft: 6 }}>Revert last edit</button>}
+          <button disabled={busy} onClick={async () => { if (hist && hist.id === p.id) return setHist(null); try { setHist({ id: p.id, items: await adminGetHistory(adminDb, p.id) }); } catch (e) { flash("Couldn't load history: " + (e.code || e.message)); } }} style={{ ...st.btn("#fff", "#f59e0b"), marginBottom: 8, marginLeft: 6 }}>History{hist && hist.id === p.id ? " ▲" : ""}</button>
+          {reqs[p.id] > 0 && <span style={{ marginLeft: 8, color: "#f59e0b", fontSize: 11, fontWeight: 800 }}>↩ Revert requested ({reqs[p.id]})</span>}
+          {hist && hist.id === p.id && (
+            <div style={{ border: `1px solid ${T.border}`, borderRadius: 8, padding: 8, marginBottom: 8 }}>
+              <div style={{ color: T.muted, fontSize: 11, marginBottom: 6 }}>Current: <b style={{ color: T.text }}>{p.title}</b> · {p.words.length} words</div>
+              {hist.items.length === 0 && <div style={{ color: T.muted, fontSize: 12 }}>No earlier versions yet. Versions are saved each time you edit the title or words.</div>}
+              {hist.items.map((v, i) => (
+                <div key={i} style={{ borderTop: i ? `1px solid ${T.border}` : "none", padding: "6px 0" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ color: T.text, fontSize: 12, fontWeight: 700, flex: 1 }}>{v.title} <span style={{ color: T.muted, fontWeight: 400 }}>· {v.words.length} words · {new Date(v.at).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} ET</span></span>
+                    <button disabled={busy} onClick={() => { if (confirm("Restore this version? The current one is saved to history.")) run(async () => { const n = await adminRestoreVersion(adminDb, p.id, i, { title: p.title, words: p.words }); setHist(null); return n === null ? true : n; }, "Restored"); }} style={st.btn("#fff", "#10b981")}>Restore</button>
+                  </div>
+                  <div style={{ color: T.faint, fontSize: 11, marginTop: 2, wordBreak: "break-word" }}>{v.words.slice(0, 20).join(" ")}{v.words.length > 20 ? " …" : ""}</div>
+                </div>
+              ))}
+              {reqs[p.id] > 0 && <button onClick={() => run(async () => { await adminClearRevertRequests(adminDb, p.id); return true; }, "Request dismissed")} style={{ ...st.btn(T.muted, T.faint), marginTop: 6 }}>Dismiss revert request</button>}
+            </div>
+          )}
           <BadgePick value={p.badge || null} onChange={b => run(() => adminSetBadge(adminDb, p.id, b), "Badge updated")} />
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8, color: T.muted, fontSize: 11 }}>Keys reward:
             <input defaultValue={p.rewardKeys || 0} onBlur={e => { const v = e.target.value; if (String(p.rewardKeys || 0) !== v) run(() => adminSetReward(adminDb, p.id, v), "Reward updated"); }} inputMode="numeric" style={{ ...st.input, width: 64, textAlign: "right" }} /> (saves when you tap away)</div>
