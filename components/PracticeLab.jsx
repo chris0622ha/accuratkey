@@ -12,7 +12,7 @@ export default function PracticeLab({ T, profile, onStart, onClose, canSubmit })
   const community = !isFeatureLocked("wordsets");
   const weak = useMemo(() => weakKeys(profile?.id), [profile?.id]);
   const missed = useMemo(() => Object.keys(getMissedWords(profile?.id)), [profile?.id]);
-  const go = (lines, name) => { if (!lines || lines.length < 3) { setMsg("Not enough text — add a bit more (at least a couple of sentences)."); return; } onClose(); onStart(lines, name); };
+  const go = (lines, name, meta) => { if (!lines || lines.length < 3) { setMsg("Not enough text — add a bit more (at least a couple of sentences)."); return; } onClose(); onStart(lines, name, meta); };
   const Card = ({ icon, title, desc, onClick, disabled }) => (
     <button onClick={onClick} disabled={disabled} style={{textAlign:"left",display:"flex",gap:12,alignItems:"center",width:"100%",padding:"12px 14px",borderRadius:10,border:`1px solid ${T.border}`,background:T.bg,color:T.text,cursor:disabled?"default":"pointer",opacity:disabled?.5:1,fontFamily:"inherit"}}>
       <UiIcon name={icon} size={22} color={T.purple}/><span><div style={{fontWeight:700,fontSize:13}}>{title}</div><div style={{color:T.muted,fontSize:11,marginTop:2}}>{desc}</div></span>

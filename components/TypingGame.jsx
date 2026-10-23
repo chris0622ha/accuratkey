@@ -9,7 +9,8 @@ import { FOUNDATIONS_ICONS, PRECISION_FLOW_ICONS, WORD_POWER_ICONS, KEYBOARD_MAS
 import { formatKeys } from "@/lib/format";
 import { CertificateModal } from "./Certificates";
 import { AICoach } from "./AICoach";
-import { setGlobalLocks, isFeatureLocked, lockMessage } from "../lib/locks";
+import { setGlobalLocks, setGlobalRewards, isFeatureLocked, lockMessage } from "../lib/locks";
+import { setClaimedToday, markSetClaimed } from "../lib/wordsets";
 import { getThemeFx } from "@/lib/themeFx";
 import { UiIcon } from "./icons/UiIcons";
 import PrefsModal from "./PrefsModal";
@@ -25,7 +26,7 @@ import { logRun, getHistory, newlyUnlocked } from "@/lib/stats";
 import { WHATS_NEW } from "@/lib/whatsNew";
 import { getPrefs, setPrefs, getBest, recordRun } from "@/lib/prefs";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, getLocks, getAllNotifications, markAllNotificationsRead, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
+import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, getLocks, getRewards, getAllNotifications, markAllNotificationsRead, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
 
 export 
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
@@ -1344,6 +1345,7 @@ export default function AccuratKey() {
   // Check maintenance, broadcast, level overrides on load
   useEffect(() => {
     getLocks().then(l => { setGlobalLocks(l); setLocksLoaded(n => n + 1); });
+    getRewards().then(r => setGlobalRewards(r));
     getMaintenanceMode().then(m => {
       setMaintenance(m);
       // Don't immediately block here - we don't know who's logged in yet,
@@ -1715,7 +1717,9 @@ export default function AccuratKey() {
   };
 
   // Show tips before starting a level
-  const startPractice = (pool, name) => {
+  const practiceMetaRef = useRef(null);
+  const startPractice = (pool, name, meta) => {
+    practiceMetaRef.current = meta || null;
     practicePoolRef.current = pool; setPracticeName(name); setKeysEarned(0);
     startLevel(-2);
   };
@@ -1822,6 +1826,18 @@ export default function AccuratKey() {
       mergeKeyStats(activeProfile?.id, keyAttemptsRef.current);
       mergeMissedWords(activeProfile?.id, missedWordsRef.current);
       logRun(activeProfile?.id, resultData);
+      const meta = practiceMetaRef.current;
+      if (resultData.level === -2 && meta?.setId && meta.rewardKeys > 0 && resultData.accuracy >= 90 && activeProfile && !setClaimedToday(activeProfile.id, meta.setId)) {
+        markSetClaimed(activeProfile.id, meta.setId);
+        (async () => {
+          let got = 0;
+          try {
+            if (isProfileRestricted(activeProfile)) { const r = addBonusKeysLocal(activeProfile.id, activeProfile, meta.rewardKeys); got = r.actualEarned; setActiveProfile(r.updatedProfile); }
+            else if (user) { got = await addBonusKeys(user.uid, activeProfile.id, meta.rewardKeys); const u = await getProfile(user.uid, activeProfile.id); setActiveProfile(u); }
+          } catch {}
+          setKeysEarned(got);
+        })();
+      }
       setNewBadges(newlyUnlocked(activeProfile?.id, getHistory(activeProfile?.id)));
     }
   }, [screen, resultData]);
