@@ -5,6 +5,9 @@ import { PRESETS, fromText, weakKeyDrill, weakKeys, getMissedWords, missedDrill,
 import { ALL_WORDS } from "./WordDB";
 import WordSetsPanel from "./WordSetsPanel";
 import { isFeatureLocked } from "@/lib/locks";
+import { SYN_ANT } from "./SynAntDB";
+import { wordOfDay } from "@/lib/features";
+import { getHistory, dayCounts, dayKey } from "@/lib/stats";
 
 export default function PracticeLab({ T, profile, onStart, onClose, canSubmit }) {
   const [text, setText] = useState("");
@@ -12,6 +15,12 @@ export default function PracticeLab({ T, profile, onStart, onClose, canSubmit })
   const community = !isFeatureLocked("wordsets");
   const weak = useMemo(() => weakKeys(profile?.id), [profile?.id]);
   const missed = useMemo(() => Object.keys(getMissedWords(profile?.id)), [profile?.id]);
+  const wod = useMemo(() => wordOfDay(SYN_ANT), []);
+  const planKey = `ak_plan_${profile?.id || "guest"}_${dayKey()}`;
+  const [done, setDone] = useState(() => { try { return JSON.parse(localStorage.getItem(planKey) || "[]"); } catch { return []; } });
+  const hist = useMemo(() => getHistory(profile?.id), [profile?.id]);
+  const playedToday = (dayCounts(hist)[dayKey()] || 0) > 0;
+  const markDone = (id) => { const d = [...new Set([...done, id])]; setDone(d); try { localStorage.setItem(planKey, JSON.stringify(d)); } catch {} };
   const go = (lines, name, meta) => { if (!lines || lines.length < 3) { setMsg("Not enough text — add a bit more (at least a couple of sentences)."); return; } onClose(); onStart(lines, name, meta); };
   const Card = ({ icon, title, desc, onClick, disabled }) => (
     <button onClick={onClick} disabled={disabled} style={{textAlign:"left",display:"flex",gap:12,alignItems:"center",width:"100%",padding:"12px 14px",borderRadius:10,border:`1px solid ${T.border}`,background:T.bg,color:T.text,cursor:disabled?"default":"pointer",opacity:disabled?.5:1,fontFamily:"inherit"}}>
@@ -25,6 +34,32 @@ export default function PracticeLab({ T, profile, onStart, onClose, canSubmit })
           <button onClick={onClose} aria-label="Close" style={{background:"none",border:"none",color:T.muted,fontSize:20,cursor:"pointer"}}>×</button>
         </div>
         <div style={{color:T.muted,fontSize:11,margin:"4px 0 12px"}}>Free practice. Runs here don't earn Keys or unlock levels, and nothing is uploaded.</div>
+
+        {(() => {
+          const day = new Date().getDay();
+          const extra = [["bigrams","Letter pairs"],["punctuation","Punctuation"],["numbers","Numbers"],["code","Code"],["symbols","Symbols"],["numpad","Numpad math"],["bigrams","Letter pairs"]][day];
+          const plan = [
+            weak.length ? { id: "weak", title: `Drill ${weak.slice(0,3).map(w => w.k.toUpperCase()).join(" ")}`, desc: "Your three weakest keys", run: () => go(weakKeyDrill(weak.map(w=>w.k), ALL_WORDS), "Weak-key drill") }
+              : { id: "warm", title: "Warm up", desc: "Common letter pairs to get your fingers moving", run: () => go(PRESETS.bigrams(), "Letter pairs") },
+            missed.length >= 4 ? { id: "missed", title: "Fix missed words", desc: `${missed.length} words you slipped on`, run: () => go(missedDrill(missed.slice(0,40)), "Missed words") }
+              : { id: "punc", title: "Real sentences", desc: "Punctuation in everyday text", run: () => go(PRESETS.punctuation(), "Punctuation") },
+            { id: "x" + day, title: `Today's mix: ${extra[1]}`, desc: "A different skill each day", run: () => go(PRESETS[extra[0]](), extra[1]) },
+          ];
+          return <div style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:12,padding:"12px 14px",marginBottom:12}}>
+            <div style={{display:"flex",justifyContent:"space-between",color:T.text,fontWeight:800,fontSize:13,marginBottom:8}}><span>Today's plan</span><span style={{color:T.muted,fontWeight:600,fontSize:11}}>{done.filter(d => plan.some(p => p.id === d)).length}/3 done{playedToday ? "" : " · no runs yet today"}</span></div>
+            {plan.map(p => <div key={p.id} style={{display:"flex",alignItems:"center",gap:10,padding:"6px 0"}}>
+              <span style={{width:18,height:18,borderRadius:9,border:`2px solid ${done.includes(p.id)?"#10b981":T.border}`,background:done.includes(p.id)?"#10b981":"transparent",color:"#fff",fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{done.includes(p.id)?"✓":""}</span>
+              <span style={{flex:1}}><div style={{color:T.text,fontSize:13,fontWeight:700}}>{p.title}</div><div style={{color:T.muted,fontSize:11}}>{p.desc}</div></span>
+              <button onClick={()=>{ markDone(p.id); p.run(); }} style={{padding:"5px 12px",borderRadius:8,border:"none",background:T.purple,color:"#fff",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>Start</button>
+            </div>)}
+          </div>; })()}
+
+        {wod && <div style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:12,padding:"12px 14px",marginBottom:12}}>
+          <div style={{color:T.purple,fontSize:11,fontWeight:800,letterSpacing:1}}>WORD OF THE DAY</div>
+          <div style={{color:T.text,fontSize:20,fontWeight:800,margin:"4px 0"}}>{wod.word}</div>
+          <div style={{color:T.muted,fontSize:12}}>Means something like: {wod.syn.slice(0,4).join(", ")}{wod.ant?.length ? ` · opposite: ${wod.ant.slice(0,3).join(", ")}` : ""}</div>
+          <button onClick={()=>go(fromText(Array.from({length:8},()=>[wod.word,...wod.syn.slice(0,4)].join(" ")).join(" ")), "Word of the day")} style={{marginTop:8,padding:"6px 12px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.text,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>Type these words</button>
+        </div>}
 
         <div style={{display:"grid",gap:8}}>
           <Card icon="target" title="Drill my weak keys" disabled={!weak.length}

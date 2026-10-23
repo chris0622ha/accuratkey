@@ -9,7 +9,7 @@ import { FOUNDATIONS_ICONS, PRECISION_FLOW_ICONS, WORD_POWER_ICONS, KEYBOARD_MAS
 import { formatKeys } from "@/lib/format";
 import { CertificateModal } from "./Certificates";
 import { AICoach } from "./AICoach";
-import { setGlobalLocks, setGlobalRewards, isFeatureLocked, lockMessage } from "../lib/locks";
+import { setGlobalEconomy, getGlobalEconomy, keysMultiplier, setGlobalLocks, setGlobalRewards, isFeatureLocked, lockMessage } from "../lib/locks";
 import { setClaimedToday, markSetClaimed, requestSetRevert } from "../lib/wordsets";
 import { getThemeFx } from "@/lib/themeFx";
 import { UiIcon } from "./icons/UiIcons";
@@ -19,6 +19,8 @@ import WhatsNewModal from "./WhatsNewModal";
 import StatsModal from "./StatsModal";
 import PracticeLab from "./PracticeLab";
 import NotificationsModal from "./NotificationsModal";
+import ReplayModal from "./ReplayModal";
+import { saveReplay, breakDue } from "../lib/features";
 import WordSetsPanel from "./WordSetsPanel";
 import { applyLevelContent, applyLevelNames, EXTRA_SECTIONS } from "../lib/levelText";
 import { mergeKeyStats, mergeMissedWords, wordAt } from "@/lib/practice";
@@ -26,7 +28,7 @@ import { logRun, getHistory, newlyUnlocked } from "@/lib/stats";
 import { WHATS_NEW } from "@/lib/whatsNew";
 import { getPrefs, setPrefs, getBest, recordRun } from "@/lib/prefs";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, getLocks, getRewards, getAllNotifications, markAllNotificationsRead, deleteNotification, deleteAllNotifications, getAnnouncements, markNotificationRevertRequested, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, getLevelNameOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
+import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, getLocks, getRewards, getAllNotifications, markAllNotificationsRead, getEconomy, deleteNotification, deleteAllNotifications, getAnnouncements, markNotificationRevertRequested, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, getLevelNameOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
 
 export 
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
@@ -399,7 +401,7 @@ const QRCanvas=({url,size=160})=>{const r=useRef(null);useEffect(()=>{if(url&&r.
 
 function getTheme(age){const base={accent:"#fb923c",accent2:"#34d399",bg:"#0a0a0f",card:"#13131f",border:"#1e1e30",font:"'JetBrains Mono',monospace",bigEmoji:false,simpleWords:false,maxLevel:15};if(age<7)return{...base,bg:"#0d0b1a",card:"#1a1030",border:"#2d1f50",purple:"#c084fc",text:"#f0e8ff",muted:"#a78bfa",faint:"#7c5cbf",font:"'Comic Sans MS','Chalkboard SE',cursive",bigEmoji:true,simpleWords:true,maxLevel:5};if(age<10)return{...base,bg:"#0a0a18",card:"#141428",border:"#2a2050",purple:"#a78bfa",accent:"#f472b6",text:"#e8e0ff",muted:"#8b78d0",faint:"#5a4898",bigEmoji:true,simpleWords:true,maxLevel:10};if(age<13)return{...base,purple:"#818cf8",text:"#e2e8ff",muted:"#6b72a0",faint:"#454870"};return{...base,purple:"#7c6af7",text:"#e0e0ff",muted:"#555",faint:"#444"};}
 
-function genLine(levelId,overrideWords){const lv=LEVELS.find(l=>l.id===levelId)||LEVELS[0];const pool=overrideWords||lv.words;const avg=pool.reduce((a,w)=>a+w.length,0)/Math.max(1,pool.length);const pick=()=>pool[Math.floor(Math.random()*pool.length)];if(avg>=32)return pick();const out=[];let n=0,tries=0;while(n<28&&tries++<200){const w=pick();if(pool.length>4&&out.includes(w))continue;out.push(w);n+=w.length+1;}return out.join(" ");}
+function genLine(levelId,overrideWords){const lv=LEVELS.find(l=>l.id===levelId)||LEVELS[0];const pool=overrideWords||lv.words;const avg=pool.reduce((a,w)=>a+w.length,0)/Math.max(1,pool.length);const pick=()=>pool[Math.floor(Math.random()*pool.length)];if(avg>=32||pool.some(w=>/\s/.test(w)))return pick();const out=[];let n=0,tries=0;while(n<25&&tries++<200){const w=pick();if(pool.length>4&&out.includes(w))continue;out.push(w);n+=w.length;}return out.join("");}
 
 // Skip challenge — unique word set per target level
 const SKIP_CHALLENGES = {
@@ -1013,6 +1015,12 @@ export default function AccuratKey() {
   const [showPractice, setShowPractice] = useState(false);
   const [notifs, setNotifs] = useState([]);
   const [showNotifs, setShowNotifs] = useState(false);
+  const [showReplay, setShowReplay] = useState(false);
+  const [eco, setEco] = useState(null);
+  const [breakNudge, setBreakNudge] = useState(false);
+  const replayRef = useRef([]);
+  const mistakesRef = useRef(0);
+  const playMsRef = useRef(0);
   const [anns, setAnns] = useState([]);
   const [viewerAdmin, setViewerAdmin] = useState(false);
   const readLS = (k) => { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch { return {}; } };
@@ -1366,6 +1374,7 @@ export default function AccuratKey() {
   useEffect(() => {
     getLocks().then(l => { setGlobalLocks(l); setLocksLoaded(n => n + 1); });
     getRewards().then(r => setGlobalRewards(r));
+    getEconomy().then(e => { setGlobalEconomy(e); setEco(e); }).catch(() => {});
     getMaintenanceMode().then(m => {
       setMaintenance(m);
       // Don't immediately block here - we don't know who's logged in yet,
@@ -1711,7 +1720,7 @@ export default function AccuratKey() {
     const ov = customWords || levelOverrides[String(levelId)] || null;
     setLines(Array.from({ length: TOTAL_LINES }, () => genLine(levelId, ov)));
     setLineIdx(0); setTyped(""); setTotalChars(0); totalCharsRef.current = 0; setTotalCorrectChars(0);
-    setStartTime(null); startTimeRef.current = null; setWpm(0); setAccuracy(100); setCombo(0); setKeyMistakes({}); keyAttemptsRef.current = {}; missedWordsRef.current = {}; setShowHeatmap(false);
+    setStartTime(null); startTimeRef.current = null; setWpm(0); setAccuracy(100); setCombo(0); setKeyMistakes({}); keyAttemptsRef.current = {}; replayRef.current = []; mistakesRef.current = 0; missedWordsRef.current = {}; setShowHeatmap(false);
   }, []);
 
   const startLevel = (levelId, isSkip = false, skipTarget = null) => {
@@ -1846,6 +1855,8 @@ export default function AccuratKey() {
       mergeKeyStats(activeProfile?.id, keyAttemptsRef.current);
       mergeMissedWords(activeProfile?.id, missedWordsRef.current);
       logRun(activeProfile?.id, resultData);
+      saveReplay(activeProfile?.id, replayRef.current, resultData);
+      if (prefs.breakEvery > 0) { const secs = resultData.wpm > 0 ? (resultData.chars / 5 / resultData.wpm) * 60 : 60; playMsRef.current += secs * 1000; if (breakDue(playMsRef.current, prefs.breakEvery)) { playMsRef.current = 0; setBreakNudge(true); } }
       const meta = practiceMetaRef.current;
       if (resultData.level === -2 && meta?.setId && meta.rewardKeys > 0 && resultData.accuracy >= 90 && activeProfile && !setClaimedToday(activeProfile.id, meta.setId)) {
         markSetClaimed(activeProfile.id, meta.setId);
@@ -1893,6 +1904,7 @@ export default function AccuratKey() {
 
     // Track mistakes
     const pos = newTyped.length - 1;
+    if (ch && replayRef.current.length < 2500) replayRef.current.push([Date.now() - (startTimeRef.current || Date.now()), ch, current[pos] || "", lineIdx]);
     if (ch && current[pos]) {
       const ek = current[pos].toLowerCase(); const ka = keyAttemptsRef.current;
       ka[ek] = ka[ek] || { n: 0, miss: 0 }; ka[ek].n++; if (ch !== current[pos]) ka[ek].miss++;
@@ -1900,6 +1912,8 @@ export default function AccuratKey() {
     if (ch && ch !== current[pos]) {
       const mw = wordAt(current, pos); if (mw) missedWordsRef.current[mw] = 1;
       const k = ch.toLowerCase();
+      mistakesRef.current++;
+      if (prefs.suddenDeath > 0 && mistakesRef.current >= prefs.suddenDeath) { setTimeout(() => startLevel(playingLevel, isSkipChallenge, skipTargetLevel), 150); return; }
       setKeyMistakes(p => ({ ...p, [k]: (p[k] || 0) + 1 }));
       if(canUse(activeProfile,"sounds"))playSound("wrong", activeProfile?.activeSound||"default");
       if (!prefs.reducedMotion && getThemeFx(activeProfile?.activeTheme).shake) setShakeKey(n => n + 1);
@@ -2227,6 +2241,7 @@ export default function AccuratKey() {
     const { user: u, activeProfile: p, screen: sc } = liveRef.current;
     getLocks().then(l => { setGlobalLocks(l); setLocksLoaded(n => n + 1); }).catch(() => {});
     getRewards().then(setGlobalRewards).catch(() => {});
+    getEconomy().then(e => { setGlobalEconomy(e); setEco(e); }).catch(() => {});
     getBroadcast().then(b => setBroadcast(b?.active && b?.message ? b : null)).catch(() => {});
     getLevelOverrides().then(o=>{applyLevelNames(LEVELS,getLevelNameOverrides());setLevelOverrides(o);}).catch(() => {});
     if (!u || !p || p.isGuest || isProfileRestricted(p)) return;
@@ -3014,6 +3029,9 @@ const Nav = () => (<>
         <p style={{color:T.muted,fontSize:15,marginBottom:6}}>{failReason}</p>
         <p style={{color:T.faint,fontSize:13,marginBottom:24}}>{lv.emoji} {lv.name} requires 75% accuracy.</p>
         <div style={{width:"100%",maxWidth:480,marginBottom:20}}>
+          {breakNudge && <div style={{background:"#0ea5e922",border:"1px solid #0ea5e966",color:T.text,borderRadius:10,padding:"10px 14px",fontSize:13,marginBottom:12,display:"flex",gap:10,alignItems:"center"}}><span style={{flex:1}}>You've been practicing a while. Look away from the screen, stretch your hands and sip some water for a minute.</span><button onClick={()=>setBreakNudge(false)} style={{background:"none",border:"none",color:T.muted,cursor:"pointer",fontSize:16}} aria-label="Dismiss">×</button></div>}
+          <button onClick={()=>setShowReplay(true)} style={{width:"100%",padding:"9px",marginBottom:12,borderRadius:10,border:`1px solid ${T.border}`,background:"transparent",color:T.text,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Watch replay & rhythm</button>
+          {showReplay && <ReplayModal T={T} pid={activeProfile?.id} onClose={()=>setShowReplay(false)} />}
           {canUse(activeProfile,"coach") && <AICoach
             wpm={resultData?.wpm || 0}
             accuracy={resultData?.accuracy || 0}
@@ -4300,6 +4318,11 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
           </div>
         )}
 
+        {eco && keysMultiplier() > 1 && (
+          <div style={{position:"fixed",top:10,left:"50%",transform:"translateX(-50%)",background:"#fbbf2422",border:"1px solid #fbbf24",color:"#fbbf24",borderRadius:99,padding:"6px 16px",fontSize:12,fontWeight:800,zIndex:1001,whiteSpace:"nowrap"}}>
+            {getGlobalEconomy().name || "Keys event"}: {keysMultiplier()}x Keys{getGlobalEconomy().endsAt ? ` until ${new Date(getGlobalEconomy().endsAt).toLocaleString("en-US",{timeZone:"America/New_York",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})} ET` : ""}
+          </div>
+        )}
         {/* Broadcast overlay - no dismiss, shows everywhere */}
         {broadcast && (
           <div style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:"#1e1e30",border:`1px solid ${T.purple}`,borderRadius:12,padding:"12px 20px",zIndex:1002,maxWidth:480,width:"90%",display:"flex",alignItems:"center",gap:12,pointerEvents:"none"}}>
@@ -4429,7 +4452,7 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
         <div key={"card"+shakeKey} style={{width:"100%",maxWidth:isMobile?660:980,background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"20px 24px",marginBottom:12,animation:shakeKey>0&&!prefs.reducedMotion?"akShake 0.2s":"none"}}>
           <div style={{fontSize:Math.round(20*prefs.textScale),letterSpacing:2,display:"flex",flexWrap:"wrap",lineHeight:1.8,fontFamily:T.font}}>
             {(() => { const fx = {...getThemeFx(activeProfile?.activeTheme)}; if (prefs.caret !== "auto") fx.caret = prefs.caret; return current.split("").map((ch,ci) => {
-              let color=T.faint, underline="2px solid transparent", bg="transparent", shadow="none", anim="none", radius=0;
+              let color=(prefs.blind&&ci>typed.length+2)?"transparent":T.faint, underline="2px solid transparent", bg="transparent", shadow="none", anim="none", radius=0;
               if (ci < typed.length) { const ok = typed[ci]===ch; color = ok ? T.accent2 : "#ef4444"; if (ok && fx.glow) shadow=`0 0 8px ${T.accent2}88`; }
               else if (ci === typed.length) {
                 color=T.purple;

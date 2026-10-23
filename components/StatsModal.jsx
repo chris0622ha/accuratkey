@@ -3,6 +3,8 @@ import React, { useState, useMemo } from "react";
 import { UiIcon } from "./icons/UiIcons";
 import { getHistory, summary, xpInfo, dayCounts, dayKey, currentDayStreak, ACHIEVEMENTS, unlockedIds, todaysQuests, weeklyReport, getGoal, setGoal, toCsv } from "@/lib/stats";
 import { getBest } from "@/lib/prefs";
+import { records } from "@/lib/features";
+import { getKeyStats } from "@/lib/practice";
 
 const Pill = ({ T, on, children, onClick }) => <button onClick={onClick} style={{padding:"6px 12px",borderRadius:8,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",border:`1px solid ${on?T.purple:T.border}`,background:on?T.purple+"33":"transparent",color:on?T.text:T.muted}}>{children}</button>;
 const Stat = ({ T, label, value }) => <div style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:10,padding:"10px 12px"}}><div style={{color:T.text,fontSize:20,fontWeight:800}}>{value}</div><div style={{color:T.muted,fontSize:11}}>{label}</div></div>;
@@ -48,7 +50,7 @@ export default function StatsModal({ T, profile, onClose }) {
         </div>
         <div style={{color:T.muted,fontSize:11,marginBottom:12}}>Saved on this device only — not uploaded anywhere.</div>
         <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
-          {[["overview","Overview"],["quests","Quests"],["history","History"],["badges","Achievements"],["goals","Goals"],["report","Weekly report"]].map(([k,l]) => <Pill key={k} T={T} on={tab===k} onClick={()=>setTab(k)}>{l}</Pill>)}
+          {[["overview","Overview"],["quests","Quests"],["history","History"],["badges","Achievements"],["records","Records"],["keys","Keys"],["goals","Goals"],["report","Weekly report"]].map(([k,l]) => <Pill key={k} T={T} on={tab===k} onClick={()=>setTab(k)}>{l}</Pill>)}
         </div>
 
         {tab === "quests" && <>
@@ -111,7 +113,38 @@ export default function StatsModal({ T, profile, onClose }) {
               <UiIcon name={on?"star":"lock"} size={22} color={on?T.accent:T.muted}/><div><div style={{color:T.text,fontSize:13,fontWeight:700}}>{a.name}</div><div style={{color:T.muted,fontSize:11}}>{a.desc}</div></div></div>; })}
           </div></>}
 
+        {tab === "records" && (() => { const r = records(hist); if (!r) return <div style={{color:T.muted,fontSize:13}}>Finish a run to start your record book.</div>;
+          const Rec = ({ label, value, sub }) => <div style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:10,padding:"10px 12px"}}><div style={{color:T.muted,fontSize:11}}>{label}</div><div style={{color:T.text,fontSize:20,fontWeight:800}}>{value}</div>{sub && <div style={{color:T.faint,fontSize:10,marginTop:2}}>{sub}</div>}</div>;
+          const d = (t) => new Date(t).toLocaleDateString(undefined,{month:"short",day:"numeric"});
+          return <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:8}}>
+            <Rec label="Fastest run" value={`${r.fastest.wpm} WPM`} sub={d(r.fastest.t)} />
+            <Rec label="Sharpest run" value={r.sharpest ? `${r.sharpest.acc}%` : "-"} sub={r.sharpest ? d(r.sharpest.t) : "needs a 10+ WPM run"} />
+            <Rec label="Longest run" value={`${Math.floor((r.longest.secs||0)/60)}m ${(r.longest.secs||0)%60}s`} sub={d(r.longest.t)} />
+            <Rec label="Most letters in a run" value={r.mostChars.chars||0} sub={d(r.mostChars.t)} />
+            <Rec label="Total letters typed" value={r.totalChars.toLocaleString()} sub={`${r.totalRuns} runs`} />
+            <Rec label="Busiest day" value={r.busiestDay ? `${r.busiestDay.runs} runs` : "-"} sub={r.busiestDay?.day} />
+            <Rec label="Most passes in a row" value={r.passStreak} />
+          </div>; })()}
+
+        {tab === "keys" && (() => { const ks = getKeyStats(pid); const rows = "abcdefghijklmnopqrstuvwxyz".split("").map(k => ({ k, n: ks[k]?.n || 0, miss: ks[k]?.miss || 0 }));
+          const seen = rows.filter(x => x.n >= 5); const rate = (x) => x.n ? x.miss / x.n : 0;
+          const shade = (x) => x.n < 5 ? T.border : `rgba(239,68,68,${Math.min(0.9, 0.12 + rate(x) * 5)})`;
+          const worst = seen.slice().sort((a, b) => rate(b) - rate(a)).filter(x => x.miss > 0).slice(0, 5);
+          return <>
+            <div style={{color:T.muted,fontSize:12,marginBottom:10}}>Your accuracy per letter across every run on this device. Redder means you miss it more. Gray means not enough data yet.</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:12}}>{rows.map(x => <div key={x.k} title={x.n ? `${x.k.toUpperCase()}: ${Math.round((1-rate(x))*100)}% of ${x.n}` : "No data"} style={{width:34,height:34,borderRadius:7,background:shade(x),display:"flex",alignItems:"center",justifyContent:"center",color:T.text,fontWeight:800,fontSize:13,border:`1px solid ${T.border}`}}>{x.k.toUpperCase()}</div>)}</div>
+            {worst.length ? <div style={{color:T.text,fontSize:13}}>Needs work: {worst.map(x => `${x.k.toUpperCase()} (${Math.round((1-rate(x))*100)}%)`).join(", ")}. Try the weak-key drill in the Practice lab.</div> : <div style={{color:T.muted,fontSize:13}}>Nothing stands out yet. Keep practicing!</div>}
+          </>; })()}
+
         {tab === "goals" && <>
+          <div style={{color:T.text,fontSize:14,fontWeight:700,marginBottom:6}}>Speed goal</div>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
+            {[0,30,40,50,60,80,100].map(n => <Pill key={n} T={T} on={(goal.targetWpm||0)===n} onClick={()=>{setGoal(pid,{targetWpm:n});setG({...goal,targetWpm:n});}}>{n ? `${n} WPM` : "None"}</Pill>)}
+          </div>
+          {goal.targetWpm > 0 && (() => { const cur = s.avgWpm || 0, pct = Math.min(100, Math.round((cur / goal.targetWpm) * 100)); return <div style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:10,padding:"12px 14px",marginBottom:16}}>
+            <div style={{display:"flex",justifyContent:"space-between",color:T.text,fontSize:13,fontWeight:700}}><span>Average of your last 20 runs</span><span>{cur}/{goal.targetWpm} WPM{cur >= goal.targetWpm ? " ✓" : ""}</span></div>
+            <div style={{height:8,background:T.border,borderRadius:4,marginTop:8}}><div style={{height:"100%",width:`${pct}%`,background:cur>=goal.targetWpm?"#34d399":T.purple,borderRadius:4}}/></div>
+            <div style={{color:T.muted,fontSize:11,marginTop:6}}>{cur >= goal.targetWpm ? "Goal reached - pick a higher one!" : `${goal.targetWpm - cur} WPM to go`}</div></div>; })()}
           <div style={{color:T.text,fontSize:14,fontWeight:700,marginBottom:6}}>Daily goal</div>
           <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12}}>
             {[1,2,3,5,8,10].map(n => <Pill key={n} T={T} on={goal.runsPerDay===n} onClick={()=>{setGoal(pid,{runsPerDay:n});setG({...goal,runsPerDay:n});}}>{n} run{n>1?"s":""}</Pill>)}

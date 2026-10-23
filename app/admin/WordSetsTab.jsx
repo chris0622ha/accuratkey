@@ -34,6 +34,8 @@ export default function WordSetsTab({ T, st, adminDb, flash }) {
     <div>
       <div style={{ color: T.muted, fontSize: 11, marginBottom: 12 }}>Submissions are anonymous in the app. You see only the word list here (no name or email). Approving publishes title + words + badge only.</div>
       <div style={st.label}>Pending ({subs.length})</div>
+      {(() => { const clean = subs.filter(x => !validateSubmission(x.title, x.words) && !(x.flags && x.flags.length) && !moderate(x.title, x.words, { ...mod, enabled: true }).length);
+        return clean.length > 1 ? <button disabled={busy} onClick={() => { if (confirm(`Approve ${clean.length} clean sets with no badge and no reward? You can set badges later.`)) run(async () => { let bad = 0; for (const x of clean) { const r = await adminApprove(adminDb, x, { title: x.title, words: x.words, badge: null, rewardKeys: 0 }).catch(() => false); if (r === false) bad++; } return bad ? false : true; }, `Approved ${clean.length} sets`); }} style={{ ...st.btn("#fff", "#10b981"), marginBottom: 10 }}>Approve all {clean.length} clean sets</button> : null; })()}
       {subs.length === 0 && <div style={{ ...st.card, color: T.muted, fontSize: 12 }}>Nothing waiting.</div>}
       {subs.map(s => {
         const text = edit[s.id] ?? s.words.join(" ");

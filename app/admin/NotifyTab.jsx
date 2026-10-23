@@ -17,6 +17,9 @@ export default function NotifyTab({ T, st, adminDb, uid, flash }) {
   const [exp, setExp] = useState(7);
   const [busy, setBusy] = useState(false);
   const [list, setList] = useState([]);
+  const [tpls, setTpls] = useState([]);
+  useEffect(() => { try { setTpls(JSON.parse(localStorage.getItem("ak_admin_tpls") || "[]")); } catch {} }, []);
+  const saveTpls = (t) => { setTpls(t); try { localStorage.setItem("ak_admin_tpls", JSON.stringify(t.slice(0, 20))); } catch {} };
   const load = useCallback(async () => { setList(await getAnnouncements()); }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -71,6 +74,19 @@ export default function NotifyTab({ T, st, adminDb, uid, flash }) {
         {aud !== "specific" && <><div style={st.label}>Disappears after</div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>{EXP.map(([k, l]) => chip(exp === k, T.purple, l, () => setExp(k)))}</div></>}
         <button disabled={busy} onClick={send} style={{ ...st.btn("#fff", "#10b981"), width: "100%", padding: 10 }}>{busy ? "Sending…" : "Send notification"}</button>
+      </div>
+      <div style={st.card}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={st.label}>Templates (saved in this browser)</span>
+          <button onClick={() => { if (!title.trim()) return flash("Write a title first"); saveTpls([{ title, body, level, aud }, ...tpls.filter(x => x.title !== title)]); flash("Template saved"); }} style={{ ...st.btn("#fff", T.purple), marginLeft: "auto" }}>Save current as template</button>
+        </div>
+        {tpls.length === 0 && <div style={{ color: T.faint, fontSize: 11, marginTop: 6 }}>None yet.</div>}
+        {tpls.map((x, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
+            <span style={{ color: T.text, fontSize: 12, flex: 1 }}>{x.title}</span>
+            <button onClick={() => { setTitle(x.title); setBody(x.body); setLevel(x.level); setAud(x.aud === "specific" ? "all" : x.aud); }} style={st.btn(T.muted, T.faint)}>Use</button>
+            <button onClick={() => saveTpls(tpls.filter((_, j) => j !== i))} style={st.btn("#fff", "#ef4444")}>×</button>
+          </div>))}
       </div>
       <div style={st.label}>Active group notifications ({list.length})</div>
       {list.length === 0 && <div style={{ ...st.card, color: T.muted, fontSize: 12 }}>None.</div>}

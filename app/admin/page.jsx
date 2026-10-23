@@ -8,6 +8,9 @@ import { applyLevelContent, applyLevelNames } from "@/lib/levelText";
 import WordSetsTab from "./WordSetsTab";
 import ModerationTab from "./ModerationTab";
 import NotifyTab from "./NotifyTab";
+import EconomyTab from "./EconomyTab";
+import GrowthCard from "./GrowthCard";
+import { adminListSubmissions, adminListRevertRequests } from "@/lib/wordsets";
 import RewardsTab from "./RewardsTab";
 const LEVELS = [
   { id:1,  name:"Home Row Hero",         emoji:"🏠", wpmTarget:12,  accuracy:75, color:"#10b981", words:["ffjj","fjfj","asdf","jkl;","add","ask","fall","glad","flask","lads","fads","salads"] },
@@ -291,7 +294,7 @@ const st = {
   input:{ width:"100%",background:T.faint,border:`1px solid ${T.border}`,borderRadius:7,color:T.text,fontFamily:T.font,fontSize:12,padding:"8px 11px",outline:"none",boxSizing:"border-box" },
   label:{ color:T.muted,fontSize:9,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:5 },
 };
-const TABS = ["stats","users","bans","admins","keys","trials","warn","broadcast","levels","analytics","log","feedback","anticheat","birthday","locks","rewards","wordsets","moderation","notify","settings"];
+const TABS = ["stats","users","bans","admins","keys","trials","warn","broadcast","levels","analytics","log","feedback","anticheat","birthday","locks","rewards","wordsets","moderation","notify","economy","settings"];
 
 export default function AdminPage() {
   // adminDb is safe to create anywhere (no browser-only APIs). adminAuth uses
@@ -311,6 +314,8 @@ export default function AdminPage() {
   const [chosenAdminProfile,setChosenAdminProfile]=useState(null); // the profile picked to act as
   const [tab,setTab]=useState("stats");
   const [users,setUsers]=useState([]);
+  const [logQ,setLogQ]=useState("");
+  const [tabBadges,setTabBadges]=useState({});
   const [usersLoaded,setUsersLoaded]=useState(false);
   const [bans,setBans]=useState([]);
   const [admins,setAdmins]=useState([]);
@@ -492,6 +497,7 @@ export default function AdminPage() {
   useEffect(()=>{ if(adminOk&&tab==="analytics"&&!failStats){setFailStatsLoading(true);getLevelFailStats(adminDb).then(d=>{setFailStats(d);setFailStatsLoading(false);}).catch(()=>setFailStatsLoading(false));} },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="broadcast") getBroadcast().then(b=>{if(b)setCurrentBroadcast(b);}); },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="levels") getLevelOverrides().then(o=>{applyLevelNames(LEVELS,getLevelNameOverrides());setLevelOverrides(o);}).catch(()=>{}); },[tab,adminOk]);
+  useEffect(()=>{ if(!adminOk) return; (async()=>{ const b={}; try{ b.wordsets=(await adminListSubmissions(adminDb)).length+(await adminListRevertRequests(adminDb)).length; }catch{} setTabBadges(b); })(); },[adminOk,tab==="wordsets"]);
   useEffect(()=>{ if(adminOk&&tab==="stats") getAppStats(adminDb).then(setStats).catch(()=>{}); },[tab,adminOk]);
 
   // COPPA: getAllUsers() returns every account AND every profile under every
@@ -810,7 +816,8 @@ export default function AdminPage() {
         <div style={{display:"flex",gap:4,marginBottom:16,background:T.card,borderRadius:10,padding:4,border:`1px solid ${T.border}`,flexWrap:"wrap"}}>
           {TABS.map(t=>(
             <button key={t} onClick={()=>setTab(t)} style={st.tab(tab===t)}>
-              {t==="locks"?"🔒 Locks":t==="rewards"?"🎁 Rewards":t==="wordsets"?"📝 Word sets":t==="moderation"?"🛡 Moderation":t==="notify"?"📣 Notify": t==="stats"?"📊 Stats":t==="users"?`👥 Users (${users.length})`:t==="bans"?`🔨 Bans (${bans.length})`:t==="admins"?`🔑 Admins`:t==="keys"?"💰 Keys":t==="trials"?"⏱ Trials":t==="warn"?"⚠️ Warn":t==="broadcast"?"📢 Broadcast":t==="levels"?"🗺️ Levels":t==="analytics"?"📈 Analytics":t==="log"?"📋 Log":t==="feedback"?"💬 Feedback":t==="anticheat"?`🚩 Anti-cheat (${flaggedScores.filter(f=>f.status==="pending").length+restoreRequests.filter(r=>r.status==="pending").length})`:t==="birthday"?`🎂 Birthdays (${bdayReqList.length})`:t==="settings"?"⚙️ Settings":""}
+              {t==="locks"?"🔒 Locks":t==="rewards"?"🎁 Rewards":t==="wordsets"?"📝 Word sets":t==="moderation"?"🛡 Moderation":t==="notify"?"📣 Notify":t==="economy"?"💰 Economy": t==="stats"?"📊 Stats":t==="users"?`👥 Users (${users.length})`:t==="bans"?`🔨 Bans (${bans.length})`:t==="admins"?`🔑 Admins`:t==="keys"?"💰 Keys":t==="trials"?"⏱ Trials":t==="warn"?"⚠️ Warn":t==="broadcast"?"📢 Broadcast":t==="levels"?"🗺️ Levels":t==="analytics"?"📈 Analytics":t==="log"?"📋 Log":t==="feedback"?"💬 Feedback":t==="anticheat"?`🚩 Anti-cheat (${flaggedScores.filter(f=>f.status==="pending").length+restoreRequests.filter(r=>r.status==="pending").length})`:t==="birthday"?`🎂 Birthdays (${bdayReqList.length})`:t==="settings"?"⚙️ Settings":""}
+            {tabBadges[t]>0&&<span style={{marginLeft:5,background:"#ef4444",color:"#fff",borderRadius:99,fontSize:9,fontWeight:900,padding:"1px 6px"}}>{tabBadges[t]}</span>}
             </button>
           ))}
         </div>
@@ -818,6 +825,7 @@ export default function AdminPage() {
         {loading && <div style={{color:T.muted,fontSize:12,textAlign:"center",padding:32}}>Loading...</div>}
 
         {/* STATS */}
+        {tab==="stats"&&<GrowthCard T={T} st={st} adminDb={adminDb} />}
         {tab==="stats" && (
           <div>
             {stats ? (
@@ -1068,6 +1076,7 @@ export default function AdminPage() {
 
         {tab==="rewards"&&<RewardsTab T={T} st={st} adminDb={adminDb} uid={user.uid} flash={flash} levels={LEVELS.filter(l=>l.id>0)} />}
         {tab==="wordsets"&&<WordSetsTab T={T} st={st} adminDb={adminDb} flash={flash} />}
+        {tab==="economy"&&<EconomyTab T={T} st={st} adminDb={adminDb} uid={user.uid} flash={flash} />}
         {tab==="notify"&&<NotifyTab T={T} st={st} adminDb={adminDb} uid={user.uid} flash={flash} />}
         {tab==="moderation"&&<ModerationTab T={T} st={st} adminDb={adminDb} uid={user.uid} flash={flash} />}
 
@@ -1126,10 +1135,19 @@ export default function AdminPage() {
         )}
 
         {/* LOG */}
-        {tab==="log"&&(
+        {tab==="log"&&(()=>{
+          const q=logQ.trim().toLowerCase();
+          const rows=log.filter(e=>!q||[e.action,e.targetUsername,e.detail,e.adminUid].some(v=>String(v||"").toLowerCase().includes(q)));
+          const exportCsv=()=>{ const esc=v=>`"${String(v??"").replace(/"/g,'""')}"`; const csv=["time,action,target,detail,admin",...rows.map(e=>[e.createdAt?.seconds?new Date(e.createdAt.seconds*1000).toISOString():"",e.action,e.targetUsername||"",e.detail||"",e.adminUid||""].map(esc).join(","))].join("\n"); const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"})); a.download="activity-log.csv"; document.body.appendChild(a); a.click(); a.remove(); };
+          return (
           <div>
-            {log.length===0&&<div style={{color:T.muted,textAlign:"center",padding:24,fontSize:12}}>No activity</div>}
-            {log.map(e=>(
+            <div style={{display:"flex",gap:8,marginBottom:10}}>
+              <input value={logQ} onChange={e=>setLogQ(e.target.value)} placeholder="Search action, user, detail…" style={{...st.input,flex:1}} />
+              <button onClick={exportCsv} style={st.btn("#fff",T.purple)}>Export CSV</button>
+            </div>
+            <div style={{color:T.faint,fontSize:10,marginBottom:8}}>{rows.length} of {log.length} entries (latest 100)</div>
+            {rows.length===0&&<div style={{color:T.muted,textAlign:"center",padding:24,fontSize:12}}>No activity</div>}
+            {rows.map(e=>(
               <div key={e.id} style={{...st.card,padding:"9px 13px"}}>
                 <span style={{color:T.purple,fontWeight:700,fontSize:11}}>{e.action}</span>
                 {e.targetUsername&&<span style={{color:T.muted,fontSize:11}}> · @{e.targetUsername}</span>}
@@ -1137,8 +1155,7 @@ export default function AdminPage() {
                 <div style={{color:T.faint,fontSize:9,marginTop:2}}>by {e.adminUid?.slice(0,8)}... · {e.createdAt?.seconds?new Date(e.createdAt.seconds*1000).toLocaleString():""}</div>
               </div>
             ))}
-          </div>
-        )}
+          </div>); })()}
 
         {/* SETTINGS */}
         {tab==="feedback"&&(

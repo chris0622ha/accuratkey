@@ -11,6 +11,7 @@ export default function ModerationTab({ T, st, adminDb, uid, flash }) {
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [hits, setHits] = useState(null);
+  const [testT, setTestT] = useState("");
   useEffect(() => { getModeration().then(c => { const m = { ...DEFAULT_MOD, ...c }; setCfg(m); setBlockedText((m.blocked || []).join(", ")); setLoaded(true); }); }, []);
   const save = async () => {
     setSaving(true);
@@ -58,6 +59,15 @@ export default function ModerationTab({ T, st, adminDb, uid, flash }) {
       <div style={{ display: "flex", gap: 8 }}>
         <button disabled={saving} onClick={save} style={{ ...st.btn("#fff", "#10b981"), flex: 1, padding: 10 }}>{saving ? "Saving…" : "Save"}</button>
         <button onClick={scan} style={st.btn("#fff", T.purple)}>Scan published sets</button>
+      </div>
+      <div style={{ ...st.card, marginTop: 14 }}>
+        <div style={st.label}>Test the filter (nothing is saved)</div>
+        <textarea value={testT} onChange={e => setTestT(e.target.value)} rows={2} placeholder="Type a title and words to see what would be flagged" style={{ ...st.input, resize: "vertical" }} />
+        {testT.trim() && (() => { const f = moderate("Test", testT.split(/[\s,]+/).filter(Boolean), { ...cfg, enabled: true, blocked: cleanBlocked(blockedText) }); return <div style={{ color: f.length ? "#f59e0b" : "#10b981", fontSize: 12, marginTop: 6 }}>{f.length ? "⚠ " + f.join(" · ") : "✓ Nothing flagged"}</div>; })()}
+        <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+          <button onClick={() => { const c = cleanBlocked(blockedText).sort(); setBlockedText(c.join(", ")); flash("Sorted and de-duplicated (not saved yet)"); }} style={st.btn(T.muted, T.faint)}>Sort & dedupe list</button>
+          <button onClick={() => { try { navigator.clipboard.writeText(cleanBlocked(blockedText).join(", ")); flash("List copied"); } catch { flash("Copy failed"); } }} style={st.btn(T.muted, T.faint)}>Copy list</button>
+        </div>
       </div>
       {hits && (
         <div style={{ marginTop: 14 }}>

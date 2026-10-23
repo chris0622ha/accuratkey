@@ -37,6 +37,11 @@ export default function PrefsModal({ T, prefs, setPref, onClose, profile, onTour
         <Row T={T} label="Focus mode" hint="Hide everything except the text"><Toggle T={T} value={prefs.focusMode} onChange={v=>setPref({focusMode:v})} /></Row>
         <Row T={T} label="Zen mode" hint="Hide WPM, accuracy and combo while typing"><Toggle T={T} value={prefs.zen} onChange={v=>setPref({zen:v})} /></Row>
 
+        <div style={{color:T.purple,fontSize:11,fontWeight:800,letterSpacing:1,marginTop:16}}>CHALLENGES & HEALTH</div>
+        <Row T={T} label="Blind mode" hint="Letters more than 2 keys ahead are hidden"><Toggle T={T} value={!!prefs.blind} onChange={v=>setPref({blind:v})} /></Row>
+        <Row T={T} label="Sudden death" hint="Restart the run after this many mistakes"><Seg T={T} value={prefs.suddenDeath||0} onChange={v=>setPref({suddenDeath:v})} options={[[0,"Off"],[3,"3"],[5,"5"],[10,"10"]]} /></Row>
+        <Row T={T} label="Break reminder" hint="A gentle nudge after this many minutes of practice"><Seg T={T} value={prefs.breakEvery||0} onChange={v=>setPref({breakEvery:v})} options={[[0,"Off"],[15,"15m"],[30,"30m"],[45,"45m"]]} /></Row>
+
         <div style={{color:T.purple,fontSize:11,fontWeight:800,letterSpacing:1,marginTop:16}}>SOUND & EFFECTS</div>
         <Row T={T} label="Volume"><Seg T={T} value={prefs.volume} onChange={v=>setPref({volume:v})} options={[[0,"Off"],[0.35,"Low"],[0.7,"Med"],[1,"High"]]} /></Row>
         <Row T={T} label="Confetti"><Toggle T={T} value={prefs.confetti} onChange={v=>setPref({confetti:v})} /></Row>
