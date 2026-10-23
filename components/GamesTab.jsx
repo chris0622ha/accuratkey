@@ -1,10 +1,10 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, ALL_WORDS, WORD_CATEGORIES, CATEGORY_NAMES, POOL_WORD_RAIN, POOL_SURVIVAL, POOL_SPEED_BURST, POOL_SCRAMBLE, POOL_SUDDEN_DEATH, POOL_ZEN, POOL_LADDER_EASY, POOL_LADDER_MED, POOL_LADDER_HARD, POOL_LADDER_VHARD, POOL_ECHO, POOL_INVADERS, POOL_ASTEROID, POOL_TOWER, POOL_WORD_CHAIN, pickWords, pickByDiff } from "./WordDB";
-import { Sniper, Mirror, Flash, Echo, GhostWords, BossBattle } from "./GamesExtra";
+import { Sniper, Flash, Echo, GhostWords, BossBattle } from "./GamesExtra";
 import { GameIcon } from "./icons/UiIcons";
 import { HundredWords, Endurance, Roulette, WordChain, CategoryBlitz, VocabBuilder, TypingInvaders, AsteroidBelt, TowerDefense, MysteryWords, RhymeTime } from "./GamesNew2";
-import { SpeedTest, MissingLetters, Anagram, BrickBreaker, Synonyms, Antonyms, TugOfWar, WordBomb, MemoryEdit, WildcardWords, Freestyle } from "./GamesNew3";
+import { SpeedTest, Anagram, Synonyms, Antonyms, TugOfWar, WordBomb, MemoryEdit, WildcardWords, Freestyle } from "./GamesNew3";
 import { GAMES as BASE_GAMES } from "./GameCatalog";
 import { isGameLocked, lockMessage } from "../lib/locks";
 // Admin-locked games are treated exactly like unavailable ones (menu + direct URL).
@@ -807,7 +807,6 @@ const GAME_SETTINGS = {
   memoryedit:  [{ key:"changes", label:"Words Changed", opts:[1,2,3], default:2 }],
   wildcard:    [{ key:"difficulty", label:"Difficulty", opts:["easy","medium","hard"], default:"medium" }],
   sniper:      [{ key:"count",      label:"Words",      opts:[10,25,50], default:25 }, { key:"difficulty", label:"Difficulty", opts:["easy","medium","hard"], default:"medium" }],
-  mirror:      [{ key:"count",      label:"Words",      opts:[10,20,30], default:20 }],
   flash:       [{ key:"flashMs",    label:"Flash time", opts:[500,1000,1500,2000], default:1000, suffix:"ms" }, { key:"count", label:"Words", opts:[10,20,30], default:20 }],
   echo:        [{ key:"lives",      label:"Lives",      opts:[1,2,3,5], default:3 }],
   ghost:       [{ key:"visibleMs",  label:"Visible for", opts:[1500,2500,3500], default:2500, suffix:"ms" }, { key:"count", label:"Words", opts:[15,25,40], default:25 }],
@@ -824,9 +823,7 @@ const GAME_SETTINGS = {
   mystery:     [{ key:"difficulty", label:"Difficulty", opts:["easy","medium","hard"], default:"medium" }],
   rhyme:       [],
   speedtest:   [{ key:"duration", label:"Duration", opts:[1,2,5], default:1, suffix:" min" }, { key:"difficulty", label:"Words", opts:["easy","medium","hard"], default:"medium" }],
-  missing:     [{ key:"difficulty", label:"Difficulty", opts:["easy","medium","hard"], default:"medium" }, { key:"count", label:"Words", opts:[10,15,20,30], default:20 }, { key:"hideRate", label:"Hide amount", opts:["low","medium","high"], default:"medium" }],
   anagram:     [{ key:"difficulty", label:"Difficulty", opts:["easy","medium","hard"], default:"medium" }, { key:"count", label:"Words", opts:[10,15,20], default:20 }],
-  bricks:      [{ key:"rows", label:"Rows", opts:[3,4,5,6], default:4 }, { key:"cols", label:"Columns", opts:[4,5,6,8], default:6 }],
   synonyms:    [{ key:"count", label:"Words", opts:[10,20,30,"all"], default:20 }],
   antonyms:    [{ key:"count", label:"Words", opts:[10,20,30,"all"], default:20 }],
 };
@@ -1143,14 +1140,13 @@ export default function GamesTab({ T }) {
   const GAME_COMPONENTS = {
     rain: WordRain, survival: Survival, burst: SpeedBurst, scramble: WordScramble,
     suddendeath: SuddenDeath, ladder: SpeedLadder, tugofwar: TugOfWar, wordbomb: WordBomb, memoryedit: MemoryEdit, wildcard: WildcardWords, freestyle: Freestyle,
-    sniper: Sniper, mirror: Mirror, flash: Flash, echo: Echo,
+    sniper: Sniper, flash: Flash, echo: Echo,
     ghost: GhostWords, boss: BossBattle,
     hundred: HundredWords, endurance: Endurance, roulette: Roulette,
     wordchain: WordChain, blitz: CategoryBlitz, vocab: VocabBuilder,
     invaders: TypingInvaders, asteroid: AsteroidBelt,
     tower: TowerDefense, mystery: MysteryWords, rhyme: RhymeTime,
-    speedtest: SpeedTest, missing: MissingLetters, anagram: Anagram,
-    bricks: BrickBreaker,
+    speedtest: SpeedTest, anagram: Anagram,
     synonyms: Synonyms, antonyms: Antonyms,
   };
 

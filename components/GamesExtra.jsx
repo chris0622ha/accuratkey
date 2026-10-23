@@ -126,57 +126,6 @@ export function Sniper({ T, onBack, onSettings, settings = {} }) {
 }
 
 // ─── MIRROR ────────────────────────────────────────────────────────────────────
-export function Mirror({ T, onBack, onSettings, settings = {} }) {
-  const count = settings.count || 20;
-  const sv = gLoad("mirror");
-  const [words] = useState(()=> sv?.words || pickN(count, EASY_WORDS));
-  const [idx, setIdx] = useState(()=> sv?.idx || 0);
-  const [typed, setTyped] = useState("");
-  const [correct, setCorrect] = useState(()=> sv?.correct || 0);
-  const [done, setDone] = useState(false);
-  const [muted, setMuted] = useState(false);
-  const [start, setStart] = useState(()=> sv?.start || null);
-  const ref = useRef(null);
-  useEffect(()=>{ if(!done) gSave("mirror",{words,idx,correct,start}); },[idx,correct,done]);
-  const target = words[idx] || "";
-  const reversed = target.split("").reverse().join("");
-
-  const handleType = e => {
-    const v = e.target.value;
-    if (!start) setStart(Date.now());
-    setTyped(v);
-    if (v === target) {
-      if (!muted) playTone(880, "sine", 0.1, 0.2);
-      setCorrect(c=>c+1);
-      const ni = idx+1;
-      if (ni >= words.length) setDone(true);
-      else { setIdx(ni); setTyped(""); }
-    }
-  };
-
-  const wpm = start && done ? Math.round((words.length / ((Date.now()-start)/60000))) : 0;
-
-  if (done) return <ResultScreen emoji="🪞" title="Mirror Master!" color={T.purple} stats={[["Words",words.length],["WPM",wpm]]} onRetry={()=>{gClear("mirror");setIdx(0);setTyped("");setCorrect(0);setDone(false);setStart(null);setTimeout(()=>ref.current?.focus(),50);}} T={T}/>;
-
-  return (
-    <div>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}><BackBtn onBack={onBack} onSettings={onSettings} T={T}/><span style={{color:T.text,fontWeight:800,fontSize:20}}>🪞 Mirror</span><SoundBtn muted={muted} toggle={()=>setMuted(m=>!m)} T={T}/></div>
-      <div style={{background:T.purple+"11",border:`1px solid ${T.purple}33`,borderRadius:8,padding:"6px 12px",marginBottom:10,fontSize:11,color:T.purple,textAlign:"center"}}>Word appears backwards — type it forwards</div>
-      <div style={{textAlign:"center",marginBottom:8,color:T.muted,fontSize:13}}>{idx+1} / {words.length}</div>
-      <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"20px",marginBottom:8,fontFamily:"'JetBrains Mono',monospace",fontSize:28,textAlign:"center",letterSpacing:4,color:T.muted,opacity:0.7,userSelect:"none"}}>
-        {reversed}
-      </div>
-      <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:"16px",marginBottom:10,fontFamily:"'JetBrains Mono',monospace",fontSize:24,textAlign:"center",letterSpacing:3}}>
-        {target.split("").map((ch,i)=>(
-          <span key={i} style={{color:i<typed.length?(typed[i]===ch?"#34d399":"#ef4444"):i===typed.length?T.purple:T.faint}}>{ch}</span>
-        ))}
-      </div>
-      <input ref={ref} autoFocus value={typed} onChange={handleType} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
-        style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}/>
-    </div>
-  );
-}
-
 // ─── FLASH ─────────────────────────────────────────────────────────────────────
 export function Flash({ T, onBack, onSettings, settings = {} }) {
   const FLASH_MS = settings.flashMs || 1000;

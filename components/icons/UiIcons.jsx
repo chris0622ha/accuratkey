@@ -19,7 +19,6 @@ const GAME_GLYPHS = {
   tugofwar: (c, a) => <><path {...c} d="M2 12h20"/><path {...a} d="M9 8v8M15 8v8"/><circle {...a} cx="12" cy="12" r="2"/></>,
   wordbomb: (c, a) => <><circle {...c} cx="11" cy="14" r="7"/><path {...a} d="M15 8l3-3M18 5l1-2M18 5l2 1M18 5l2-1"/></>,
   sniper: (c, a) => <><circle {...c} cx="12" cy="12" r="8"/><circle {...a} cx="12" cy="12" r="3"/><path {...c} d="M12 1v5M12 18v5M1 12h5M18 12h5"/></>,
-  mirror: (c, a) => <><path {...c} d="M12 3v18"/><path {...a} d="M4 8l5 4-5 4zM20 8l-5 4 5 4z"/></>,
   flash: (c, a) => <><circle {...c} cx="12" cy="12" r="4"/><path {...a} d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></>,
   echo: (c, a) => <><circle {...c} cx="12" cy="12" r="2.5"/><path {...a} d="M7.5 7.5a6.4 6.4 0 0 0 0 9M16.5 7.5a6.4 6.4 0 0 1 0 9M4.5 4.5a10.6 10.6 0 0 0 0 15M19.5 4.5a10.6 10.6 0 0 1 0 15"/></>,
   memoryedit: (c, a) => <><path {...c} d="M12 4a4 4 0 0 0-7 2.5A3.5 3.5 0 0 0 5 13a3.5 3.5 0 0 0 4 5 3 3 0 0 0 3 2zM12 4a4 4 0 0 1 7 2.5A3.5 3.5 0 0 1 19 13a3.5 3.5 0 0 1-4 5 3 3 0 0 1-3 2z"/><path {...a} d="M12 4v16"/></>,
@@ -40,9 +39,7 @@ const GAME_GLYPHS = {
   rhyme: (c, a) => <><path {...c} d="M9 18V6l10-2v12"/><circle {...a} cx="6.5" cy="18" r="2.5"/><circle {...a} cx="16.5" cy="16" r="2.5"/></>,
   freestyle: (c, a) => <><path {...c} d="M4 20l1-4L17 4l3 3L8 19z"/><path {...a} d="M14 7l3 3M4 20h6"/></>,
   speedtest: (c, a) => <><circle {...c} cx="12" cy="13" r="8"/><path {...a} d="M12 13l4-4M12 3v2M9 2h6"/></>,
-  missing: (c, a) => <><path {...c} d="M3 19h5M16 19h5"/><path {...c} d="M5.5 15V6l2.500 0M18.500 15V6"/><path {...a} d="M10 19h4M12 15v-1M12 11.500a2 2 0 1 0-2-2"/></>,
   anagram: (c, a) => <><path {...c} d="M4 8h13l-3-3M20 16H7l3 3"/><path {...a} d="M4 12h16"/></>,
-  bricks: (c, a) => <><rect {...c} x="3" y="4" width="18" height="16" rx="2"/><path {...a} d="M3 9.3h18M3 14.6h18M9 4v5.3M15 9.3v5.3M9 14.6V20"/></>,
   synonyms: (c, a) => <><path {...c} d="M4 6h16M4 10h16"/><path {...a} d="M4 15h10M4 19h10M17 15l3 2-3 2"/></>,
   antonyms: (c, a) => <><path {...c} d="M4 8h13M14 4l4 4-4 4"/><path {...a} d="M20 16H7M10 12l-4 4 4 4"/></>,
 };

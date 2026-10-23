@@ -87,7 +87,7 @@ const TOPICS: Record<string, Topic> = {
       { heading: '⚡ Speed Games', body: 'Word Rain, Speed Burst, Speed Ladder, Speed Test. Words appear faster over time or on a timer. Pure WPM training. Great for breaking plateaus.' },
       { heading: '🎯 Accuracy Games', body: 'Survival, Sudden Death, Sniper Mode. One mistake costs a life or ends the game. Forces precision over speed. Best for accuracy under pressure.' },
       { heading: '🧠 Memory Games', body: 'Ghost Words, Echo Mode, Mirror Mode. Words appear briefly then disappear — you type from memory. Builds visual memory and forces touch typing (you can\'t look at the screen).' },
-      { heading: '🕹️ Arcade Games', body: 'Typing Invaders, Asteroid Belt, Brick Breaker, Boss Battle, Code Rain. Your typing controls a game element — shoot invaders, destroy asteroids, break bricks. Fun and motivating.' },
+      { heading: '🕹️ Arcade Games', body: 'Typing Invaders, Asteroid Belt, Boss Battle, Code Rain. Your typing controls a game element — shoot invaders, destroy asteroids, break bricks. Fun and motivating.' },
       { heading: '🧘 Chill Games', body: 'Zen Mode, Typewriter Story, Typing Journal, Poetry Mode. No timer, no pressure. Type at your own pace. Great for warm-ups, cool-downs, or just relaxing.' },
       { heading: '🔀 Puzzle Games', body: 'Word Scramble, Anagram, Missing Letters. Letters are scrambled or hidden. Tests word recognition speed and pattern matching.' },
       { heading: '📚 Educational Games', body: 'Vocab Builder, Synonyms, Antonyms. Learn vocabulary while typing.' },
