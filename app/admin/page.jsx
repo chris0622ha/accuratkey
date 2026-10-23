@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { onAuthStateChanged, signInWithPopup, signOut, signInWithEmailAndPassword, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth";
-import { getAdminAuth, getAdminDb, getLevelNameOverrides, deleteLevelOverride, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, adminSetProfileAdmin, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest, replyToFeedback, getFlaggedScores, getRestoreRequests, approveFlaggedScore, dismissFlaggedScore, resolveRestoreRequest, getCoppaAuditSummary, runCoppaCleanup } from "@/lib/firebase";
+import { getAdminAuth, getAdminDb, adminLookupUser, getLevelNameOverrides, deleteLevelOverride, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, adminSetProfileAdmin, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest, replyToFeedback, getFlaggedScores, getRestoreRequests, approveFlaggedScore, dismissFlaggedScore, resolveRestoreRequest, getCoppaAuditSummary, runCoppaCleanup } from "@/lib/firebase";
 import { KKey } from "@/components/icons/KKey";
 import LocksTab from "./LocksTab";
 import { applyLevelContent, applyLevelNames } from "@/lib/levelText";
@@ -9,6 +9,7 @@ import WordSetsTab from "./WordSetsTab";
 import ModerationTab from "./ModerationTab";
 import NotifyTab from "./NotifyTab";
 import EconomyTab from "./EconomyTab";
+import AdminNewsTab, { adminNewsUnseen } from "./AdminNewsTab";
 import GrowthCard from "./GrowthCard";
 import { adminListSubmissions, adminListRevertRequests } from "@/lib/wordsets";
 import RewardsTab from "./RewardsTab";
@@ -294,7 +295,7 @@ const st = {
   input:{ width:"100%",background:T.faint,border:`1px solid ${T.border}`,borderRadius:7,color:T.text,fontFamily:T.font,fontSize:12,padding:"8px 11px",outline:"none",boxSizing:"border-box" },
   label:{ color:T.muted,fontSize:9,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:5 },
 };
-const TABS = ["stats","users","bans","admins","keys","trials","warn","broadcast","levels","analytics","log","feedback","anticheat","birthday","locks","rewards","wordsets","moderation","notify","economy","settings"];
+const TABS = ["stats","users","bans","admins","keys","trials","warn","broadcast","levels","analytics","log","feedback","anticheat","birthday","locks","rewards","wordsets","moderation","notify","economy","adminnews","settings"];
 
 export default function AdminPage() {
   // adminDb is safe to create anywhere (no browser-only APIs). adminAuth uses
@@ -315,6 +316,9 @@ export default function AdminPage() {
   const [tab,setTab]=useState("stats");
   const [users,setUsers]=useState([]);
   const [logQ,setLogQ]=useState("");
+  const [usersFound,setUsersFound]=useState(null);
+  const [usersBusy,setUsersBusy]=useState(false);
+  const [newsTick,setNewsTick]=useState(0);
   const [tabBadges,setTabBadges]=useState({});
   const [usersLoaded,setUsersLoaded]=useState(false);
   const [bans,setBans]=useState([]);
@@ -538,7 +542,7 @@ export default function AdminPage() {
     if (banExpiry) { await tempBanUser(banTarget.uid, { ...data, expiresAt: new Date(banExpiry).toISOString() }, adminDb); }
     else { await banUser(banTarget.uid, data, adminDb); }
     await logActivity("ban", { adminUid:user.uid, targetUid:banTarget.uid, targetUsername:banTarget.username, detail:banReason+(banExpiry?` (expires ${banExpiry})` :"") }, adminDb);
-    flash(`Banned ${banTarget.username||banTarget.email}`);
+    flash(`Banned ${banTarget.username||banTarget.uid.slice(0,8)}`);
     setBanTarget(null); setBanReason(""); setBanExpiry(""); loadBansAndAdmins();
   }
 
@@ -603,7 +607,7 @@ export default function AdminPage() {
     if(!warnTarget||!warnMsg.trim()) return;
     await warnUser(warnTarget.uid,{message:warnMsg,warnedBy:user.uid},adminDb);
     await logActivity("warn",{adminUid:user.uid,targetUid:warnTarget.uid,targetUsername:warnTarget.username,detail:warnMsg},adminDb);
-    flash(`Warned ${warnTarget.username||warnTarget.email}`);
+    flash(`Warned ${warnTarget.username||warnTarget.uid.slice(0,8)}`);
     setWarnTarget(null); setWarnMsg("");
   }
 
@@ -640,11 +644,16 @@ export default function AdminPage() {
   }
 
   async function handleSearch() {
-    const raw = searchInput.trim().replace(/^@/,''); if(!raw) return;
+    if(!searchInput.trim()) return;
     setSearchLoading(true); setSearchResult(null);
-    let found = users.find(u=>u.uid===raw||u.username===raw.toLowerCase());
-    if(!found) { const r=await getUserByUsername(raw); if(r) found=users.find(u=>u.uid===r.uid)||r; }
+    let found=null; try{ found=await adminLookupUser(adminDb,searchInput); }catch(e){ flash("Lookup failed: "+(e.code||e.message)); }
     setSearchResult(found||"not_found"); setSearchLoading(false);
+  }
+  async function handleUsersSearch() {
+    if(!filter.trim()) return;
+    setUsersBusy(true); setUsersFound(null);
+    try{ const f=await adminLookupUser(adminDb,filter); setUsersFound(f||"none"); }catch(e){ flash("Lookup failed: "+(e.code||e.message)); }
+    setUsersBusy(false);
   }
 
   async function handleBroadcast() {
@@ -714,7 +723,7 @@ export default function AdminPage() {
           <>
             <div style={{color:T.danger,fontSize:12,textAlign:"center",maxWidth:280}}>None of your profiles have admin access.</div>
             <div style={{color:T.faint,fontSize:11}}>UID: {user.uid}</div>
-            <div style={{color:T.faint,fontSize:11}}>Signed in as: {user.email || "unknown"}</div>
+            <div style={{color:T.faint,fontSize:11}}>Signed in as an admin</div>
             <button onClick={()=>signOut(adminAuth)} style={{marginTop:8,padding:"9px 20px",borderRadius:8,border:`1px solid ${T.border}`,background:"transparent",color:T.text,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>
               Sign out
             </button>
@@ -743,7 +752,7 @@ export default function AdminPage() {
       <div style={{maxWidth:780,margin:"0 auto"}}>
 
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18,flexWrap:"wrap",gap:8}}>
-          <div><div style={{fontSize:15,fontWeight:700,color:T.purple}}>AccuratKey Admin</div><div style={{fontSize:10,color:T.muted}}>{user?.email}{chosenAdminProfile?` · ${chosenAdminProfile.name}`:""}</div></div>
+          <div><div style={{fontSize:15,fontWeight:700,color:T.purple}}>AccuratKey Admin</div><div style={{fontSize:10,color:T.muted}}>{chosenAdminProfile?` · ${chosenAdminProfile.name}`:""}</div></div>
           <div style={{display:"flex",gap:10,alignItems:"center"}}>
             <button onClick={()=>{setShowSwitcher(true);setSwitcherMode("menu");setSwitchErr("");}} style={{background:"none",border:`1px solid ${T.border}`,borderRadius:7,color:T.muted,fontSize:11,padding:"5px 10px",cursor:"pointer",fontFamily:"inherit"}}>Switch account/profile</button>
             <a href="/game" style={{color:T.muted,fontSize:11,textDecoration:"none"}}>← Back</a>
@@ -816,8 +825,9 @@ export default function AdminPage() {
         <div style={{display:"flex",gap:4,marginBottom:16,background:T.card,borderRadius:10,padding:4,border:`1px solid ${T.border}`,flexWrap:"wrap"}}>
           {TABS.map(t=>(
             <button key={t} onClick={()=>setTab(t)} style={st.tab(tab===t)}>
-              {t==="locks"?"🔒 Locks":t==="rewards"?"🎁 Rewards":t==="wordsets"?"📝 Word sets":t==="moderation"?"🛡 Moderation":t==="notify"?"📣 Notify":t==="economy"?"💰 Economy": t==="stats"?"📊 Stats":t==="users"?`👥 Users (${users.length})`:t==="bans"?`🔨 Bans (${bans.length})`:t==="admins"?`🔑 Admins`:t==="keys"?"💰 Keys":t==="trials"?"⏱ Trials":t==="warn"?"⚠️ Warn":t==="broadcast"?"📢 Broadcast":t==="levels"?"🗺️ Levels":t==="analytics"?"📈 Analytics":t==="log"?"📋 Log":t==="feedback"?"💬 Feedback":t==="anticheat"?`🚩 Anti-cheat (${flaggedScores.filter(f=>f.status==="pending").length+restoreRequests.filter(r=>r.status==="pending").length})`:t==="birthday"?`🎂 Birthdays (${bdayReqList.length})`:t==="settings"?"⚙️ Settings":""}
+              {t==="locks"?"🔒 Locks":t==="rewards"?"🎁 Rewards":t==="wordsets"?"📝 Word sets":t==="moderation"?"🛡 Moderation":t==="notify"?"📣 Notify":t==="economy"?"💰 Economy":t==="adminnews"?"🆕 Admin news": t==="stats"?"📊 Stats":t==="users"?"👥 Users":t==="bans"?`🔨 Bans (${bans.length})`:t==="admins"?`🔑 Admins`:t==="keys"?"💰 Keys":t==="trials"?"⏱ Trials":t==="warn"?"⚠️ Warn":t==="broadcast"?"📢 Broadcast":t==="levels"?"🗺️ Levels":t==="analytics"?"📈 Analytics":t==="log"?"📋 Log":t==="feedback"?"💬 Feedback":t==="anticheat"?`🚩 Anti-cheat (${flaggedScores.filter(f=>f.status==="pending").length+restoreRequests.filter(r=>r.status==="pending").length})`:t==="birthday"?`🎂 Birthdays (${bdayReqList.length})`:t==="settings"?"⚙️ Settings":""}
             {tabBadges[t]>0&&<span style={{marginLeft:5,background:"#ef4444",color:"#fff",borderRadius:99,fontSize:9,fontWeight:900,padding:"1px 6px"}}>{tabBadges[t]}</span>}
+            {t==="adminnews"&&newsTick>=0&&adminNewsUnseen()&&<span style={{marginLeft:5,width:8,height:8,borderRadius:4,background:"#ef4444",display:"inline-block"}}/>}
             </button>
           ))}
         </div>
@@ -897,13 +907,13 @@ export default function AdminPage() {
         {/* USERS */}
         {!loading&&tab==="users"&&(
           <div>
-            <input value={filter} onChange={e=>{ setFilter(e.target.value); if(e.target.value.trim()) loadAllUsersIfNeeded(); }} placeholder="Filter — type a username, email, or UID to load matching accounts..." style={{...st.input,marginBottom:10}} />
-            {filtered.length===0&&<div style={{color:T.muted,textAlign:"center",padding:24,fontSize:12}}>No users</div>}
-            {!filter.trim() ? (
-              <div style={{color:T.muted,fontSize:12,padding:24,textAlign:"center",lineHeight:1.6}}>Type a username, email, or UID above to look up an account. There's no default list of every user here on purpose.</div>
-            ) : filtered.length === 0 ? (
-              <div style={{color:T.muted,fontSize:12,padding:24,textAlign:"center"}}>No matching accounts.</div>
-            ) : filtered.map(u=><UserRow key={u.uid} u={u} bannedUids={bannedUids} adminUids={adminUids} currentUid={user.uid} onBan={setBanTarget} onUnban={handleUnban} onSkip={setSkipTarget} onNote={openNote} onWarn={setWarnTarget} onSessions={openSessions} />)}
+            <div style={{display:"flex",gap:8,marginBottom:10}}>
+              <input value={filter} onChange={e=>setFilter(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleUsersSearch()} placeholder="Type a @username or UID" style={{...st.input,flex:1}} />
+              <button onClick={handleUsersSearch} disabled={usersBusy||!filter.trim()} style={st.btn()}>{usersBusy?"…":"Look up"}</button>
+            </div>
+            {!usersFound&&<div style={{color:T.muted,fontSize:12,padding:24,textAlign:"center",lineHeight:1.6}}>Look up one account by @username or UID. There is no list of every user on purpose, and emails are never shown.</div>}
+            {usersFound==="none"&&<div style={{color:T.muted,fontSize:12,padding:24,textAlign:"center"}}>No account found for that username or UID.</div>}
+            {usersFound&&usersFound!=="none"&&<UserRow u={usersFound} bannedUids={bannedUids} adminUids={adminUids} currentUid={user.uid} onBan={setBanTarget} onUnban={handleUnban} onSkip={setSkipTarget} onNote={openNote} onWarn={setWarnTarget} onSessions={openSessions} />}
           </div>
         )}
 
@@ -941,7 +951,7 @@ export default function AdminPage() {
               <div key={a.uid} style={st.card}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                   <div>
-                    <div style={{color:T.purple,fontWeight:700,fontSize:12}}>{u?.username?`@${u.username} · `:""}{u?.email||a.uid}</div>
+                    <div style={{color:T.purple,fontWeight:700,fontSize:12}}>{u?.username?`@${u.username} · `:""}{a.uid}</div>
                     <div style={{color:T.faint,fontSize:9,marginTop:2}}>{a.uid}</div>
                   </div>
                   {a.uid!==user?.uid?<button onClick={()=>handleRevoke(a.uid,u?.username)} style={st.btn(T.danger,T.danger+"22")}>Revoke</button>:<span style={{color:T.faint,fontSize:11}}>you</span>}
@@ -1076,6 +1086,7 @@ export default function AdminPage() {
 
         {tab==="rewards"&&<RewardsTab T={T} st={st} adminDb={adminDb} uid={user.uid} flash={flash} levels={LEVELS.filter(l=>l.id>0)} />}
         {tab==="wordsets"&&<WordSetsTab T={T} st={st} adminDb={adminDb} flash={flash} />}
+        {tab==="adminnews"&&<AdminNewsTab T={T} st={st} onSeen={()=>setNewsTick(n=>n+1)} />}
         {tab==="economy"&&<EconomyTab T={T} st={st} adminDb={adminDb} uid={user.uid} flash={flash} />}
         {tab==="notify"&&<NotifyTab T={T} st={st} adminDb={adminDb} uid={user.uid} flash={flash} />}
         {tab==="moderation"&&<ModerationTab T={T} st={st} adminDb={adminDb} uid={user.uid} flash={flash} />}
@@ -1371,7 +1382,7 @@ export default function AdminPage() {
       {banTarget&&(
         <Modal onClose={()=>{setBanTarget(null);setBanReason("");setBanExpiry("");}}>
           <div style={{color:T.danger,fontWeight:700,fontSize:14,marginBottom:4}}>Ban user</div>
-          <div style={{color:T.muted,fontSize:11,marginBottom:14}}>{banTarget.username?`@${banTarget.username} · `:""}{banTarget.email}</div>
+          <div style={{color:T.muted,fontSize:11,marginBottom:14}}>{banTarget.username?`@${banTarget.username}`:banTarget.uid}</div>
           <div style={st.label}>Reason</div>
           <input value={banReason} onChange={e=>setBanReason(e.target.value)} placeholder="Reason..." style={{...st.input,marginBottom:10}} autoFocus />
           <div style={st.label}>Expiry date (optional — leave blank for permanent)</div>
@@ -1387,7 +1398,7 @@ export default function AdminPage() {
       {skipTarget&&(
         <Modal onClose={()=>setSkipTarget(null)}>
           <div style={{fontWeight:700,fontSize:14,color:T.text,marginBottom:4}}>Skip to Level</div>
-          <div style={{color:T.muted,fontSize:11,marginBottom:14}}>{skipTarget.username?`@${skipTarget.username}`:skipTarget.email}</div>
+          <div style={{color:T.muted,fontSize:11,marginBottom:14}}>{skipTarget.username?`@${skipTarget.username}`:skipTarget.uid}</div>
           {skipTarget.profiles?.map(p=>(
             <div key={p.id} style={{background:T.faint,borderRadius:8,padding:"10px 12px",marginBottom:8}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
@@ -1407,7 +1418,7 @@ export default function AdminPage() {
       {noteTarget&&(
         <Modal onClose={()=>setNoteTarget(null)}>
           <div style={{fontWeight:700,fontSize:14,color:T.text,marginBottom:4}}>Admin Note</div>
-          <div style={{color:T.muted,fontSize:11,marginBottom:14}}>{noteTarget.username?`@${noteTarget.username}`:noteTarget.email}</div>
+          <div style={{color:T.muted,fontSize:11,marginBottom:14}}>{noteTarget.username?`@${noteTarget.username}`:noteTarget.uid}</div>
           <textarea value={noteText} onChange={e=>setNoteText(e.target.value)} rows={4} placeholder="Notes..." style={{...st.input,resize:"vertical",marginBottom:14}} />
           <div style={{display:"flex",gap:8}}>
             <button onClick={handleSaveNote} style={{...st.btn(),flex:1,padding:"10px"}}>Save</button>
@@ -1420,7 +1431,7 @@ export default function AdminPage() {
       {warnTarget&&(
         <Modal onClose={()=>{setWarnTarget(null);setWarnMsg("");}}>
           <div style={{fontWeight:700,fontSize:14,color:T.warn,marginBottom:4}}>⚠️ Warn User</div>
-          <div style={{color:T.muted,fontSize:11,marginBottom:14}}>{warnTarget.username?`@${warnTarget.username}`:warnTarget.email}</div>
+          <div style={{color:T.muted,fontSize:11,marginBottom:14}}>{warnTarget.username?`@${warnTarget.username}`:warnTarget.uid}</div>
           <div style={st.label}>Warning message (shown as popup)</div>
           <textarea value={warnMsg} onChange={e=>setWarnMsg(e.target.value)} rows={3} placeholder="Your account has received a warning for..." style={{...st.input,resize:"vertical",marginBottom:14}} autoFocus />
           <div style={{display:"flex",gap:8}}>
@@ -1434,7 +1445,7 @@ export default function AdminPage() {
       {sessionTarget&&(
         <Modal onClose={()=>{setSessionTarget(null);setSessionData([]);}}>
           <div style={{fontWeight:700,fontSize:14,color:T.text,marginBottom:4}}>Session History</div>
-          <div style={{color:T.muted,fontSize:11,marginBottom:14}}>{sessionTarget.username?`@${sessionTarget.username}`:sessionTarget.email}</div>
+          <div style={{color:T.muted,fontSize:11,marginBottom:14}}>{sessionTarget.username?`@${sessionTarget.username}`:sessionTarget.uid}</div>
           {sessionLoading&&<div style={{color:T.muted,fontSize:12,padding:16,textAlign:"center"}}>Loading...</div>}
           {!sessionLoading&&sessionData.length===0&&<div style={{color:T.muted,fontSize:12,textAlign:"center",padding:16}}>No sessions</div>}
           <div style={{maxHeight:360,overflowY:"auto"}}>
