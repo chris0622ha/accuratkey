@@ -7,6 +7,7 @@ import WordSetsPanel from "./WordSetsPanel";
 import { isFeatureLocked } from "@/lib/locks";
 import { SYN_ANT } from "./SynAntDB";
 import { wordOfDay } from "@/lib/features";
+import { getGlobalSite } from "@/lib/siteConfig";
 import { getHistory, dayCounts, dayKey } from "@/lib/stats";
 
 export default function PracticeLab({ T, profile, onStart, onClose, canSubmit }) {
@@ -15,7 +16,7 @@ export default function PracticeLab({ T, profile, onStart, onClose, canSubmit })
   const community = !isFeatureLocked("wordsets");
   const weak = useMemo(() => weakKeys(profile?.id), [profile?.id]);
   const missed = useMemo(() => Object.keys(getMissedWords(profile?.id)), [profile?.id]);
-  const wod = useMemo(() => wordOfDay(SYN_ANT), []);
+  const wod = useMemo(() => { const f = getGlobalSite().wotd; const e = f && SYN_ANT.find(x => x.word === f && x.syn?.length); return e || wordOfDay(SYN_ANT); }, []);
   const planKey = `ak_plan_${profile?.id || "guest"}_${dayKey()}`;
   const [done, setDone] = useState(() => { try { return JSON.parse(localStorage.getItem(planKey) || "[]"); } catch { return []; } });
   const hist = useMemo(() => getHistory(profile?.id), [profile?.id]);

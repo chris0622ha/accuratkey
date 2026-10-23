@@ -9,6 +9,7 @@ import { FOUNDATIONS_ICONS, PRECISION_FLOW_ICONS, WORD_POWER_ICONS, KEYBOARD_MAS
 import { formatKeys } from "@/lib/format";
 import { CertificateModal } from "./Certificates";
 import { AICoach } from "./AICoach";
+import { getSite, setGlobalSite, bannerActive } from "../lib/siteConfig";
 import { setGlobalEconomy, getGlobalEconomy, keysMultiplier, setGlobalLocks, setGlobalRewards, isFeatureLocked, lockMessage } from "../lib/locks";
 import { setClaimedToday, markSetClaimed, requestSetRevert } from "../lib/wordsets";
 import { getThemeFx } from "@/lib/themeFx";
@@ -1017,6 +1018,9 @@ export default function AccuratKey() {
   const [showNotifs, setShowNotifs] = useState(false);
   const [showReplay, setShowReplay] = useState(false);
   const [eco, setEco] = useState(null);
+  const [siteCfg, setSiteCfg] = useState({});
+  const [bannerGone, setBannerGone] = useState(() => { try { return localStorage.getItem("ak_banner_gone") || ""; } catch { return ""; } });
+  const [needRefresh, setNeedRefresh] = useState(false);
   const [breakNudge, setBreakNudge] = useState(false);
   const replayRef = useRef([]);
   const mistakesRef = useRef(0);
@@ -1359,7 +1363,10 @@ export default function AccuratKey() {
   const annItems = (user && activeProfile && !isProfileRestricted(activeProfile)) ? anns
     .filter(a => (!a.expiresAt || a.expiresAt > Date.now()) && !annGone[a.id] && (a.audience === "all" || (a.audience === "admins" && viewerAdmin) || (a.audience === "users" && !viewerAdmin)))
     .map(a => ({ id: "ann_" + a.id, annId: a.id, type: "announcement", title: a.title, body: a.body, level: a.level, createdAt: { toDate: () => new Date(a.at) }, read: !!annSeen[a.id], local: true })) : [];
-  const allNotifs = [...notifs, ...annItems].sort((x, y) => tms(y.createdAt) - tms(x.createdAt));
+  const w = siteCfg.welcome;
+  const welcomeItem = (w && w.enabled && w.body && user && activeProfile && !isProfileRestricted(activeProfile) && !annGone["welcome" + (w.at || 0)])
+    ? [{ id: "ann_welcome", annId: "welcome" + (w.at || 0), type: "announcement", title: w.title || "Welcome!", body: w.body, createdAt: { toDate: () => new Date(w.at || 0) }, read: !!annSeen["welcome" + (w.at || 0)], local: true }] : [];
+  const allNotifs = [...notifs, ...annItems, ...welcomeItem].sort((x, y) => tms(y.createdAt) - tms(x.createdAt));
   const urgentPending = allNotifs.find(n => !n.read && n.level === "urgent");
   const hasImportant = allNotifs.some(n => !n.read && (n.level === "important" || n.level === "urgent"));
   const saveAnn = (k, uidv, obj) => { try { localStorage.setItem(k + uidv, JSON.stringify(obj)); } catch {} };
@@ -1375,6 +1382,7 @@ export default function AccuratKey() {
     getLocks().then(l => { setGlobalLocks(l); setLocksLoaded(n => n + 1); });
     getRewards().then(r => setGlobalRewards(r));
     getEconomy().then(e => { setGlobalEconomy(e); setEco(e); }).catch(() => {});
+    getSite().then(c => { setGlobalSite(c); setSiteCfg(c); try { if (c.version) { const seen = localStorage.getItem("ak_site_ver"); if (!seen) localStorage.setItem("ak_site_ver", String(c.version)); else if (seen !== String(c.version)) setNeedRefresh(true); } } catch {} }).catch(() => {});
     getMaintenanceMode().then(m => {
       setMaintenance(m);
       // Don't immediately block here - we don't know who's logged in yet,
@@ -4318,6 +4326,17 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
           </div>
         )}
 
+        {bannerActive(siteCfg.banner) && bannerGone !== String(siteCfg.banner.id || siteCfg.banner.text) && (
+          <div style={{position:"fixed",bottom:12,left:"50%",transform:"translateX(-50%)",zIndex:9998,maxWidth:"92vw",background:(siteCfg.banner.color||"#a78bfa")+"22",border:`1px solid ${siteCfg.banner.color||"#a78bfa"}`,color:siteCfg.banner.color||"#a78bfa",borderRadius:12,padding:"8px 34px 8px 14px",fontSize:12,fontWeight:700,backdropFilter:"blur(6px)"}}>
+            {siteCfg.banner.text}{siteCfg.banner.link && /^https:\/\//.test(siteCfg.banner.link) && <> · <a href={siteCfg.banner.link} target="_blank" rel="noopener noreferrer" style={{color:"inherit",textDecoration:"underline"}}>Learn more</a></>}
+            <button aria-label="Dismiss" onClick={()=>{ const id=String(siteCfg.banner.id||siteCfg.banner.text); setBannerGone(id); try{localStorage.setItem("ak_banner_gone",id);}catch{} }} style={{position:"absolute",top:4,right:8,background:"transparent",border:"none",color:"inherit",fontSize:16,cursor:"pointer"}}>×</button>
+          </div>
+        )}
+        {needRefresh && (
+          <div style={{position:"fixed",top:10,right:10,zIndex:9999,background:"#34d39922",border:"1px solid #34d399",color:"#34d399",borderRadius:12,padding:"8px 12px",fontSize:12,fontWeight:700}}>
+            New update available <button onClick={()=>{ try{localStorage.setItem("ak_site_ver",String(siteCfg.version));}catch{} location.reload(); }} style={{marginLeft:8,padding:"4px 10px",borderRadius:8,border:"none",background:"#34d399",color:"#000",fontWeight:800,cursor:"pointer",fontSize:11}}>Refresh</button>
+          </div>
+        )}
         {eco && keysMultiplier() > 1 && (
           <div style={{position:"fixed",top:10,left:"50%",transform:"translateX(-50%)",background:"#fbbf2422",border:"1px solid #fbbf24",color:"#fbbf24",borderRadius:99,padding:"6px 16px",fontSize:12,fontWeight:800,zIndex:1001,whiteSpace:"nowrap"}}>
             {getGlobalEconomy().name || "Keys event"}: {keysMultiplier()}x Keys{getGlobalEconomy().endsAt ? ` until ${new Date(getGlobalEconomy().endsAt).toLocaleString("en-US",{timeZone:"America/New_York",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})} ET` : ""}

@@ -13,6 +13,7 @@ import AdminNewsTab, { adminNewsUnseen } from "./AdminNewsTab";
 import GrowthCard from "./GrowthCard";
 import { adminListSubmissions, adminListRevertRequests } from "@/lib/wordsets";
 import RewardsTab from "./RewardsTab";
+import ToolsTab, { readAdminPrefs } from "./ToolsTab";
 const LEVELS = [
   { id:1,  name:"Home Row Hero",         emoji:"🏠", wpmTarget:12,  accuracy:75, color:"#10b981", words:["ffjj","fjfj","asdf","jkl;","add","ask","fall","glad","flask","lads","fads","salads"] },
   { id:2,  name:"Top Row Climber",       emoji:"🧗", wpmTarget:16,  accuracy:75, color:"#3b82f6", words:["quit","wrap","type","your","power","tower","write","pretty","quite","report"] },
@@ -295,7 +296,7 @@ const st = {
   input:{ width:"100%",background:T.faint,border:`1px solid ${T.border}`,borderRadius:7,color:T.text,fontFamily:T.font,fontSize:12,padding:"8px 11px",outline:"none",boxSizing:"border-box" },
   label:{ color:T.muted,fontSize:9,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:5 },
 };
-const TABS = ["stats","users","bans","admins","keys","trials","warn","broadcast","levels","analytics","log","feedback","anticheat","birthday","locks","rewards","wordsets","moderation","notify","economy","adminnews","settings"];
+const TABS = ["stats","users","bans","admins","keys","trials","warn","broadcast","levels","analytics","log","feedback","anticheat","birthday","locks","rewards","wordsets","moderation","notify","economy","adminnews","tools","settings"];
 
 export default function AdminPage() {
   // adminDb is safe to create anywhere (no browser-only APIs). adminAuth uses
@@ -314,6 +315,26 @@ export default function AdminPage() {
   const [adminProfiles,setAdminProfiles]=useState(null); // this account's profiles, once fetched
   const [chosenAdminProfile,setChosenAdminProfile]=useState(null); // the profile picked to act as
   const [tab,setTab]=useState("stats");
+  const [prefs,setPrefs]=useState({idle:30,pinned:[]});
+  const [paletteOpen,setPaletteOpen]=useState(false);
+  const [paletteQ,setPaletteQ]=useState("");
+  const orderedTabs=[...prefs.pinned.filter(t=>TABS.includes(t)),...TABS.filter(t=>!prefs.pinned.includes(t))];
+  useEffect(()=>{ setPrefs(readAdminPrefs()); },[tab]);
+  useEffect(()=>{
+    if(!adminOk) return;
+    const onKey=(e)=>{
+      if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){ e.preventDefault(); setPaletteQ(""); setPaletteOpen(o=>!o); return; }
+      if(e.key==="Escape") setPaletteOpen(false);
+      if(e.altKey&&/^[1-9]$/.test(e.key)){ const t=orderedTabs[Number(e.key)-1]; if(t){ e.preventDefault(); setTab(t); } }
+    };
+    window.addEventListener("keydown",onKey); return ()=>window.removeEventListener("keydown",onKey);
+  });
+  useEffect(()=>{
+    if(!adminOk||!prefs.idle||!adminAuth) return;
+    let timer; const reset=()=>{ clearTimeout(timer); timer=setTimeout(()=>{ signOut(adminAuth).catch(()=>{}); },prefs.idle*60000); };
+    const evs=["mousemove","keydown","click","touchstart","scroll"]; evs.forEach(e=>window.addEventListener(e,reset,{passive:true})); reset();
+    return ()=>{ clearTimeout(timer); evs.forEach(e=>window.removeEventListener(e,reset)); };
+  },[adminOk,prefs.idle]);
   const [users,setUsers]=useState([]);
   const [logQ,setLogQ]=useState("");
   const [usersFound,setUsersFound]=useState(null);
@@ -821,11 +842,24 @@ export default function AdminPage() {
         )}
         {searchResult==="not_found" && <div style={{color:T.danger,fontSize:12,marginBottom:12}}>Not found</div>}
 
+        {paletteOpen&&(
+          <div onClick={()=>setPaletteOpen(false)} style={{position:"fixed",inset:0,background:"#000a",zIndex:10000,display:"flex",justifyContent:"center",alignItems:"flex-start",paddingTop:"12vh"}}>
+            <div onClick={e=>e.stopPropagation()} style={{width:"min(480px,92vw)",background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:12}}>
+              <input autoFocus value={paletteQ} onChange={e=>setPaletteQ(e.target.value)} placeholder="Go to a tab, or type @username / UID to look up" style={st.input}
+                onKeyDown={e=>{ if(e.key==="Enter"){ const m=orderedTabs.filter(t=>t.includes(paletteQ.toLowerCase())); if(paletteQ&&!paletteQ.startsWith("@")&&m.length){ setTab(m[0]); setPaletteOpen(false); } else if(paletteQ.trim()){ const q=paletteQ.trim(); setPaletteOpen(false); setSearchInput(q); setSearchLoading(true); setSearchResult(null); adminLookupUser(adminDb,q).catch(()=>null).then(f=>{ setSearchResult(f||"not_found"); setSearchLoading(false); window.scrollTo(0,0); }); } } }} />
+              <div style={{marginTop:8,maxHeight:260,overflow:"auto"}}>
+                {orderedTabs.filter(t=>t.includes(paletteQ.toLowerCase().replace(/^@/,"")) && !paletteQ.startsWith("@")).map((t,i)=>(<button key={t} onClick={()=>{ setTab(t); setPaletteOpen(false); }} style={{display:"block",width:"100%",textAlign:"left",padding:"7px 10px",background:"transparent",border:"none",color:T.text,fontSize:12,cursor:"pointer",borderRadius:6}}>{i<9?`Alt+${i+1}  `:""}{t}</button>))}
+                {paletteQ.trim()&&<div style={{color:T.muted,fontSize:11,padding:"6px 10px"}}>Press Enter to {paletteQ.startsWith("@")?"look up ":"open the first match, or look up "}“{paletteQ.trim()}”</div>}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Tabs */}
         <div style={{display:"flex",gap:4,marginBottom:16,background:T.card,borderRadius:10,padding:4,border:`1px solid ${T.border}`,flexWrap:"wrap"}}>
-          {TABS.map(t=>(
+          {orderedTabs.map(t=>(
             <button key={t} onClick={()=>setTab(t)} style={st.tab(tab===t)}>
-              {t==="locks"?"🔒 Locks":t==="rewards"?"🎁 Rewards":t==="wordsets"?"📝 Word sets":t==="moderation"?"🛡 Moderation":t==="notify"?"📣 Notify":t==="economy"?"💰 Economy":t==="adminnews"?"🆕 Admin news": t==="stats"?"📊 Stats":t==="users"?"👥 Users":t==="bans"?`🔨 Bans (${bans.length})`:t==="admins"?`🔑 Admins`:t==="keys"?"💰 Keys":t==="trials"?"⏱ Trials":t==="warn"?"⚠️ Warn":t==="broadcast"?"📢 Broadcast":t==="levels"?"🗺️ Levels":t==="analytics"?"📈 Analytics":t==="log"?"📋 Log":t==="feedback"?"💬 Feedback":t==="anticheat"?`🚩 Anti-cheat (${flaggedScores.filter(f=>f.status==="pending").length+restoreRequests.filter(r=>r.status==="pending").length})`:t==="birthday"?`🎂 Birthdays (${bdayReqList.length})`:t==="settings"?"⚙️ Settings":""}
+              {t==="locks"?"🔒 Locks":t==="rewards"?"🎁 Rewards":t==="wordsets"?"📝 Word sets":t==="moderation"?"🛡 Moderation":t==="notify"?"📣 Notify":t==="economy"?"💰 Economy":t==="adminnews"?"🆕 Admin news":t==="tools"?"🧰 Tools": t==="stats"?"📊 Stats":t==="users"?"👥 Users":t==="bans"?`🔨 Bans (${bans.length})`:t==="admins"?`🔑 Admins`:t==="keys"?"💰 Keys":t==="trials"?"⏱ Trials":t==="warn"?"⚠️ Warn":t==="broadcast"?"📢 Broadcast":t==="levels"?"🗺️ Levels":t==="analytics"?"📈 Analytics":t==="log"?"📋 Log":t==="feedback"?"💬 Feedback":t==="anticheat"?`🚩 Anti-cheat (${flaggedScores.filter(f=>f.status==="pending").length+restoreRequests.filter(r=>r.status==="pending").length})`:t==="birthday"?`🎂 Birthdays (${bdayReqList.length})`:t==="settings"?"⚙️ Settings":""}
             {tabBadges[t]>0&&<span style={{marginLeft:5,background:"#ef4444",color:"#fff",borderRadius:99,fontSize:9,fontWeight:900,padding:"1px 6px"}}>{tabBadges[t]}</span>}
             {t==="adminnews"&&newsTick>=0&&adminNewsUnseen()&&<span style={{marginLeft:5,width:8,height:8,borderRadius:4,background:"#ef4444",display:"inline-block"}}/>}
             </button>
@@ -1086,6 +1120,7 @@ export default function AdminPage() {
 
         {tab==="rewards"&&<RewardsTab T={T} st={st} adminDb={adminDb} uid={user.uid} flash={flash} levels={LEVELS.filter(l=>l.id>0)} />}
         {tab==="wordsets"&&<WordSetsTab T={T} st={st} adminDb={adminDb} flash={flash} />}
+        {tab==="tools"&&<ToolsTab T={T} st={st} adminDb={adminDb} uid={user.uid} flash={flash} levels={LEVELS.filter(l=>l.id>0)} tabs={TABS} />}
         {tab==="adminnews"&&<AdminNewsTab T={T} st={st} onSeen={()=>setNewsTick(n=>n+1)} />}
         {tab==="economy"&&<EconomyTab T={T} st={st} adminDb={adminDb} uid={user.uid} flash={flash} />}
         {tab==="notify"&&<NotifyTab T={T} st={st} adminDb={adminDb} uid={user.uid} flash={flash} />}

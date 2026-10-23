@@ -7,6 +7,7 @@ import { HundredWords, Endurance, Roulette, WordChain, CategoryBlitz, VocabBuild
 import { SpeedTest, Anagram, Synonyms, Antonyms, TugOfWar, WordBomb, MemoryEdit, WildcardWords, Freestyle } from "./GamesNew3";
 import { GAMES as BASE_GAMES } from "./GameCatalog";
 import { isGameLocked, lockMessage } from "../lib/locks";
+import { getGlobalSite } from "../lib/siteConfig";
 // Admin-locked games are treated exactly like unavailable ones (menu + direct URL).
 const getGames = () => BASE_GAMES.map(g => isGameLocked(g.id) ? { ...g, unavailable: true, desc: "Locked by admin - " + lockMessage() } : g);
 // Word pools
@@ -1192,7 +1193,7 @@ export default function GamesTab({ T }) {
           <div key={g.id} style={{ display:"flex", alignItems:"center", gap:14, padding:"14px 16px", borderRadius:12, border:`1px solid ${T.border}`, background:T.card, fontFamily:T.font, opacity:g.unavailable?0.5:1 }}>
             <span style={{ fontSize:30, cursor:g.unavailable?"default":"pointer" }} onClick={()=>!g.unavailable&&enterGame(g.id)}><GameIcon id={g.id} cat={g.cat} size={32} /></span>
             <div style={{flex:1,minWidth:0,cursor:g.unavailable?"default":"pointer"}} onClick={()=>!g.unavailable&&enterGame(g.id)}>
-              <div style={{ color:T.text, fontWeight:700, fontSize:15 }}>{g.name}</div>
+              <div style={{ color:T.text, fontWeight:700, fontSize:15 }}>{g.name}{getGlobalSite().spotlight===g.id && <span style={{marginLeft:8,fontSize:10,fontWeight:800,color:"#fbbf24",background:"#fbbf2422",border:"1px solid #fbbf24",borderRadius:99,padding:"1px 8px"}}>⭐ Spotlight</span>}</div>
               <div style={{ color:g.unavailable?"#ef4444":T.muted, fontSize:12, marginTop:2 }}>{g.desc}</div>
               <div style={{ marginTop:4, fontSize:10, color:"#555" }}>{CATEGORIES.find(c=>c.id===g.cat)?.label}</div>
             </div>
