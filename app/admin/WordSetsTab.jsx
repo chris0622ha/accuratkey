@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { moderate } from "@/lib/moderation";
 import { getModeration } from "@/lib/firebase";
-import { adminListSubmissions, adminListPublic, adminApprove, adminReject, adminSetBadge, adminSetReward, adminDeleteSet, parseWords, validateSubmission, BADGES, badgeInfo } from "@/lib/wordsets";
+import { adminListSubmissions, adminListPublic, adminApprove, adminReject, adminSetBadge, adminSetReward, adminDeleteSet, parseWords, validateSubmission, BADGES, badgeInfo, BADGE_REWARD, adminSeedStarters } from "@/lib/wordsets";
 
 export default function WordSetsTab({ T, st, adminDb, flash }) {
   const [subs, setSubs] = useState([]);
@@ -43,8 +43,8 @@ export default function WordSetsTab({ T, st, adminDb, flash }) {
             <textarea value={text} onChange={e => setEdit(x => ({ ...x, [s.id]: e.target.value }))} rows={4} style={{ ...st.input, resize: "vertical", marginBottom: 6 }} />
             <div style={{ color: err ? "#ef4444" : T.muted, fontSize: 11, marginBottom: 8 }}>{err || `${words.length} words — you can edit the list before approving`}</div>
             <div style={{ marginBottom: 8 }}><BadgePick value={pick[s.id] || null} onChange={b => setPick(x => ({ ...x, [s.id]: b }))} /></div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, color: T.muted, fontSize: 11 }}>Keys reward (0-50, once a day per player):
-              <input value={rew[s.id] ?? ""} onChange={e => setRew(x => ({ ...x, [s.id]: e.target.value.replace(/\D/g, "").slice(0, 2) }))} placeholder="0" inputMode="numeric" style={{ ...st.input, width: 64, textAlign: "right" }} /></div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, color: T.muted, fontSize: 11 }}>Keys reward (0-50, once a day per player; picking a badge suggests one):
+              <input value={rew[s.id] ?? (pick[s.id] ? String(BADGE_REWARD[pick[s.id]] || "") : "")} onChange={e => setRew(x => ({ ...x, [s.id]: e.target.value.replace(/\D/g, "").slice(0, 2) }))} placeholder="0" inputMode="numeric" style={{ ...st.input, width: 64, textAlign: "right" }} /></div>
             <input value={why[s.id] || ""} onChange={e => setWhy(x => ({ ...x, [s.id]: e.target.value.slice(0, 140) }))} placeholder="Reason if rejecting (optional, shown to the user)" style={{ ...st.input, marginBottom: 8 }} />
             <div style={{ display: "flex", gap: 8 }}>
               <button disabled={busy || !!err} onClick={() => run(() => adminApprove(adminDb, s, { title: s.title, words, badge: pick[s.id] || null, rewardKeys: rew[s.id] }), "Approved & published")} style={{ ...st.btn("#fff", "#10b981"), flex: 1, padding: 10, opacity: err ? .5 : 1 }}>Approve</button>
@@ -53,6 +53,7 @@ export default function WordSetsTab({ T, st, adminDb, flash }) {
           </div>
         );
       })}
+      <button disabled={busy} onClick={() => run(async () => { const n = await adminSeedStarters(adminDb); flash(n ? `Added ${n} starter set(s)` : "Starter sets already exist"); return true; }, "Done")} style={{ ...st.btn("#fff", T.purple), marginTop: 14 }}>Add 1 starter set per rating</button>
       <div style={{ ...st.label, marginTop: 18 }}>Published ({pub.length})</div>
       {pub.map(p => (
         <div key={p.id} style={st.card}>
