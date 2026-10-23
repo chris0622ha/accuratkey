@@ -1164,6 +1164,7 @@ export function Freestyle({ T, onBack, onSettings, settings={} }) {
 
   const handleKey = e => {
     if (e.key === "Enter") { e.preventDefault(); submitLine(); }
+    else if (e.key === "\\") { e.preventDefault(); setTyped(""); }
   };
 
   const reset = () => {
@@ -1210,7 +1211,7 @@ export function Freestyle({ T, onBack, onSettings, settings={} }) {
           value={typed}
           onChange={handleType}
           onKeyDown={handleKey}
-          placeholder={`Write line ${lineIdx+1}... (Enter to submit)`}
+          placeholder={`Write line ${lineIdx+1}... (Enter to submit, \\ to clear)`}
           rows={1}
           style={{width:"100%",background:"transparent",border:"none",color:T.text,fontFamily:"'JetBrains Mono',monospace",fontSize:15,lineHeight:1.8,outline:"none",resize:"none"}}
         />

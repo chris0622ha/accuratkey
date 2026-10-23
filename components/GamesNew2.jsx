@@ -817,7 +817,7 @@ export function MadLibs({ T, onBack, onSettings, settings={} }) {
     ):(
       <>
         <div style={{color:T.faint,fontSize:11,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>{currentField?.label} ({fieldIdx+1}/{template.fields.length})</div>
-        <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();if(!typed.trim())return;if(!muted)playTone(660,"sine",.08,.15);setAnswers(a=>({...a,[currentField.key]:typed.trim()}));const ni=fieldIdx+1;if(ni>=template.fields.length)setDone(true);else{setFieldIdx(ni);setTyped("");}}}} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder={`Type a ${currentField?.label?.toLowerCase()}...`}
+        <input ref={ref} autoFocus value={typed} onChange={handleType} onKeyDown={e=>{if(e.key==="\\"){e.preventDefault();setTyped("");return;}if(e.key==="Enter"){e.preventDefault();if(!typed.trim())return;if(!muted)playTone(660,"sine",.08,.15);setAnswers(a=>({...a,[currentField.key]:typed.trim()}));const ni=fieldIdx+1;if(ni>=template.fields.length)setDone(true);else{setFieldIdx(ni);setTyped("");}}}} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} placeholder={`Type a ${currentField?.label?.toLowerCase()}...`}
           style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontFamily:T.font,fontSize:16,padding:"12px 14px",outline:"none",boxSizing:"border-box"}}/>
         <div style={{color:T.faint,fontSize:11,marginTop:4,textAlign:"center"}}>Press Enter to confirm</div>
       </>
