@@ -1013,7 +1013,6 @@ export default function AccuratKey() {
   const [showPractice, setShowPractice] = useState(false);
   const [notifs, setNotifs] = useState([]);
   const [showNotifs, setShowNotifs] = useState(false);
-  useEffect(() => { if (!user?.uid || !activeProfile || isProfileRestricted(activeProfile)) return; const iv = setInterval(() => getAllNotifications(user.uid).then(n => setNotifs(p => n.map(x => ({ ...x, wasUnread: p.find(q => q.id === x.id)?.wasUnread })))).catch(() => {}), 60000); return () => clearInterval(iv); }, [user?.uid, activeProfile?.id]);
   const practicePoolRef = useRef([]);
   const [practiceName, setPracticeName] = useState("Practice");
   const keyAttemptsRef = useRef({});
@@ -2200,6 +2199,41 @@ export default function AccuratKey() {
     }
   };
 
+  // ── Live refresh: keep config, notifications, challenges, friend requests, history and profile current without a page reload ──
+  const liveRef = useRef({});
+  liveRef.current = { user, activeProfile, screen };
+  const refreshLive = React.useCallback(() => {
+    const { user: u, activeProfile: p, screen: sc } = liveRef.current;
+    getLocks().then(l => { setGlobalLocks(l); setLocksLoaded(n => n + 1); }).catch(() => {});
+    getRewards().then(setGlobalRewards).catch(() => {});
+    getBroadcast().then(b => setBroadcast(b?.active && b?.message ? b : null)).catch(() => {});
+    getLevelOverrides().then(setLevelOverrides).catch(() => {});
+    if (!u || !p || p.isGuest || isProfileRestricted(p)) return;
+    getPendingNotifications(u.uid).then(n => { const fr = n.filter(x => x.type === "feedback_reply"); if (fr.length) { setPendingNotifications(fr); setActiveNotification(cur => cur || fr[0]); } }).catch(() => {});
+    getAllNotifications(u.uid).then(n => setNotifs(prev => n.map(x => ({ ...x, wasUnread: prev.find(q => q.id === x.id)?.wasUnread })))).catch(() => {});
+    if (canUse(p, "challenges")) getPendingChallenges(u.uid).then(setChallenges).catch(() => {});
+    if (canUse(p, "friends")) getIncomingRequests(u.uid).then(setFriendReqs).catch(() => {});
+    getRecentSessions(u.uid, p.id, 10).then(setSessions).catch(() => {});
+    if (sc !== "game") getProfile(u.uid, p.id).then(fresh => {
+      if (!fresh) return;
+      setActiveProfile(prev => {
+        if (!prev || prev.id !== fresh.id) return prev;
+        const keys = ["keys", "highestUnlocked", "currentLevel", "streak", "activeTheme", "activeSound", "activeFont"];
+        const changed = keys.some(k => prev[k] !== fresh[k]) || JSON.stringify(prev.features || null) !== JSON.stringify(fresh.features || null);
+        return changed ? { ...prev, ...fresh } : prev;
+      });
+    }).catch(() => {});
+  }, []);
+  useEffect(() => {
+    if (!user?.uid || !activeProfile?.id) return;
+    refreshLive();
+    const onVis = () => { if (!document.hidden) refreshLive(); };
+    document.addEventListener("visibilitychange", onVis); window.addEventListener("focus", onVis);
+    const iv = setInterval(() => { if (!document.hidden && liveRef.current.screen !== "game") refreshLive(); }, 60000);
+    return () => { document.removeEventListener("visibilitychange", onVis); window.removeEventListener("focus", onVis); clearInterval(iv); };
+  }, [user?.uid, activeProfile?.id]);
+  useEffect(() => { if (screen === "result") { const t = setTimeout(refreshLive, 1500); return () => clearTimeout(t); } }, [screen]);
+
   const AvatarImg = ({ profile, size = 36, style = {} }) => {
     if (!profile) return null;
     return profile.photoURL
@@ -2377,7 +2411,7 @@ const Confetti = ({ sectionName }) => {
 const Nav = () => (<>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
       <div>
-        <span style={{fontWeight:800,fontSize:fs(16),color:T.text,fontFamily:T.font}}><span style={{color:T.purple}}>Accurat</span>Key</span>
+        <button onClick={()=>{ setNavMenu(false); if(activeProfile){ setActiveTabWithUrl("map"); if(screen!=="levelMap") setScreenWithUrl("levelMap"); window.scrollTo(0,0); } else { window.location.href="/"; } }} aria-label="Home" title="Home" style={{background:"none",border:"none",padding:0,cursor:"pointer",fontWeight:800,fontSize:fs(16),color:T.text,fontFamily:T.font}}><span style={{color:T.purple}}>Accurat</span>Key</button>
         {currentUsername && <div style={{fontSize:9,color:T.muted,marginTop:1}}>@{currentUsername}</div>}
       </div>
       {activeProfile && (() => {
