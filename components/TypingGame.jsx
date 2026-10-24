@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import TypingTest from "./TypingTest";
 import GamesTab from "./GamesTab";
 import { TugOfWar } from "./GamesNew3";
+import TugMulti from "./TugMulti";
 import { KKey } from "./icons/KKey";
 import { FOUNDATIONS_ICONS, PRECISION_FLOW_ICONS, WORD_POWER_ICONS, KEYBOARD_MASTERY_ICONS, SPEED_SURGE_ICONS, FREE_RUN_ICONS, CENTURY_CLUB_ICONS, ENDURANCE_ICONS, LITERATURE_ICONS, MACHINE_MODE_ICONS, LEGEND_TIER_ICONS, SPEED_SURGE_II_ICONS, IconStar } from "./icons/LevelIcons";
 import { formatKeys } from "@/lib/format";
@@ -817,7 +818,7 @@ export default function AccuratKey() {
   const setActiveTabWithUrl = React.useCallback((tab) => {
     setActiveTab(tab);
     if (tab === "test") setTestMountKey(k => k + 1);
-    const tabUrls = { games: "/game", map: "/game/map", daily: "/game/daily", test: "/game/test", sets: "/game/sets" };
+    const tabUrls = { games: "/game", map: "/game/map", daily: "/game/daily", test: "/game/test", sets: "/game/sets", multi: "/game" };
     const url = tabUrls[tab] || "/game";
     if (typeof window !== "undefined" && window.location.pathname !== url) {
       // Use history.replaceState directly, same as setScreenWithUrl below —
@@ -3426,6 +3427,13 @@ const Nav = () => (<>
                   <rect x="11" y="26" width="18" height="4" rx="2" fill={active?"#fff":"currentColor"} opacity={active?0.7:0.4}/>
                 </svg>
               ), canUse(activeProfile,"test")],
+              ["multi", (active) => (
+                <svg width={active?22:18} height={active?22:18} viewBox="0 0 40 40" fill="none">
+                  <circle cx="12" cy="13" r="4.5" stroke={active?"#fff":"currentColor"} strokeWidth="2" opacity={active?0.9:0.55}/>
+                  <circle cx="28" cy="13" r="4.5" stroke={active?"#fff":"currentColor"} strokeWidth="2" opacity={active?0.9:0.55}/>
+                  <path d="M4 31c0-4.5 3.6-7.5 8-7.5s8 3 8 7.5M20 31c0-4.5 3.6-7.5 8-7.5s8 3 8 7.5" stroke={active?"#fff":"currentColor"} strokeWidth="2" strokeLinecap="round" opacity={active?0.9:0.55}/>
+                </svg>
+              ), !!(user && activeProfile && !isProfileRestricted(activeProfile))],
               ["sets", (active) => (
                 // Sets — three stacked word cards
                 <svg width={active?22:18} height={active?22:18} viewBox="0 0 40 40" fill="none">
@@ -3444,13 +3452,14 @@ const Nav = () => (<>
               }}>
                 {renderIcon(activeTab===k)}
                 <span style={{fontSize:9,fontWeight:700,letterSpacing:0.5,textTransform:"uppercase",fontFamily:"monospace",opacity:activeTab===k?0.9:0.6}}>
-                  {k==="games"?"Games":k==="map"?"Map":k==="daily"?"Daily":k==="sets"?"Sets":"Test"}
+                  {k==="games"?"Games":k==="map"?"Map":k==="daily"?"Daily":k==="sets"?"Sets":k==="multi"?"Multi":"Test"}
                 </span>
               </button>
             ))}
           </div>
 
           {activeTab==="games" && <GamesTab T={T} />}
+          {activeTab==="multi" && user && activeProfile && !isProfileRestricted(activeProfile) && <TugMulti T={T} user={user} />}
 
           {activeTab==="sets" && !isFeatureLocked("wordsets") && <div style={{padding:"4px 0 20px"}}>
             <div style={{color:T.text,fontWeight:800,fontSize:18,marginBottom:4}}>Community word sets</div>
