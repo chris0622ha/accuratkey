@@ -18,7 +18,7 @@ const tsMs = (t) => (t?.toDate ? t.toDate().getTime() : typeof t === "number" ? 
 const fmt = (t) => { const m = tsMs(t); return m ? new Date(m).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : ""; };
 
 export default function ToolsTab({ T, st, adminDb, uid, flash, levels, tabs }) {
-  const [sub, setSub] = useState("site");
+  const [sub, setSub] = useState(() => { try { const v = localStorage.getItem("ak_tools_sub"); if (v) { localStorage.removeItem("ak_tools_sub"); return v; } } catch {} return "site"; });
   const last = useRef("");
   const flash2 = (m) => { last.current = /^(failed|couldn't|could not|not found|enter |pick |add |link must|nothing|not an)|failed/i.test(String(m)) ? "bad" : "ok"; flash(m); };
   const p = { T, st, adminDb, uid, flash: flash2 };

@@ -15,7 +15,7 @@ import { adminListSubmissions, adminListRevertRequests } from "@/lib/wordsets";
 import RewardsTab from "./RewardsTab";
 import ToolsTab, { readAdminPrefs } from "./ToolsTab";
 import { HomeStrip } from "./ToolsMore";
-import { parseCommand, COMMAND_HELP } from "@/lib/adminCommands";
+import CommandBar from "./CommandBar";
 const LEVELS = [
   { id:1,  name:"Home Row Hero",         emoji:"🏠", wpmTarget:12,  accuracy:75, color:"#10b981", words:["ffjj","fjfj","asdf","jkl;","add","ask","fall","glad","flask","lads","fads","salads"] },
   { id:2,  name:"Top Row Climber",       emoji:"🧗", wpmTarget:16,  accuracy:75, color:"#3b82f6", words:["quit","wrap","type","your","power","tower","write","pretty","quite","report"] },
@@ -330,8 +330,9 @@ export default function AdminPage() {
   useEffect(()=>{
     if(!adminOk) return;
     const onKey=(e)=>{
-      if((e.ctrlKey||e.metaKey)&&(e.key.toLowerCase()==="k"||e.key==="/")){ e.preventDefault(); setPaletteQ(""); setPaletteOpen(o=>!o); return; }
-      if(e.key==="Escape") setPaletteOpen(false);
+      if((e.ctrlKey||e.metaKey)&&(e.key.toLowerCase()==="k"||e.key==="/")){ e.preventDefault(); setPaletteOpen(o=>!o); return; }
+      const tg=e.target&&e.target.tagName; const typing=tg==="INPUT"||tg==="TEXTAREA"||tg==="SELECT"||(e.target&&e.target.isContentEditable);
+      if(e.key==="/"&&!typing&&!e.altKey&&!e.ctrlKey&&!e.metaKey&&!paletteOpen){ e.preventDefault(); setPaletteOpen(true); return; }
       if(e.altKey&&/^[1-9]$/.test(e.key)){ const t=orderedTabs[Number(e.key)-1]; if(t){ e.preventDefault(); setTab(t); } }
     };
     window.addEventListener("keydown",onKey); return ()=>window.removeEventListener("keydown",onKey);
@@ -850,21 +851,7 @@ export default function AdminPage() {
         )}
         {searchResult==="not_found" && <div style={{color:T.danger,fontSize:12,marginBottom:12}}>Not found</div>}
 
-        {paletteOpen&&(
-          <div onClick={()=>setPaletteOpen(false)} style={{position:"fixed",inset:0,background:"#000a",zIndex:10000,display:"flex",justifyContent:"center",alignItems:"flex-start",paddingTop:"12vh"}}>
-            <div onClick={e=>e.stopPropagation()} style={{width:"min(480px,92vw)",background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:12}}>
-              <input autoFocus value={paletteQ} onChange={e=>setPaletteQ(e.target.value)} placeholder="Command (event x2 keys until 9pm), tab name, or @username" style={st.input}
-                onKeyDown={e=>{ if(e.key==="Enter"){ const cmd=parseCommand(paletteQ,Date.now()); if(cmd.isCommand){ e.preventDefault(); if(!cmd.ok){ flash(cmd.error); return; } if(/^\/?(ban|admin|broadcast|announce|maintenance\s+on|sets\s+(remove|approve)|level\s+\d+\s+reset|keys\s+\S+\s+=)/i.test(paletteQ.trim())&&armedQ!==paletteQ){ setArmedQ(paletteQ); return; } setArmedQ(""); setPaletteOpen(false); cmd.run({adminDb,uid:user.uid,setTab,tabs:TABS}).then(r=>flash(r.msg)).catch(er=>flash("Failed: "+(er.message||er.code||"error"))); return; } const m=orderedTabs.filter(t=>t.includes(paletteQ.toLowerCase())); if(paletteQ&&!paletteQ.startsWith("@")&&m.length){ setTab(m[0]); setPaletteOpen(false); } else if(paletteQ.trim()){ const q=paletteQ.trim(); setPaletteOpen(false); try{ const r=JSON.parse(localStorage.getItem("ak_admin_recent")||"[]").filter(x=>x!==q); localStorage.setItem("ak_admin_recent",JSON.stringify([q,...r].slice(0,6))); }catch{} setSearchInput(q); setSearchLoading(true); setSearchResult(null); adminLookupUser(adminDb,q).catch(()=>null).then(f=>{ setSearchResult(f||"not_found"); setSearchLoading(false); window.scrollTo(0,0); }); } } }} />
-              <div style={{marginTop:8,maxHeight:260,overflow:"auto"}}>
-                {(()=>{ const c=parseCommand(paletteQ,Date.now()); if(!c.isCommand) return null; return <div style={{padding:"8px 10px",marginTop:4,borderRadius:8,border:`1px solid ${c.ok?"#10b981":T.danger}`,color:c.ok?"#10b981":T.danger,fontSize:12,fontWeight:700}}>{c.ok?(armedQ===paletteQ?`⚠ Press Enter again to confirm: ${c.summary}`:`↵ ${c.summary}`):`✕ ${c.error}`}</div>; })()}
-                {!paletteQ.trim()&&<div style={{padding:"6px 10px",fontSize:11,color:T.muted,lineHeight:1.6}}><b style={{color:T.text}}>Commands</b> (press Enter to run)<br/>{COMMAND_HELP.map(([c,d])=><div key={c}><span style={{fontFamily:"monospace",color:T.purple,cursor:"pointer"}} onClick={()=>setPaletteQ(c)}>{c}</span> — {d}</div>)}</div>}
-                {!parseCommand(paletteQ,Date.now()).isCommand&&orderedTabs.filter(t=>t.includes(paletteQ.toLowerCase().replace(/^@/,"")) && !paletteQ.startsWith("@")).map((t,i)=>(<button key={t} onClick={()=>{ setTab(t); setPaletteOpen(false); }} style={{display:"block",width:"100%",textAlign:"left",padding:"7px 10px",background:"transparent",border:"none",color:T.text,fontSize:12,cursor:"pointer",borderRadius:6}}>{i<9?`Alt+${i+1}  `:""}{t}</button>))}
-                {!paletteQ.trim()&&(()=>{ let r=[]; try{ r=JSON.parse(localStorage.getItem("ak_admin_recent")||"[]"); }catch{} return r.length>0&&<div style={{color:T.muted,fontSize:10,padding:"6px 10px 2px"}}>Recent lookups: {r.map(x=><button key={x} onClick={()=>setPaletteQ(x)} style={{marginRight:6,background:T.faint,border:"none",color:T.text,borderRadius:6,padding:"2px 8px",fontSize:11,cursor:"pointer"}}>{x}</button>)}</div>; })()}
-                {paletteQ.trim()&&<div style={{color:T.muted,fontSize:11,padding:"6px 10px"}}>Press Enter to {paletteQ.startsWith("@")?"look up ":"open the first match, or look up "}“{paletteQ.trim()}”</div>}
-              </div>
-            </div>
-          </div>
-        )}
+        <CommandBar open={paletteOpen} setOpen={setPaletteOpen} adminDb={adminDb} uid={user.uid} setTab={setTab} tabs={TABS} onLookup={(q)=>{ setSearchInput(q); setSearchLoading(true); setSearchResult(null); adminLookupUser(adminDb,q).catch(()=>null).then(f=>{ setSearchResult(f||"not_found"); setSearchLoading(false); window.scrollTo(0,0); }); }} />
 
         {/* Tabs */}
         <div style={{display:"flex",gap:4,marginBottom:16,background:T.card,borderRadius:10,padding:4,border:`1px solid ${T.border}`,flexWrap:"wrap"}}>
