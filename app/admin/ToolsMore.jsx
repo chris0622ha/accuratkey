@@ -237,7 +237,7 @@ export function HomeStrip({ T, st, adminDb }) {
 }
 
 // ── Text editor: click any words on a live preview of the site and type what they should say ──
-import { setTextRules, getOriginalText } from "@/lib/textOverrides";
+import { setTextRules, getOriginalText, isUiText } from "@/lib/textOverrides";
 const PREVIEW_PAGES = [["/", "Home"], ["/game", "Game"], ["/games", "Games"], ["/shop", "Shop"], ["/help", "Help"], ["/privacy", "Privacy"]];
 export function TextPanel({ T, st, adminDb, uid, flash }) {
   const [saved, setSaved] = useState(null);
@@ -261,7 +261,7 @@ export function TextPanel({ T, st, adminDb, uid, flash }) {
       const style = d.createElement("style"); style.textContent = ".ak-hl{outline:2px dashed #a78bfa!important;outline-offset:2px;cursor:pointer!important}"; d.head.appendChild(style);
       let hl = null;
       const clear = () => { if (hl) { hl.classList.remove("ak-hl"); hl = null; } };
-      const own = (el) => [...el.childNodes].some(c => c.nodeType === 3 && c.data.trim());
+      const own = (el) => [...el.childNodes].some(c => c.nodeType === 3 && c.data.trim() && isUiText(c));
       d.addEventListener("mouseover", e => { if (!editRef.current) return clear(); const el = e.target; if (el && el.nodeType === 1 && own(el)) { clear(); hl = el; el.classList.add("ak-hl"); } }, true);
       d.addEventListener("mouseout", clear, true);
       d.addEventListener("click", e => {
@@ -271,6 +271,7 @@ export function TextPanel({ T, st, adminDb, uid, flash }) {
         if (r && r.startContainer.nodeType === 3 && r.startContainer.data.trim()) n = r.startContainer;
         else n = [...e.target.childNodes].find(c => c.nodeType === 3 && c.data.trim());
         if (!n) return flash("No text there. Click right on the words");
+        if (!isUiText(n) && !(getOriginalText(n) !== n.data)) return flash("That text changes by itself (game words, names, scores), so it can't be edited. Menus, buttons and headings can.");
         const orig = getOriginalText(n).trim(); if (!orig) return;
         const cur = rulesRef.current.find(x => x.from === orig);
         setSel(orig); setVal(cur ? cur.to : orig); setSub(!!cur?.sub);
@@ -295,14 +296,14 @@ export function TextPanel({ T, st, adminDb, uid, flash }) {
   };
   if (!saved) return <div style={{ color: T.muted }}>Loading…</div>;
   return (<>
-    <Card T={T} st={st} title="Change any text" hint="1. Pick a page.  2. Click the words you want to change.  3. Type the new words, then Publish. The preview updates as you type.">
+    <Card T={T} st={st} title="Change any text" hint="1. Pick a page.  2. Click a menu, button or heading.  3. Type the new words, then Publish. Only fixed interface text can be changed. Game words, daily challenge words, names and scores can't.">
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginBottom: 8 }}>
         {PREVIEW_PAGES.map(([p, l]) => <button key={p} onClick={() => { setPage(p); setSel(null); }} style={st.tab(page === p)}>{l}</button>)}
         <span style={{ flex: 1 }} />
         <button onClick={() => setEdit(true)} style={st.tab(edit)}>✏️ Edit text</button>
         <button onClick={() => setEdit(false)} style={st.tab(!edit)}>👆 Browse</button>
       </div>
-      <div style={{ color: T.muted, fontSize: 11, marginBottom: 8 }}>{edit ? "Click any words in the preview to change them." : "Browse mode: click around to open menus or other screens, then switch back to Edit text."}</div>
+      <div style={{ color: T.muted, fontSize: 11, marginBottom: 8 }}>{edit ? "Click a menu, button or heading in the preview to change it." : "Browse mode: click around to open menus or other screens, then switch back to Edit text."}</div>
       {sel != null && (
         <div style={{ background: T.card2 || T.card, border: `1px solid ${T.purple}`, borderRadius: 10, padding: 10, marginBottom: 8 }}>
           <div style={{ color: T.muted, fontSize: 11, marginBottom: 4 }}>Changing: <b style={{ color: T.text }}>{sel}</b></div>
@@ -312,7 +313,6 @@ export function TextPanel({ T, st, adminDb, uid, flash }) {
             <button style={st.btn()} onClick={() => { setVal(sel); }}>Undo change</button>
             <button style={st.btn()} onClick={() => setSel(null)}>Cancel</button>
           </div>
-          <label style={{ color: T.muted, fontSize: 11, display: "block", marginTop: 6 }}><input type="checkbox" checked={sub} onChange={e => setSub(e.target.checked)} /> Also change these words when they appear inside longer text</label>
         </div>
       )}
       <iframe ref={frame} key={page} name="ak-text-preview" src={page} onLoad={onLoad} title="Site preview" style={{ width: "100%", height: 460, border: `1px solid ${T.border}`, borderRadius: 10, background: "#0a0a0f" }} />
