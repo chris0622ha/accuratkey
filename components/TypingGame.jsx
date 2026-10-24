@@ -10,6 +10,7 @@ import { formatKeys } from "@/lib/format";
 import { CertificateModal } from "./Certificates";
 import { AICoach } from "./AICoach";
 import { getSite, setGlobalSite, bannerActive } from "../lib/siteConfig";
+import NoticeDock from "./NoticeDock";
 import { setGlobalEconomy, getGlobalEconomy, keysMultiplier, setGlobalLocks, setGlobalRewards, isFeatureLocked, lockMessage } from "../lib/locks";
 import { setClaimedToday, markSetClaimed, requestSetRevert } from "../lib/wordsets";
 import { getThemeFx } from "@/lib/themeFx";
@@ -4326,27 +4327,12 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
           </div>
         )}
 
-        {bannerActive(siteCfg.banner) && bannerGone !== String(siteCfg.banner.id || siteCfg.banner.text) && (
-          <div style={{position:"fixed",bottom:12,left:"50%",transform:"translateX(-50%)",zIndex:9998,maxWidth:"92vw",background:(siteCfg.banner.color||"#a78bfa")+"22",border:`1px solid ${siteCfg.banner.color||"#a78bfa"}`,color:siteCfg.banner.color||"#a78bfa",borderRadius:12,padding:"8px 34px 8px 14px",fontSize:12,fontWeight:700,backdropFilter:"blur(6px)"}}>
-            {siteCfg.banner.text}{siteCfg.banner.link && /^https:\/\//.test(siteCfg.banner.link) && <> · <a href={siteCfg.banner.link} target="_blank" rel="noopener noreferrer" style={{color:"inherit",textDecoration:"underline"}}>Learn more</a></>}
-            <button aria-label="Dismiss" onClick={()=>{ const id=String(siteCfg.banner.id||siteCfg.banner.text); setBannerGone(id); try{localStorage.setItem("ak_banner_gone",id);}catch{} }} style={{position:"absolute",top:4,right:8,background:"transparent",border:"none",color:"inherit",fontSize:16,cursor:"pointer"}}>×</button>
-          </div>
-        )}
-        {siteCfg.planned && siteCfg.planned.at > Date.now() && siteCfg.planned.at - Date.now() < 86400000 && (
-          <div style={{position:"fixed",bottom:56,left:"50%",transform:"translateX(-50%)",zIndex:9998,maxWidth:"92vw",background:"#f59e0b22",border:"1px solid #f59e0b",color:"#f59e0b",borderRadius:12,padding:"8px 14px",fontSize:12,fontWeight:700}}>
-            🛠 Planned maintenance {new Date(siteCfg.planned.at).toLocaleString("en-US",{timeZone:"America/New_York",weekday:"short",hour:"numeric",minute:"2-digit"})} ET{siteCfg.planned.text ? ` — ${siteCfg.planned.text}` : ""}
-          </div>
-        )}
-        {needRefresh && (
-          <div style={{position:"fixed",top:10,right:10,zIndex:9999,background:"#34d39922",border:"1px solid #34d399",color:"#34d399",borderRadius:12,padding:"8px 12px",fontSize:12,fontWeight:700}}>
-            New update available <button onClick={()=>{ try{localStorage.setItem("ak_site_ver",String(siteCfg.version));}catch{} location.reload(); }} style={{marginLeft:8,padding:"4px 10px",borderRadius:8,border:"none",background:"#34d399",color:"#000",fontWeight:800,cursor:"pointer",fontSize:11}}>Refresh</button>
-          </div>
-        )}
-        {eco && keysMultiplier() > 1 && (
-          <div style={{position:"fixed",top:10,left:"50%",transform:"translateX(-50%)",background:"#fbbf2422",border:"1px solid #fbbf24",color:"#fbbf24",borderRadius:99,padding:"6px 16px",fontSize:12,fontWeight:800,zIndex:1001,whiteSpace:"nowrap"}}>
-            {getGlobalEconomy().name || "Keys event"}: {keysMultiplier()}x Keys{getGlobalEconomy().endsAt ? ` until ${new Date(getGlobalEconomy().endsAt).toLocaleString("en-US",{timeZone:"America/New_York",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})} ET` : ""}
-          </div>
-        )}
+        <NoticeDock items={[
+          ...(eco && keysMultiplier() > 1 ? [{ id: "eco", icon: "🎉", color: "#fbbf24", text: `${getGlobalEconomy().name || "Keys event"}: ${keysMultiplier()}x Keys${getGlobalEconomy().endsAt ? ` until ${new Date(getGlobalEconomy().endsAt).toLocaleString("en-US",{timeZone:"America/New_York",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})} ET` : ""}` }] : []),
+          ...(bannerActive(siteCfg.banner) && bannerGone !== String(siteCfg.banner.id || siteCfg.banner.text) ? [{ id: "banner" + (siteCfg.banner.id || ""), icon: "📢", color: siteCfg.banner.color || "#a78bfa", text: siteCfg.banner.text, link: siteCfg.banner.link, onDismiss: () => { const id = String(siteCfg.banner.id || siteCfg.banner.text); setBannerGone(id); try { localStorage.setItem("ak_banner_gone", id); } catch {} } }] : []),
+          ...(siteCfg.planned && siteCfg.planned.at > Date.now() && siteCfg.planned.at - Date.now() < 86400000 ? [{ id: "planned", icon: "🛠", color: "#f59e0b", text: `Maintenance ${new Date(siteCfg.planned.at).toLocaleString("en-US",{timeZone:"America/New_York",weekday:"short",hour:"numeric",minute:"2-digit"})} ET${siteCfg.planned.text ? " — " + siteCfg.planned.text : ""}` }] : []),
+          ...(needRefresh ? [{ id: "refresh", icon: "⬆", color: "#34d399", text: "New update available", action: { label: "Refresh", run: () => { try { localStorage.setItem("ak_site_ver", String(siteCfg.version)); } catch {} location.reload(); } } }] : []),
+        ]} />
         {/* Broadcast overlay - no dismiss, shows everywhere */}
         {broadcast && (
           <div style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:"#1e1e30",border:`1px solid ${T.purple}`,borderRadius:12,padding:"12px 20px",zIndex:1002,maxWidth:480,width:"90%",display:"flex",alignItems:"center",gap:12,pointerEvents:"none"}}>
