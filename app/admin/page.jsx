@@ -13,9 +13,9 @@ import AdminNewsTab, { adminNewsUnseen } from "./AdminNewsTab";
 import GrowthCard from "./GrowthCard";
 import { adminListSubmissions, adminListRevertRequests } from "@/lib/wordsets";
 import RewardsTab from "./RewardsTab";
+import { ADMIN_TABS } from "@/lib/adminTabs";
 import ToolsTab, { readAdminPrefs } from "./ToolsTab";
 import { HomeStrip } from "./ToolsMore";
-import CommandBar from "./CommandBar";
 const LEVELS = [
   { id:1,  name:"Home Row Hero",         emoji:"🏠", wpmTarget:12,  accuracy:75, color:"#10b981", words:["ffjj","fjfj","asdf","jkl;","add","ask","fall","glad","flask","lads","fads","salads"] },
   { id:2,  name:"Top Row Climber",       emoji:"🧗", wpmTarget:16,  accuracy:75, color:"#3b82f6", words:["quit","wrap","type","your","power","tower","write","pretty","quite","report"] },
@@ -298,7 +298,7 @@ const st = {
   input:{ width:"100%",background:T.faint,border:`1px solid ${T.border}`,borderRadius:7,color:T.text,fontFamily:T.font,fontSize:12,padding:"8px 11px",outline:"none",boxSizing:"border-box" },
   label:{ color:T.muted,fontSize:9,letterSpacing:2,textTransform:"uppercase",display:"block",marginBottom:5 },
 };
-const TABS = ["stats","users","bans","admins","keys","trials","warn","broadcast","levels","analytics","log","feedback","anticheat","birthday","locks","rewards","wordsets","moderation","notify","economy","adminnews","tools","settings"];
+const TABS = ADMIN_TABS;
 
 export default function AdminPage() {
   // adminDb is safe to create anywhere (no browser-only APIs). adminAuth uses
@@ -319,20 +319,17 @@ export default function AdminPage() {
   const [tab,setTab]=useState("stats");
   const [confirmSwitchAccount,setConfirmSwitchAccount]=useState(null);
   const [prefs,setPrefs]=useState({idle:30,pinned:[]});
+  const doLookup=(q)=>{ setSearchInput(q); setSearchLoading(true); setSearchResult(null); adminLookupUser(adminDb,q).catch(()=>null).then(f=>{ setSearchResult(f||"not_found"); setSearchLoading(false); window.scrollTo(0,0); }); };
+  useEffect(()=>{ const go=(e)=>{ if(TABS.includes(e.detail)) setTab(e.detail); }; const lk=(e)=>doLookup(e.detail); window.addEventListener("ak-admin-go",go); window.addEventListener("ak-admin-lookup",lk); return ()=>{ window.removeEventListener("ak-admin-go",go); window.removeEventListener("ak-admin-lookup",lk); }; },[]);
+  useEffect(()=>{ if(!adminOk) return; try{ const q=sessionStorage.getItem("ak_admin_lookup"); if(q){ sessionStorage.removeItem("ak_admin_lookup"); doLookup(q); } }catch{} },[adminOk]);
   useEffect(()=>{ const h=location.hash.slice(1); if(TABS.includes(h)) setTab(h); },[]);
   useEffect(()=>{ if(adminOk) history.replaceState(null,"","#"+tab); },[tab,adminOk]);
-  const [paletteOpen,setPaletteOpen]=useState(false);
-  const [paletteQ,setPaletteQ]=useState("");
-  const [armedQ,setArmedQ]=useState("");
   const orderedTabs=[...prefs.pinned.filter(t=>TABS.includes(t)),...TABS.filter(t=>!prefs.pinned.includes(t))];
   useEffect(()=>{ setPrefs(readAdminPrefs()); },[tab]);
   useEffect(()=>{ if(!adminOk||!user) return; try{ if(sessionStorage.getItem('ak_admin_login_logged')) return; sessionStorage.setItem('ak_admin_login_logged','1'); }catch{} logActivity('admin_login',{adminUid:user.uid,detail:'Opened admin panel'},adminDb).catch(()=>{}); },[adminOk]);
   useEffect(()=>{
     if(!adminOk) return;
     const onKey=(e)=>{
-      if((e.ctrlKey||e.metaKey)&&(e.key.toLowerCase()==="k"||e.key==="/")){ e.preventDefault(); setPaletteOpen(o=>!o); return; }
-      const tg=e.target&&e.target.tagName; const typing=tg==="INPUT"||tg==="TEXTAREA"||tg==="SELECT"||(e.target&&e.target.isContentEditable);
-      if(e.key==="/"&&!typing&&!e.altKey&&!e.ctrlKey&&!e.metaKey&&!paletteOpen){ e.preventDefault(); setPaletteOpen(true); return; }
       if(e.altKey&&/^[1-9]$/.test(e.key)){ const t=orderedTabs[Number(e.key)-1]; if(t){ e.preventDefault(); setTab(t); } }
     };
     window.addEventListener("keydown",onKey); return ()=>window.removeEventListener("keydown",onKey);
@@ -851,7 +848,6 @@ export default function AdminPage() {
         )}
         {searchResult==="not_found" && <div style={{color:T.danger,fontSize:12,marginBottom:12}}>Not found</div>}
 
-        <CommandBar open={paletteOpen} setOpen={setPaletteOpen} adminDb={adminDb} uid={user.uid} setTab={setTab} tabs={TABS} onLookup={(q)=>{ setSearchInput(q); setSearchLoading(true); setSearchResult(null); adminLookupUser(adminDb,q).catch(()=>null).then(f=>{ setSearchResult(f||"not_found"); setSearchLoading(false); window.scrollTo(0,0); }); }} />
 
         {/* Tabs */}
         <div style={{display:"flex",gap:4,marginBottom:16,background:T.card,borderRadius:10,padding:4,border:`1px solid ${T.border}`,flexWrap:"wrap"}}>
