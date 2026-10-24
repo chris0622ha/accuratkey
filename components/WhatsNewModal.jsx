@@ -1,8 +1,8 @@
 "use client";
 import React from "react";
 import { WHATS_NEW } from "@/lib/whatsNew";
-// Shows the release time in US Eastern; Intl picks EST or EDT automatically for the date.
-const fmt = (e) => { try { return new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(new Date(e.at)); } catch { return e.date || ""; } };
+import { groupByDay } from "@/lib/newsGroup";
+const DAYS = groupByDay(WHATS_NEW);
 export default function WhatsNewModal({ T, onClose }) {
   return (
     <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:9000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
@@ -11,9 +11,9 @@ export default function WhatsNewModal({ T, onClose }) {
           <div style={{color:T.text,fontWeight:800,fontSize:16}}>What's new</div>
           <button onClick={onClose} aria-label="Close" style={{background:"none",border:"none",color:T.muted,fontSize:20,cursor:"pointer"}}>×</button>
         </div>
-        {WHATS_NEW.map(e => (
+        {DAYS.map(e => (
           <div key={e.id} style={{padding:"12px 0",borderTop:`1px solid ${T.border}`}}>
-            <div style={{color:T.purple,fontSize:11,fontWeight:700}}>{fmt(e)}</div>
+            <div style={{color:T.purple,fontSize:11,fontWeight:700}}>{e.date}</div>
             <div style={{color:T.text,fontWeight:700,fontSize:14,margin:"3px 0 6px"}}>{e.title}</div>
             <ul style={{margin:0,paddingLeft:18,color:T.muted,fontSize:13,lineHeight:1.7}}>{e.items.map(i=><li key={i}>{i}</li>)}</ul>
           </div>

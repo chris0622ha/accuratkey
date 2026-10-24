@@ -9,10 +9,12 @@ import { SYN_ANT } from "./SynAntDB";
 import { wordOfDay } from "@/lib/features";
 import { getGlobalSite } from "@/lib/siteConfig";
 import { getHistory, dayCounts, dayKey } from "@/lib/stats";
+import PlayerHub from "./PlayerHub";
 
 export default function PracticeLab({ T, profile, onStart, onClose, canSubmit }) {
   const [text, setText] = useState("");
   const [msg, setMsg] = useState("");
+  const [hub, setHub] = useState(false);
   const community = !isFeatureLocked("wordsets");
   const weak = useMemo(() => weakKeys(profile?.id), [profile?.id]);
   const missed = useMemo(() => Object.keys(getMissedWords(profile?.id)), [profile?.id]);
@@ -34,6 +36,7 @@ export default function PracticeLab({ T, profile, onStart, onClose, canSubmit })
           <div style={{display:"flex",alignItems:"center",gap:8,color:T.text,fontWeight:800,fontSize:16}}><UiIcon name="keyboard" size={18} color={T.purple}/>Practice lab</div>
           <button onClick={onClose} aria-label="Close" style={{background:"none",border:"none",color:T.muted,fontSize:20,cursor:"pointer"}}>×</button>
         </div>
+        <button onClick={()=>setHub(true)} style={{width:"100%",marginBottom:10,padding:"9px 12px",borderRadius:10,border:`1px solid ${T.purple}`,background:T.purple+"22",color:T.text,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"inherit",textAlign:"left"}}>🧰 More tools — insights, warm-ups, focus sounds, goals &amp; your data</button>
         <div style={{color:T.muted,fontSize:11,margin:"4px 0 12px"}}>Free practice. Runs here don't earn Keys or unlock levels, and nothing is uploaded.</div>
 
         {(() => {
@@ -90,6 +93,7 @@ export default function PracticeLab({ T, profile, onStart, onClose, canSubmit })
           <button onClick={()=>go(fromText(text.replace(/[^\x20-\x7E\s]/g,"")), "Custom text")} style={{padding:"8px 16px",borderRadius:8,border:"none",background:T.purple,color:"#fff",fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Practice this</button>
         </div>
       </div>
+      {hub && <PlayerHub T={T} profile={profile} onStart={onStart} onClose={()=>setHub(false)} onCloseAll={onClose} />}
     </div>
   );
 }
