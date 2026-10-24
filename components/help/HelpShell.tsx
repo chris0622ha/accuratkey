@@ -1,6 +1,8 @@
 'use client';
 import Link from 'next/link';
 import { ReactNode } from 'react';
+import { latestVersion, BUILD } from '@/lib/version';
+import { WHATS_NEW } from '@/lib/whatsNew';
 
 export const H = { bg: '#0a0a0f', card: '#12121d', card2: '#171727', line: '#22223a', text: '#e6e6ff', mute: '#9a9ab8', dim: '#6b6b88', accent: '#7c6af7', font: "'JetBrains Mono',monospace" };
 
@@ -33,6 +35,7 @@ export function HelpShell({ children, back }: { children: ReactNode; back?: { hr
         <Link href="/privacy" style={{ color: H.dim }}>Privacy</Link>
         <Link href="/childrens-privacy" style={{ color: H.dim }}>Children&apos;s privacy</Link>
         <Link href="/tos" style={{ color: H.dim }}>Terms</Link>
+        <span>AccuratKey v{latestVersion(WHATS_NEW)}{BUILD ? ` · ${BUILD}` : ''}</span>
       </footer>
     </div>
   );

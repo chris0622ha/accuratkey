@@ -19,6 +19,10 @@ function exportData(profile) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "accuratkey-my-data.json"; document.body.appendChild(a); a.click(); a.remove();
 }
+import { applyNews } from "@/lib/newsEdits";
+import { WHATS_NEW } from "@/lib/whatsNew";
+import { getGlobalSite } from "@/lib/siteConfig";
+import { latestVersion, BUILD } from "@/lib/version";
 export default function PrefsModal({ T, prefs, setPref, onClose, profile, onTour, onWhatsNew }) {
   return (
     <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:9000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
@@ -60,6 +64,8 @@ export default function PrefsModal({ T, prefs, setPref, onClose, profile, onTour
         </Row>
         <Row T={T} label="Quick tour"><button onClick={()=>{onClose();onTour&&onTour();}} style={{padding:"5px 10px",fontSize:11,fontWeight:700,borderRadius:6,cursor:"pointer",fontFamily:"inherit",border:`1px solid ${T.border}`,background:"transparent",color:T.text}}>Replay</button></Row>
         <Row T={T} label="What's new"><button onClick={()=>{onClose();onWhatsNew&&onWhatsNew();}} style={{padding:"5px 10px",fontSize:11,fontWeight:700,borderRadius:6,cursor:"pointer",fontFamily:"inherit",border:`1px solid ${T.border}`,background:"transparent",color:T.text}}>Open</button></Row>
+
+        <Row T={T} label="Version"><span style={{fontSize:11,color:T.muted}}>v{latestVersion(applyNews(WHATS_NEW, getGlobalSite().news))}{BUILD ? ` · build ${BUILD}` : ""}</span></Row>
 
         <Row T={T} label="Legal"><span style={{display:"flex",gap:10,fontSize:11}}>
           <a href="/help" target="_blank" rel="noopener" style={{color:T.purple,fontWeight:700}}>Help</a><a href="/privacy" style={{color:T.muted}}>Privacy</a><a href="#" onClick={e=>{e.preventDefault();window.dispatchEvent(new CustomEvent("ak-open-cookie-settings"));}} style={{color:T.muted}}>Cookies</a><a href="/childrens-privacy" style={{color:T.muted}}>Children</a><a href="/tos" style={{color:T.muted}}>Terms</a></span></Row>
