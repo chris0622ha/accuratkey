@@ -2500,7 +2500,7 @@ const Nav = () => (<>
               {item("feedback","Send feedback",()=>{setShowFeedback(true);setFeedbackSent(false);setFeedbackText("");})}
               {item("lock","Switch profile",()=>requirePin("switch", () => setScreenWithUrl("profilePicker")))}
               <div style={{display:"flex",flexWrap:"wrap",gap:"4px 12px",justifyContent:"center",padding:"8px 8px 4px",marginTop:4,borderTop:`1px solid ${T.border}`,fontSize:11}}>
-                <a href="/privacy" style={{color:T.muted}}>Privacy</a><a href="/childrens-privacy" style={{color:T.muted}}>Children's privacy</a><a href="/tos" style={{color:T.muted}}>Terms</a>
+                <a href="/help" target="_blank" rel="noopener" style={{color:T.purple,fontWeight:700}}>Help</a><a href="/privacy" style={{color:T.muted}}>Privacy</a><a href="/childrens-privacy" style={{color:T.muted}}>Children's privacy</a><a href="/tos" style={{color:T.muted}}>Terms</a>
               </div>
             </div>
           </>}
