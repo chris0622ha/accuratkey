@@ -1544,10 +1544,15 @@ export default function AccuratKey() {
         { const _acct = await getAccount(u.uid).catch(() => undefined);
           if (_acct === null) {
             const _fresh = u.metadata?.creationTime && (Date.now() - new Date(u.metadata.creationTime).getTime() < 120000);
-            if (_fresh) { try { await deleteUser(u); } catch { await signOut(auth).catch(()=>{}); } } else { await signOut(auth).catch(()=>{}); }
-            setUser(null); setAuthErr("No AccuratKey account for that sign-in yet. Create your account on tqak first (tqak.vercel.app), then log in here.");
-            setScreenWithUrl("auth");
-            return;
+            if (_fresh) {
+              // Brand-new login that never signed up on tqak: remove it and point them there.
+              try { await deleteUser(u); } catch { await signOut(auth).catch(()=>{}); }
+              setUser(null); setAuthErr("No AccuratKey account for that sign-in yet. Create your account on tqak first (tqak.vercel.app), then log in here.");
+              setScreenWithUrl("auth");
+              return;
+            }
+            // Existing login that predates this rule and has no account record: repair it, never lock it out.
+            await createAccount(u.uid, u.email).catch(() => {});
           } }
         const profs = await getProfiles(u.uid);
         setProfiles(profs);
