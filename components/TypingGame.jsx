@@ -1539,7 +1539,16 @@ export default function AccuratKey() {
           setCurrentUsername(null);
           return;
         }
-        await createAccount(u.uid, u.email);
+        // Accounts are created on tqak. A sign-in with no account record means someone
+        // signed in here (e.g. with Google) without signing up first - don't let them in.
+        { const _acct = await getAccount(u.uid).catch(() => undefined);
+          if (_acct === null) {
+            const _fresh = u.metadata?.creationTime && (Date.now() - new Date(u.metadata.creationTime).getTime() < 120000);
+            if (_fresh) { try { await deleteUser(u); } catch { await signOut(auth).catch(()=>{}); } } else { await signOut(auth).catch(()=>{}); }
+            setUser(null); setAuthErr("No AccuratKey account for that sign-in yet. Create your account on tqak first (tqak.vercel.app), then log in here.");
+            setScreenWithUrl("auth");
+            return;
+          } }
         const profs = await getProfiles(u.uid);
         setProfiles(profs);
         if (profs.length === 0) {
@@ -1661,8 +1670,7 @@ export default function AccuratKey() {
       if (authMode === "login") {
         await signInWithEmailAndPassword(auth, authEmail, authPass);
       } else {
-        const cred = await createUserWithEmailAndPassword(auth, authEmail, authPass);
-        await createAccount(cred.user.uid, cred.user.email);
+        window.location.href = "https://tqak.vercel.app/login?mode=up"; return;
       }
     } catch (e) { setAuthErr(cleanErr(e)); }
     setAuthLoading(false);
@@ -2770,9 +2778,9 @@ const Nav = () => (<>
         <div style={{background:"#13131f",border:"1px solid #1e1e30",borderRadius:16,padding:28}}>
           <div style={{display:"flex",gap:8,marginBottom:20}}>
             {["login","signup"].map(m => (
-              <button key={m} onClick={() => { setAuthMode(m); setAuthErr("");}}
+              <button key={m} onClick={() => { if (m === "signup") { window.location.href = "https://tqak.vercel.app/login?mode=up"; return; } setAuthMode(m); setAuthErr("");}}
                 style={{flex:1,padding:"10px",borderRadius:8,border:`2px solid ${authMode===m?"#7c6af7":"#1e1e30"}`,background:authMode===m?"#7c6af722":"transparent",color:authMode===m?"#c4baff":"#555",fontFamily:"'JetBrains Mono',monospace",fontSize:13,fontWeight:700,cursor:"pointer"}}>
-                {m === "login" ? "Log in" : "Sign up"}
+                {m === "login" ? "Log in" : "Sign up on tqak ↗"}
               </button>
             ))}
           </div>
