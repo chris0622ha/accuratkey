@@ -7,9 +7,10 @@ import { cleanBlocked } from "@/lib/moderation";
 import { adminListPublic, adminListSubmissions, adminDeleteSet } from "@/lib/wordsets";
 import { GAMES } from "@/components/GameCatalog";
 import { SYN_ANT } from "@/components/SynAntDB";
+import { LevelsPanel, SetsPanel, ExportsPanel, TestPanel } from "./ToolsMore";
 
 const CONFIG_DOCS = ["economy", "rewards", "locks", "moderation", "announcements", "maintenance", "broadcast", "site"];
-const SUBS = [["site", "🌐 Site"], ["audit", "📜 Audit"], ["notes", "🗒 Notes"], ["tasks", "✅ Tasks"], ["backup", "💾 Backup"], ["health", "🩺 Health"], ["levelqa", "🔎 Level QA"], ["setstats", "📈 Set stats"], ["blocklist", "🚫 Blocklist"], ["prefs", "⚙ Admin prefs"]];
+const SUBS = [["site", "🌐 Site"], ["audit", "📜 Audit"], ["notes", "🗒 Notes"], ["tasks", "✅ Tasks"], ["backup", "💾 Backup"], ["health", "🩺 Health"], ["levelqa", "🔎 Level QA"], ["setstats", "📈 Set stats"], ["blocklist", "🚫 Blocklist"], ["levels", "🎚 Levels"], ["sets", "📚 Sets"], ["exports", "📤 Exports"], ["test", "🧪 Test & safety"], ["prefs", "⚙ Admin prefs"]];
 const download = (name, text, type = "application/json") => {
   const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 };
@@ -33,6 +34,10 @@ export default function ToolsTab({ T, st, adminDb, uid, flash, levels, tabs }) {
       {sub === "levelqa" && <LevelQA {...p} levels={levels} />}
       {sub === "setstats" && <SetStats {...p} />}
       {sub === "blocklist" && <Blocklist {...p} />}
+      {sub === "levels" && <LevelsPanel {...p} levels={levels} />}
+      {sub === "sets" && <SetsPanel {...p} />}
+      {sub === "exports" && <ExportsPanel {...p} levels={levels} />}
+      {sub === "test" && <TestPanel {...p} />}
       {sub === "prefs" && <PrefsPanel {...p} tabs={tabs} />}
     </div>
   );
@@ -51,7 +56,7 @@ function SitePanel({ T, st, adminDb, uid, flash }) {
   const [site, setS] = useState(null);
   const [bText, setBText] = useState(""); const [bColor, setBColor] = useState("#a78bfa"); const [bLink, setBLink] = useState(""); const [bHours, setBHours] = useState(24);
   const [wOn, setWOn] = useState(false); const [wTitle, setWTitle] = useState("Welcome to AccuratKey!"); const [wBody, setWBody] = useState("");
-  const [spot, setSpot] = useState(""); const [wotd, setWotd] = useState("");
+  const [spot, setSpot] = useState(""); const [wotd, setWotd] = useState(""); const [pAt, setPAt] = useState(""); const [pText, setPText] = useState("");
   useEffect(() => { getSite().then(s => { setS(s); setBText(s.banner?.text || ""); setBColor(s.banner?.color || "#a78bfa"); setBLink(s.banner?.link || ""); setWOn(!!s.welcome?.enabled); setWTitle(s.welcome?.title || "Welcome to AccuratKey!"); setWBody(s.welcome?.body || ""); setSpot(s.spotlight || ""); setWotd(s.wotd || ""); }); }, []);
   const save = async (patch, label) => {
     try { const n = await setSite(patch, adminDb); setS(n); await logActivity("site_update", { adminUid: uid, detail: label }, adminDb).catch(() => {}); flash("Saved: " + label); }
@@ -80,6 +85,14 @@ function SitePanel({ T, st, adminDb, uid, flash }) {
       <input value={wTitle} onChange={e => setWTitle(e.target.value.slice(0, 60))} style={{ ...st.input, marginTop: 6 }} />
       <textarea value={wBody} onChange={e => setWBody(e.target.value.slice(0, 300))} rows={3} placeholder="Message (300 max)" style={{ ...st.input, marginTop: 6, resize: "vertical" }} />
       <button style={{ ...st.btn(), marginTop: 8 }} onClick={() => save({ welcome: { enabled: wOn, title: wTitle, body: wBody, at: Date.now() } }, "welcome message")}>Save welcome</button>
+    </Card>
+    <Card T={T} st={st} title="Planned maintenance notice" hint="Players see a notice in the 24 hours before the time you set. It does not turn maintenance mode on by itself.">
+      <input type="datetime-local" value={pAt} onChange={e => setPAt(e.target.value)} style={st.input} />
+      <input value={pText} onChange={e => setPText(e.target.value.slice(0, 100))} placeholder="Optional note (100 max)" style={{ ...st.input, marginTop: 6 }} />
+      <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+        <button style={st.btn()} onClick={() => { const t = pAt ? new Date(pAt).getTime() : 0; if (!t || t < Date.now()) return flash("Pick a future time"); save({ planned: { at: t, text: pText } }, "planned maintenance"); }}>Publish notice</button>
+        <button style={st.btn("#fff", T.faint)} onClick={() => save({ planned: null }, "planned maintenance cleared")}>Clear</button>
+      </div>
     </Card>
     <Card T={T} st={st} title="Ask everyone to refresh" hint="Players who already have the game open see an 'New update available' button. Use it after you ship a fix.">
       <button style={st.btn()} onClick={() => save({ version: String(Date.now()) }, "refresh prompt")}>Send refresh prompt</button>

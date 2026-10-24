@@ -15,6 +15,7 @@ export default function NotifyTab({ T, st, adminDb, uid, flash }) {
   const [body, setBody] = useState("");
   const [level, setLevel] = useState("none");
   const [exp, setExp] = useState(7);
+  const [delay, setDelay] = useState(0);
   const [busy, setBusy] = useState(false);
   const [list, setList] = useState([]);
   const [tpls, setTpls] = useState([]);
@@ -42,7 +43,7 @@ export default function NotifyTab({ T, st, adminDb, uid, flash }) {
         flash(`Sent to ${ok}${missing.length ? ` - not found/failed: ${missing.join(", ")}` : ""}`);
       } else {
         const cur = await getAnnouncements();
-        const item = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: t, body: b, level, audience: aud, at: Date.now(), expiresAt: exp ? Date.now() + exp * 86400000 : null };
+        const item = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: t, body: b, level, audience: aud, at: Date.now(), startsAt: delay ? Date.now() + delay * 3600000 : null, expiresAt: exp ? Date.now() + delay * 3600000 + exp * 86400000 : null };
         await setAnnouncements([item, ...cur], adminDb);
         flash("Sent");
         await load();
@@ -72,7 +73,9 @@ export default function NotifyTab({ T, st, adminDb, uid, flash }) {
         <div style={st.label}>Priority</div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>{LVL.map(([k, l, c]) => chip(level === k, c, l, () => setLevel(k)))}</div>
         {aud !== "specific" && <><div style={st.label}>Disappears after</div>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>{EXP.map(([k, l]) => chip(exp === k, T.purple, l, () => setExp(k)))}</div></>}
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>{EXP.map(([k, l]) => chip(exp === k, T.purple, l, () => setExp(k)))}</div>
+        <div style={st.label}>Send in</div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>{[[0, "Now"], [1, "1 hour"], [6, "6 hours"], [24, "Tomorrow"], [72, "3 days"]].map(([k, l]) => chip(delay === k, T.purple, l, () => setDelay(k)))}</div></>}
         <button disabled={busy} onClick={send} style={{ ...st.btn("#fff", "#10b981"), width: "100%", padding: 10 }}>{busy ? "Sending…" : "Send notification"}</button>
       </div>
       <div style={st.card}>

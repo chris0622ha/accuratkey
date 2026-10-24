@@ -29,7 +29,7 @@ import { logRun, getHistory, newlyUnlocked } from "@/lib/stats";
 import { WHATS_NEW } from "@/lib/whatsNew";
 import { getPrefs, setPrefs, getBest, recordRun } from "@/lib/prefs";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, getLocks, getRewards, getAllNotifications, markAllNotificationsRead, getEconomy, deleteNotification, deleteAllNotifications, getAnnouncements, markNotificationRevertRequested, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, getLevelNameOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
+import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, getLocks, getRewards, getAllNotifications, markAllNotificationsRead, getEconomy, deleteNotification, deleteAllNotifications, getAnnouncements, markNotificationRevertRequested, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, getLevelNameOverrides, getLevelTargetOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
 
 export 
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
@@ -1361,7 +1361,7 @@ export default function AccuratKey() {
   // Notifications = personal inbox + admin group announcements (filtered for this viewer)
   const tms = (t) => (t?.toDate ? t.toDate().getTime() : (typeof t === "number" ? t : 0));
   const annItems = (user && activeProfile && !isProfileRestricted(activeProfile)) ? anns
-    .filter(a => (!a.expiresAt || a.expiresAt > Date.now()) && !annGone[a.id] && (a.audience === "all" || (a.audience === "admins" && viewerAdmin) || (a.audience === "users" && !viewerAdmin)))
+    .filter(a => (!a.startsAt || a.startsAt <= Date.now()) && (!a.expiresAt || a.expiresAt > Date.now()) && !annGone[a.id] && (a.audience === "all" || (a.audience === "admins" && viewerAdmin) || (a.audience === "users" && !viewerAdmin)))
     .map(a => ({ id: "ann_" + a.id, annId: a.id, type: "announcement", title: a.title, body: a.body, level: a.level, createdAt: { toDate: () => new Date(a.at) }, read: !!annSeen[a.id], local: true })) : [];
   const w = siteCfg.welcome;
   const welcomeItem = (w && w.enabled && w.body && user && activeProfile && !isProfileRestricted(activeProfile) && !annGone["welcome" + (w.at || 0)])
@@ -1393,7 +1393,7 @@ export default function AccuratKey() {
       // handles the real gate with proper owner/admin bypass logic.
     }).catch(() => {});
     getBroadcast().then(b => { if (b?.active && b?.message) setBroadcast(b); }).catch(()=>{});
-    getLevelOverrides().then(o=>{applyLevelNames(LEVELS,getLevelNameOverrides());setLevelOverrides(o);}).catch(()=>{});
+    getLevelOverrides().then(o=>{applyLevelNames(LEVELS,getLevelNameOverrides(),getLevelTargetOverrides());setLevelOverrides(o);}).catch(()=>{});
   }, []);
 
   useEffect(() => {
@@ -2251,7 +2251,7 @@ export default function AccuratKey() {
     getRewards().then(setGlobalRewards).catch(() => {});
     getEconomy().then(e => { setGlobalEconomy(e); setEco(e); }).catch(() => {});
     getBroadcast().then(b => setBroadcast(b?.active && b?.message ? b : null)).catch(() => {});
-    getLevelOverrides().then(o=>{applyLevelNames(LEVELS,getLevelNameOverrides());setLevelOverrides(o);}).catch(() => {});
+    getLevelOverrides().then(o=>{applyLevelNames(LEVELS,getLevelNameOverrides(),getLevelTargetOverrides());setLevelOverrides(o);}).catch(() => {});
     if (!u || !p || p.isGuest || isProfileRestricted(p)) return;
     getAnnouncements().then(setAnns).catch(() => {});
     isAdmin(u.uid).then(setViewerAdmin).catch(() => {});
@@ -4330,6 +4330,11 @@ Custom challenge — 75%+ accuracy to unlock.`))requestStartLevel(lv.id,true,lv.
           <div style={{position:"fixed",bottom:12,left:"50%",transform:"translateX(-50%)",zIndex:9998,maxWidth:"92vw",background:(siteCfg.banner.color||"#a78bfa")+"22",border:`1px solid ${siteCfg.banner.color||"#a78bfa"}`,color:siteCfg.banner.color||"#a78bfa",borderRadius:12,padding:"8px 34px 8px 14px",fontSize:12,fontWeight:700,backdropFilter:"blur(6px)"}}>
             {siteCfg.banner.text}{siteCfg.banner.link && /^https:\/\//.test(siteCfg.banner.link) && <> · <a href={siteCfg.banner.link} target="_blank" rel="noopener noreferrer" style={{color:"inherit",textDecoration:"underline"}}>Learn more</a></>}
             <button aria-label="Dismiss" onClick={()=>{ const id=String(siteCfg.banner.id||siteCfg.banner.text); setBannerGone(id); try{localStorage.setItem("ak_banner_gone",id);}catch{} }} style={{position:"absolute",top:4,right:8,background:"transparent",border:"none",color:"inherit",fontSize:16,cursor:"pointer"}}>×</button>
+          </div>
+        )}
+        {siteCfg.planned && siteCfg.planned.at > Date.now() && siteCfg.planned.at - Date.now() < 86400000 && (
+          <div style={{position:"fixed",bottom:56,left:"50%",transform:"translateX(-50%)",zIndex:9998,maxWidth:"92vw",background:"#f59e0b22",border:"1px solid #f59e0b",color:"#f59e0b",borderRadius:12,padding:"8px 14px",fontSize:12,fontWeight:700}}>
+            🛠 Planned maintenance {new Date(siteCfg.planned.at).toLocaleString("en-US",{timeZone:"America/New_York",weekday:"short",hour:"numeric",minute:"2-digit"})} ET{siteCfg.planned.text ? ` — ${siteCfg.planned.text}` : ""}
           </div>
         )}
         {needRefresh && (

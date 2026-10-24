@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { onAuthStateChanged, signInWithPopup, signOut, signInWithEmailAndPassword, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth";
-import { getAdminAuth, getAdminDb, adminLookupUser, getLevelNameOverrides, deleteLevelOverride, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, adminSetProfileAdmin, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest, replyToFeedback, getFlaggedScores, getRestoreRequests, approveFlaggedScore, dismissFlaggedScore, resolveRestoreRequest, getCoppaAuditSummary, runCoppaCleanup } from "@/lib/firebase";
+import { getAdminAuth, getAdminDb, adminLookupUser, getLevelNameOverrides, getLevelTargetOverrides, deleteLevelOverride, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, adminSetProfileAdmin, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest, replyToFeedback, getFlaggedScores, getRestoreRequests, approveFlaggedScore, dismissFlaggedScore, resolveRestoreRequest, getCoppaAuditSummary, runCoppaCleanup } from "@/lib/firebase";
 import { KKey } from "@/components/icons/KKey";
 import LocksTab from "./LocksTab";
 import { applyLevelContent, applyLevelNames } from "@/lib/levelText";
@@ -14,6 +14,7 @@ import GrowthCard from "./GrowthCard";
 import { adminListSubmissions, adminListRevertRequests } from "@/lib/wordsets";
 import RewardsTab from "./RewardsTab";
 import ToolsTab, { readAdminPrefs } from "./ToolsTab";
+import { HomeStrip } from "./ToolsMore";
 const LEVELS = [
   { id:1,  name:"Home Row Hero",         emoji:"🏠", wpmTarget:12,  accuracy:75, color:"#10b981", words:["ffjj","fjfj","asdf","jkl;","add","ask","fall","glad","flask","lads","fads","salads"] },
   { id:2,  name:"Top Row Climber",       emoji:"🧗", wpmTarget:16,  accuracy:75, color:"#3b82f6", words:["quit","wrap","type","your","power","tower","write","pretty","quite","report"] },
@@ -321,6 +322,7 @@ export default function AdminPage() {
   const [paletteQ,setPaletteQ]=useState("");
   const orderedTabs=[...prefs.pinned.filter(t=>TABS.includes(t)),...TABS.filter(t=>!prefs.pinned.includes(t))];
   useEffect(()=>{ setPrefs(readAdminPrefs()); },[tab]);
+  useEffect(()=>{ if(!adminOk||!user) return; try{ if(sessionStorage.getItem('ak_admin_login_logged')) return; sessionStorage.setItem('ak_admin_login_logged','1'); }catch{} logActivity('admin_login',{adminUid:user.uid,detail:'Opened admin panel'},adminDb).catch(()=>{}); },[adminOk]);
   useEffect(()=>{
     if(!adminOk) return;
     const onKey=(e)=>{
@@ -522,7 +524,7 @@ export default function AdminPage() {
   useEffect(()=>{ if(adminOk&&tab==="settings") getMaintenanceMode().then(m=>{setMaintEnabled(m.enabled);setMaintMsg(m.message||"");if(m.triggers)setMaintTriggers(m.triggers);}); },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="analytics"&&!failStats){setFailStatsLoading(true);getLevelFailStats(adminDb).then(d=>{setFailStats(d);setFailStatsLoading(false);}).catch(()=>setFailStatsLoading(false));} },[tab,adminOk]);
   useEffect(()=>{ if(adminOk&&tab==="broadcast") getBroadcast().then(b=>{if(b)setCurrentBroadcast(b);}); },[tab,adminOk]);
-  useEffect(()=>{ if(adminOk&&tab==="levels") getLevelOverrides().then(o=>{applyLevelNames(LEVELS,getLevelNameOverrides());setLevelOverrides(o);}).catch(()=>{}); },[tab,adminOk]);
+  useEffect(()=>{ if(adminOk&&tab==="levels") getLevelOverrides().then(o=>{applyLevelNames(LEVELS,getLevelNameOverrides(),getLevelTargetOverrides());setLevelOverrides(o);}).catch(()=>{}); },[tab,adminOk]);
   useEffect(()=>{ if(!adminOk) return; (async()=>{ const b={}; try{ b.wordsets=(await adminListSubmissions(adminDb)).length+(await adminListRevertRequests(adminDb)).length; }catch{} setTabBadges(b); })(); },[adminOk,tab==="wordsets"]);
   useEffect(()=>{ if(adminOk&&tab==="stats") getAppStats(adminDb).then(setStats).catch(()=>{}); },[tab,adminOk]);
 
@@ -702,7 +704,7 @@ export default function AdminPage() {
     if(!nameChanged && !wordsChanged){ await deleteLevelOverride(editingLevel, adminDb); setLevelOverrides(p=>{const n={...p};delete n[String(editingLevel)];return n;}); applyLevelNames(LEVELS,{...getLevelNameOverrides(),[String(editingLevel)]:null}); flash("No changes - using defaults"); setEditingLevel(null); setEditWords(""); return; }
     await updateLevelWords(editingLevel, wordsChanged?words:[], adminDb, nameChanged?name:null);
     await logActivity("edit_level",{adminUid:user.uid,detail:`level ${editingLevel}: ${nameChanged?`name "${name}" `:""}${wordsChanged?words.length+" words":""}`},adminDb);
-    const o = await getLevelOverrides(); applyLevelNames(LEVELS,getLevelNameOverrides()); setLevelOverrides(o);
+    const o = await getLevelOverrides(); applyLevelNames(LEVELS,getLevelNameOverrides(),getLevelTargetOverrides()); setLevelOverrides(o);
     flash(`Level ${editingLevel} updated`);
     setEditingLevel(null); setEditWords("");
   }
@@ -847,9 +849,10 @@ export default function AdminPage() {
           <div onClick={()=>setPaletteOpen(false)} style={{position:"fixed",inset:0,background:"#000a",zIndex:10000,display:"flex",justifyContent:"center",alignItems:"flex-start",paddingTop:"12vh"}}>
             <div onClick={e=>e.stopPropagation()} style={{width:"min(480px,92vw)",background:T.card,border:`1px solid ${T.border}`,borderRadius:12,padding:12}}>
               <input autoFocus value={paletteQ} onChange={e=>setPaletteQ(e.target.value)} placeholder="Go to a tab, or type @username / UID to look up" style={st.input}
-                onKeyDown={e=>{ if(e.key==="Enter"){ const m=orderedTabs.filter(t=>t.includes(paletteQ.toLowerCase())); if(paletteQ&&!paletteQ.startsWith("@")&&m.length){ setTab(m[0]); setPaletteOpen(false); } else if(paletteQ.trim()){ const q=paletteQ.trim(); setPaletteOpen(false); setSearchInput(q); setSearchLoading(true); setSearchResult(null); adminLookupUser(adminDb,q).catch(()=>null).then(f=>{ setSearchResult(f||"not_found"); setSearchLoading(false); window.scrollTo(0,0); }); } } }} />
+                onKeyDown={e=>{ if(e.key==="Enter"){ const m=orderedTabs.filter(t=>t.includes(paletteQ.toLowerCase())); if(paletteQ&&!paletteQ.startsWith("@")&&m.length){ setTab(m[0]); setPaletteOpen(false); } else if(paletteQ.trim()){ const q=paletteQ.trim(); setPaletteOpen(false); try{ const r=JSON.parse(localStorage.getItem("ak_admin_recent")||"[]").filter(x=>x!==q); localStorage.setItem("ak_admin_recent",JSON.stringify([q,...r].slice(0,6))); }catch{} setSearchInput(q); setSearchLoading(true); setSearchResult(null); adminLookupUser(adminDb,q).catch(()=>null).then(f=>{ setSearchResult(f||"not_found"); setSearchLoading(false); window.scrollTo(0,0); }); } } }} />
               <div style={{marginTop:8,maxHeight:260,overflow:"auto"}}>
                 {orderedTabs.filter(t=>t.includes(paletteQ.toLowerCase().replace(/^@/,"")) && !paletteQ.startsWith("@")).map((t,i)=>(<button key={t} onClick={()=>{ setTab(t); setPaletteOpen(false); }} style={{display:"block",width:"100%",textAlign:"left",padding:"7px 10px",background:"transparent",border:"none",color:T.text,fontSize:12,cursor:"pointer",borderRadius:6}}>{i<9?`Alt+${i+1}  `:""}{t}</button>))}
+                {!paletteQ.trim()&&(()=>{ let r=[]; try{ r=JSON.parse(localStorage.getItem("ak_admin_recent")||"[]"); }catch{} return r.length>0&&<div style={{color:T.muted,fontSize:10,padding:"6px 10px 2px"}}>Recent lookups: {r.map(x=><button key={x} onClick={()=>setPaletteQ(x)} style={{marginRight:6,background:T.faint,border:"none",color:T.text,borderRadius:6,padding:"2px 8px",fontSize:11,cursor:"pointer"}}>{x}</button>)}</div>; })()}
                 {paletteQ.trim()&&<div style={{color:T.muted,fontSize:11,padding:"6px 10px"}}>Press Enter to {paletteQ.startsWith("@")?"look up ":"open the first match, or look up "}“{paletteQ.trim()}”</div>}
               </div>
             </div>
@@ -870,6 +873,7 @@ export default function AdminPage() {
         {loading && <div style={{color:T.muted,fontSize:12,textAlign:"center",padding:32}}>Loading...</div>}
 
         {/* STATS */}
+        {tab==="stats"&&<HomeStrip T={T} st={st} adminDb={adminDb} />}
         {tab==="stats"&&<GrowthCard T={T} st={st} adminDb={adminDb} />}
         {tab==="stats" && (
           <div>
