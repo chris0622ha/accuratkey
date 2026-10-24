@@ -924,7 +924,7 @@ export default function AccuratKey() {
   if (typeof window !== "undefined" && _activeFont && _activeFont !== "jetbrains") {
     const GOOGLE_FONTS = {"firacode":"Fira+Code:wght@400;700","sourcecodepro":"Source+Code+Pro:wght@400;700","robototmono":"Roboto+Mono:wght@400;700","spacemono":"Space+Mono:wght@400;700","inconsolata":"Inconsolata:wght@400;700","ptmono":"PT+Mono","cousine":"Cousine:wght@400;700","inter":"Inter:wght@400;700","outfit":"Outfit:wght@400;700","nunito":"Nunito:wght@400;700","poppins":"Poppins:wght@400;700","quicksand":"Quicksand:wght@400;700","dmsans":"DM+Sans:wght@400;700","lexend":"Lexend:wght@400;700","orbitron":"Orbitron:wght@400;700","rajdhani":"Rajdhani:wght@400;700","exo2":"Exo+2:wght@400;700","audiowide":"Audiowide","nasalization":"Russo+One","ubuntu":"Ubuntu+Mono:wght@400;700","comicsans":"Comic+Neue:wght@400;700","fredoka":"Fredoka:wght@400;700","boogaloo":"Boogaloo","pressstart":"Press+Start+2P","vt323":"VT323","silkscreen":"Silkscreen","playfair":"Playfair+Display:wght@400;700","cormorant":"Cormorant+Garamond:wght@400;700","crimsonpro":"Crimson+Pro:wght@400;700","eb_garamond":"EB+Garamond:wght@400;700","lora":"Lora:wght@400;700","ibmplexmono":"IBM+Plex+Mono:wght@400;700","cascadia":"Roboto+Mono:wght@400;700","notosamono":"Noto+Sans+Mono:wght@400;700","overpassmono":"Overpass+Mono:wght@400;700","sharetechmono":"Share+Tech+Mono","anonymouspro":"Anonymous+Pro:wght@400;700","manrope":"Manrope:wght@400;700","plusjakarta":"Plus+Jakarta+Sans:wght@400;700","syne":"Syne:wght@400;700","figtree":"Figtree:wght@400;700","onest":"Onest:wght@400;700","geist":"Geist:wght@400;700","jura":"Jura:wght@400;700","quantico":"Quantico:wght@400;700","oxanium":"Oxanium:wght@400;700","tektur":"Tektur:wght@400;700","tourney":"Tourney:wght@400;700","blender":"Blinker:wght@400;700","chewy":"Chewy","rubikbubbles":"Rubik+Bubbles","permanentmarker":"Permanent+Marker","creepster":"Creepster","domine":"Domine:wght@400;700","ultra":"Ultra"};
     const gf = GOOGLE_FONTS[_activeFont];
-    if (gf && !document.getElementById("gf-"+_activeFont)) {
+    if (gf && !isProfileRestricted(activeProfile) && !document.getElementById("gf-"+_activeFont)) {
       const l=document.createElement("link");l.id="gf-"+_activeFont;l.rel="stylesheet";l.href="https://fonts.googleapis.com/css2?family="+gf+"&display=swap";document.head.appendChild(l);
     }
   }
@@ -1818,7 +1818,7 @@ export default function AccuratKey() {
   useEffect(() => { setPrefsState(getPrefs(activeProfile?.id)); }, [activeProfile?.id]);
   useEffect(() => {
     _akVolume = prefs.volume;
-    if (prefs.dyslexiaFont && typeof document !== "undefined" && !document.getElementById("gf-lexend-pref")) {
+    if (prefs.dyslexiaFont && !isProfileRestricted(activeProfile) && typeof document !== "undefined" && !document.getElementById("gf-lexend-pref")) {
       const l = document.createElement("link"); l.id = "gf-lexend-pref"; l.rel = "stylesheet";
       l.href = "https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;800&display=swap"; document.head.appendChild(l);
     }

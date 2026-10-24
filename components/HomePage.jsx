@@ -1,4 +1,11 @@
 'use client';
+import "@fontsource/jetbrains-mono/latin-400.css";
+import "@fontsource/jetbrains-mono/latin-700.css";
+import "@fontsource/jetbrains-mono/latin-800.css";
+import "@fontsource/space-grotesk/latin-400.css";
+import "@fontsource/space-grotesk/latin-500.css";
+import "@fontsource/space-grotesk/latin-600.css";
+import "@fontsource/space-grotesk/latin-700.css";
 import LogoMark from "@/components/LogoMark";
 import { useState, useEffect } from 'react';
 
@@ -119,7 +126,6 @@ export default function HomePage() {
   return (
     <div style={{ minHeight:'100vh', background:C.bg, color:C.text, fontFamily:C.font, overflowX:'hidden' }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
         a{color:inherit}
         .fi{opacity:0;transform:translateY(16px);transition:opacity .5s ease,transform .5s ease}
@@ -343,6 +349,8 @@ export default function HomePage() {
           <a href="/help" style={{ color:C.muted }}>Help</a>
           <a href="/privacy" style={{ color:C.muted }}>Privacy</a>
           <a href="/childrens-privacy" style={{ color:C.muted }}>Children&apos;s privacy</a>
+          <a href="https://trivquic.vercel.app" target="_blank" rel="noopener noreferrer" style={{ color:C.muted }}>TrivQuic</a>
+          <a href="https://tqak.vercel.app" target="_blank" rel="noopener noreferrer" style={{ color:C.muted }}>tqak</a>
           <a href="/tos" style={{ color:C.muted }}>Terms</a>
         </span>
       </footer>

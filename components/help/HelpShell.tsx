@@ -36,6 +36,8 @@ export function HelpShell({ children, back }: { children: ReactNode; back?: { hr
       <footer style={{ borderTop: `1px solid ${H.line}`, padding: '20px', textAlign: 'center', fontSize: 11, color: H.dim, display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
         <Link href="/privacy" style={{ color: H.dim }}>Privacy</Link>
         <Link href="/childrens-privacy" style={{ color: H.dim }}>Children&apos;s privacy</Link>
+        <a href="https://trivquic.vercel.app" target="_blank" rel="noopener noreferrer" style={{ color: H.dim }}>TrivQuic</a>
+        <a href="https://tqak.vercel.app" target="_blank" rel="noopener noreferrer" style={{ color: H.dim }}>tqak</a>
         <Link href="/tos" style={{ color: H.dim }}>Terms</Link>
         <span>AccuratKey v{latestVersion(WHATS_NEW)}{BUILD ? ` · ${BUILD}` : ''}</span>
       </footer>

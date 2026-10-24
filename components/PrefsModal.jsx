@@ -68,7 +68,7 @@ export default function PrefsModal({ T, prefs, setPref, onClose, profile, onTour
         <Row T={T} label="Version"><span style={{fontSize:11,color:T.muted}}>v{latestVersion(applyNews(WHATS_NEW, getGlobalSite().news))}{BUILD ? ` · build ${BUILD}` : ""}</span></Row>
 
         <Row T={T} label="Legal"><span style={{display:"flex",gap:10,fontSize:11}}>
-          <a href="/help" target="_blank" rel="noopener" style={{color:T.purple,fontWeight:700}}>Help</a><a href="/privacy" style={{color:T.muted}}>Privacy</a><a href="#" onClick={e=>{e.preventDefault();window.dispatchEvent(new CustomEvent("ak-open-cookie-settings"));}} style={{color:T.muted}}>Cookies</a><a href="/childrens-privacy" style={{color:T.muted}}>Children</a><a href="/tos" style={{color:T.muted}}>Terms</a></span></Row>
+          <a href="/help" target="_blank" rel="noopener" style={{color:T.purple,fontWeight:700}}>Help</a><a href="/privacy" style={{color:T.muted}}>Privacy</a><a href="#" onClick={e=>{e.preventDefault();window.dispatchEvent(new CustomEvent("ak-open-cookie-settings"));}} style={{color:T.muted}}>Cookies</a><a href="/childrens-privacy" style={{color:T.muted}}>Children</a><a href="/tos" style={{color:T.muted}}>Terms</a><a href="https://tqak.vercel.app" target="_blank" rel="noopener noreferrer" style={{color:T.muted}}>tqak</a><a href="https://trivquic.vercel.app" target="_blank" rel="noopener noreferrer" style={{color:T.muted}}>TrivQuic</a></span></Row>
 
         <div style={{color:T.purple,fontSize:11,fontWeight:800,letterSpacing:1,marginTop:16}}>SHORTCUTS</div>
         <div style={{color:T.muted,fontSize:12,lineHeight:1.9,marginTop:6}}>
