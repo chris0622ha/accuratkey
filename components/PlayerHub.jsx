@@ -4,6 +4,7 @@ import { PRESETS, fromText, getKeyStats } from "@/lib/practice";
 import { ALL_WORDS } from "./WordDB";
 import { getHistory, dayCounts, dayKey, currentDayStreak } from "@/lib/stats";
 import { loadReplay } from "@/lib/features";
+import { canStore } from "@/lib/consent";
 
 // "More tools" hub: insights, training extras, planning and privacy tools. Everything here is computed from, and stored on, this device only.
 const TABS = [["insights", "📊 Insights"], ["train", "🎯 Train"], ["audio", "🎧 Focus & rhythm"], ["plan", "🗓 Plan"], ["data", "🔒 My data"]];
@@ -11,7 +12,7 @@ const rnd = (n) => Math.floor(Math.random() * n);
 const pick = (a) => a[rnd(a.length)];
 const avg = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
 const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k) || "null") ?? d; } catch { return d; } };
-const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const lsSet = (k, v) => { if (!canStore()) return; try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 
 const PASSAGES = [
   ["Alice in Wonderland", "Alice was beginning to get very tired of sitting by her sister on the bank, and of having nothing to do. Once or twice she had peeped into the book her sister was reading, but it had no pictures or conversations in it."],

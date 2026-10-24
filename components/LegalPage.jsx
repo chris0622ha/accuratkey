@@ -1,4 +1,5 @@
 import Link from "next/link";
+import CookieLink from "./CookieLink";
 import { LEGAL } from "@/lib/legal";
 
 export const ContactLine = () => LEGAL.contactEmail
@@ -12,6 +13,7 @@ export default function LegalPage({ title, intro, sections }) {
         <Link href="/game" style={{fontWeight:800,fontSize:18,textDecoration:"none",fontFamily:"'JetBrains Mono',monospace"}}><span style={{color:"#7c6af7"}}>Accurat</span><span style={{color:"#e0e0ff"}}>Key</span></Link>
         <div style={{display:"flex",gap:16,fontSize:13}}>
           <Link href="/privacy" style={{color:"#8a8aa8",textDecoration:"none"}}>Privacy</Link>
+          <CookieLink style={{color:"#8a8aa8",textDecoration:"none"}} />
           <Link href="/childrens-privacy" style={{color:"#8a8aa8",textDecoration:"none"}}>Children</Link>
           <Link href="/tos" style={{color:"#8a8aa8",textDecoration:"none"}}>Terms</Link>
         </div>
