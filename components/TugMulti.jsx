@@ -81,11 +81,11 @@ export default function TugMulti({ T, user }) {
 
   const broken = pres === null || room === undefined && pres !== undefined;
   return (
-    <div style={{ padding: "4px 0 20px" }}>
+    <div style={{ padding: "4px 0 20px", color: T.text }}>
       <div style={{ ...box, textAlign: "center" }}>
         <div style={{ fontSize: 20, fontWeight: 800 }}>🪢 Tug of War</div>
         <div style={{ color: T.muted, fontSize: 13, marginTop: 4 }}>Live multiplayer — pick a side by joining, then type words to pull the rope.</div>
-        <div style={{ marginTop: 10, display: "inline-flex", gap: 8, alignItems: "center", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 999, padding: "6px 14px", fontWeight: 700 }}>
+        <div style={{ marginTop: 10, display: "inline-flex", gap: 8, alignItems: "center", background: T.bg, border: `1px solid ${T.border}`, borderRadius: 999, padding: "6px 14px", fontWeight: 700, color: T.text }}>
           <span style={{ width: 8, height: 8, borderRadius: 4, background: count > 0 ? "#10b981" : T.faint }} />
           {pres === undefined ? "Checking…" : `${count} ${count === 1 ? "player" : "players"} in Tug of War now`}
         </div>
@@ -94,7 +94,7 @@ export default function TugMulti({ T, user }) {
 
       {broken && (
         <div style={{ ...box, color: "#f87171", fontSize: 13 }}>
-          Multiplayer couldn't connect. The game's database rules may not allow it yet — see the setup note from your admin.
+          Multiplayer isn't available right now. Please try again later.
         </div>
       )}
 
