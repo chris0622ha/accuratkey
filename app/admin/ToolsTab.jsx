@@ -7,10 +7,10 @@ import { cleanBlocked } from "@/lib/moderation";
 import { adminListPublic, adminListSubmissions, adminDeleteSet } from "@/lib/wordsets";
 import { GAMES } from "@/components/GameCatalog";
 import { SYN_ANT } from "@/components/SynAntDB";
-import { LevelsPanel, SetsPanel, ExportsPanel, TestPanel, TextPanel, ChangelogPanel, AB, FlashCtx } from "./ToolsMore";
+import { LevelsPanel, SetsPanel, ExportsPanel, TestPanel, TextPanel, ChangelogPanel, MobilePanel, AB, FlashCtx } from "./ToolsMore";
 
 const CONFIG_DOCS = ["economy", "rewards", "locks", "moderation", "announcements", "maintenance", "broadcast", "site"];
-const SUBS = [["site", "🌐 Site"], ["text", "✏️ Text"], ["changelog", "📰 Changelog"], ["audit", "📜 Audit"], ["notes", "🗒 Notes"], ["tasks", "✅ Tasks"], ["backup", "💾 Backup"], ["health", "🩺 Health"], ["levelqa", "🔎 Level QA"], ["setstats", "📈 Set stats"], ["blocklist", "🚫 Blocklist"], ["levels", "🎚 Levels"], ["sets", "📚 Sets"], ["exports", "📤 Exports"], ["test", "🧪 Test & safety"], ["prefs", "⚙ Admin prefs"]];
+const SUBS = [["site", "🌐 Site"], ["text", "✏️ Text"], ["changelog", "📰 Changelog"], ["mobile", "📱 Mobile"], ["audit", "📜 Audit"], ["notes", "🗒 Notes"], ["tasks", "✅ Tasks"], ["backup", "💾 Backup"], ["health", "🩺 Health"], ["levelqa", "🔎 Level QA"], ["setstats", "📈 Set stats"], ["blocklist", "🚫 Blocklist"], ["levels", "🎚 Levels"], ["sets", "📚 Sets"], ["exports", "📤 Exports"], ["test", "🧪 Test & safety"], ["prefs", "⚙ Admin prefs"]];
 const download = (name, text, type = "application/json") => {
   const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 };
@@ -31,6 +31,7 @@ export default function ToolsTab({ T, st, adminDb, uid, flash, levels, tabs }) {
       {sub === "site" && <SitePanel {...p} />}
       {sub === "text" && <TextPanel {...p} />}
       {sub === "changelog" && <ChangelogPanel {...p} />}
+      {sub === "mobile" && <MobilePanel {...p} />}
       {sub === "audit" && <AuditPanel {...p} />}
       {sub === "notes" && <NotesPanel {...p} />}
       {sub === "tasks" && <TasksPanel {...p} />}

@@ -1059,6 +1059,8 @@ export default function AccuratKey() {
   const [sectionUnlockName, setSectionUnlockName] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
   const [hasKeyboard, setHasKeyboard] = useState(false);
+  const [acctMobile, setAcctMobile] = useState(false);   // admin granted phone access to the whole account
+  const [adminAcct, setAdminAcct] = useState(false);
   const [birthdayProfile, setBirthdayProfile] = useState(null);
 
   // Tips screen state
@@ -1500,9 +1502,9 @@ export default function AccuratKey() {
     });
 
     const unsub = onAuthStateChanged(auth, async (u) => {
-      if (!u) setChildUseAccount(false);
+      if (!u) { setChildUseAccount(false); setAcctMobile(false); setAdminAcct(false); }
       let _childUse = false;
-      if (u) { try { const a = await getAccount(u.uid); _childUse = !!(a && a.childUse); } catch {} setChildUseAccount(_childUse); }
+      if (u) { try { const a = await getAccount(u.uid); _childUse = !!(a && a.childUse); setAcctMobile(!!(a && a.mobileAccess)); } catch {} setChildUseAccount(_childUse); isAdmin(u.uid).then(v => setAdminAcct(!!v)).catch(() => {}); }
       setUser(u);
       setAuthReady(true);
       if (u) {
@@ -2568,7 +2570,8 @@ const Nav = () => (<>
 
   // SCREENS
 
-  if (isMobile && !hasKeyboard && authReady && screen !== "auth" && user?.uid !== "qM3qeYBLwvRXy8D0gOKGCQbGuA12") return (
+  const _mobileOk = acctMobile || adminAcct || !!activeProfile?.mobileAccess || (!activeProfile && profiles.some(p => p.mobileAccess));
+  if (isMobile && !hasKeyboard && authReady && screen !== "auth" && user?.uid !== "qM3qeYBLwvRXy8D0gOKGCQbGuA12" && !_mobileOk) return (
     <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font,padding:32,textAlign:"center"}}>
       <div style={{fontSize:64,marginBottom:20}}>⌨️</div>
       <h1 style={{color:T.text,fontSize:24,fontWeight:700,marginBottom:12}}>⌨️ Press any key</h1>

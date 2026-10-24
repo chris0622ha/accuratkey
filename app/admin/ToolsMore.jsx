@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect, useCallback, useContext, createContext, useRef } from "react";
-import { doc, getDocs, collection, query, where, limit, updateDoc, deleteDoc, setDoc, serverTimestamp, orderBy } from "firebase/firestore";
+import { doc, getDoc, getDocs, collection, query, where, limit, updateDoc, deleteDoc, setDoc, serverTimestamp, orderBy } from "firebase/firestore";
 import { setMaintenanceMode, getAllBans, setEconomy, logActivity, getActivityLog, getLevelOverrides, getLevelNameOverrides, getLevelTargetOverrides, updateLevelWords, deleteLevelOverride, setLevelTargets, addNotification, getRewards, getEconomy, getLocks, setLocks, getMaintenanceMode } from "@/lib/firebase";
 import { adminListPublic, adminListSubmissions, adminListRevertRequests, adminDeleteSet, adminSetBadge, adminSetReward, parseWords, validateSubmission, BADGES } from "@/lib/wordsets";
-import { getModeration } from "@/lib/firebase";
+import { getModeration, adminLookupUser } from "@/lib/firebase";
 import { moderate } from "@/lib/moderation";
 import { GAMES } from "@/components/GameCatalog";
 import { LOCKABLE_FEATURES } from "@/lib/locks";
@@ -397,4 +397,53 @@ export function ChangelogPanel({ T, st, adminDb, uid, flash }) {
       })}
     </Card>
   </>);
+}
+
+
+// ── Mobile access: phones without a keyboard are blocked; admins can allow an account or single profiles ──
+export function MobilePanel({ T, st, adminDb, uid, flash }) {
+  const [q, setQ] = useState("");
+  const [res, setRes] = useState(null);
+  const [acct, setAcct] = useState(false);
+  const find = async () => {
+    setRes(null);
+    const r = await adminLookupUser(adminDb, q);
+    if (!r) return flash("Not found - use the exact username or account ID");
+    let a = false; try { const d = await getDoc(doc(adminDb, "accounts", r.uid)); a = !!(d.exists() && d.data().mobileAccess); } catch {}
+    setAcct(a); setRes(r);
+  };
+  const setAccount = async (on) => {
+    await setDoc(doc(adminDb, "accounts", res.uid), { mobileAccess: on }, { merge: true });
+    setAcct(on); flash(on ? "Mobile access allowed for the whole account" : "Account mobile access removed");
+  };
+  const setProfile = async (pid, on) => {
+    await updateDoc(doc(adminDb, "accounts", res.uid, "profiles", pid), { mobileAccess: on });
+    setRes(r => ({ ...r, profiles: r.profiles.map(p => p.id === pid ? { ...p, mobileAccess: on } : p) }));
+    flash(on ? "Mobile access allowed for that profile" : "Profile mobile access removed");
+  };
+  return (
+    <div style={st.card}>
+      <div style={{ color: T.purple, fontSize: 11, fontWeight: 800, marginBottom: 4 }}>📱 Mobile access</div>
+      <div style={{ color: T.muted, fontSize: 11, marginBottom: 10 }}>Phones and tablets without a keyboard are blocked by default. Allow a whole account, or only chosen profiles. Admins and the owner are always allowed. Changes apply the next time they open the app.</div>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <input value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => e.key === "Enter" && find()} placeholder="@username or account ID" style={{ flex: 1, minWidth: 160, background: T.bg, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, padding: "8px 10px", fontSize: 13 }} />
+        <AB onClick={find} style={st.tab(true)}>Find</AB>
+      </div>
+      {res && (
+        <div style={{ marginTop: 12 }}>
+          <div style={{ fontWeight: 700, color: T.text, fontSize: 13 }}>{res.username ? "@" + res.username : res.uid}</div>
+          <div style={{ marginTop: 8, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "8px 10px", border: `1px solid ${T.border}`, borderRadius: 8 }}>
+            <span style={{ fontSize: 13, color: T.text }}>Whole account (all profiles)</span>
+            <AB onClick={() => setAccount(!acct)} style={st.tab(acct)}>{acct ? "Allowed ✓" : "Blocked"}</AB>
+          </div>
+          {res.profiles.map(p => (
+            <div key={p.id} style={{ marginTop: 6, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "8px 10px", border: `1px solid ${T.border}`, borderRadius: 8 }}>
+              <span style={{ fontSize: 13, color: T.text }}>{p.avatar || "👤"} {p.name || p.id}</span>
+              <AB onClick={() => setProfile(p.id, !p.mobileAccess)} style={st.tab(!!p.mobileAccess)}>{p.mobileAccess ? "Allowed ✓" : (acct ? "Via account" : "Blocked")}</AB>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
