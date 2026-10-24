@@ -2,8 +2,10 @@
 import React from "react";
 import { WHATS_NEW } from "@/lib/whatsNew";
 import { groupByDay } from "@/lib/newsGroup";
-const DAYS = groupByDay(WHATS_NEW);
+import { applyNews } from "@/lib/newsEdits";
+import { getGlobalSite } from "@/lib/siteConfig";
 export default function WhatsNewModal({ T, onClose }) {
+  const DAYS = groupByDay(applyNews(WHATS_NEW, getGlobalSite().news));
   return (
     <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:9000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
       <div onClick={e=>e.stopPropagation()} style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:16,padding:"20px 22px",width:"100%",maxWidth:460,maxHeight:"85vh",overflowY:"auto"}}>

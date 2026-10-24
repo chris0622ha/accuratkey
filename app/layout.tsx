@@ -3,6 +3,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import PwaSetup from "@/components/PwaSetup";
 import GlobalCommandBar from "./GlobalCommandBar";
 import CookieConsent from "@/components/CookieConsent";
+import TextOverrides from "@/components/TextOverrides";
 // AccuratKey - URLs: /signin /game /play /stats /help /store /social /about /settings /friends
 export const metadata: Metadata = {
   title: "AccuratKey",
@@ -37,6 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <PwaSetup />
         <GlobalCommandBar />
         <CookieConsent />
+        <TextOverrides />
         <ErrorBoundary>{children}</ErrorBoundary>
       </body>
     </html>

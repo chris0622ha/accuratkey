@@ -7,6 +7,9 @@ import { getModeration } from "@/lib/firebase";
 import { moderate } from "@/lib/moderation";
 import { GAMES } from "@/components/GameCatalog";
 import { LOCKABLE_FEATURES } from "@/lib/locks";
+import { getSite, setSite } from "@/lib/siteConfig";
+import { WHATS_NEW } from "@/lib/whatsNew";
+import { ADMIN_NEWS } from "@/lib/adminWhatsNew";
 
 export const FlashCtx = createContext({ last: { current: "" } });
 // Button that shows "Working…" while an async action runs and "✓ Done" if it finished with a success message
@@ -231,4 +234,105 @@ export function HomeStrip({ T, st, adminDb }) {
     <span>✅ <b>{d.open}</b> open task{d.open === 1 ? "" : "s"}</span><span>📝 <b>{d.subs}</b> set{d.subs === 1 ? "" : "s"} waiting</span>
     {d.note && <span style={{ color: T.muted }}>Last shift note: “{d.note.slice(0, 120)}”</span>}
   </div>;
+}
+
+// ── Text & changelog editor ──
+const COMMON_LABELS = ["Profile", "Notifications", "Practice lab", "Stats & achievements", "Preferences", "Help center", "What's new", "Friends", "Challenges", "Send feedback", "Switch profile", "Games", "Map", "Daily", "Sets", "Privacy", "Children's privacy", "Terms"];
+export function TextPanel({ T, st, adminDb, uid, flash }) {
+  const [rows, setRows] = useState(null);
+  const [site, setSiteDoc] = useState({});
+  useEffect(() => { getSite().then(c => { setSiteDoc(c); setRows((c.texts || []).map(r => ({ ...r }))); }).catch(() => setRows([])); }, []);
+  if (!rows) return <div style={{ color: T.muted }}>Loading…</div>;
+  const upd = (i, patch) => setRows(rs => rs.map((r, j) => j === i ? { ...r, ...patch } : r));
+  const gameLabels = GAMES.flatMap(g => [g.name, g.desc]).filter(Boolean);
+  const save = async () => {
+    const clean = rows.map(r => ({ from: (r.from || "").trim(), to: (r.to || "").trim(), sub: !!r.sub })).filter(r => r.from && r.to);
+    if (clean.some(r => r.from.length > 200 || r.to.length > 200)) return flash("Each text must be 200 characters or fewer");
+    await setSite({ texts: clean }, adminDb);
+    logActivity("text_overrides", { adminUid: uid, detail: `${clean.length} text change(s)` }, adminDb).catch(() => {});
+    setRows(clean); flash("Saved. Players see it on their next page load");
+  };
+  return (<>
+    <Card T={T} st={st} title="Change text anywhere" hint={'Replace any label the players see: menu items, buttons, headings, game names. "Find" is the exact current text. Tick "anywhere" to replace it even inside a longer sentence. Only text changes, never layout.'}>
+      <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
+        {COMMON_LABELS.map(l => <button key={l} style={{ ...st.tab(false), fontSize: 10 }} onClick={() => setRows(rs => rs.some(r => r.from === l) ? rs : [...rs, { from: l, to: l, sub: false }])}>{l}</button>)}
+      </div>
+      <div style={{ color: T.muted, fontSize: 10, marginBottom: 8 }}>Tap a label to add it, or add your own row. Game names and descriptions: <select style={{ ...st.input, width: "auto", fontSize: 11 }} value="" onChange={e => e.target.value && setRows(rs => [...rs, { from: e.target.value, to: e.target.value, sub: false }])}><option value="">pick…</option>{[...new Set(gameLabels)].map(l => <option key={l} value={l}>{l}</option>)}</select></div>
+      {rows.map((r, i) => (
+        <div key={i} style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginBottom: 6 }}>
+          <input value={r.from} onChange={e => upd(i, { from: e.target.value })} placeholder="Find (current text)" style={{ ...st.input, flex: "1 1 150px", width: "auto" }} />
+          <span style={{ color: T.muted }}>→</span>
+          <input value={r.to} onChange={e => upd(i, { to: e.target.value })} placeholder="Show instead" style={{ ...st.input, flex: "1 1 150px", width: "auto" }} />
+          <label style={{ color: T.muted, fontSize: 11 }}><input type="checkbox" checked={!!r.sub} onChange={e => upd(i, { sub: e.target.checked })} /> anywhere</label>
+          <button style={st.btn("#fff", T.danger)} onClick={() => setRows(rs => rs.filter((_, j) => j !== i))}>✕</button>
+        </div>
+      ))}
+      <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+        <button style={st.btn()} onClick={() => setRows(rs => [...rs, { from: "", to: "", sub: false }])}>+ Add row</button>
+        <AB style={st.btn("#000", "#34d399")} onClick={save}>Save text changes</AB>
+      </div>
+    </Card>
+  </>);
+}
+
+const NEWS_SRC = { news: "Player changelog (What's new)", adminNews: "Admin changelog" };
+export function ChangelogPanel({ T, st, adminDb, uid, flash }) {
+  const [which, setWhich] = useState("news");
+  const [site, setSiteDoc] = useState(null);
+  const [draft, setDraft] = useState({});
+  const [nw, setNw] = useState({ title: "", items: "" });
+  useEffect(() => { getSite().then(setSiteDoc).catch(() => setSiteDoc({})); }, []);
+  if (!site) return <div style={{ color: T.muted }}>Loading…</div>;
+  const cfg = site[which] || { edits: {}, hidden: [], extra: [] };
+  const base = which === "news" ? WHATS_NEW : ADMIN_NEWS;
+  const all = [...(cfg.extra || []), ...base].sort((a, b) => new Date(b.at) - new Date(a.at));
+  const hidden = new Set(cfg.hidden || []);
+  const persist = async (next) => { const doc2 = { edits: {}, hidden: [], extra: [], ...cfg, ...next }; const s2 = await setSite({ [which]: doc2 }, adminDb); setSiteDoc(s2); };
+  const eff = (e) => ({ ...e, ...(cfg.edits?.[e.id] || {}) });
+  const saveEntry = async (e) => {
+    const d = draft[e.id]; if (!d) return;
+    const items = d.items.split("\n").map(x => x.trim()).filter(Boolean);
+    if (!d.title.trim() || !items.length) return flash("Enter a title and at least one line");
+    if ((cfg.extra || []).some(x => x.id === e.id)) await persist({ extra: cfg.extra.map(x => x.id === e.id ? { ...x, title: d.title.trim(), items } : x) });
+    else await persist({ edits: { ...(cfg.edits || {}), [e.id]: { title: d.title.trim(), items } } });
+    setDraft(x => { const n = { ...x }; delete n[e.id]; return n; }); flash("Changelog entry saved");
+  };
+  const addEntry = async () => {
+    const items = nw.items.split("\n").map(x => x.trim()).filter(Boolean);
+    if (!nw.title.trim() || !items.length) return flash("Enter a title and at least one line");
+    const e = { id: "x-" + Date.now(), at: new Date().toISOString(), title: nw.title.trim(), items };
+    await persist({ extra: [e, ...(cfg.extra || [])] }); setNw({ title: "", items: "" }); flash("Entry added");
+  };
+  return (<>
+    <div style={{ display: "flex", gap: 4, marginBottom: 10 }}>{Object.entries(NEWS_SRC).map(([k, l]) => <button key={k} onClick={() => setWhich(k)} style={st.tab(which === k)}>{l}</button>)}</div>
+    <Card T={T} st={st} title="Add an entry" hint="Shows at the top with today's date. Entries from the same day are combined for players.">
+      <input value={nw.title} onChange={e => setNw({ ...nw, title: e.target.value })} placeholder="Title" style={{ ...st.input, marginBottom: 6 }} />
+      <textarea value={nw.items} onChange={e => setNw({ ...nw, items: e.target.value })} rows={3} placeholder="One change per line" style={{ ...st.input, resize: "vertical" }} />
+      <AB style={{ ...st.btn(), marginTop: 6 }} onClick={addEntry}>Add entry</AB>
+    </Card>
+    <Card T={T} st={st} title={`Entries (${all.length})`} hint="Edit the wording, hide an entry, or restore the original.">
+      {all.map(e0 => {
+        const e = eff(e0); const d = draft[e0.id]; const isHidden = hidden.has(e0.id); const isExtra = (cfg.extra || []).some(x => x.id === e0.id); const edited = !!cfg.edits?.[e0.id];
+        return (
+          <div key={e0.id} style={{ borderTop: `1px solid ${T.border}`, padding: "8px 0", opacity: isHidden ? 0.5 : 1 }}>
+            <div style={{ color: T.muted, fontSize: 10 }}>{new Date(e0.at).toLocaleDateString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", year: "numeric" })}{isExtra ? " · added by admin" : edited ? " · edited" : ""}{isHidden ? " · hidden" : ""}</div>
+            {d ? (<>
+              <input value={d.title} onChange={x => setDraft({ ...draft, [e0.id]: { ...d, title: x.target.value } })} style={{ ...st.input, margin: "4px 0" }} />
+              <textarea value={d.items} onChange={x => setDraft({ ...draft, [e0.id]: { ...d, items: x.target.value } })} rows={Math.min(8, d.items.split("\n").length + 1)} style={{ ...st.input, resize: "vertical" }} />
+              <div style={{ display: "flex", gap: 6, marginTop: 6 }}><AB style={st.btn("#000", "#34d399")} onClick={() => saveEntry(e0)}>Save</AB><button style={st.btn()} onClick={() => setDraft(x => { const n = { ...x }; delete n[e0.id]; return n; })}>Cancel</button></div>
+            </>) : (<>
+              <div style={{ color: T.text, fontWeight: 700, fontSize: 13 }}>{e.title}</div>
+              <ul style={{ margin: "4px 0", paddingLeft: 18, color: T.muted, fontSize: 12 }}>{e.items.map((x, i) => <li key={i}>{x}</li>)}</ul>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                <button style={st.btn()} onClick={() => setDraft({ ...draft, [e0.id]: { title: e.title, items: e.items.join("\n") } })}>Edit</button>
+                <AB style={st.btn()} onClick={() => persist({ hidden: isHidden ? cfg.hidden.filter(x => x !== e0.id) : [...(cfg.hidden || []), e0.id] }).then(() => flash(isHidden ? "Entry shown" : "Entry hidden"))}>{isHidden ? "Show" : "Hide"}</AB>
+                {edited && <AB style={st.btn()} onClick={() => { const ed = { ...cfg.edits }; delete ed[e0.id]; return persist({ edits: ed }).then(() => flash("Restored original")); }}>Restore original</AB>}
+                {isExtra && <AB style={st.btn("#fff", T.danger)} onClick={() => confirm("Delete this entry?") && persist({ extra: cfg.extra.filter(x => x.id !== e0.id) }).then(() => flash("Entry deleted"))}>Delete</AB>}
+              </div>
+            </>)}
+          </div>
+        );
+      })}
+    </Card>
+  </>);
 }

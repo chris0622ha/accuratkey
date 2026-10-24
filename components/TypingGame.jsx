@@ -9,7 +9,7 @@ import { FOUNDATIONS_ICONS, PRECISION_FLOW_ICONS, WORD_POWER_ICONS, KEYBOARD_MAS
 import { formatKeys } from "@/lib/format";
 import { CertificateModal } from "./Certificates";
 import { AICoach } from "./AICoach";
-import { getSite, setGlobalSite, bannerActive } from "../lib/siteConfig";
+import { getSite, setGlobalSite, getGlobalSite, bannerActive } from "../lib/siteConfig";
 import NoticeDock from "./NoticeDock";
 import { setGlobalEconomy, getGlobalEconomy, keysMultiplier, setGlobalLocks, setGlobalRewards, isFeatureLocked, lockMessage } from "../lib/locks";
 import { setClaimedToday, markSetClaimed, requestSetRevert } from "../lib/wordsets";
@@ -28,6 +28,7 @@ import { applyLevelContent, applyLevelNames, EXTRA_SECTIONS } from "../lib/level
 import { mergeKeyStats, mergeMissedWords, wordAt } from "@/lib/practice";
 import { logRun, getHistory, newlyUnlocked } from "@/lib/stats";
 import { WHATS_NEW } from "@/lib/whatsNew";
+import { applyNews } from "@/lib/newsEdits";
 import { getPrefs, setPrefs, getBest, recordRun } from "@/lib/prefs";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
 import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, getLocks, getRewards, getAllNotifications, markAllNotificationsRead, getEconomy, deleteNotification, deleteAllNotifications, getAnnouncements, markNotificationRevertRequested, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, getLevelNameOverrides, getLevelTargetOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
@@ -827,7 +828,7 @@ export default function AccuratKey() {
   }, []);
 
   // Sync screen to URL (replace so back button works naturally)
-  const STANDALONE_PAGES = ["/about", "/help", "/faq", "/how-to-play"];
+  const STANDALONE_PAGES = ["/about", "/help"];
   const setScreenWithUrl = React.useCallback((s) => {
     setScreen(s);
     // Don't redirect if on a standalone content page
@@ -1383,7 +1384,7 @@ export default function AccuratKey() {
     getLocks().then(l => { setGlobalLocks(l); setLocksLoaded(n => n + 1); });
     getRewards().then(r => setGlobalRewards(r));
     getEconomy().then(e => { setGlobalEconomy(e); setEco(e); }).catch(() => {});
-    getSite().then(c => { setGlobalSite(c); setSiteCfg(c); try { if (c.version) { const seen = localStorage.getItem("ak_site_ver"); if (!seen) localStorage.setItem("ak_site_ver", String(c.version)); else if (seen !== String(c.version)) setNeedRefresh(true); } } catch {} }).catch(() => {});
+    getSite().then(c => { setGlobalSite(c); setSiteCfg(c); try { setNewSeen(localStorage.getItem("ak_whatsnew_seen") === (applyNews(WHATS_NEW, c.news)[0]||WHATS_NEW[0]).id); } catch {} try { if (c.version) { const seen = localStorage.getItem("ak_site_ver"); if (!seen) localStorage.setItem("ak_site_ver", String(c.version)); else if (seen !== String(c.version)) setNeedRefresh(true); } } catch {} }).catch(() => {});
     getMaintenanceMode().then(m => {
       setMaintenance(m);
       // Don't immediately block here - we don't know who's logged in yet,
@@ -1821,7 +1822,7 @@ export default function AccuratKey() {
   useEffect(() => {
     try {
       if (screen === "levelMap" && !localStorage.getItem("ak_onboarded")) setTourStep(0);
-      setNewSeen(localStorage.getItem("ak_whatsnew_seen") === WHATS_NEW[0].id);
+      setNewSeen(localStorage.getItem("ak_whatsnew_seen") === (applyNews(WHATS_NEW, getGlobalSite().news)[0]||WHATS_NEW[0]).id);
     } catch {}
   }, [screen]);
 
@@ -2538,7 +2539,7 @@ const Nav = () => (<>
         await markNotificationRevertRequested(user.uid, n.id);
         setNotifs(ns=>ns.map(x=>x.id===n.id?{...x,revertRequested:true}:x));
       }catch(e){ alert("Couldn't send the request. Please try again."); } }} />}
-    {showWhatsNew && <WhatsNewModal T={T} onClose={()=>{setShowWhatsNew(false);setNewSeen(true);try{localStorage.setItem("ak_whatsnew_seen",WHATS_NEW[0].id);}catch{}}} />}
+    {showWhatsNew && <WhatsNewModal T={T} onClose={()=>{setShowWhatsNew(false);setNewSeen(true);try{localStorage.setItem("ak_whatsnew_seen",(applyNews(WHATS_NEW, getGlobalSite().news)[0]||WHATS_NEW[0]).id);}catch{}}} />}
   </>
   );
 
