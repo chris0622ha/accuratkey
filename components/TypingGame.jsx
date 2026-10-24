@@ -2494,6 +2494,7 @@ const Nav = () => (<>
               {canUse(activeProfile,"practice")&&item("target","Practice lab",()=>setShowPractice(true))}
               {canUse(activeProfile,"stats")&&item("stats","Stats & achievements",()=>setShowStats(true))}
               {item("star","Preferences",()=>setShowPrefs(true))}
+              {item("help","Help center",()=>{window.open("/help","_blank","noopener");setNavMenu(false);})}
               {item("calendar","What's new",()=>setShowWhatsNew(true),!newSeen)}
               {canUse(activeProfile,"friends")&&item("friends","Friends",()=>{getFriends(user?.uid).then(setFriends);getIncomingRequests(user?.uid).then(setFriendReqs);setShowFriends(true);})}
               {canUse(activeProfile,"challenges")&&item("trophy","Challenges",()=>{getPendingChallenges(user.uid).then(setChallenges);setShowChallenges(true);setChallengeMsg("");},pendingCh)}

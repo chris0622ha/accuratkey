@@ -112,6 +112,7 @@ const UI_GLYPHS = {
   settings: (c, a) => <><circle {...c} cx="12" cy="12" r="3"/><path {...a} d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></>,
   lock: (c, a) => <><rect {...c} x="5" y="11" width="14" height="10" rx="2"/><path {...a} d="M8 11V8a4 4 0 0 1 8 0v3"/></>,
   target: (c, a) => <><circle {...c} cx="12" cy="12" r="8"/><circle {...a} cx="12" cy="12" r="3"/><path {...c} d="M12 1v4M12 19v4M1 12h4M19 12h4"/></>,
+  help: (c, a) => <><circle {...c} cx="12" cy="12" r="9"/><path {...c} d="M9.500 9.500a2.500 2.500 0 1 1 3.500 2.300c-.7.4-1 .9-1 1.700"/><circle {...a} cx="12" cy="17" r=".6"/></>,
   star: (c, a) => <><path {...c} d="M12 3l2.700 5.600 6.100.9-4.400 4.300 1 6.100L12 17l-5.400 2.900 1-6.100L3.200 9.500l6.100-.9z"/></>,
 };
 export function UiIcon({ name, size = 20, color, accent }) {

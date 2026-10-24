@@ -40,18 +40,27 @@ export default function HelpPage() {
 
   return (
     <HelpShell>
-      <section style={{ padding: '56px 0 28px', textAlign: 'center' }}>
-        <h1 style={{ fontSize: 'clamp(26px,5vw,38px)', fontWeight: 800, margin: '0 0 10px' }}>How can we help?</h1>
-        <p style={{ color: H.mute, fontSize: 14, margin: '0 0 24px' }}>Search the Help Center or pick a topic below.</p>
-        <div style={{ maxWidth: 560, margin: '0 auto', position: 'relative' }}>
+      <section style={{ margin: '28px 0 30px', padding: 'clamp(30px,6vw,56px) clamp(18px,4vw,48px)', borderRadius: 24, textAlign: 'center', background: 'radial-gradient(120% 140% at 10% 0%, #3b2d8f 0%, #1b1640 45%, #0e0e1c 100%)', border: `1px solid ${H.line}`, position: 'relative', overflow: 'hidden' }}>
+        <div aria-hidden style={{ position: 'absolute', right: -40, top: -40, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle,#7c6af755,transparent 70%)' }} />
+        <div style={{ fontSize: 12, letterSpacing: 4, color: '#b9afff', marginBottom: 12 }}>HELP CENTER</div>
+        <h1 style={{ fontSize: 'clamp(28px,6vw,46px)', fontWeight: 800, margin: '0 0 12px', lineHeight: 1.1 }}>How can we help?</h1>
+        <p style={{ color: '#c9c9e8', fontSize: 14, margin: '0 0 26px' }}>Guides, answers and fixes for every part of AccuratKey.</p>
+        <div style={{ maxWidth: 580, margin: '0 auto' }}>
           <input
             value={q}
             onChange={e => setQ(e.target.value)}
-            placeholder="Search, e.g. streak, Bluetooth, delete account"
+            placeholder="🔎  Search, e.g. streak, Bluetooth, delete account"
             aria-label="Search help"
-            style={{ width: '100%', boxSizing: 'border-box', background: H.card, border: `1px solid ${H.line}`, borderRadius: 12, padding: '15px 18px', color: H.text, fontFamily: H.font, fontSize: 15, outline: 'none' }}
+            style={{ width: '100%', boxSizing: 'border-box', background: '#0a0a12', border: '1px solid #4b4390', borderRadius: 14, padding: '16px 20px', color: H.text, fontFamily: H.font, fontSize: 15, outline: 'none', boxShadow: '0 8px 30px #0008' }}
           />
         </div>
+        {query.length < 2 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 18 }}>
+            {POPULAR.map(([label, id], i) => (
+              <Link key={i} href={`/help/${id}`} className="hchip" style={{ textDecoration: 'none', background: '#ffffff12', border: '1px solid #ffffff22', borderRadius: 999, padding: '7px 13px', color: '#d6d6f2', fontSize: 12 }}>{label}</Link>
+            ))}
+          </div>
+        )}
       </section>
 
       {query.length >= 2 ? (
@@ -72,9 +81,12 @@ export default function HelpPage() {
         </section>
       ) : (
         <>
-          <section style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginBottom: 44 }}>
-            {POPULAR.map(([label, id], i) => (
-              <Link key={i} href={`/help/${id}`} className="hchip" style={{ textDecoration: 'none', background: H.card, border: `1px solid ${H.line}`, borderRadius: 999, padding: '8px 14px', color: H.mute, fontSize: 12 }}>{label}</Link>
+          <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(210px,1fr))', gap: 12, marginBottom: 44 }}>
+            {[['1', 'Connect a keyboard', 'AccuratKey needs a physical one.', '/help/keyboard'], ['2', 'Make a profile', 'Free, with or without an account.', '/help/getting-started'], ['3', 'Pass your first level', 'No Backspace: accuracy comes first.', '/help/levels']].map(([n, t, d, h]) => (
+              <Link key={n} href={h} className="hcard" style={{ textDecoration: 'none', display: 'flex', gap: 14, alignItems: 'center', background: H.card2, border: `1px solid ${H.line}`, borderRadius: 14, padding: '16px 18px' }}>
+                <span style={{ width: 34, height: 34, borderRadius: 10, background: H.accent, color: '#fff', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{n}</span>
+                <span><div style={{ color: H.text, fontWeight: 700, fontSize: 13 }}>{t}</div><div style={{ color: H.mute, fontSize: 11, marginTop: 2 }}>{d}</div></span>
+              </Link>
             ))}
           </section>
 
@@ -88,8 +100,8 @@ export default function HelpPage() {
                   if (!t) return null;
                   const href = id === 'keyboard' ? '/help/keyboard' : `/help/${id}`;
                   return (
-                    <Link key={id} href={href} className="hcard" style={{ ['--c' as any]: t.color, textDecoration: 'none', background: H.card, border: `1px solid ${H.line}`, borderTop: `3px solid ${t.color}`, borderRadius: 12, padding: '16px 18px', display: 'block' }}>
-                      <div style={{ fontSize: 24, marginBottom: 8 }}>{t.emoji}</div>
+                    <Link key={id} href={href} className="hcard" style={{ ['--c' as any]: t.color, textDecoration: 'none', border: `1px solid ${H.line}`, borderRadius: 16, padding: '18px 20px', display: 'block', background: `linear-gradient(160deg, ${t.color}1f, ${H.card} 55%)` }}>
+                      <div style={{ width: 44, height: 44, borderRadius: 12, background: t.color + '2e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, marginBottom: 12 }}>{t.emoji}</div>
                       <div style={{ color: H.text, fontWeight: 700, fontSize: 14, marginBottom: 4 }}>{t.title}</div>
                       <div style={{ color: H.mute, fontSize: 12, lineHeight: 1.55 }}>{TOPIC_DESC[id]}</div>
                     </Link>
