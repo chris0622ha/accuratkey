@@ -315,6 +315,7 @@ export default function AdminPage() {
   const [adminProfiles,setAdminProfiles]=useState(null); // this account's profiles, once fetched
   const [chosenAdminProfile,setChosenAdminProfile]=useState(null); // the profile picked to act as
   const [tab,setTab]=useState("stats");
+  const [confirmSwitchAccount,setConfirmSwitchAccount]=useState(null);
   const [prefs,setPrefs]=useState({idle:30,pinned:[]});
   const [paletteOpen,setPaletteOpen]=useState(false);
   const [paletteQ,setPaletteQ]=useState("");
@@ -1213,7 +1214,7 @@ export default function AdminPage() {
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
                   <div style={{display:"flex",alignItems:"center",gap:8}}>
                     {f.username
-                      ? <button onClick={()=>{ setSearch(f.username); setTab("users"); }} style={{background:"none",border:"none",color:T.purple,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",padding:0}}>@{f.username}</button>
+                      ? <button onClick={()=>{ setFilter(f.username); setTab("users"); }} style={{background:"none",border:"none",color:T.purple,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",padding:0}}>@{f.username}</button>
                       : <span style={{color:T.muted,fontSize:10}}>{f.uid?.slice(0,8)}…</span>
                     }
                     {f.profileName && <span style={{color:T.faint,fontSize:10}}>· {f.profileName}</span>}
