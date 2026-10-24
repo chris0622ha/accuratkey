@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { onAuthStateChanged, signInWithPopup, signOut, signInWithEmailAndPassword, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth";
 import { getAdminAuth, getAdminDb, adminLookupUser, getLevelNameOverrides, getLevelTargetOverrides, deleteLevelOverride, isAdmin, getAllUsers, getAllBans, getAllAdmins, banUser, tempBanUser, unbanUser, grantAdmin, revokeAdmin, adminSkipLevel, setAdminNote, getAdminNote, getActivityLog, setMaintenanceMode, getMaintenanceMode, getUserByUsername, logActivity, adminSetKeys, adminSetTrials, adminSetProfileAdmin, getProfilesForAdmin, getUserSessions, getUserLastSeen, warnUser, clearWarning, setBroadcast, getBroadcast, getAppStats, updateLevelWords, getLevelOverrides, getLevelFailStats, getAdminFeedback, dismissFeedback, getAdminBirthdayRequests, approveBirthdayRequest, rejectBirthdayRequest, replyToFeedback, getFlaggedScores, getRestoreRequests, approveFlaggedScore, dismissFlaggedScore, resolveRestoreRequest, getCoppaAuditSummary, runCoppaCleanup } from "@/lib/firebase";
 import { KKey } from "@/components/icons/KKey";
@@ -442,7 +442,8 @@ export default function AdminPage() {
   const [showSwitcher,setShowSwitcher]=useState(false);
   const [switcherMode,setSwitcherMode]=useState("menu"); // "menu" | "account"
 
-  const flash = m => { setMsg(m); setTimeout(()=>setMsg(""),3000); };
+  const flashT = useRef(null);
+  const flash = m => { setMsg(m); clearTimeout(flashT.current); flashT.current=setTimeout(()=>setMsg(""),4500); };
 
   useEffect(()=>{ return onAuthStateChanged(adminAuth, async u => {
     setUser(u);
@@ -829,7 +830,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {msg && <div style={{background:T.purple+"22",border:`1px solid ${T.purple}44`,borderRadius:8,padding:"9px 13px",marginBottom:12,color:T.purple,fontSize:12}}>{msg}</div>}
+        {msg && (()=>{ const bad=/^(failed|couldn't|could not|not found|enter |pick |add |link must|nothing|not an)|failed/i.test(msg); const c=bad?T.danger:"#10b981"; return <div role="status" onClick={()=>setMsg("")} style={{position:"fixed",top:14,left:"50%",transform:"translateX(-50%)",zIndex:10001,maxWidth:"92vw",background:T.card,border:`1.5px solid ${c}`,borderRadius:12,padding:"11px 16px",color:c,fontSize:13,fontWeight:700,boxShadow:"0 6px 24px #000a",cursor:"pointer"}}>{bad?"✕ ":"✓ "}{msg}</div>; })()}
 
         {/* Global search */}
         <div style={{display:"flex",gap:8,marginBottom:14}}>

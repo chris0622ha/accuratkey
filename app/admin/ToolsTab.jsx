@@ -111,9 +111,10 @@ function SitePanel({ T, st, adminDb, uid, flash }) {
 }
 
 // ── Audit: who did what, with filters ──
-function AuditPanel({ T, st, adminDb }) {
+function AuditPanel({ T, st, adminDb, flash }) {
   const [rows, setRows] = useState(null); const [act, setAct] = useState(""); const [who, setWho] = useState(""); const [from, setFrom] = useState(""); const [to, setTo] = useState("");
   const load = useCallback(async () => { setRows(await getActivityLog(500, adminDb).catch(() => [])); }, [adminDb]);
+  const reload = async () => { await load(); flash && flash("Reloaded"); };
   useEffect(() => { load(); }, [load]);
   if (!rows) return <div style={{ color: T.muted }}>Loading…</div>;
   const f0 = from ? new Date(from).getTime() : 0, t0 = to ? new Date(to).getTime() + 86400000 : Infinity;
@@ -127,7 +128,7 @@ function AuditPanel({ T, st, adminDb }) {
         <select value={who} onChange={e => setWho(e.target.value)} style={{ ...st.input, width: "auto" }}><option value="">All admins</option>{admins.map(a => <option key={a} value={a}>{a.slice(0, 8)}…</option>)}</select>
         <input type="date" value={from} onChange={e => setFrom(e.target.value)} style={{ ...st.input, width: "auto" }} />
         <input type="date" value={to} onChange={e => setTo(e.target.value)} style={{ ...st.input, width: "auto" }} />
-        <button style={st.btn()} onClick={load}>Reload</button>
+        <button style={st.btn()} onClick={reload}>Reload</button>
       </div>
     </Card>
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 10 }}>
@@ -149,7 +150,7 @@ const listLog = async (adb, action, extra) => {
 function NotesPanel({ T, st, adminDb, uid, flash }) {
   const [q, setQ] = useState(""); const [who, setWho] = useState(null); const [notes, setNotes] = useState([]); const [txt, setTxt] = useState("");
   const find = async () => { const u = await adminLookupUser(adminDb, q).catch(() => null); if (!u) { setWho(null); setNotes([]); return flash("Not found"); } setWho(u); setNotes(await listLog(adminDb, "admin_note", ["targetUid", u.uid]).catch(() => [])); };
-  const add = async () => { if (!txt.trim() || !who) return; await logActivity("admin_note", { adminUid: uid, targetUid: who.uid, targetUsername: who.username, detail: txt.trim().slice(0, 400) }, adminDb); setTxt(""); setNotes(await listLog(adminDb, "admin_note", ["targetUid", who.uid])); };
+  const add = async () => { if (!txt.trim() || !who) return; await logActivity("admin_note", { adminUid: uid, targetUid: who.uid, targetUsername: who.username, detail: txt.trim().slice(0, 400) }, adminDb); setTxt(""); setNotes(await listLog(adminDb, "admin_note", ["targetUid", who.uid])); flash("Note added"); };
   return (<>
     <Card T={T} st={st} title="Staff notes on an account" hint="Private to admins. Look up by @username or UID. Don't store personal details about children here.">
       <div style={{ display: "flex", gap: 6 }}><input value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => e.key === "Enter" && find()} placeholder="@username or UID" style={st.input} /><button style={st.btn()} onClick={find}>Find</button></div>
@@ -163,20 +164,20 @@ function NotesPanel({ T, st, adminDb, uid, flash }) {
   </>);
 }
 
-function TasksPanel({ T, st, adminDb, uid }) {
+function TasksPanel({ T, st, adminDb, uid, flash }) {
   const [tasks, setTasks] = useState([]); const [shift, setShift] = useState([]); const [t, setT] = useState(""); const [s, setSn] = useState("");
   const load = useCallback(async () => { setTasks(await listLog(adminDb, "admin_task").catch(() => [])); setShift(await listLog(adminDb, "admin_shift").catch(() => [])); }, [adminDb]);
   useEffect(() => { load(); }, [load]);
   const open = tasks.filter(x => !x.done), done = tasks.filter(x => x.done);
   return (<>
     <Card T={T} st={st} title={`Admin tasks (${open.length} open)`} hint="A shared to-do list for all admins.">
-      <div style={{ display: "flex", gap: 6 }}><input value={t} onChange={e => setT(e.target.value)} onKeyDown={async e => { if (e.key === "Enter" && t.trim()) { await logActivity("admin_task", { adminUid: uid, detail: t.trim().slice(0, 200) }, adminDb); setT(""); load(); } }} placeholder="New task, press Enter" style={st.input} /></div>
-      {open.map(x => <div key={x.id} style={{ marginTop: 6, fontSize: 12, color: T.text, display: "flex", gap: 8, alignItems: "center" }}><input type="checkbox" onChange={async () => { await updateDoc(doc(adminDb, "activityLog", x.id), { done: true }); load(); }} />{x.detail}</div>)}
+      <div style={{ display: "flex", gap: 6 }}><input value={t} onChange={e => setT(e.target.value)} onKeyDown={async e => { if (e.key === "Enter" && t.trim()) { await logActivity("admin_task", { adminUid: uid, detail: t.trim().slice(0, 200) }, adminDb); setT(""); load(); flash("Task added"); } }} placeholder="New task, press Enter" style={st.input} /></div>
+      {open.map(x => <div key={x.id} style={{ marginTop: 6, fontSize: 12, color: T.text, display: "flex", gap: 8, alignItems: "center" }}><input type="checkbox" onChange={async () => { await updateDoc(doc(adminDb, "activityLog", x.id), { done: true }); load(); flash("Task done"); }} />{x.detail}</div>)}
       {done.length > 0 && <details style={{ marginTop: 8 }}><summary style={{ color: T.muted, fontSize: 11, cursor: "pointer" }}>Done ({done.length})</summary>{done.map(x => <div key={x.id} style={{ fontSize: 11, color: T.muted, textDecoration: "line-through" }}>{x.detail} <button onClick={async () => { await deleteDoc(doc(adminDb, "activityLog", x.id)); load(); }} style={{ background: "none", border: "none", color: T.danger, cursor: "pointer", fontSize: 10 }}>clear</button></div>)}</details>}
     </Card>
     <Card T={T} st={st} title="Shift notes" hint="Leave a handoff note for the next admin.">
       <textarea value={s} onChange={e => setSn(e.target.value)} rows={2} placeholder="What should the next admin know?" style={{ ...st.input, resize: "vertical" }} />
-      <button style={{ ...st.btn(), marginTop: 6 }} onClick={async () => { if (!s.trim()) return; await logActivity("admin_shift", { adminUid: uid, detail: s.trim().slice(0, 400) }, adminDb); setSn(""); load(); }}>Post note</button>
+      <button style={{ ...st.btn(), marginTop: 6 }} onClick={async () => { if (!s.trim()) return; await logActivity("admin_shift", { adminUid: uid, detail: s.trim().slice(0, 400) }, adminDb); setSn(""); load(); flash("Shift note posted"); }}>Post note</button>
       {shift.slice(0, 10).map(x => <div key={x.id} style={{ marginTop: 8, fontSize: 12, color: T.text, borderTop: `1px solid ${T.border}`, paddingTop: 6 }}>{x.detail}<div style={{ color: T.muted, fontSize: 10 }}>{fmt(x.createdAt)}</div></div>)}
     </Card>
   </>);
@@ -220,7 +221,7 @@ function BackupPanel({ T, st, adminDb, uid, flash }) {
   );
 }
 
-function HealthPanel({ T, st, adminDb }) {
+function HealthPanel({ T, st, adminDb, flash }) {
   const [res, setRes] = useState(null); const [busy, setBusy] = useState(false);
   const run = async () => {
     setBusy(true); const out = [];
@@ -228,7 +229,7 @@ function HealthPanel({ T, st, adminDb }) {
     for (const n of CONFIG_DOCS) await time(`config/${n}`, async () => ((await getDoc(doc(adminDb, "config", n))).exists() ? "set" : "empty"));
     for (const c of ["wordSets", "levelOverrides", "activityLog", "wordSetSubmissions"]) await time(c, async () => (await getDocs(query(collection(adminDb, c), limit(50)))).size + " docs (first 50)");
     out.push({ label: "Browser online", ok: navigator.onLine, ms: 0, note: navigator.onLine ? "yes" : "no" });
-    setRes(out); setBusy(false);
+    setRes(out); setBusy(false); flash(out.every(r => r.ok) ? "All checks passed" : `Failed: ${out.filter(r => !r.ok).length} check(s) had problems`);
   };
   return (
     <Card T={T} st={st} title="System health" hint="Read-only checks against your database from this admin session.">

@@ -31,7 +31,7 @@ export function LevelsPanel({ T, st, adminDb, uid, flash, levels }) {
     if (find.length < 2) return flash("Enter at least 2 characters to find");
     const o = await getLevelOverrides().catch(() => ({})); const re = new RegExp(lit(find), "g"); const out = [];
     for (const l of levels || []) { const cur = (o[String(l.id)] || l.words || []).map(String); const next = cur.map(x => x.replace(re, rep)); if (next.some((x, i) => x !== cur[i])) out.push({ id: l.id, name: l.name, next, hits: next.filter((x, i) => x !== cur[i]).length }); }
-    setPrev(out);
+    setPrev(out); flash(`Preview: ${out.length} level(s) would change`);
   };
   const apply = async () => {
     if (!prev?.length || !confirm(`Change text in ${prev.length} level(s)?`)) return; setBusy(true);
@@ -108,17 +108,18 @@ export function SetsPanel({ T, st, adminDb, uid, flash }) {
 // ── Exports, reports, log cleanup ──
 export function ExportsPanel({ T, st, adminDb, uid, flash, levels }) {
   const [rep, setRep] = useState(""); const [days, setDays] = useState(90); const [cnt, setCnt] = useState(null);
-  const sets = async () => { const s = await adminListPublic(adminDb); download("word-sets.csv", csv([["title", "rating", "keys", "featured", "words"], ...s.map(x => [x.title, x.badge || "", x.rewardKeys || 0, x.featured ? "yes" : "", x.words.join(" ")])])); };
-  const lvls = async () => { const o = await getLevelOverrides().catch(() => ({})); download("levels.csv", csv([["id", "name", "wpm", "accuracy", "entries"], ...(levels || []).map(l => [l.id, l.name, l.wpmTarget, l.accuracy, (o[String(l.id)] || l.words || []).join(" | ")])])); };
-  const log = async () => { const r = await getActivityLog(500, adminDb); download("activity-log.json", JSON.stringify(r.map(x => ({ ...x, createdAt: tsMs(x.createdAt) })), null, 1), "application/json"); };
+  const sets = async () => { const s = await adminListPublic(adminDb); flash(`Downloaded ${s.length} sets`); download("word-sets.csv", csv([["title", "rating", "keys", "featured", "words"], ...s.map(x => [x.title, x.badge || "", x.rewardKeys || 0, x.featured ? "yes" : "", x.words.join(" ")])])); };
+  const lvls = async () => { flash("Downloaded levels.csv"); const o = await getLevelOverrides().catch(() => ({})); download("levels.csv", csv([["id", "name", "wpm", "accuracy", "entries"], ...(levels || []).map(l => [l.id, l.name, l.wpmTarget, l.accuracy, (o[String(l.id)] || l.words || []).join(" | ")])])); };
+  const log = async () => { const r = await getActivityLog(500, adminDb); flash(`Downloaded ${r.length} log entries`); download("activity-log.json", JSON.stringify(r.map(x => ({ ...x, createdAt: tsMs(x.createdAt) })), null, 1), "application/json"); };
   const report = async () => {
+    flash("Building report…");
     const [subs, rv, eco, locks, maint, tasks] = await Promise.all([adminListSubmissions(adminDb).catch(() => []), adminListRevertRequests(adminDb).catch(() => []), getEconomy().catch(() => ({})), getLocks().catch(() => ({})), getMaintenanceMode().catch(() => ({})), getDocs(query(collection(adminDb, "activityLog"), where("action", "==", "admin_task"), limit(100))).then(s => s.docs.map(d => d.data())).catch(() => [])]);
     const live = eco.multiplier > 1 && (!eco.endsAt || eco.endsAt > Date.now());
-    setRep([`AccuratKey admin report — ${new Date().toLocaleString("en-US", { timeZone: "America/New_York" })} ET`, `Word sets waiting: ${subs.length}`, `Revert requests: ${rv.length}`, `Open admin tasks: ${tasks.filter(t => !t.done).length}`, `Keys event: ${live ? `${eco.multiplier}x${eco.name ? " (" + eco.name + ")" : ""}` : "none"}`, `Locked: ${Object.keys(locks.features || {}).length} features, ${Object.keys(locks.games || {}).length} games`, `Maintenance mode: ${maint.enabled ? "ON" : "off"}`].join("\n"));
+    setRep([`AccuratKey admin report — ${new Date().toLocaleString("en-US", { timeZone: "America/New_York" })} ET`, `Word sets waiting: ${subs.length}`, `Revert requests: ${rv.length}`, `Open admin tasks: ${tasks.filter(t => !t.done).length}`, `Keys event: ${live ? `${eco.multiplier}x${eco.name ? " (" + eco.name + ")" : ""}` : "none"}`, `Locked: ${Object.keys(locks.features || {}).length} features, ${Object.keys(locks.games || {}).length} games`, `Maintenance mode: ${maint.enabled ? "ON" : "off"}`].join("\n")); flash("Report ready");
   };
   const count = async () => {
     const cut = Date.now() - days * 86400000; const r = await getActivityLog(500, adminDb);
-    setCnt(r.filter(x => tsMs(x.createdAt) && tsMs(x.createdAt) < cut && !["admin_task", "admin_note", "admin_shift"].includes(x.action)));
+    const old = r.filter(x => tsMs(x.createdAt) && tsMs(x.createdAt) < cut && !["admin_task", "admin_note", "admin_shift"].includes(x.action)); setCnt(old); flash(`${old.length} old entr${old.length === 1 ? "y" : "ies"} found`);
   };
   const clean = async () => { if (!cnt?.length || !confirm(`Permanently delete ${cnt.length} activity log entries older than ${days} days? Notes, tasks and shift notes are kept.`)) return; for (const x of cnt) await deleteDoc(doc(adminDb, "activityLog", x.id)); await logActivity("log_cleanup", { adminUid: uid, detail: `${cnt.length} entries older than ${days}d` }, adminDb).catch(() => {}); flash(`Deleted ${cnt.length}`); setCnt(null); };
   return (<>
@@ -144,7 +145,7 @@ export function TestPanel({ T, st, adminDb, uid, flash }) {
     const [r, e] = await Promise.all([getRewards(), getEconomy()]); const w = Math.max(0, Number(wpm) || 0); const lr = level ? r.levels?.[String(level)] : undefined;
     const mult = e.multiplier > 1 && (!e.endsAt || e.endsAt > Date.now()) && (!e.startsAt || e.startsAt <= Date.now()) ? e.multiplier : 1;
     const base = lr ?? 10 + Math.floor(w / 10);
-    setCalc({ pass: Math.round(base * mult), fail: Math.round(3 * mult), mult, cap: e.dailyCap || 500, custom: lr != null });
+    flash("Calculated"); setCalc({ pass: Math.round(base * mult), fail: Math.round(3 * mult), mult, cap: e.dailyCap || 500, custom: lr != null });
   };
   const wsLocked = !!lk?.features?.wordsets;
   const toggle = async () => { if (!confirm(wsLocked ? "Re-open community word sets for everyone?" : "Lock community word sets for everyone now?")) return; const n = { ...lk, features: { ...(lk.features || {}) } }; if (wsLocked) delete n.features.wordsets; else n.features.wordsets = true; try { await setLocks(n, adminDb); setLk(n); await logActivity("emergency_lock", { adminUid: uid, detail: wsLocked ? "wordsets unlocked" : "wordsets locked" }, adminDb).catch(() => {}); flash(wsLocked ? "Unlocked" : "Locked"); } catch (e) { flash("Failed: " + (e.code || e.message)); } };
