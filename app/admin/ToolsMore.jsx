@@ -236,41 +236,103 @@ export function HomeStrip({ T, st, adminDb }) {
   </div>;
 }
 
-// ── Text & changelog editor ──
-const COMMON_LABELS = ["Profile", "Notifications", "Practice lab", "Stats & achievements", "Preferences", "Help center", "What's new", "Friends", "Challenges", "Send feedback", "Switch profile", "Games", "Map", "Daily", "Sets", "Privacy", "Children's privacy", "Terms"];
+// ── Text editor: click any words on a live preview of the site and type what they should say ──
+import { setTextRules, getOriginalText } from "@/lib/textOverrides";
+const PREVIEW_PAGES = [["/", "Home"], ["/game", "Game"], ["/games", "Games"], ["/shop", "Shop"], ["/help", "Help"], ["/privacy", "Privacy"]];
 export function TextPanel({ T, st, adminDb, uid, flash }) {
-  const [rows, setRows] = useState(null);
-  const [site, setSiteDoc] = useState({});
-  useEffect(() => { getSite().then(c => { setSiteDoc(c); setRows((c.texts || []).map(r => ({ ...r }))); }).catch(() => setRows([])); }, []);
-  if (!rows) return <div style={{ color: T.muted }}>Loading…</div>;
-  const upd = (i, patch) => setRows(rs => rs.map((r, j) => j === i ? { ...r, ...patch } : r));
-  const gameLabels = GAMES.flatMap(g => [g.name, g.desc]).filter(Boolean);
-  const save = async () => {
-    const clean = rows.map(r => ({ from: (r.from || "").trim(), to: (r.to || "").trim(), sub: !!r.sub })).filter(r => r.from && r.to);
-    if (clean.some(r => r.from.length > 200 || r.to.length > 200)) return flash("Each text must be 200 characters or fewer");
+  const [saved, setSaved] = useState(null);
+  const [rules, setRules] = useState([]);
+  const [page, setPage] = useState("/game");
+  const [edit, setEdit] = useState(true);
+  const [sel, setSel] = useState(null);
+  const [val, setVal] = useState("");
+  const [sub, setSub] = useState(false);
+  const frame = useRef(null); const editRef = useRef(true); const rulesRef = useRef([]);
+  useEffect(() => { getSite().then(c => { const r = (c.texts || []).map(x => ({ ...x })); setSaved(r); setRules(r); }).catch(() => { setSaved([]); }); }, []);
+  useEffect(() => { editRef.current = edit; }, [edit]);
+  useEffect(() => { rulesRef.current = rules; }, [rules]);
+  // What the preview shows: saved rules plus the one being typed right now
+  const draft = sel == null ? rules : [...rules.filter(r => r.from !== sel), ...(val.trim() && val.trim() !== sel ? [{ from: sel, to: val.trim(), sub }] : [])];
+  useEffect(() => { const d = frame.current?.contentDocument; if (d?.body) setTextRules(draft, d); });
+
+  const onLoad = () => {
+    const d = frame.current?.contentDocument; if (!d) return;
+    try {
+      const style = d.createElement("style"); style.textContent = ".ak-hl{outline:2px dashed #a78bfa!important;outline-offset:2px;cursor:pointer!important}"; d.head.appendChild(style);
+      let hl = null;
+      const clear = () => { if (hl) { hl.classList.remove("ak-hl"); hl = null; } };
+      const own = (el) => [...el.childNodes].some(c => c.nodeType === 3 && c.data.trim());
+      d.addEventListener("mouseover", e => { if (!editRef.current) return clear(); const el = e.target; if (el && el.nodeType === 1 && own(el)) { clear(); hl = el; el.classList.add("ak-hl"); } }, true);
+      d.addEventListener("mouseout", clear, true);
+      d.addEventListener("click", e => {
+        if (!editRef.current) return;
+        e.preventDefault(); e.stopPropagation();
+        let n = null; const r = d.caretRangeFromPoint ? d.caretRangeFromPoint(e.clientX, e.clientY) : null;
+        if (r && r.startContainer.nodeType === 3 && r.startContainer.data.trim()) n = r.startContainer;
+        else n = [...e.target.childNodes].find(c => c.nodeType === 3 && c.data.trim());
+        if (!n) return flash("No text there. Click right on the words");
+        const orig = getOriginalText(n).trim(); if (!orig) return;
+        const cur = rulesRef.current.find(x => x.from === orig);
+        setSel(orig); setVal(cur ? cur.to : orig); setSub(!!cur?.sub);
+      }, true);
+      d.addEventListener("keydown", e => { if (editRef.current) e.stopPropagation(); }, true);
+    } catch { flash("Couldn't open the preview. Reload the admin page and try again"); }
+  };
+
+  const apply = () => {
+    if (sel == null) return;
+    const to = val.trim();
+    setRules(rs => { const rest = rs.filter(r => r.from !== sel); return to && to !== sel ? [...rest, { from: sel, to, sub }] : rest; });
+    setSel(null);
+  };
+  const dirty = saved && JSON.stringify(rules.map(r => [r.from, r.to, !!r.sub])) !== JSON.stringify(saved.map(r => [r.from, r.to, !!r.sub]));
+  const publish = async () => {
+    if (sel != null) apply();
+    const clean = (sel != null ? draft : rules).filter(r => r.from && r.to);
     await setSite({ texts: clean }, adminDb);
     logActivity("text_overrides", { adminUid: uid, detail: `${clean.length} text change(s)` }, adminDb).catch(() => {});
-    setRows(clean); flash("Saved. Players see it on their next page load");
+    setSaved(clean.map(x => ({ ...x }))); setRules(clean); flash("Published. Players see it on their next page load");
   };
+  if (!saved) return <div style={{ color: T.muted }}>Loading…</div>;
   return (<>
-    <Card T={T} st={st} title="Change text anywhere" hint={'Replace any label the players see: menu items, buttons, headings, game names. "Find" is the exact current text. Tick "anywhere" to replace it even inside a longer sentence. Only text changes, never layout.'}>
-      <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
-        {COMMON_LABELS.map(l => <button key={l} style={{ ...st.tab(false), fontSize: 10 }} onClick={() => setRows(rs => rs.some(r => r.from === l) ? rs : [...rs, { from: l, to: l, sub: false }])}>{l}</button>)}
+    <Card T={T} st={st} title="Change any text" hint="1. Pick a page.  2. Click the words you want to change.  3. Type the new words, then Publish. The preview updates as you type.">
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginBottom: 8 }}>
+        {PREVIEW_PAGES.map(([p, l]) => <button key={p} onClick={() => { setPage(p); setSel(null); }} style={st.tab(page === p)}>{l}</button>)}
+        <span style={{ flex: 1 }} />
+        <button onClick={() => setEdit(true)} style={st.tab(edit)}>✏️ Edit text</button>
+        <button onClick={() => setEdit(false)} style={st.tab(!edit)}>👆 Browse</button>
       </div>
-      <div style={{ color: T.muted, fontSize: 10, marginBottom: 8 }}>Tap a label to add it, or add your own row. Game names and descriptions: <select style={{ ...st.input, width: "auto", fontSize: 11 }} value="" onChange={e => e.target.value && setRows(rs => [...rs, { from: e.target.value, to: e.target.value, sub: false }])}><option value="">pick…</option>{[...new Set(gameLabels)].map(l => <option key={l} value={l}>{l}</option>)}</select></div>
-      {rows.map((r, i) => (
-        <div key={i} style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginBottom: 6 }}>
-          <input value={r.from} onChange={e => upd(i, { from: e.target.value })} placeholder="Find (current text)" style={{ ...st.input, flex: "1 1 150px", width: "auto" }} />
-          <span style={{ color: T.muted }}>→</span>
-          <input value={r.to} onChange={e => upd(i, { to: e.target.value })} placeholder="Show instead" style={{ ...st.input, flex: "1 1 150px", width: "auto" }} />
-          <label style={{ color: T.muted, fontSize: 11 }}><input type="checkbox" checked={!!r.sub} onChange={e => upd(i, { sub: e.target.checked })} /> anywhere</label>
-          <button style={st.btn("#fff", T.danger)} onClick={() => setRows(rs => rs.filter((_, j) => j !== i))}>✕</button>
+      <div style={{ color: T.muted, fontSize: 11, marginBottom: 8 }}>{edit ? "Click any words in the preview to change them." : "Browse mode: click around to open menus or other screens, then switch back to Edit text."}</div>
+      {sel != null && (
+        <div style={{ background: T.card2 || T.card, border: `1px solid ${T.purple}`, borderRadius: 10, padding: 10, marginBottom: 8 }}>
+          <div style={{ color: T.muted, fontSize: 11, marginBottom: 4 }}>Changing: <b style={{ color: T.text }}>{sel}</b></div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            <input autoFocus value={val} maxLength={200} onChange={e => setVal(e.target.value)} onKeyDown={e => { if (e.key === "Enter") apply(); }} placeholder="New text" style={{ ...st.input, flex: "1 1 200px", width: "auto" }} />
+            <button style={st.btn("#000", "#34d399")} onClick={apply}>Done</button>
+            <button style={st.btn()} onClick={() => { setVal(sel); }}>Undo change</button>
+            <button style={st.btn()} onClick={() => setSel(null)}>Cancel</button>
+          </div>
+          <label style={{ color: T.muted, fontSize: 11, display: "block", marginTop: 6 }}><input type="checkbox" checked={sub} onChange={e => setSub(e.target.checked)} /> Also change these words when they appear inside longer text</label>
+        </div>
+      )}
+      <iframe ref={frame} key={page} name="ak-text-preview" src={page} onLoad={onLoad} title="Site preview" style={{ width: "100%", height: 460, border: `1px solid ${T.border}`, borderRadius: 10, background: "#0a0a0f" }} />
+      <div style={{ display: "flex", gap: 6, marginTop: 8, alignItems: "center", flexWrap: "wrap" }}>
+        <AB disabled={!dirty && sel == null} style={st.btn("#000", "#34d399")} onClick={publish}>{dirty || sel != null ? "Publish changes" : "Nothing to publish"}</AB>
+        {dirty && <button style={st.btn()} onClick={() => { setRules(saved.map(x => ({ ...x }))); setSel(null); }}>Discard</button>}
+        {dirty && <span style={{ color: "#fbbf24", fontSize: 11 }}>Not published yet</span>}
+      </div>
+    </Card>
+    <Card T={T} st={st} title={`Changes (${rules.length})`} hint="Everything currently changed. Remove one to bring back the original words.">
+      {rules.length === 0 && <div style={{ color: T.muted, fontSize: 12 }}>No changes yet.</div>}
+      {rules.map((r, i) => (
+        <div key={i} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12, color: T.text, padding: "4px 0", borderTop: i ? `1px solid ${T.border}` : "none" }}>
+          <span style={{ color: T.muted, textDecoration: "line-through", flex: "0 1 40%", overflow: "hidden", textOverflow: "ellipsis" }}>{r.from}</span>
+          <span>→</span>
+          <b style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{r.to}</b>
+          <button style={st.btn()} onClick={() => { setSel(r.from); setVal(r.to); setSub(!!r.sub); }}>Edit</button>
+          <button style={st.btn("#fff", T.danger)} onClick={() => setRules(rs => rs.filter((_, j) => j !== i))}>Remove</button>
         </div>
       ))}
-      <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-        <button style={st.btn()} onClick={() => setRows(rs => [...rs, { from: "", to: "", sub: false }])}>+ Add row</button>
-        <AB style={st.btn("#000", "#34d399")} onClick={save}>Save text changes</AB>
-      </div>
     </Card>
   </>);
 }

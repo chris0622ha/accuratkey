@@ -9,6 +9,7 @@ export default function TextOverrides() {
   const path = usePathname() || "";
   useEffect(() => {
     if (path.startsWith("/admin")) { setTextRules([]); return; }
+    if (window.name === "ak-text-preview") return; // the admin text editor applies its own draft rules to this frame
     let on = true;
     getSite().then(c => { if (on) setTextRules(c.texts); }).catch(() => {});
     return () => { on = false; };
