@@ -33,7 +33,7 @@ import { WHATS_NEW } from "@/lib/whatsNew";
 import { applyNews } from "@/lib/newsEdits";
 import { getPrefs, setPrefs, getBest, recordRun } from "@/lib/prefs";
 import { onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, GithubAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
-import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, getLocks, getRewards, getAllNotifications, markAllNotificationsRead, getEconomy, deleteNotification, deleteAllNotifications, getAnnouncements, markNotificationRevertRequested, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, getLevelNameOverrides, getLevelTargetOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
+import { auth, isAdmin, getAccount, createAccount, getProfiles, getProfile, createProfile, updateProfile, deleteProfile, saveSession, saveSessionLocal, addBonusKeysLocal, updateProfileLocal, getProfileLocal, getRecentSessionsLocal, addBonusKeys, getRecentSessions, calcAge, isBirthdayToday, isProfileRestricted, setChildUseAccount, checkAndUpdateBirthday, createPhotoUploadToken, listenForPhotoUpload, deletePhotoUploadToken, getBan, claimUsername, changeUsername, getUsername, checkUsernameAvailable, getMaintenanceMode, getLocks, getRewards, getAllNotifications, markAllNotificationsRead, getEconomy, deleteNotification, deleteAllNotifications, getAnnouncements, markNotificationRevertRequested, logActivity, getWarning, clearWarning, getBroadcast, getLevelOverrides, getLevelNameOverrides, getLevelTargetOverrides, updateStreak, getFriends, getIncomingRequests, getUserByUsername, getUserByUid, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getDailyChallenge, submitDailyScore, requestScoreRestore, getETDateStr, getDailyLeaderboard, purchaseTheme, setActiveTheme, purchaseFont, setActiveFont, purchaseSound, setActiveSound, getSessionDates, submitFeedback, submitBirthdayRequest, getBirthdayRequestStatus, approveBirthdayRequest, rejectBirthdayRequest, getAdminBirthdayRequests, sendChallengeEx, declineChallenge, submitChallengeResult, getPendingChallenges, getWeeklySessions, getPendingNotifications, markNotificationRead, replyToFeedback, startGameChallenge } from "@/lib/firebase";
 
 export 
 // ─── Custom Date Picker ───────────────────────────────────────────────────────
@@ -1500,6 +1500,9 @@ export default function AccuratKey() {
     });
 
     const unsub = onAuthStateChanged(auth, async (u) => {
+      if (!u) setChildUseAccount(false);
+      let _childUse = false;
+      if (u) { try { const a = await getAccount(u.uid); _childUse = !!(a && a.childUse); } catch {} setChildUseAccount(_childUse); }
       setUser(u);
       setAuthReady(true);
       if (u) {
@@ -1523,7 +1526,7 @@ export default function AccuratKey() {
         // Check username
         const uname = await getUsername(u.uid);
         setCurrentUsername(uname);
-        if (!uname) setShowUsernamePrompt(true);
+        if (!uname && !_childUse) setShowUsernamePrompt(true);
         // Check warning
         const warn = await getWarning(u.uid);
         if (warn && !warn.seen) setWarning(warn);
