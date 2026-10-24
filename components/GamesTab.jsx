@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { TYPING_BASIC, TYPING_MEDIUM, TYPING_HARD, EASY_ARR, MED_ARR, HARD_ARR, VHARD_ARR, IMPOSSIBLE_ARR, ALL_WORDS, WORD_CATEGORIES, CATEGORY_NAMES, POOL_WORD_RAIN, POOL_SURVIVAL, POOL_SPEED_BURST, POOL_SCRAMBLE, POOL_SUDDEN_DEATH, POOL_ZEN, POOL_LADDER_EASY, POOL_LADDER_MED, POOL_LADDER_HARD, POOL_LADDER_VHARD, POOL_ECHO, POOL_INVADERS, POOL_ASTEROID, POOL_TOWER, POOL_WORD_CHAIN, pickWords, pickByDiff } from "./WordDB";
 import { Sniper, Flash, Echo, GhostWords, BossBattle } from "./GamesExtra";
 import { GameIcon } from "./icons/UiIcons";
-import { HundredWords, Endurance, Roulette, WordChain, CategoryBlitz, VocabBuilder, TypingInvaders, AsteroidBelt, TowerDefense, MysteryWords, RhymeTime } from "./GamesNew2";
+import { HundredWords, Endurance, Roulette, WordChain, CategoryBlitz, VocabBuilder, SpellingBee, TypingInvaders, AsteroidBelt, TowerDefense, MysteryWords, RhymeTime } from "./GamesNew2";
 import { SpeedTest, Anagram, Synonyms, Antonyms, TugOfWar, WordBomb, MemoryEdit, WildcardWords, Freestyle } from "./GamesNew3";
 import { GAMES as BASE_GAMES } from "./GameCatalog";
 import { isGameLocked, lockMessage } from "../lib/locks";
@@ -818,6 +818,7 @@ const GAME_SETTINGS = {
   wordchain:   [{ key:"timePerWord", label:"Time per word", opts:[5,10,15,20], default:10, suffix:"s" }],
   blitz:       [{ key:"duration",   label:"Duration",   opts:[15,30,60], default:30, suffix:"s" }, { key:"category", label:"Category", opts:["animals","countries","fruits","food","science","sports","tech","programming"], default:"animals" }],
   vocab:       [{ key:"count",      label:"Words",      opts:[10,15,20,25], default:15 }],
+  spellingbee: [{ key:"difficulty", label:"Difficulty", opts:["super_easy","easy","normal","medium","hard","super_hard","impossible"], default:"normal" }],
   invaders:    [{ key:"waves",      label:"Waves",      opts:[3,5,10], default:5 }],
   asteroid:    [{ key:"lives",      label:"Lives",      opts:[2,3,5], default:3 }],
   tower:       [],
@@ -1144,7 +1145,7 @@ export default function GamesTab({ T }) {
     sniper: Sniper, flash: Flash, echo: Echo,
     ghost: GhostWords, boss: BossBattle,
     hundred: HundredWords, endurance: Endurance, roulette: Roulette,
-    wordchain: WordChain, blitz: CategoryBlitz, vocab: VocabBuilder,
+    wordchain: WordChain, blitz: CategoryBlitz, vocab: VocabBuilder, spellingbee: SpellingBee,
     invaders: TypingInvaders, asteroid: AsteroidBelt,
     tower: TowerDefense, mystery: MysteryWords, rhyme: RhymeTime,
     speedtest: SpeedTest, anagram: Anagram,

@@ -27,7 +27,7 @@ export const GAMES = [
   { id:"wordchain",   emoji:"🔗", name:"Word Chain",        desc:"Each word must start with the last letter",       cat:"puzzle" },
   { id:"blitz",       emoji:"⚡", name:"Category Blitz",    desc:"Type as many words in a category as possible",    cat:"challenge" },
   { id:"vocab",       emoji:"📚", name:"Vocab Builder",     desc:"Read the definition — type the word",             cat:"educational" },
-  { id:"spellingbee", emoji:"🐝", name:"Spelling Bee",      desc:"Not available right now",                          cat:"educational", unavailable:true },
+  { id:"spellingbee", emoji:"🐝", name:"Spelling Bee",      desc:"Hear the word, then spell it",                    cat:"educational" },
   { id:"invaders",    emoji:"👾", name:"Typing Invaders",   desc:"Shoot invaders by typing their words",            cat:"arcade" },
   { id:"asteroid",    emoji:"☄️", name:"Asteroid Belt",     desc:"Destroy asteroids before they hit your ship",     cat:"arcade" },
   { id:"tower",       emoji:"🏰", name:"Tower Defense",     desc:"Stop enemies from reaching your base",            cat:"arcade" },
