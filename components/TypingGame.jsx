@@ -3264,8 +3264,12 @@ const Nav = () => (<>
               ].map(([key, label, desc]) => (
                 <PrivacyRow key={key} privKey={key} label={label} desc={desc} profile={activeProfile} T={T} onToggle={(k,v)=>{
                   const np={...(activeProfile?.privacy||{}),[k]:v};
+                  const prev=activeProfile?.privacy||{};
                   patchProfile({privacy:np});
-                  updateProfile(user.uid,activeProfile.id,{privacy:np});
+                  updateProfile(user.uid,activeProfile.id,{privacy:np}).catch(()=>{
+                    patchProfile({privacy:prev});
+                    alert("Couldn't save that privacy setting. Check your connection and try again.");
+                  });
                 }} />
               ))
               )}

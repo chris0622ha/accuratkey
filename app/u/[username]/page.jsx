@@ -115,9 +115,9 @@ export default function PublicProfile({ params }) {
     </div>
   );
 
-  const prof = data.profiles[activeProfile];
-  // If all profiles are private, show nothing
+  // Only profiles whose owner left "Public profile page" on are ever shown
   const publicProfiles = data.profiles.filter(p => p.isPublic !== false);
+  const prof = publicProfiles[activeProfile] || publicProfiles[0];
   if (publicProfiles.length === 0) return (
     <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:T.font}}>
       <div style={{fontSize:48,marginBottom:16}}>🔒</div>
@@ -126,7 +126,7 @@ export default function PublicProfile({ params }) {
       <a href="/" style={{color:T.purple,fontSize:13,marginTop:20,textDecoration:"none"}}>← AccuratKey</a>
     </div>
   );
-  const badges = getBadges(prof);
+  const badges = prof.showBadges === false ? [] : getBadges(prof);
 
   return (
     <div style={{minHeight:"100vh",background:T.bg,fontFamily:T.font,color:T.text,padding:"32px 16px"}}>
@@ -177,9 +177,9 @@ export default function PublicProfile({ params }) {
         </div>
 
         {/* Profile switcher (if multiple) */}
-        {data.profiles.length > 1 && (
+        {publicProfiles.length > 1 && (
           <div style={{display:"flex",gap:6,marginBottom:14,overflowX:"auto"}}>
-            {data.profiles.map((p,i) => (
+            {publicProfiles.map((p,i) => (
               <button key={i} onClick={()=>setActiveProfile(i)} style={{flexShrink:0,background:i===activeProfile?T.purple+"22":T.card,border:`1px solid ${i===activeProfile?T.purple:T.border}`,borderRadius:8,color:i===activeProfile?T.purple:T.muted,fontSize:12,padding:"6px 12px",cursor:"pointer",fontFamily:T.font,display:"flex",alignItems:"center",gap:6}}>
                 <span>{AV[p.avatar]||"⌨️"}</span>{p.name}
               </button>
