@@ -1,3 +1,4 @@
+import LogoMark from "@/components/LogoMark";
 import Link from "next/link";
 import CookieLink from "./CookieLink";
 import { LEGAL } from "@/lib/legal";
@@ -10,7 +11,7 @@ export default function LegalPage({ title, intro, sections }) {
   return (
     <div style={{minHeight:"100vh",background:"#0a0a0f",fontFamily:"system-ui,-apple-system,Segoe UI,sans-serif",color:"#d6d6ee",padding:"0 20px 80px"}}>
       <nav style={{maxWidth:760,margin:"0 auto",padding:"20px 0",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid #1e1e30"}}>
-        <Link href="/game" style={{fontWeight:800,fontSize:18,textDecoration:"none",fontFamily:"'JetBrains Mono',monospace"}}><span style={{color:"#7c6af7"}}>Accurat</span><span style={{color:"#e0e0ff"}}>Key</span></Link>
+        <Link href="/game" style={{fontWeight:800,fontSize:18,textDecoration:"none",fontFamily:"'JetBrains Mono',monospace",display:"inline-flex",alignItems:"center"}}><LogoMark size={24} /><span style={{color:"#7c6af7"}}>Accurat</span><span style={{color:"#e0e0ff"}}>Key</span></Link>
         <div style={{display:"flex",gap:16,fontSize:13}}>
           <Link href="/privacy" style={{color:"#8a8aa8",textDecoration:"none"}}>Privacy</Link>
           <CookieLink style={{color:"#8a8aa8",textDecoration:"none"}} />

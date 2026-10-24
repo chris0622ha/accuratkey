@@ -1,4 +1,5 @@
 "use client";
+import LogoMark from "@/components/LogoMark";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import TypingTest from "./TypingTest";
@@ -904,15 +905,20 @@ export default function AccuratKey() {
   // Only when a profile is actually selected (not during profile picker)
   if (typeof document !== "undefined" && _fontFamily && activeProfile) {
     document.documentElement.style.setProperty("--ak-font", _fontFamily);
+    // Keep text the same visual size whichever font is picked: normalise every font to the default font's x-height
+    // (font-size-adjust works for every size set anywhere on the page, so nothing has to be scaled by hand).
+    document.documentElement.style.setProperty("font-size-adjust", "0.55");
   } else if (typeof document !== "undefined" && !activeProfile) {
     // Reset to default when no profile selected (profile picker screen)
     document.documentElement.style.removeProperty("--ak-font");
+    document.documentElement.style.removeProperty("font-size-adjust");
   }
+  const _autoSize = typeof CSS !== "undefined" && CSS.supports && CSS.supports("font-size-adjust", "0.55");
   // Font scale: pixel/display fonts need smaller sizes to not break layout
   // Only scale fonts that actually render oversized at normal px values
   const BIG_FONTS = ["pressstart","rubikbubbles","permanentmarker","audiowide","orbitron"];
   const MED_FONTS = ["rajdhani","exo2","tourney"];
-  const _fs = BIG_FONTS.includes(_activeFont) ? 0.7 : MED_FONTS.includes(_activeFont) ? 0.85 : 1;
+  const _fs = _autoSize ? 1 : BIG_FONTS.includes(_activeFont) ? 0.7 : MED_FONTS.includes(_activeFont) ? 0.85 : 1;
   const fs = (size) => _fs < 1 ? Math.round(size * _fs) : size;
   // Load Google Font if needed
   if (typeof window !== "undefined" && _activeFont && _activeFont !== "jetbrains") {
@@ -2460,7 +2466,7 @@ const Confetti = ({ sectionName }) => {
 const Nav = () => (<>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
       <div>
-        <button onClick={()=>{ setNavMenu(false); if(activeProfile){ setActiveTabWithUrl("map"); if(screen!=="levelMap") setScreenWithUrl("levelMap"); window.scrollTo(0,0); } else { window.location.href="/"; } }} aria-label="Home" title="Home" style={{background:"none",border:"none",padding:0,cursor:"pointer",fontWeight:800,fontSize:fs(16),color:T.text,fontFamily:T.font}}><span style={{color:T.purple}}>Accurat</span>Key</button>
+        <button onClick={()=>{ setNavMenu(false); if(activeProfile){ setActiveTabWithUrl("map"); if(screen!=="levelMap") setScreenWithUrl("levelMap"); window.scrollTo(0,0); } else { window.location.href="/"; } }} aria-label="Home" title="Home" style={{background:"none",border:"none",padding:0,cursor:"pointer",fontWeight:800,fontSize:fs(16),color:T.text,fontFamily:T.font,display:"inline-flex",alignItems:"center"}}><LogoMark size={24} /><span style={{color:T.purple}}>Accurat</span>Key</button>
         {currentUsername && <div style={{fontSize:9,color:T.muted,marginTop:1}}>@{currentUsername}</div>}
       </div>
       {activeProfile && (() => {
@@ -2730,7 +2736,7 @@ const Nav = () => (<>
     <div style={{minHeight:"100vh",background:"#0a0a0f",display:"flex",alignItems:"center",justifyContent:"center"}}>
       {activeProfile && <style>{`* { font-family: ${T.font} !important; } body { background: ${T.bg}; }`}</style>}
       <div style={{color:"#7c6af7",fontSize:20,fontFamily:"'JetBrains Mono',monospace"}}>
-        <span style={{color:"#e0e0ff"}}>Accurat</span><span style={{color:"#7c6af7"}}>Key</span>
+        <LogoMark size={26} /><span style={{color:"#e0e0ff"}}>Accurat</span><span style={{color:"#7c6af7"}}>Key</span>
         <span style={{animation:"blink 1s infinite",marginLeft:4}}>_</span>
       </div>
       <style>{`@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}`}</style>

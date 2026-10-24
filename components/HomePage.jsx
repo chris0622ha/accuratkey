@@ -1,4 +1,5 @@
 'use client';
+import LogoMark from "@/components/LogoMark";
 import { useState, useEffect } from 'react';
 
 const LAYOUTS = [
@@ -142,7 +143,7 @@ export default function HomePage() {
 
       <nav style={{ borderBottom:`1px solid ${C.border}`, padding:'0 5%', position:'sticky', top:0, background:C.bg+'ee', backdropFilter:'blur(12px)', zIndex:100 }}>
         <div style={{ maxWidth:1100, margin:'0 auto', display:'flex', alignItems:'center', justifyContent:'space-between', height:60, gap:16 }}>
-          <span style={{ fontWeight:800, fontSize:18 }}><span style={{ color:C.purple }}>Accurat</span>Key</span>
+          <span style={{ fontWeight:800, fontSize:18, display:'inline-flex', alignItems:'center' }}><LogoMark size={28} /><span style={{ color:C.purple }}>Accurat</span>Key</span>
           <div style={{ display:'flex', gap:22, alignItems:'center' }}>
             <a className="navl" href="#features">Features</a>
             <a className="navl" href="#levels">Levels</a>
@@ -337,7 +338,7 @@ export default function HomePage() {
       </section>
 
       <footer style={{ borderTop:`1px solid ${C.border}`, padding:'22px 5%', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:12 }}>
-        <span style={{ fontSize:13, color:C.faint }}><span style={{ color:C.purple }}>Accurat</span>Key</span>
+        <span style={{ fontSize:13, color:C.faint, display:'inline-flex', alignItems:'center' }}><LogoMark size={18} /><span style={{ color:C.purple }}>Accurat</span>Key</span>
         <span style={{ display:'flex', gap:16, fontSize:12, flexWrap:'wrap' }}>
           <a href="/help" style={{ color:C.muted }}>Help</a>
           <a href="/privacy" style={{ color:C.muted }}>Privacy</a>

@@ -1,4 +1,5 @@
 "use client";
+import LogoMark from "@/components/LogoMark";
 import { useState } from "react";
 import { submitPhotoUpload } from "@/lib/firebase";
 
@@ -48,7 +49,7 @@ export default function PhotoUploadPage({ params }) {
     <div style={{ minHeight:"100vh",background:"#0a0a0f",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"'JetBrains Mono',monospace",padding:24,textAlign:"center" }}>
       <div style={{ fontSize:48,marginBottom:16 }}>📸</div>
       <h1 style={{ color:"#e0e0ff",fontSize:22,fontWeight:700,marginBottom:8 }}>
-        <span style={{ color:"#7c6af7" }}>Accurat</span>Key
+        <LogoMark size={28} /><span style={{ color:"#7c6af7" }}>Accurat</span>Key
       </h1>
       <p style={{ color:"#555",fontSize:14,marginBottom:32 }}>Choose a photo from your phone</p>
 

@@ -1,10 +1,11 @@
+import LogoMark from "@/components/LogoMark";
 import Link from 'next/link';
 export const dynamic = 'force-dynamic';
 export default function AboutPage() {
   return (
     <div style={{minHeight:'100vh',background:'#0a0a0f',fontFamily:"'JetBrains Mono',monospace",color:'#e0e0ff',padding:'0 20px'}}>
       <nav style={{maxWidth:800,margin:'0 auto',padding:'20px 0',display:'flex',justifyContent:'space-between',alignItems:'center',borderBottom:'1px solid #1e1e30'}}>
-        <Link href="/game" style={{color:'#7c6af7',fontWeight:800,fontSize:18,textDecoration:'none'}}><span style={{color:'#7c6af7'}}>Accurat</span><span style={{color:'#e0e0ff'}}>Key</span></Link>
+        <Link href="/game" style={{color:'#7c6af7',fontWeight:800,fontSize:18,textDecoration:'none',display:'inline-flex',alignItems:'center'}}><LogoMark size={24} /><span style={{color:'#7c6af7'}}>Accurat</span><span style={{color:'#e0e0ff'}}>Key</span></Link>
         <div style={{display:'flex',gap:24}}>
           {[['Game','/game'],['About','/about'],['Help','/help']].map(([l,h])=>(
             <Link key={h} href={h} style={{color:'#666',fontSize:13,textDecoration:'none'}}>{l}</Link>
@@ -12,7 +13,7 @@ export default function AboutPage() {
         </div>
       </nav>
       <main style={{maxWidth:800,margin:'60px auto 0'}}>
-        <h1 style={{fontSize:42,fontWeight:800,marginBottom:8}}><span style={{color:'#7c6af7'}}>Accurat</span>Key</h1>
+        <h1 style={{fontSize:42,fontWeight:800,marginBottom:8,display:'flex',alignItems:'center'}}><LogoMark size={48} /><span style={{color:'#7c6af7'}}>Accurat</span>Key</h1>
         <p style={{color:'#7c6af7',fontSize:16,marginBottom:40}}>Train smarter. Type faster.</p>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20,marginBottom:60}}>
           {[

@@ -1,4 +1,5 @@
 'use client';
+import LogoMark from "@/components/LogoMark";
 import Link from 'next/link';
 import { ReactNode } from 'react';
 import { latestVersion, BUILD } from '@/lib/version';
@@ -20,7 +21,8 @@ export function HelpShell({ children, back }: { children: ReactNode; back?: { hr
       `}</style>
       <header style={{ position: 'sticky', top: 0, zIndex: 20, background: H.bg + 'ee', backdropFilter: 'blur(8px)', borderBottom: `1px solid ${H.line}` }}>
         <div style={{ maxWidth: 1040, margin: '0 auto', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <Link href="/help" style={{ textDecoration: 'none', fontWeight: 800, fontSize: 17 }}>
+          <Link href="/help" style={{ textDecoration: 'none', fontWeight: 800, fontSize: 17, display: 'inline-flex', alignItems: 'center' }}>
+            <LogoMark size={26} />
             <span style={{ color: H.accent }}>Accurat</span><span style={{ color: H.text }}>Key</span>
             <span style={{ color: H.dim, fontWeight: 600, fontSize: 13, marginLeft: 10 }}>Help</span>
           </Link>

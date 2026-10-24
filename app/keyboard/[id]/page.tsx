@@ -1,4 +1,5 @@
 'use client';
+import LogoMark from "@/components/LogoMark";
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -284,7 +285,7 @@ export default function KeyboardDetailPage({ params }: { params: { id: string } 
   return (
     <div style={{minHeight:'100vh',background:'#0a0a0f',fontFamily:"'JetBrains Mono',monospace",color:'#e0e0ff',padding:'0 20px'}}>
       <nav style={{maxWidth:700,margin:'0 auto',padding:'20px 0',display:'flex',justifyContent:'space-between',alignItems:'center',borderBottom:'1px solid #1e1e30'}}>
-        <Link href="/game" style={{color:'#7c6af7',fontWeight:800,fontSize:18,textDecoration:'none'}}><span style={{color:'#7c6af7'}}>Accurat</span><span style={{color:'#e0e0ff'}}>Key</span></Link>
+        <Link href="/game" style={{color:'#7c6af7',fontWeight:800,fontSize:18,textDecoration:'none',display:'inline-flex',alignItems:'center'}}><LogoMark size={24} /><span style={{color:'#7c6af7'}}>Accurat</span><span style={{color:'#e0e0ff'}}>Key</span></Link>
         <Link href="/keyboard" style={{color:'#555',fontSize:13,textDecoration:'none'}}>← All methods</Link>
       </nav>
       <main style={{maxWidth:700,margin:'40px auto 80px'}}>

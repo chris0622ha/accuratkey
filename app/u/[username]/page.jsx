@@ -1,4 +1,5 @@
 "use client";
+import LogoMark from "@/components/LogoMark";
 import { useState, useEffect } from "react";
 import { getPublicProfileFull } from "@/lib/firebase";
 
@@ -134,7 +135,7 @@ export default function PublicProfile({ params }) {
 
         {/* Back link */}
         <a href="/" style={{color:T.muted,fontSize:12,textDecoration:"none",display:"flex",alignItems:"center",gap:4,marginBottom:24}}>
-          <span style={{color:T.purple,fontWeight:800}}>Accurat</span><span style={{fontWeight:800}}>Key</span>
+          <LogoMark size={20} style={{marginRight:6}} /><span style={{color:T.purple,fontWeight:800}}>Accurat</span><span style={{fontWeight:800}}>Key</span>
           <span style={{color:T.faint,margin:"0 4px"}}>·</span>
           <span>Public Profile</span>
         </a>
