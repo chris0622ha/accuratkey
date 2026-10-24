@@ -1668,7 +1668,7 @@ export default function AccuratKey() {
     setAuthErr(""); setAuthLoading(true);
     try {
       if (authMode === "login") {
-        await signInWithEmailAndPassword(auth, authEmail, authPass);
+        await signInWithEmailAndPassword(auth, authEmail.trim(), authPass);
       } else {
         window.location.href = "https://tqak.vercel.app/login?mode=up"; return;
       }
