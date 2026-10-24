@@ -1,11 +1,28 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useContext, createContext, useRef } from "react";
 import { doc, getDocs, collection, query, where, limit, updateDoc, deleteDoc, setDoc, serverTimestamp, orderBy } from "firebase/firestore";
-import { logActivity, getActivityLog, getLevelOverrides, getLevelNameOverrides, getLevelTargetOverrides, updateLevelWords, deleteLevelOverride, setLevelTargets, addNotification, getRewards, getEconomy, getLocks, setLocks, getMaintenanceMode } from "@/lib/firebase";
+import { setMaintenanceMode, getAllBans, setEconomy, logActivity, getActivityLog, getLevelOverrides, getLevelNameOverrides, getLevelTargetOverrides, updateLevelWords, deleteLevelOverride, setLevelTargets, addNotification, getRewards, getEconomy, getLocks, setLocks, getMaintenanceMode } from "@/lib/firebase";
 import { adminListPublic, adminListSubmissions, adminListRevertRequests, adminDeleteSet, adminSetBadge, adminSetReward, parseWords, validateSubmission, BADGES } from "@/lib/wordsets";
 import { getModeration } from "@/lib/firebase";
 import { moderate } from "@/lib/moderation";
+import { GAMES } from "@/components/GameCatalog";
+import { LOCKABLE_FEATURES } from "@/lib/locks";
 
+export const FlashCtx = createContext({ last: { current: "" } });
+// Button that shows "Working…" while an async action runs and "✓ Done" if it finished with a success message
+export function AB({ onClick, children, disabled, ...rest }) {
+  const ctx = useContext(FlashCtx); const [s, setS] = useState(""); const alive = useRef(true);
+  useEffect(() => () => { alive.current = false; }, []);
+  const click = async (e) => {
+    if (!onClick) return; ctx.last.current = "";
+    const r = onClick(e);
+    if (r && typeof r.then === "function") {
+      setS("w");
+      try { await r; if (alive.current) { setS(ctx.last.current === "ok" ? "d" : ""); if (ctx.last.current === "ok") setTimeout(() => alive.current && setS(""), 1800); } } catch { if (alive.current) setS(""); }
+    }
+  };
+  return <button {...rest} disabled={disabled || s === "w"} onClick={click}>{s === "w" ? "Working…" : s === "d" ? "✓ Done" : children}</button>;
+}
 const download = (name, text, type = "text/csv") => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); };
 const csv = (rows) => rows.map(r => r.map(c => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
 const tsMs = (t) => (t?.toDate ? t.toDate().getTime() : typeof t === "number" ? t : t?.seconds ? t.seconds * 1000 : 0);
@@ -47,17 +64,17 @@ export function LevelsPanel({ T, st, adminDb, uid, flash, levels }) {
         <input value={acc} onChange={e => setAcc(e.target.value.replace(/\D/g, ""))} placeholder={lv ? `Accuracy % (now ${lv.accuracy})` : "Accuracy %"} style={{ ...st.input, width: 160 }} />
       </div>
       {lv && <div style={{ color: T.muted, fontSize: 11, marginTop: 6 }}>{lv.name}</div>}
-      <div style={{ display: "flex", gap: 6, marginTop: 8 }}><button style={st.btn()} onClick={() => saveT(false)}>Save</button><button style={st.btn("#fff", T.faint)} onClick={() => saveT(true)}>Reset to original</button></div>
+      <div style={{ display: "flex", gap: 6, marginTop: 8 }}><AB style={st.btn()} onClick={() => saveT(false)}>Save</AB><AB style={st.btn("#fff", T.faint)} onClick={() => saveT(true)}>Reset to original</AB></div>
     </Card>
     <Card T={T} st={st} title="Find & replace across levels" hint="Case-sensitive. Shows how many levels change before you apply.">
       <div style={{ display: "flex", gap: 6 }}><input value={find} onChange={e => setFind(e.target.value)} placeholder="Find" style={st.input} /><input value={rep} onChange={e => setRep(e.target.value)} placeholder="Replace with" style={st.input} /></div>
-      <div style={{ display: "flex", gap: 6, marginTop: 8 }}><button style={st.btn()} onClick={plan}>Preview</button>{prev?.length > 0 && <button disabled={busy} style={st.btn("#fff", T.danger)} onClick={apply}>Apply to {prev.length} level(s)</button>}</div>
+      <div style={{ display: "flex", gap: 6, marginTop: 8 }}><AB style={st.btn()} onClick={plan}>Preview</AB>{prev?.length > 0 && <AB disabled={busy} style={st.btn("#fff", T.danger)} onClick={apply}>Apply to {prev.length} level(s)</AB>}</div>
       {prev && <div style={{ marginTop: 8, fontSize: 12, color: T.text }}>{prev.length ? prev.slice(0, 40).map(p => <div key={p.id}>L{p.id} {p.name}: {p.hits} entr{p.hits === 1 ? "y" : "ies"}</div>) : "No matches."}</div>}
     </Card>
     <Card T={T} st={st} title={`Level overrides (${ids.length})`} hint="Levels you've changed. Reset removes the custom text, name and targets for that level.">
       {ids.map(id => <div key={id} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12, color: T.text, padding: "2px 0" }}>
         <span style={{ flex: 1 }}>L{id}{ov.names[id] ? ` "${ov.names[id]}"` : ""}{ov.words[id] ? ` · ${ov.words[id].length} entries` : ""}{ov.targets[id] ? ` · targets ${ov.targets[id].wpm ?? "–"} WPM / ${ov.targets[id].acc ?? "–"}%` : ""}</span>
-        <button style={st.btn("#fff", T.danger)} onClick={async () => { if (!confirm(`Reset level ${id} to original?`)) return; await deleteLevelOverride(id, adminDb); await logActivity("level_reset", { adminUid: uid, detail: `L${id}` }, adminDb).catch(() => {}); flash("Reset (reload to see)"); loadOv(); }}>Reset</button></div>)}
+        <AB style={st.btn("#fff", T.danger)} onClick={async () => { if (!confirm(`Reset level ${id} to original?`)) return; await deleteLevelOverride(id, adminDb); await logActivity("level_reset", { adminUid: uid, detail: `L${id}` }, adminDb).catch(() => {}); flash("Reset (reload to see)"); loadOv(); }}>Reset</AB></div>)}
       {ov && !ids.length && <div style={{ color: T.muted, fontSize: 11 }}>No overrides.</div>}
     </Card>
   </>);
@@ -74,6 +91,8 @@ export function SetsPanel({ T, st, adminDb, uid, flash }) {
   const run = async (fn, label) => { setBusy(true); try { await fn(); await logActivity("wordset_bulk", { adminUid: uid, detail: `${label} (${chosen.length})` }, adminDb).catch(() => {}); flash(label + " done"); setSel({}); await load(); } catch (e) { flash("Failed: " + (e.code || e.message)); } setBusy(false); };
   const groups = {}; sets.forEach(s => { const k = [...s.words].map(w => w.toLowerCase()).sort().join(","); (groups[k] = groups[k] || []).push(s); const t = "t:" + s.title.trim().toLowerCase(); (groups[t] = groups[t] || []).push(s); });
   const seen = new Set(); const dups = Object.values(groups).filter(g => g.length > 1).map(g => g.filter((x, i, a) => a.findIndex(y => y.id === x.id) === i)).filter(g => { const k = g.map(x => x.id).sort().join(); if (seen.has(k) || g.length < 2) return false; seen.add(k); return true; });
+  const [wf, setWf] = useState(""); 
+  const wfHits = wf.trim().length >= 2 ? sets.filter(x => x.words.some(w => w.toLowerCase() === wf.trim().toLowerCase()) || x.title.toLowerCase().includes(wf.trim().toLowerCase())) : null;
   const doImport = async () => {
     const lines = imp.split("\n").map(l => l.trim()).filter(Boolean); if (!lines.length) return;
     const cfg = await getModeration(); const ok = [], bad = [];
@@ -86,21 +105,25 @@ export function SetsPanel({ T, st, adminDb, uid, flash }) {
     <Card T={T} st={st} title={`Published sets (${sets.length}) — select for bulk actions`}>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
         <select value={badge} onChange={e => setBadge(e.target.value)} style={{ ...st.input, width: "auto" }}><option value="">Rating…</option><option value="none">No rating</option>{(BADGES || []).map(b => <option key={b.id} value={b.id}>{b.label || b.id}</option>)}</select>
-        <button disabled={busy || !chosen.length || !badge} style={st.btn()} onClick={() => run(async () => { for (const s of chosen) await adminSetBadge(adminDb, s.id, badge === "none" ? null : badge); }, "Set rating")}>Apply rating</button>
+        <AB disabled={busy || !chosen.length || !badge} style={st.btn()} onClick={() => run(async () => { for (const s of chosen) await adminSetBadge(adminDb, s.id, badge === "none" ? null : badge); }, "Set rating")}>Apply rating</AB>
         <input value={rew} onChange={e => setRew(e.target.value.replace(/\D/g, ""))} placeholder="Keys 0-50" style={{ ...st.input, width: 90 }} />
-        <button disabled={busy || !chosen.length || rew === ""} style={st.btn()} onClick={() => run(async () => { for (const s of chosen) await adminSetReward(adminDb, s.id, rew); }, "Set reward")}>Apply reward</button>
-        <button disabled={busy || !chosen.length} style={st.btn("#000", "#fbbf24")} onClick={() => run(async () => { for (const s of chosen) await updateDoc(doc(adminDb, "wordSets", s.id), { featured: !s.featured }); }, "Toggle ⭐")}>Toggle ⭐ Featured</button>
-        <button disabled={busy || !chosen.length} style={st.btn("#fff", T.danger)} onClick={() => { const r = prompt(`Remove ${chosen.length} set(s)? Reason for the creators (optional):`, ""); if (r === null) return; run(async () => { for (const s of chosen) await adminDeleteSet(adminDb, s.id, r, s.title); }, "Remove"); }}>Remove</button>
+        <AB disabled={busy || !chosen.length || rew === ""} style={st.btn()} onClick={() => run(async () => { for (const s of chosen) await adminSetReward(adminDb, s.id, rew); }, "Set reward")}>Apply reward</AB>
+        <AB disabled={busy || !chosen.length} style={st.btn("#000", "#fbbf24")} onClick={() => run(async () => { for (const s of chosen) await updateDoc(doc(adminDb, "wordSets", s.id), { featured: !s.featured }); }, "Toggle ⭐")}>Toggle ⭐ Featured</AB>
+        <AB disabled={busy || !chosen.length} style={st.btn("#fff", T.danger)} onClick={() => { const r = prompt(`Remove ${chosen.length} set(s)? Reason for the creators (optional):`, ""); if (r === null) return; run(async () => { for (const s of chosen) await adminDeleteSet(adminDb, s.id, r, s.title); }, "Remove"); }}>Remove</AB>
       </div>
       <div style={{ maxHeight: 280, overflow: "auto" }}>{sets.map(s => <label key={s.id} style={{ display: "block", fontSize: 12, color: T.text, padding: "2px 0" }}><input type="checkbox" checked={!!sel[s.id]} onChange={e => setSel({ ...sel, [s.id]: e.target.checked })} /> {s.featured ? "⭐ " : ""}{s.title} <span style={{ color: T.muted }}>· {s.words.length} words{s.badge ? " · " + s.badge : ""}{s.rewardKeys ? ` · ${s.rewardKeys} Keys` : ""}</span></label>)}</div>
     </Card>
+    <Card T={T} st={st} title="Word finder" hint="Which published sets contain a word (or have it in the title)?">
+      <input value={wf} onChange={e => setWf(e.target.value)} placeholder="Type a word" style={st.input} />
+      {wfHits && <div style={{ marginTop: 6, fontSize: 12, color: T.text }}>{wfHits.length ? wfHits.map(x => <div key={x.id}>{x.title} <span style={{ color: T.muted }}>· {x.words.length} words</span></div>) : "No sets contain it."}</div>}
+    </Card>
     <Card T={T} st={st} title={`Possible duplicates (${dups.length})`} hint="Same title or same word list.">
-      {dups.map((g, i) => <div key={i} style={{ fontSize: 12, color: T.text, marginBottom: 6 }}>{g.map(s => s.title).join("  ≈  ")} <button disabled={busy} style={{ ...st.btn("#fff", T.danger), marginLeft: 6 }} onClick={() => { if (!confirm(`Keep "${g[g.length - 1].title}" (oldest) and remove ${g.length - 1} other(s)?`)) return; setBusy(true); (async () => { try { for (const s of g.slice(0, -1)) await adminDeleteSet(adminDb, s.id, "Duplicate of another set", s.title); flash("Removed"); await load(); } catch (e) { flash("Failed: " + (e.code || e.message)); } setBusy(false); })(); }}>Keep oldest</button></div>)}
+      {dups.map((g, i) => <div key={i} style={{ fontSize: 12, color: T.text, marginBottom: 6 }}>{g.map(s => s.title).join("  ≈  ")} <AB disabled={busy} style={{ ...st.btn("#fff", T.danger), marginLeft: 6 }} onClick={() => { if (!confirm(`Keep "${g[g.length - 1].title}" (oldest) and remove ${g.length - 1} other(s)?`)) return; setBusy(true); (async () => { try { for (const s of g.slice(0, -1)) await adminDeleteSet(adminDb, s.id, "Duplicate of another set", s.title); flash("Removed"); await load(); } catch (e) { flash("Failed: " + (e.code || e.message)); } setBusy(false); })(); }}>Keep oldest</AB></div>)}
       {!dups.length && <div style={{ color: T.muted, fontSize: 11 }}>None found.</div>}
     </Card>
     <Card T={T} st={st} title="Bulk import" hint="One set per line: Title | word word word …  Each line is checked like a player submission and by auto-moderation. Up to 50 lines.">
       <textarea value={imp} onChange={e => setImp(e.target.value)} rows={5} style={{ ...st.input, resize: "vertical", fontFamily: "monospace" }} placeholder={"Garden Words | rose tulip daisy lily fern moss vine bloom petal stem\nKitchen | spoon knife plate bowl whisk ladle tray pan pot cup"} />
-      <button disabled={busy} style={{ ...st.btn(), marginTop: 8 }} onClick={doImport}>Validate & publish</button>
+      <AB disabled={busy} style={{ ...st.btn(), marginTop: 8 }} onClick={doImport}>Validate & publish</AB>
     </Card>
   </>);
 }
@@ -110,6 +133,7 @@ export function ExportsPanel({ T, st, adminDb, uid, flash, levels }) {
   const [rep, setRep] = useState(""); const [days, setDays] = useState(90); const [cnt, setCnt] = useState(null);
   const sets = async () => { const s = await adminListPublic(adminDb); flash(`Downloaded ${s.length} sets`); download("word-sets.csv", csv([["title", "rating", "keys", "featured", "words"], ...s.map(x => [x.title, x.badge || "", x.rewardKeys || 0, x.featured ? "yes" : "", x.words.join(" ")])])); };
   const lvls = async () => { flash("Downloaded levels.csv"); const o = await getLevelOverrides().catch(() => ({})); download("levels.csv", csv([["id", "name", "wpm", "accuracy", "entries"], ...(levels || []).map(l => [l.id, l.name, l.wpmTarget, l.accuracy, (o[String(l.id)] || l.words || []).join(" | ")])])); };
+  const bans = async () => { const b = await getAllBans(adminDb); flash(`Downloaded ${b.length} bans`); download("bans.csv", csv([["uid", "username", "reason", "until"], ...b.map(x => [x.uid, x.username || "", x.reason || "", x.until ? new Date(tsMs(x.until) || x.until).toISOString() : "permanent"])])); };
   const log = async () => { const r = await getActivityLog(500, adminDb); flash(`Downloaded ${r.length} log entries`); download("activity-log.json", JSON.stringify(r.map(x => ({ ...x, createdAt: tsMs(x.createdAt) })), null, 1), "application/json"); };
   const report = async () => {
     flash("Building report…");
@@ -124,14 +148,14 @@ export function ExportsPanel({ T, st, adminDb, uid, flash, levels }) {
   const clean = async () => { if (!cnt?.length || !confirm(`Permanently delete ${cnt.length} activity log entries older than ${days} days? Notes, tasks and shift notes are kept.`)) return; for (const x of cnt) await deleteDoc(doc(adminDb, "activityLog", x.id)); await logActivity("log_cleanup", { adminUid: uid, detail: `${cnt.length} entries older than ${days}d` }, adminDb).catch(() => {}); flash(`Deleted ${cnt.length}`); setCnt(null); };
   return (<>
     <Card T={T} st={st} title="Exports" hint="Spreadsheet-ready CSV files. No account or personal data is included.">
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}><button style={st.btn()} onClick={sets}>Word sets (.csv)</button><button style={st.btn()} onClick={lvls}>Levels (.csv)</button><button style={st.btn()} onClick={log}>Activity log (.json)</button></div>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}><AB style={st.btn()} onClick={sets}>Word sets (.csv)</AB><AB style={st.btn()} onClick={lvls}>Levels (.csv)</AB><AB style={st.btn()} onClick={bans}>Bans (.csv)</AB><AB style={st.btn()} onClick={log}>Activity log (.json)</AB></div>
     </Card>
     <Card T={T} st={st} title="Daily report" hint="A quick status summary you can paste into a message.">
-      <button style={st.btn()} onClick={report}>Build report</button>
-      {rep && <><pre style={{ whiteSpace: "pre-wrap", color: T.text, fontSize: 12, marginTop: 8 }}>{rep}</pre><button style={st.btn("#fff", T.faint)} onClick={() => navigator.clipboard?.writeText(rep).then(() => flash("Copied"))}>Copy</button></>}
+      <AB style={st.btn()} onClick={report}>Build report</AB>
+      {rep && <><pre style={{ whiteSpace: "pre-wrap", color: T.text, fontSize: 12, marginTop: 8 }}>{rep}</pre><AB style={st.btn("#fff", T.faint)} onClick={() => navigator.clipboard?.writeText(rep).then(() => flash("Copied"))}>Copy</AB></>}
     </Card>
     <Card T={T} st={st} title="Activity log cleanup" hint="Looks at the most recent 500 entries. Kept: notes, tasks and shift notes.">
-      <div style={{ display: "flex", gap: 6, alignItems: "center" }}><select value={days} onChange={e => { setDays(Number(e.target.value)); setCnt(null); }} style={{ ...st.input, width: "auto" }}>{[30, 90, 180, 365].map(d => <option key={d} value={d}>older than {d} days</option>)}</select><button style={st.btn()} onClick={count}>Count</button>{cnt && <button style={st.btn("#fff", T.danger)} disabled={!cnt.length} onClick={clean}>Delete {cnt.length}</button>}</div>
+      <div style={{ display: "flex", gap: 6, alignItems: "center" }}><select value={days} onChange={e => { setDays(Number(e.target.value)); setCnt(null); }} style={{ ...st.input, width: "auto" }}>{[30, 90, 180, 365].map(d => <option key={d} value={d}>older than {d} days</option>)}</select><AB style={st.btn()} onClick={count}>Count</AB>{cnt && <AB style={st.btn("#fff", T.danger)} disabled={!cnt.length} onClick={clean}>Delete {cnt.length}</AB>}</div>
     </Card>
   </>);
 }
@@ -147,18 +171,47 @@ export function TestPanel({ T, st, adminDb, uid, flash }) {
     const base = lr ?? 10 + Math.floor(w / 10);
     flash("Calculated"); setCalc({ pass: Math.round(base * mult), fail: Math.round(3 * mult), mult, cap: e.dailyCap || 500, custom: lr != null });
   };
+  const [lkKind, setLkKind] = useState("features"); const [lkId, setLkId] = useState("wordsets"); const [lkHrs, setLkHrs] = useState(2);
+  const [mOn, setMOn] = useState(null); const [mMsg, setMMsg] = useState("");
+  useEffect(() => { getMaintenanceMode().then(m => { setMOn(!!m.enabled); setMMsg(m.message || ""); }); }, []);
+  const timers = lk ? Object.entries(lk.until || {}).filter(([, t]) => t > Date.now()) : [];
+  const lockFor = async () => {
+    const n = { ...lk, features: { ...(lk.features || {}) }, games: { ...(lk.games || {}) }, until: { ...(lk.until || {}) } };
+    n[lkKind][lkId] = true; n.until[(lkKind === "games" ? "g:" : "f:") + lkId] = Date.now() + lkHrs * 3600000;
+    try { await setLocks(n, adminDb); setLk(n); await logActivity("lock_timer", { adminUid: uid, detail: `${lkKind}/${lkId} for ${lkHrs}h` }, adminDb).catch(() => {}); flash(`Locked for ${lkHrs}h — players see it unlock on their next page load after that`); } catch (e) { flash("Failed: " + (e.code || e.message)); }
+  };
+  const clearTimer = async (k) => { const n = { ...lk, until: { ...(lk.until || {}) } }; delete n.until[k]; try { await setLocks(n, adminDb); setLk(n); flash("Timer removed (lock stays until you unlock it)"); } catch (e) { flash("Failed: " + (e.code || e.message)); } };
+  const presets = [["Double Keys weekend", 2, 48], ["Triple Keys day", 3, 24], ["Bonus hour (1.5x)", 1.5, 6]];
+  const applyPreset = async ([name, m, h]) => { if (!confirm(`Start "${name}" (${m}x for ${h}h) now?`)) return; try { const e = await getEconomy(); await setEconomy({ ...e, multiplier: m, name, startsAt: Date.now(), endsAt: Date.now() + h * 3600000 }, adminDb); await logActivity("economy_update", { adminUid: uid, detail: `preset ${name}` }, adminDb).catch(() => {}); flash(`${name} started`); } catch (e) { flash("Failed: " + (e.code || e.message)); } };
+  const setMaint = async (on) => { if (!confirm(on ? "Turn maintenance mode ON for players now?" : "Turn maintenance mode OFF?")) return; try { const m = await getMaintenanceMode(); await setMaintenanceMode(on, mMsg || m.message || "We'll be right back.", m.triggers || { admins: false, users: true }, adminDb); setMOn(on); await logActivity("maintenance", { adminUid: uid, detail: on ? "on" : "off" }, adminDb).catch(() => {}); flash(on ? "Maintenance mode ON" : "Maintenance mode OFF"); } catch (e) { flash("Failed: " + (e.code || e.message)); } };
   const wsLocked = !!lk?.features?.wordsets;
   const toggle = async () => { if (!confirm(wsLocked ? "Re-open community word sets for everyone?" : "Lock community word sets for everyone now?")) return; const n = { ...lk, features: { ...(lk.features || {}) } }; if (wsLocked) delete n.features.wordsets; else n.features.wordsets = true; try { await setLocks(n, adminDb); setLk(n); await logActivity("emergency_lock", { adminUid: uid, detail: wsLocked ? "wordsets unlocked" : "wordsets locked" }, adminDb).catch(() => {}); flash(wsLocked ? "Unlocked" : "Locked"); } catch (e) { flash("Failed: " + (e.code || e.message)); } };
   return (<>
     <Card T={T} st={st} title="Notification preview" hint="Sends a test notification to your own account so you can see how it looks at each priority.">
-      <div style={{ display: "flex", gap: 6 }}>{["none", "important", "urgent"].map(l => <button key={l} onClick={() => setLvl(l)} style={st.btn(lvl === l ? "#fff" : T.muted, lvl === l ? T.purple : T.faint)}>{l}</button>)}<button style={st.btn("#fff", "#10b981")} onClick={preview}>Send to me</button></div>
+      <div style={{ display: "flex", gap: 6 }}>{["none", "important", "urgent"].map(l => <AB key={l} onClick={() => setLvl(l)} style={st.btn(lvl === l ? "#fff" : T.muted, lvl === l ? T.purple : T.faint)}>{l}</AB>)}<AB style={st.btn("#fff", "#10b981")} onClick={preview}>Send to me</AB></div>
     </Card>
     <Card T={T} st={st} title="Keys calculator" hint="What a run pays right now, using your current rewards and Keys event.">
-      <div style={{ display: "flex", gap: 6 }}><input value={wpm} onChange={e => setWpm(e.target.value.replace(/\D/g, ""))} placeholder="WPM" style={{ ...st.input, width: 90 }} /><input value={level} onChange={e => setLevelN(e.target.value.replace(/\D/g, ""))} placeholder="Level # (optional)" style={{ ...st.input, width: 150 }} /><button style={st.btn()} onClick={doCalc}>Calculate</button></div>
+      <div style={{ display: "flex", gap: 6 }}><input value={wpm} onChange={e => setWpm(e.target.value.replace(/\D/g, ""))} placeholder="WPM" style={{ ...st.input, width: 90 }} /><input value={level} onChange={e => setLevelN(e.target.value.replace(/\D/g, ""))} placeholder="Level # (optional)" style={{ ...st.input, width: 150 }} /><AB style={st.btn()} onClick={doCalc}>Calculate</AB></div>
       {calc && <div style={{ marginTop: 8, color: T.text, fontSize: 12 }}>Pass: <b>{calc.pass}</b> Keys{calc.custom ? " (custom level reward)" : ""} · Fail: <b>{calc.fail}</b> · Multiplier: {calc.mult}x · Daily cap: {calc.cap}</div>}
     </Card>
+    <Card T={T} st={st} title="Lock for a set time" hint="Locks a feature or game and unlocks it by itself later (takes effect for players on their next page load).">
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <select value={lkKind} onChange={e => { setLkKind(e.target.value); setLkId(e.target.value === "games" ? GAMES[0].id : "wordsets"); }} style={{ ...st.input, width: "auto" }}><option value="features">Feature</option><option value="games">Game</option></select>
+        <select value={lkId} onChange={e => setLkId(e.target.value)} style={{ ...st.input, width: "auto" }}>{(lkKind === "games" ? GAMES.map(g => [g.id, g.name]) : LOCKABLE_FEATURES).map(([id, n]) => <option key={id} value={id}>{n}</option>)}</select>
+        <select value={lkHrs} onChange={e => setLkHrs(Number(e.target.value))} style={{ ...st.input, width: "auto" }}>{[1, 2, 6, 12, 24, 72].map(h => <option key={h} value={h}>{h}h</option>)}</select>
+        <AB disabled={!lk} style={st.btn()} onClick={lockFor}>Lock</AB>
+      </div>
+      {timers.map(([k, t]) => <div key={k} style={{ fontSize: 12, color: T.text, marginTop: 6 }}>{k.slice(2)} unlocks {new Date(t).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} ET <AB style={st.btn("#fff", T.faint)} onClick={() => clearTimer(k)}>Remove timer</AB></div>)}
+    </Card>
+    <Card T={T} st={st} title="Keys event presets" hint="Start a common Keys event in one tap (replaces any current event).">
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{presets.map(p => <AB key={p[0]} style={st.btn()} onClick={() => applyPreset(p)}>{p[0]}</AB>)}</div>
+    </Card>
+    <Card T={T} st={st} title={`Quick maintenance mode${mOn === null ? "" : mOn ? " — currently ON" : " — currently off"}`} hint="Uses the same switch as Settings. Players (not admins, unless you chose so in Settings) see your message.">
+      <input value={mMsg} onChange={e => setMMsg(e.target.value.slice(0, 140))} placeholder="Message for players" style={st.input} />
+      <div style={{ display: "flex", gap: 6, marginTop: 8 }}><AB style={st.btn("#fff", T.danger)} onClick={() => setMaint(true)}>Turn ON</AB><AB style={st.btn("#fff", "#10b981")} onClick={() => setMaint(false)}>Turn OFF</AB></div>
+    </Card>
     <Card T={T} st={st} title="Emergency lock: community word sets" hint="One tap to hide and block community sets for everyone except admins; tap again to bring them back.">
-      <button disabled={!lk} style={st.btn("#fff", wsLocked ? "#10b981" : T.danger)} onClick={toggle}>{wsLocked ? "Unlock community word sets" : "Lock community word sets now"}</button>
+      <AB disabled={!lk} style={st.btn("#fff", wsLocked ? "#10b981" : T.danger)} onClick={toggle}>{wsLocked ? "Unlock community word sets" : "Lock community word sets now"}</AB>
     </Card>
   </>);
 }

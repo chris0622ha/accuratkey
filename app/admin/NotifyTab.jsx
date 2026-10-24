@@ -57,6 +57,12 @@ export default function NotifyTab({ T, st, adminDb, uid, flash }) {
     if (!confirm("Remove this notification for everyone?")) return;
     try { await setAnnouncements((await getAnnouncements()).filter(x => x.id !== id), adminDb); flash("Removed"); await load(); } catch (e) { flash("Failed: " + (e.code || e.message)); }
   };
+  const edit = async (a) => {
+    const t = prompt("Title", a.title); if (t === null) return; const b = prompt("Message", a.body); if (b === null) return;
+    if (!t.trim()) return flash("Add a title");
+    try { const cur = await getAnnouncements(); await setAnnouncements(cur.map(x => x.id === a.id ? { ...x, title: t.trim().slice(0, 80), body: b.trim().slice(0, 300), editedAt: Date.now() } : x), adminDb); await logActivity("admin_notification_edit", { adminUid: uid, detail: t.trim().slice(0, 80) }, adminDb).catch(() => {}); flash("Notification updated"); await load(); } catch (e) { flash("Failed: " + (e.code || e.message)); }
+  };
+  const reuse = (a) => { setAud(a.audience === "specific" ? "all" : a.audience); setTitle(a.title); setBody(a.body); setLevel(a.level || "none"); window.scrollTo({ top: 0, behavior: "smooth" }); flash("Loaded into the form above — edit and send"); };
   const chip = (active, color, label, onClick) => <button key={label} onClick={onClick} style={{ ...st.btn(active ? "#fff" : T.muted, active ? color : T.faint), fontSize: 11 }}>{label}</button>;
   return (
     <div>
@@ -98,6 +104,8 @@ export default function NotifyTab({ T, st, adminDb, uid, flash }) {
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ color: T.text, fontWeight: 800, fontSize: 13, flex: 1 }}>{a.title}</span>
             {a.level !== "none" && <span style={{ color: a.level === "urgent" ? "#ef4444" : "#f59e0b", fontSize: 10, fontWeight: 800 }}>{String(a.level).toUpperCase()}</span>}
+            <button onClick={() => edit(a)} style={st.btn("#fff", T.faint)}>Edit</button>
+            <button onClick={() => reuse(a)} style={st.btn("#fff", T.faint)}>Reuse</button>
             <button onClick={() => remove(a.id)} style={st.btn("#fff", "#ef4444")}>Remove</button>
           </div>
           <div style={{ color: T.muted, fontSize: 11, marginTop: 4 }}>{a.body}</div>

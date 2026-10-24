@@ -318,6 +318,8 @@ export default function AdminPage() {
   const [tab,setTab]=useState("stats");
   const [confirmSwitchAccount,setConfirmSwitchAccount]=useState(null);
   const [prefs,setPrefs]=useState({idle:30,pinned:[]});
+  useEffect(()=>{ const h=location.hash.slice(1); if(TABS.includes(h)) setTab(h); },[]);
+  useEffect(()=>{ if(adminOk) history.replaceState(null,"","#"+tab); },[tab,adminOk]);
   const [paletteOpen,setPaletteOpen]=useState(false);
   const [paletteQ,setPaletteQ]=useState("");
   const orderedTabs=[...prefs.pinned.filter(t=>TABS.includes(t)),...TABS.filter(t=>!prefs.pinned.includes(t))];
